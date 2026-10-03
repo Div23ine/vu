@@ -1,0 +1,37 @@
+{
+  "name": "@vunvault/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.react-lib.json": "./tsconfig.react-lib.json",
+    "./tsconfig.next.json": "./tsconfig.next.json",
+    "./tsconfig.node.json": "./tsconfig.node.json",
+    "./eslint.base.mjs": "./eslint.base.mjs",
+    "./eslint.next.mjs": "./eslint.next.mjs",
+    "./eslint.node.mjs": "./eslint.node.mjs",
+    "./prettier.config.mjs": "./prettier.config.mjs"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.base.json --showConfig >/dev/null && tsc -p tsconfig.react-lib.json --showConfig >/dev/null && tsc -p tsconfig.next.json --showConfig >/dev/null && tsc -p tsconfig.node.json --showConfig >/dev/null && echo \"typecheck ok\""
+  },
+  "peerDependencies": {
+    "eslint": "*"
+  },
+  "dependencies": {
+    "@eslint/js": "catalog:",
+    "@next/eslint-plugin-next": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-jsx-a11y": "catalog:",
+    "eslint-plugin-react": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "globals": "catalog:",
+    "typescript-eslint": "catalog:"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  }
+}
