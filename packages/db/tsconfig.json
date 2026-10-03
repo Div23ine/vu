@@ -1,0 +1,4 @@
+{
+  "extends": "@vunvault/config/tsconfig.node.json",
+  "include": ["src"]
+}

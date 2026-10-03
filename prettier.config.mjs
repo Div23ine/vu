@@ -1,2 +1,5 @@
+// @ts-check
 // Root Prettier config: single source of truth lives in @vunvault/config.
-export { default } from '@vunvault/config/prettier.config.mjs';
+import prettierConfig from '@vunvault/config/prettier.config.mjs';
+
+export default prettierConfig;

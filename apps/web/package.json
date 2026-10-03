@@ -1,0 +1,22 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@vunvault/ui": "workspace:*",
+    "@vunvault/lib": "workspace:*",
+    "@vunvault/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@vunvault/config": "workspace:*",
+    "typescript": "catalog:",
+    "eslint": "catalog:",
+    "vitest": "catalog:"
+  }
+}
