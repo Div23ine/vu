@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": [],
+  "files": [
+    "eslint.base.mjs",
+    "eslint.next.mjs",
+    "eslint.node.mjs",
+    "prettier.config.mjs"
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "verbatimModuleSyntax": false
+  }
+}

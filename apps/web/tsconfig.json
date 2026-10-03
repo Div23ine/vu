@@ -1,0 +1,6 @@
+{
+  "extends": "@vunvault/config/tsconfig.next.json",
+  "include": [
+    "src"
+  ]
+}

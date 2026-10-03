@@ -1,0 +1,6 @@
+{
+  "extends": "@vunvault/config/tsconfig.react-lib.json",
+  "include": [
+    "src"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "@vunvault/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.react-lib.json": "./tsconfig.react-lib.json",
+    "./tsconfig.next.json": "./tsconfig.next.json",
+    "./tsconfig.node.json": "./tsconfig.node.json",
+    "./eslint.base.mjs": "./eslint.base.mjs",
+    "./eslint.next.mjs": "./eslint.next.mjs",
+    "./eslint.node.mjs": "./eslint.node.mjs",
+    "./prettier.config.mjs": "./prettier.config.mjs",
+    "./vitest.shared": "../../vitest.shared.mjs"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.configs.json --noEmit",
+    "lint": "echo \"configs only, nothing to lint\" && exit 0"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.9.0",
+    "@next/eslint-plugin-next": "^14.2.5",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-jsx-a11y": "^6.9.0",
+    "eslint-plugin-react": "^7.35.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "globals": "^15.9.0",
+    "typescript-eslint": "^8.1.0"
+  },
+  "devDependencies": {
+    "typescript-eslint": "^8.1.0",
+    "@types/node": "^20.14.0"
+  }
+}
