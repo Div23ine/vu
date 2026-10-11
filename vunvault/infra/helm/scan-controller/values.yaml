@@ -1,0 +1,58 @@
+# vv-scan-controller values (Task 100). The controller's secrets (REDIS_URL,
+# SCAN_CONTROLLER_HMAC_KEY, DATABASE_URL) arrive as the Terraform-built
+# Kubernetes secret `vv-scan-controller-secrets` (Task 98) — the k3s cluster
+# has NO vault access by design; this chart never sees a value.
+
+image:
+  repository: "" # <registry>/vv/scan-controller
+  tag: ""        # CI-set; an empty tag fails the template
+  digest: ""
+
+# Singleton by design: the consumer holds the queue's worker lock, and two
+# controllers would double-claim scan jobs' progress channels.
+replicaCount: 1
+
+serviceAccount:
+  controller: vv-scan-controller
+  runner: vv-scan-runner
+
+# The controller lives in the scan namespace it governs.
+namespace: vv-scans
+
+config:
+  nodeEnv: production
+  logLevel: info
+  # The API's internal callback base — reached over the NAT gateway and
+  # authenticated with the HMAC signature (Task 40g), never with a session.
+  apiInternalUrl: https://api.vunvault.example
+  workerSlotsTotal: "4"
+  redisKeyPrefix: vv
+  apiTimeoutMs: "10000"
+
+secretRef: vv-scan-controller-secrets
+
+# The controller schedules onto the control node; scan PODS land on the
+# tainted agents (the pod manifest carries its own toleration, Task 86).
+nodeSelector:
+  vv/pool: control
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Task 86 guard rails, values-driven so environments can size them.
+quota:
+  pods: "30"
+  requestsCpu: "12"
+  limitsCpu: "30"
+  limitsMemory: 40Gi
+
+limitRange:
+  defaultCpu: "1"
+  defaultMemory: 1Gi
+  defaultRequestCpu: 250m
+  defaultRequestMemory: 256Mi

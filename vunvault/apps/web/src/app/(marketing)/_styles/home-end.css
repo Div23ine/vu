@@ -1,0 +1,256 @@
+/**
+ * Home end-sections stylesheet (Task 52) — contributors, glass cards and the
+ * social links, reproduced from the prototype's CSS. Tokenised values use
+ * `var(--token)` (`--paper`, `--line`, `--line-soft`, `--ink*`, `--brand*`,
+ * `--white`, `--r-full`, `--dark-abyss`, `--ease`); one-off literals without
+ * tokens stay inside this file only — never in TSX.
+ *
+ * AUTHORED additions, marked below: `.contributor-avatar-initials` (the
+ * catalogue mandates initials tiles instead of photographs; the prototype's
+ * `.contributor-avatar` rules style an `<img>`), and a `:focus-visible`
+ * outline for the press-band CTAs.
+ *
+ * Reduced motion: the prototype block is reproduced verbatim; the global
+ * fallback in `@vunvault/ui`'s `motion.css` collapses every hover transform.
+ */
+
+/* ——— Glass cards (reference; also used by the press + contact bands) ——— */
+.glass-card {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid rgba(59, 153, 252, 0.14);
+  box-shadow: 0 8px 32px rgba(10, 13, 18, 0.06);
+}
+#services-plans .glass-card {
+  transition:
+    transform 0.3s var(--ease),
+    box-shadow 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+#services-plans .glass-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--brand-line);
+  box-shadow: 0 24px 50px -30px rgba(10, 13, 18, 0.4);
+}
+#contact .glass-card {
+  transition:
+    transform 0.25s var(--ease),
+    border-color 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+#contact a.glass-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--brand-line);
+  box-shadow: 0 22px 46px -34px rgba(10, 13, 18, 0.45);
+}
+#contact a.glass-card:hover .font-mono {
+  color: var(--brand-strong);
+}
+
+/* ——— Social links (reference) ——— */
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-full);
+  color: var(--ink-soft);
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 16px -14px rgba(10, 13, 18, 0.6);
+  transition:
+    color 0.25s var(--ease),
+    border-color 0.25s var(--ease),
+    background-color 0.25s var(--ease),
+    transform 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+.social-link svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.25s var(--ease);
+}
+.social-link:hover,
+.social-link:focus-visible {
+  color: var(--brand);
+  border-color: var(--brand);
+  background: var(--brand-tint);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px -16px var(--brand-glow);
+  outline: none;
+}
+.social-link:hover svg {
+  transform: scale(1.1);
+}
+.social-link:active {
+  transform: translateY(-1px) scale(0.97);
+}
+@media (max-width: 640px) {
+  .social-link {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ——— Contributors (reference) ——— */
+.contributors {
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgba(59, 153, 252, 0.06), transparent 60%), var(--paper);
+  border-top: 1px solid var(--line-soft);
+}
+.contributors-header {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 60rem;
+}
+.contributors-header h2 {
+  color: var(--ink);
+}
+.contributors-header p {
+  max-width: 60ch;
+}
+.contributors-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 34px 26px;
+  margin-top: 54px;
+}
+.contributor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 8px;
+}
+.contributor-card.circular .contributor-avatar-wrap {
+  position: relative;
+  width: 156px;
+  height: 156px;
+  max-width: 156px;
+  max-height: 156px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(59, 153, 252, 0.22), transparent 70%),
+    linear-gradient(160deg, var(--dark), var(--dark-abyss));
+  border: 1px solid rgba(59, 153, 252, 0.28);
+  box-shadow:
+    0 0 0 6px rgba(59, 153, 252, 0.06),
+    0 24px 48px -28px rgba(0, 0, 0, 0.65);
+  transition:
+    transform 0.35s var(--ease),
+    box-shadow 0.35s var(--ease),
+    border-color 0.35s var(--ease);
+  overflow: hidden;
+}
+.contributor-card.circular:hover .contributor-avatar-wrap {
+  transform: translateY(-6px) scale(1.02);
+  border-color: var(--brand);
+  box-shadow:
+    0 0 0 8px rgba(59, 153, 252, 0.1),
+    0 30px 60px -26px var(--brand-glow);
+}
+.contributor-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s var(--ease);
+}
+.contributor-card.circular:hover .contributor-avatar {
+  transform: scale(1.06);
+}
+.contributor-card.circular .contributor-avatar-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  pointer-events: none;
+}
+/* Authored: initials tile (no photographs — see component header). */
+.contributor-avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--grad-brand);
+  color: var(--white);
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  object-fit: initial;
+}
+.contributor-name {
+  margin-top: 18px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.contributor-role {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-strong);
+}
+.contributor-bio {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--ink-muted);
+  max-width: 30ch;
+}
+@media (max-width: 1180px) {
+  .contributors-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .contributors-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 20px;
+  }
+  .contributor-card.circular .contributor-avatar-wrap {
+    width: 138px;
+    height: 138px;
+  }
+}
+@media (max-width: 640px) {
+  .contributors-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .contributor-card.circular .contributor-avatar-wrap {
+    width: 148px;
+    height: 148px;
+  }
+  .contributor-bio {
+    max-width: 40ch;
+  }
+}
+
+/* Authored: keyboard focus for the press band's report CTA. */
+#press-media a:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vv-article-card,
+  .vv-track,
+  .vv-plan,
+  .vv-seg-card,
+  .contributor-card,
+  .glass-card {
+    max-width: 100%;
+    min-width: 0;
+  }
+}

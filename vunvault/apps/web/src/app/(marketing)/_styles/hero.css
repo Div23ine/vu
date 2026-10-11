@@ -1,0 +1,376 @@
+/**
+ * Home hero + CVE ticker stylesheet (Task 47), reproduced from the
+ * prototype's CSS. Every value with a design token uses `var(--token)`
+ * (`--grad-brand`, `--dark-abyss`, `--slate-muted`, `--font-mono`,
+ * `--r-full`, `--r-lg`, `--r-2xl`, `--white`, `--brand`, `--brand-glow`,
+ * `--brand-tint`, `--brand-line`, `--ok`, `--ease` …); one-off literals
+ * without tokens (the dark panel's mid gradient stop `#0c1119`, the status
+ * pill's mint `#8ef0c1`, metric-label slate `#7d8b9e`, the ok-tints and
+ * inlay shadows) stay inside this file only — never in TSX. The SVG
+ * illustration's own colours live in `network-map.tsx` under the catalogue's
+ * artwork exception.
+ *
+ * `--ticker-bg` is the prototype's own navy, intentionally NOT a design
+ * token — per the catalogue it is the only new hex literal this task adds to
+ * a stylesheet.
+ *
+ * Reduced motion: the global fallback in `@vunvault/ui`'s `motion.css`
+ * collapses every animation/transition below (single frame, layout intact);
+ * the ticker additionally gets an explicit block at the bottom — no marquee,
+ * and the strip becomes horizontally scrollable instead.
+ */
+
+:root {
+  --ticker-bg: #0a1931;
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(10px) saturate(1.4);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  border: 1px solid rgba(59, 153, 252, 0.2);
+  box-shadow: 0 4px 16px rgba(10, 13, 18, 0.06);
+  border-radius: var(--r-full);
+}
+
+.hero-eyebrow {
+  display: inline-block;
+  padding: 7px 16px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-strong);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-full);
+}
+
+.btn-get-started {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 42px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--white);
+  background: var(--grad-brand);
+  border-radius: var(--r-full);
+  border: 1px solid rgba(59, 153, 252, 0.5);
+  box-shadow:
+    0 14px 34px -14px var(--brand-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition:
+    transform 0.25s var(--ease),
+    box-shadow 0.25s var(--ease),
+    filter 0.25s var(--ease);
+}
+.btn-get-started::after {
+  content: '→';
+  font-size: 1rem;
+  transition: transform 0.25s var(--ease);
+}
+.btn-get-started:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow:
+    0 20px 44px -16px var(--brand-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.btn-get-started:hover::after {
+  transform: translateX(4px);
+}
+.btn-get-started:active {
+  transform: translateY(0) scale(0.98);
+}
+.btn-get-started:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.hero-visual {
+  position: relative;
+  overflow: hidden;
+  max-width: 960px;
+  margin-inline: auto;
+  border-radius: var(--r-2xl);
+  background:
+    radial-gradient(120% 90% at 12% 0%, rgba(59, 153, 252, 0.16), transparent 55%),
+    linear-gradient(160deg, var(--dark) 0%, #0c1119 52%, var(--dark-abyss) 100%);
+  border: 1px solid rgba(59, 153, 252, 0.24);
+  box-shadow:
+    0 40px 90px -40px rgba(0, 0, 0, 0.75),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  transform-style: preserve-3d;
+  transition:
+    transform 0.45s var(--ease),
+    box-shadow 0.45s var(--ease);
+  will-change: transform;
+}
+.hero-visual:hover {
+  box-shadow:
+    0 50px 110px -44px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(59, 153, 252, 0.12) inset;
+}
+.hero-visual-glow {
+  position: absolute;
+  top: -22%;
+  left: 50%;
+  width: 78%;
+  height: 62%;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, var(--brand-glow), transparent 72%);
+  filter: blur(70px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(59, 153, 252, 0.13) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(59, 153, 252, 0.13) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(100% 80% at 50% 30%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(100% 80% at 50% 30%, #000 25%, transparent 78%);
+  pointer-events: none;
+}
+.hero-visual-inner {
+  position: relative;
+  z-index: 2;
+  padding: 30px;
+}
+.hero-visual-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 26px;
+}
+.hero-visual-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.hero-visual-title {
+  margin-top: 6px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--white);
+}
+.hero-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8ef0c1;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: var(--r-full);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+.hero-status-dot {
+  position: relative;
+  display: inline-flex;
+  width: 8px;
+  height: 8px;
+}
+.hero-status-dot span {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-full);
+  background: var(--ok);
+}
+.hero-status-dot span:last-child {
+  animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+  opacity: 0.6;
+}
+
+.hero-visual-stage {
+  position: relative;
+  border-radius: var(--r-lg);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(59, 153, 252, 0.14);
+  overflow: hidden;
+}
+.hero-network {
+  width: 100%;
+  height: auto;
+  max-height: clamp(280px, 42vw, 460px);
+  display: block;
+}
+.hero-network text {
+  fill: var(--slate-muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.hero-network-links path {
+  stroke-dasharray: 0;
+}
+.hero-network-links path[stroke-dasharray] {
+  animation: vv-dash 3s linear infinite;
+}
+.hero-node circle:first-child {
+  animation: vv-pulse-node 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+.hero-node:nth-child(2) circle:first-child {
+  animation-delay: 0.4s;
+}
+.hero-node:nth-child(3) circle:first-child {
+  animation-delay: 0.8s;
+}
+.hero-node:nth-child(4) circle:first-child {
+  animation-delay: 1.2s;
+}
+.hero-node:nth-child(5) circle:first-child {
+  animation-delay: 1.6s;
+}
+.hero-node:nth-child(6) circle:first-child {
+  animation-delay: 2s;
+}
+.hero-scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 90px;
+  background: linear-gradient(to bottom, transparent, rgba(59, 153, 252, 0.14), transparent);
+  pointer-events: none;
+  animation: vv-scan 5.5s var(--ease) infinite;
+}
+
+.hero-visual-foot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.hero-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hero-metric-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7d8b9e;
+}
+.hero-metric-value {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--brand);
+  text-shadow: 0 0 22px var(--brand-glow);
+}
+
+@media (max-width: 1024px) {
+  .hero-visual-inner {
+    padding: 24px;
+  }
+}
+@media (max-width: 768px) {
+  .hero-visual-inner {
+    padding: 18px;
+  }
+  .hero-visual-head {
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .hero-visual-title {
+    font-size: 1.15rem;
+  }
+  .hero-visual-foot {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .hero-metric-value {
+    font-size: 1.25rem;
+  }
+  .hero-metric:last-child {
+    grid-column: span 2;
+  }
+  .btn-get-started {
+    padding: 15px 34px;
+    font-size: 0.9rem;
+  }
+}
+@media (max-width: 420px) {
+  .hero-visual-foot {
+    grid-template-columns: 1fr;
+  }
+  .hero-metric:last-child {
+    grid-column: auto;
+  }
+}
+
+/* The marquee utility: Task 5 already ships `--animate-vv-marquee` (and the
+ * `vv-marquee` keyframe); this maps the prototype's class name onto it. */
+@utility animate-marquee {
+  animation: var(--animate-vv-marquee);
+}
+
+@keyframes vv-dash {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+@keyframes vv-pulse-node {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes vv-scan {
+  0% {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(520px);
+    opacity: 0;
+  }
+}
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Ticker under reduced motion: static and scrollable instead of animated. */
+@media (prefers-reduced-motion: reduce) {
+  .cve-marquee {
+    animation: none !important;
+  }
+  .cve-strip {
+    overflow-x: auto;
+  }
+}
