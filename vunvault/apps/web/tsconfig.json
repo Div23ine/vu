@@ -1,9 +1,0 @@
-{
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@vunvault/config/tsconfig.next.json",
-  "include": ["src", ".next/types/**/*.ts"],
-  "compilerOptions": {
-    "esModuleInterop": true
-  },
-  "exclude": ["node_modules"]
-}
