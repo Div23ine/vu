@@ -5,6 +5,9 @@ import { inter } from '../lib/fonts';
 import { Providers } from './providers';
 import './globals.css';
 
+// 👇 THIS IS THE MISSING LINE REQUIRED FOR CLOUDFLARE PAGES
+export const runtime = 'edge';
+
 /**
  * Root layout.
  *
@@ -47,11 +50,6 @@ export const metadata: Metadata = {
   },
 };
 
-/**
- * The theme colour comes from the design tokens, not from a literal: `tokens.ts` is
- * the only TypeScript file in the repository allowed to hold a hex value, and a
- * test there fails if it drifts from `tokens.css`.
- */
 export const viewport: Viewport = {
   themeColor: tokens.color.paper,
 };
