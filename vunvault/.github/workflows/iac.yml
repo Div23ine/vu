@@ -1,0 +1,113 @@
+name: iac
+
+# Infrastructure gate: Dockerfiles, Helm charts, Terraform and the bake file.
+# Everything here is static analysis or build-without-push — this workflow has
+# no registry credentials and no cloud credentials at all.
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'docker/**'
+      - 'docker-bake.hcl'
+      - 'apps/scan-worker/**'
+      - '.github/workflows/iac.yml'
+      - 'scripts/verify-terraform.mjs'
+      - 'scripts/gen-scan-egress.mjs'
+      - 'scripts/verify-dockerfiles.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - 'docker/**'
+      - 'docker-bake.hcl'
+      - 'apps/scan-worker/**'
+
+permissions:
+  contents: read
+
+jobs:
+  dockerfiles:
+    name: dockerfiles
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Hadolint every Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          recursive: true
+          failure-threshold: error
+      - name: Repo policy (multi-stage, non-root, distroless, no latest)
+        uses: ./.github/actions/setup
+      - run: node scripts/verify-dockerfiles.mjs
+      - name: Bake file parses (no build, no push)
+        run: |
+          docker buildx create --name vv-syntax --driver docker-container >/dev/null 2>&1 || true
+          REGISTRY=example.test TAG=syntax GIT_SHA=deadbeef CREATED=2026-01-01T00:00:00Z \
+          NODE_BUILD_IMAGE=node:22-bookworm-slim DISTROLESS_IMAGE=gcr.io/distroless/nodejs22-debian12:nonroot \
+          docker buildx bake --print >/dev/null
+
+  helm:
+    name: helm charts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Lint and template every chart
+        # The library dependency resolves from disk; the fake registry/tag
+        # satisfy the imageRef guard without inventing a real image.
+        run: |
+          set -euo pipefail
+          for chart in api broadcast-worker notify-worker maintenance-worker scan-controller; do
+            helm dependency update "infra/helm/$chart"
+            helm lint "infra/helm/$chart" \
+              --set image.repository=example.test/vv/$chart --set image.tag=deadbeef
+            helm template "vv-$chart" "infra/helm/$chart" -n vunvault \
+              --set image.repository=example.test/vv/$chart --set image.tag=deadbeef \
+              > "/tmp/$chart.yaml"
+          done
+      - name: Schema-check the rendered manifests
+        run: |
+          kubeconform -strict -summary -ignore-missing-schemas /tmp/*.yaml
+
+  terraform:
+    name: terraform (${{ matrix.stack }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: [oci, cloudflare]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - name: fmt / init / validate
+        working-directory: infra/terraform/${{ matrix.stack }}
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false
+          terraform validate
+      - name: tflint
+        uses: terraform-linters/setup-tflint@v4
+      - run: tflint --config="${{ github.workspace }}/.tflint.hcl" --recursive
+        working-directory: infra/terraform/${{ matrix.stack }}
+      - name: checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra/terraform/${{ matrix.stack }}
+          config_file: .checkov.yaml
+          quiet: true
+      - uses: ./.github/actions/setup
+      - name: Repo policy (provider pins, no OCIDs, vault locks, scan isolation)
+        run: node scripts/verify-terraform.mjs
+      - name: Scan-egress allow-list matches the generator
+        run: node scripts/gen-scan-egress.mjs

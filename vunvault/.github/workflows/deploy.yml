@@ -1,0 +1,253 @@
+name: deploy
+
+# The delivery pipeline (Task 102): main → staging automatically; production
+# by dispatch behind the environment's required reviewers. Order is fixed —
+# migrate, API, workers, controller, edge, web — and every cluster change is
+# `helm upgrade --install --atomic`: a failed upgrade rolls itself back.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options: [staging, production]
+      git_sha:
+        description: Commit SHA to deploy (default HEAD)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.environment || 'staging' }}
+  cancel-in-progress: false # a half-applied environment is worse than a queue
+
+env:
+  ENVIRONMENT: ${{ inputs.environment || 'staging' }}
+  GIT_SHA: ${{ inputs.git_sha || github.sha }}
+
+jobs:
+  release:
+    name: images
+    uses: ./.github/workflows/release.yml
+    with:
+      git_sha: ${{ inputs.git_sha || github.sha }}
+    secrets: inherit
+
+  migrate:
+    name: database migrations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: release
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ env.GIT_SHA }}
+      - uses: ./.github/actions/setup
+      - run: pnpm install --frozen-lockfile
+      - name: Migration safety gate (additive-only policy)
+        run: node scripts/verify-migrations.mjs
+      - name: Apply migrations
+        env:
+          # A deployment credential (Supabase DIRECT url) — the pooler URL the
+          # apps use cannot run DDL. Masked by the runner; never echoed.
+          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+        run: pnpm --filter @vunvault/db db:migrate
+
+  deploy-oke:
+    name: deploy to OKE (api + workers)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    needs: [release, migrate]
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ env.GIT_SHA }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: digests
+          path: artifacts
+      - uses: oracle-actions/configure-oci-cli@v1
+        with:
+          user: ${{ secrets.OCI_USER_OCID }}
+          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+          tenancy: ${{ secrets.OCI_TENANCY_OCID }}
+          region: ${{ vars.OCI_REGION }}
+          key: ${{ secrets.OCI_PRIVATE_KEY }}
+      - name: Open the bastion tunnel to the private OKE API
+        env:
+          BASTION_ID: ${{ vars.OKE_BASTION_ID }}
+          COMPARTMENT_ID: ${{ vars.COMPARTMENT_OCID }}
+        run: bash scripts/deploy/oci-bastion-tunnel.sh oke
+      - uses: ./.github/actions/setup
+      - name: Render the Vault OCID maps
+        env:
+          SECRET_OCIDS_JSON: ${{ vars.SECRET_OCIDS_JSON }}
+        run: node scripts/deploy/render-secret-map.mjs --write artifacts/secret-maps
+      - name: Helm — api first, then the workers (each --atomic)
+        env:
+          REGISTRY: ${{ vars.OCIR_REGISTRY }}
+        run: |
+          set -euo pipefail
+          bash scripts/deploy/helm-deploy.sh api          artifacts/digests.json
+          bash scripts/deploy/helm-deploy.sh broadcast-worker artifacts/digests.json
+          bash scripts/deploy/helm-deploy.sh notify-worker      artifacts/digests.json
+          bash scripts/deploy/helm-deploy.sh maintenance-worker artifacts/digests.json
+
+  deploy-k3s:
+    name: deploy scan controller (k3s)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [release, migrate]
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ env.GIT_SHA }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: digests
+          path: artifacts
+      - uses: oracle-actions/configure-oci-cli@v1
+        with:
+          user: ${{ secrets.OCI_USER_OCID }}
+          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+          tenancy: ${{ secrets.OCI_TENANCY_OCID }}
+          region: ${{ vars.OCI_REGION }}
+          key: ${{ secrets.OCI_PRIVATE_KEY }}
+      - name: Open the bastion tunnel to the k3s API
+        env:
+          BASTION_ID: ${{ vars.SCAN_BASTION_ID }}
+          COMPARTMENT_ID: ${{ vars.COMPARTMENT_OCID }}
+        run: bash scripts/deploy/oci-bastion-tunnel.sh k3s
+      - name: Helm — scan-controller (--atomic)
+        env:
+          REGISTRY: ${{ vars.OCIR_REGISTRY }}
+        run: bash scripts/deploy/helm-deploy.sh scan-controller artifacts/digests.json
+
+  deploy-edge:
+    name: deploy edge worker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: release
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ env.GIT_SHA }}
+      - uses: ./.github/actions/setup
+      - run: pnpm install --frozen-lockfile
+      - uses: oracle-actions/configure-oci-cli@v1
+        with:
+          user: ${{ secrets.OCI_USER_OCID }}
+          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+          tenancy: ${{ secrets.OCI_TENANCY_OCID }}
+          region: ${{ vars.OCI_REGION }}
+          key: ${{ secrets.OCI_PRIVATE_KEY }}
+      - name: Push the origin-lock secret from OCI Vault (never printed)
+        env:
+          VAULT_SECRET_ID: ${{ vars.EDGE_ORIGIN_SECRET_OCID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          VALUE=$(oci secrets secret-bundle get --secret-id "$VAULT_SECRET_ID" --stage CURRENT \
+            --query 'data."secret-bundle-content".content' --raw-output | base64 -d)
+          echo "::add-mask::$VALUE"
+          printf '%s' "$VALUE" | pnpm --filter @vunvault/edge exec \
+            wrangler secret put EDGE_ORIGIN_SECRET --env "$ENVIRONMENT"
+      - name: Deploy the Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CF_ACCOUNT_ID }}
+          workingDirectory: apps/edge
+          command: deploy --env ${{ env.ENVIRONMENT }}
+
+  deploy-web:
+    name: deploy web (Cloudflare Pages)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: deploy-edge
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ env.GIT_SHA }}
+      - uses: ./.github/actions/setup
+      - run: pnpm install --frozen-lockfile
+      - name: Build (public NEXT_PUBLIC_* values from repository variables)
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_R2_HOST: ${{ vars.NEXT_PUBLIC_R2_HOST }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.STRIPE_PUBLISHABLE_KEY }}
+        run: pnpm --filter web pages:build
+      - name: Publish to Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CF_ACCOUNT_ID }}
+          # --branch must equal the Pages project's production_branch (the
+          # Terraform var pages_branch, default main) or the deploy lands as a
+          # PREVIEW and the environment never moves.
+          command: pages deploy ${{ github.workspace }}/apps/web/.vercel/output/static --project-name vunvault-web-${{ env.ENVIRONMENT }} --branch ${{ vars.PAGES_BRANCH || 'main' }}
+
+  smoke:
+    name: post-deploy smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: [deploy-oke, deploy-k3s, deploy-edge, deploy-web]
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ env.GIT_SHA }}
+      - uses: ./.github/actions/setup
+      - name: Probe the deployed estate
+        run: node scripts/deploy/smoke.mjs --api "${{ vars.API_URL }}" --web "${{ vars.WEB_URL }}"
+
+  rollback:
+    # Only fires when a deploy in THIS run broke the smoke: Helm --atomic has
+    # already rolled back whatever failed mid-upgrade, so this job undoes the
+    # releases that succeeded before the breakage.
+    name: rollback OKE releases
+    if: failure() && needs.smoke.result == 'failure'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [smoke, deploy-oke]
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oracle-actions/configure-oci-cli@v1
+        with:
+          user: ${{ secrets.OCI_USER_OCID }}
+          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+          tenancy: ${{ secrets.OCI_TENANCY_OCID }}
+          region: ${{ vars.OCI_REGION }}
+          key: ${{ secrets.OCI_PRIVATE_KEY }}
+      - name: Tunnel + rollback api and workers to the previous revision
+        env:
+          BASTION_ID: ${{ vars.OKE_BASTION_ID }}
+          COMPARTMENT_ID: ${{ vars.COMPARTMENT_OCID }}
+        run: |
+          set -euo pipefail
+          bash scripts/deploy/oci-bastion-tunnel.sh oke
+          for release in vv-api vv-broadcast-worker vv-notify-worker vv-maintenance-worker; do
+            helm rollback "$release" 0 --namespace vunvault --wait --timeout 10m || true
+          done

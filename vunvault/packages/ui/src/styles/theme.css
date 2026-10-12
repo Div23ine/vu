@@ -1,0 +1,109 @@
+/**
+ * Tailwind v4 theme mapping. Every utility class resolves to a token declared in
+ * `tokens.css` — this file adds no values of its own, it only names them.
+ */
+@theme inline {
+  /* colours */
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-tint: var(--brand-tint);
+  --color-brand-line: var(--brand-line);
+  --color-brand-glow: var(--brand-glow);
+  --color-brand-bright: var(--brand-bright);
+  --color-dark: var(--dark);
+  --color-dark-2: var(--dark-2);
+  --color-dark-3: var(--dark-3);
+  --color-dark-deep: var(--dark-deep);
+  --color-dark-abyss: var(--dark-abyss);
+  --color-black: var(--black);
+  --color-white: var(--white);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-dark: var(--line-dark);
+  --color-critical: var(--critical);
+  --color-high: var(--high);
+  --color-medium: var(--medium);
+  --color-low: var(--low);
+  --color-ok: var(--ok);
+  --color-ok-ink: var(--ok-ink);
+  --color-ok-bg: var(--ok-bg);
+  --color-ok-line: var(--ok-line);
+  --color-warn-ink: var(--warn-ink);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-line: var(--warn-line);
+  --color-danger-ink: var(--danger-ink);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-line: var(--danger-line);
+  --color-pill-ok-ink: var(--pill-ok-ink);
+  --color-table-head: var(--table-head);
+  --color-slate-text: var(--slate-text);
+  --color-slate-muted: var(--slate-muted);
+
+  /* radii */
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-2xl: var(--r-2xl);
+  --radius-full: var(--r-full);
+  --radius-field: var(--r-field);
+  --radius-toast: var(--r-toast);
+  --radius-kpi: var(--r-kpi);
+  --radius-tile: var(--r-tile);
+
+  /* motion */
+  --ease-vv: var(--ease);
+  --ease-vv-out: var(--ease-out);
+  --default-transition-duration: var(--dur);
+  --default-transition-timing-function: var(--ease);
+
+  /* animations (keyframes live in motion.css) */
+  --animate-vv-spin: vv-spin 1s linear infinite;
+  --animate-vv-ping: vv-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-vv-pulse: vv-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-vv-bounce: vv-bounce 1s infinite;
+  --animate-vv-fade-in: vv-fade-in 0.6s ease-out both;
+  --animate-vv-float: vv-float 5s ease-in-out infinite;
+  --animate-vv-float-delayed: vv-float 5s ease-in-out 1.5s infinite;
+  --animate-vv-marquee: vv-marquee 30s linear infinite;
+  --animate-vv-fade-up: vv-fade-up 0.8s var(--ease) forwards;
+  --animate-vv-overlay-in: vv-fade-in 0.25s var(--ease-out) both;
+  --animate-vv-modal-pop: vv-modal-pop 0.3s var(--ease) both;
+  --animate-vv-toast-in: vv-toast-in 0.3s var(--ease) both;
+  --animate-vv-toast-out: vv-toast-out 0.28s var(--ease) both;
+
+  /* shadows */
+  --shadow-card: var(--sh-card);
+  --shadow-kpi: var(--sh-kpi);
+  --shadow-btn-brand: var(--sh-btn-brand);
+  --shadow-ghost: var(--sh-ghost);
+  --shadow-toast: var(--sh-toast);
+  --shadow-tile: var(--sh-tile);
+}
+
+@theme {
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+}
+
+@utility bg-grad-brand {
+  background-image: var(--grad-brand);
+}
+
+@utility bg-grad-dark {
+  background-image: var(--grad-dark);
+}
+
+@utility bg-grad-tile {
+  background-image: var(--grad-tile);
+}

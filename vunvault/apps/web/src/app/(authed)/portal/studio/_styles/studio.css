@@ -1,0 +1,407 @@
+/**
+ * Content Studio stylesheet (Task 71).
+ *
+ * The access-denied card HAS reference markup: its `vbg-*` blocks are
+ * reproduced here verbatim in structure, with every `--vg-*` prototype
+ * variable translated to this repo's token (`--brand*`, `--ink*`, `--line*`,
+ * `--r-*`, `--dur`, `--ease`, `--white`). Colours with NO token (`#f8fafc`
+ * list-item background, the rgba() stops the reference itself carries) stay
+ * literal in this file only, per the feature-stylesheet exception. The
+ * prototype's `--quiet` button variant and `.vbg-demo-note` are dropped with
+ * the demo-grant control they belonged to.
+ *
+ * AUTHORED (marked inline): the `vcs-*` header/chip/status/table rules —
+ * the table wrap is copied from the portal's feature-table family (the
+ * `.vps-table-wrap` rules of Task 69, themselves copied from billing) —
+ * plus the focus-visible rings and the reduced-motion block.
+ */
+
+/* ——— Denied card (reference: .vbg-denied family) ——— */
+.vbg-denied {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px 90px;
+}
+.vbg-denied-card {
+  position: relative;
+  overflow: hidden;
+  width: min(720px, 100%);
+  padding: 44px 40px 40px;
+  text-align: center;
+  border-radius: var(--r-2xl);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(59, 153, 252, 0.1), transparent 58%), var(--white);
+  border: 1px solid rgba(59, 153, 252, 0.22);
+  box-shadow: 0 40px 90px -50px rgba(10, 13, 18, 0.55);
+}
+.vbg-denied-glow {
+  position: absolute;
+  top: -55%;
+  right: -12%;
+  width: 48%;
+  height: 200%;
+  background: radial-gradient(closest-side, var(--brand-glow), transparent 72%);
+  filter: blur(72px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+.vbg-denied-icon {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  margin-bottom: 22px;
+  border-radius: 50%;
+  color: var(--brand-strong);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  box-shadow: 0 0 0 10px rgba(59, 153, 252, 0.06);
+}
+.vbg-denied-eyebrow {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-strong);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-full);
+}
+.vbg-denied-title {
+  position: relative;
+  z-index: 1;
+  margin: 18px 0 0;
+  font-size: clamp(1.5rem, 3.4vw, 2.05rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.vbg-denied-text {
+  position: relative;
+  z-index: 1;
+  margin: 14px auto 0;
+  max-width: 54ch;
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--ink-muted);
+}
+.vbg-denied-list {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+.vbg-denied-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 15px;
+  font-size: 0.79rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  background: #f8fafc;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+.vbg-denied-list svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--brand);
+}
+.vbg-denied-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* ——— Buttons (reference: .vbg-btn family; --quiet dropped with the demo control) ——— */
+.vbg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 12px 22px;
+  font-size: 0.79rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    transform var(--dur) var(--ease),
+    filter var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+.vbg-btn svg {
+  flex: 0 0 auto;
+}
+.vbg-btn:active {
+  transform: translateY(1px) scale(0.985);
+}
+.vbg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+.vbg-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+.vbg-btn--primary {
+  color: var(--white);
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-strong) 100%);
+  border-color: rgba(59, 153, 252, 0.5);
+  box-shadow:
+    0 14px 30px -16px var(--brand-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+.vbg-btn--primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow: 0 20px 40px -18px var(--brand-glow);
+}
+.vbg-btn--ghost {
+  color: var(--ink);
+  background: var(--white);
+  border-color: var(--line);
+  box-shadow: 0 6px 18px -16px rgba(10, 13, 18, 0.6);
+}
+.vbg-btn--ghost:hover {
+  transform: translateY(-2px);
+  color: var(--brand-strong);
+  border-color: var(--brand-line);
+  box-shadow: 0 14px 30px -20px var(--brand-glow);
+}
+
+/* ——— Header (authored) ——— */
+.vcs-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+.vcs-header-text {
+  min-width: 0;
+}
+.vcs-title {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.vcs-sub {
+  margin-top: 10px;
+  max-width: 62ch;
+  font-size: 0.86rem;
+  line-height: 1.7;
+  color: var(--ink-muted);
+}
+.vcs-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.vcs-name {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* ——— Verified chip (authored on the brand chip language) ——— */
+.vcs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--brand-strong);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-full);
+  white-space: nowrap;
+}
+
+/* ——— Status chips (authored on the .vbb-status chip language, Task 70 family) ——— */
+.vcs-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border-radius: var(--r-full);
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.vcs-status--muted {
+  color: var(--ink-muted);
+  background: var(--white);
+  border-color: var(--line);
+}
+.vcs-status--warn {
+  color: var(--warn-ink);
+  background: var(--warn-bg);
+  border-color: var(--warn-line);
+}
+.vcs-status--ok {
+  color: var(--ok-ink);
+  background: var(--ok-bg);
+  border-color: var(--ok-line);
+}
+.vcs-status--danger {
+  color: var(--danger-ink);
+  background: var(--danger-bg);
+  border-color: var(--danger-line);
+}
+.vcs-status--brand {
+  color: var(--brand-strong);
+  background: var(--brand-tint);
+  border-color: var(--brand-line);
+}
+
+/* ——— Table (copied from the portal feature-table family, .vps-table-wrap) ——— */
+.vcs-table-wrap {
+  border-radius: var(--r-xl);
+  border: 1px solid var(--line-soft);
+  background: var(--white);
+  box-shadow: 0 22px 50px -40px rgba(10, 13, 18, 0.45);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.vcs-table-wrap table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.vcs-table-wrap thead th {
+  padding: 15px 18px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b7c4d4;
+  background: linear-gradient(180deg, var(--dark), var(--dark-deep));
+  border-bottom: 1px solid rgba(59, 153, 252, 0.24);
+  white-space: nowrap;
+}
+.vcs-table-wrap thead th:last-child {
+  text-align: right;
+}
+.vcs-table-wrap tbody td {
+  padding: 16px 18px;
+  vertical-align: middle;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line-soft);
+}
+.vcs-table-wrap tbody tr {
+  transition: background-color var(--dur) var(--ease);
+}
+.vcs-table-wrap tbody tr:nth-child(even) {
+  background: #fbfcfd;
+}
+.vcs-table-wrap tbody tr:hover {
+  background: var(--brand-tint);
+}
+.vcs-table-wrap tbody tr:last-child td {
+  border-bottom: 0;
+}
+.vcs-table-wrap tbody td:last-child {
+  text-align: right;
+}
+
+/* ——— Cells (authored; follows the .vps-cell family) ——— */
+.vcs-cell-title {
+  display: block;
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 0.82rem;
+}
+.vcs-reviewer-note {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--warn-ink);
+}
+.vcs-cell-date {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.vcs-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--brand-strong);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-full);
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+.vcs-action-link:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--white);
+}
+.vcs-action-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+
+/* ——— Reduced motion (authored) ——— */
+@media (prefers-reduced-motion: reduce) {
+  .vbg-btn,
+  .vcs-action-link {
+    transition-duration: 0.001ms !important;
+  }
+  .vbg-btn:hover,
+  .vbg-btn:active {
+    transform: none !important;
+  }
+  .vcs-table-wrap tbody tr {
+    transition-duration: 0.001ms !important;
+  }
+}
