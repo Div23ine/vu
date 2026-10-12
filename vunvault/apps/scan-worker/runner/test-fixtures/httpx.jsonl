@@ -1,5 +1,0 @@
-{"url":"https://api.horizonsacco.co.ke","status-code":200,"title":"Horizon SACCO — Member Portal","content-type":"text/html; charset=utf-8","tech":["WordPress","PHP","nginx"],"headers":{"server":"nginx","x-frame-options":"SAMEORIGIN"}}
-{"url":"https://api.horizonsacco.co.ke/login","status-code":200,"title":"Sign in","content-type":"text/html","headers":{"strict-transport-security":"max-age=31536000","content-security-policy":"default-src 'self'"}}
-{"url":"https://api.horizonsacco.co.ke/api/health","status-code":200,"content-type":"application/json","headers":{}}
-{"url":"https://api.horizonsacco.co.ke/missing","status-code":404,"content-type":"text/html","headers":{}}
-not-json-at-all
