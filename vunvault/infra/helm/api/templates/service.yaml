@@ -1,0 +1,1 @@
+{{- include "vv-lib.service" (dict "ctx" $ "name" "api" "servicePort" 80) }}

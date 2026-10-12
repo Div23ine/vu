@@ -1,0 +1,52 @@
+# vv-api values (Task 100). NO secret values live in this file — OCIDs,
+# hostnames and sizes only. image.tag comes from CI (GIT_SHA); an empty tag
+# fails the template rather than defaulting to anything floating.
+
+image:
+  repository: '' # <registry>/vv/api — from the Task 98 registry_url output
+  tag: '' # CI sets this to the immutable GIT_SHA tag
+  digest: '' # optional: pin by digest once cosign signs (Task 102)
+
+replicaCount: 2
+
+port: 8080
+
+serviceAccount:
+  name: vv-api
+  annotations: {}
+
+# Plain, non-secret runtime configuration.
+config:
+  nodeEnv: production
+  webOrigin: https://www.vunvault.example
+  apiUrl: https://api.vunvault.example
+  sentryDsn: '' # optional; empty = Sentry stays off
+  scanControllerCidrs: '' # the k3s NAT egress IP(s) for internal callbacks
+
+# name -> OCI Vault secret OCID (the Task 98 `secret_ocids` output).
+# OCIDs are identifiers, not secrets; the pod fetches VALUES at runtime with
+# its own resource principal (SECRETS_PROVIDER=oci-vault).
+ociSecretMap: {}
+
+ingress:
+  enabled: true
+  className: nginx
+  # The DNS-only ORIGIN hostname, not the public api host: the vv-edge Worker
+  # fetches origin.<zone>, Cloudflare resolves it to this LB, and the ingress
+  # vhost-matches on it. (ADR 0006 §3.)
+  host: origin.vunvault.example
+  # The audit SSE tail and the scan WS relay are long-lived; nginx's 60 s
+  # default would sever both mid-stream.
+  readTimeoutSeconds: 3600
+  sendTimeoutSeconds: 3600
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: '1'
+    memory: 512Mi
+
+nodeSelector: {}
+tolerations: []

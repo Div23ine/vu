@@ -1,0 +1,606 @@
+/**
+ * Free Scanner stylesheet (Task 48) — CTA band, terminal window, form, log
+ * screen and progress rail, reproduced from the prototype's CSS. Every value
+ * with a design token uses `var(--token)` (`--white`, `--dark-2`,
+ * `--dark-deep`, `--slate-text`, `--slate-muted`, `--font-mono`, `--r-sm`,
+ * `--r-field`, `--r-full`, `--r-2xl`, `--brand`, `--brand-soft`,
+ * `--brand-glow`, `--brand-line`, `--critical`, `--high`, `--ok`, `--ease`,
+ * `--paper`); one-off literals without tokens (the CTA's gradient end stop
+ * `#060a10`, the window's `#0b0f16`, slate greys `#8d9aab`/`#94a3b8`/
+ * `#55637a`/`#6b7a8d`/`#7dd3fc`/`#34d399`, the button ink `#04121f` and the
+ * macOS traffic-light reds/ambers/greens) stay inside this file only — never
+ * in TSX.
+ *
+ * Radix adaptation: the prototype's hand-rolled modal shell (`.vv-scan-modal`
+ * and its backdrop) is replaced at runtime by the Task 11 `Dialog` primitive;
+ * the blocks are kept below for fidelity, and `.vv-scan-window` is applied to
+ * the Radix panel itself — hence the sizing overrides (`width`, `max-width`,
+ * `max-height`) that supersede the panel's utility classes.
+ *
+ * Authored additions, marked below: the `.vv-line` log-row palette (the
+ * prototype's stylesheet embeds the class names but not their colours) and
+ * `:focus-visible` outlines for the CTA/execute buttons.
+ *
+ * Reduced motion: the prototype's block at the bottom collapses the window
+ * and shake transitions; the global fallback in `@vunvault/ui`'s `motion.css`
+ * covers the pulse and marquee-style loops, and the engine itself appends the
+ * whole log instantly when reduced motion is set.
+ */
+
+/* ——— CTA band ——— */
+.vv-scan-cta-section {
+  padding: 3.5rem 0;
+  background: var(--paper);
+}
+.vv-scan-cta {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 26px;
+  padding: 40px 44px;
+  border-radius: var(--r-2xl);
+  color: var(--white);
+  background:
+    radial-gradient(90% 130% at 100% 0%, rgba(59, 153, 252, 0.3), transparent 60%),
+    linear-gradient(135deg, var(--dark) 0%, #060a10 100%);
+  border: 1px solid rgba(59, 153, 252, 0.32);
+  box-shadow: 0 30px 60px -34px rgba(0, 0, 0, 0.6);
+}
+.vv-scan-cta-glow {
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 46%;
+  height: 180%;
+  background: radial-gradient(closest-side, var(--brand-glow), transparent 72%);
+  filter: blur(70px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.vv-scan-cta-body {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 420px;
+  min-width: 0;
+}
+.vv-scan-cta-eyebrow {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.vv-scan-cta-title {
+  margin-top: 10px;
+  font-size: clamp(1.4rem, 3vw, 2.05rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--white);
+}
+.vv-scan-cta-title span {
+  color: var(--brand-soft);
+}
+.vv-scan-cta-text {
+  margin-top: 12px;
+  max-width: 62ch;
+  font-size: 0.84rem;
+  line-height: 1.75;
+  color: #9aa8ba;
+}
+.vv-scan-cta-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+.vv-scan-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 30px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #04121f;
+  background: linear-gradient(135deg, var(--brand-soft), var(--brand));
+  border-radius: var(--r-full);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 34px -16px var(--brand-glow);
+  cursor: pointer;
+  transition:
+    transform 0.25s var(--ease),
+    filter 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+.vv-scan-cta-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow: 0 22px 46px -18px var(--brand-glow);
+}
+.vv-scan-cta-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+.vv-scan-cta-btn svg {
+  transition: transform 0.25s var(--ease);
+}
+.vv-scan-cta-btn:hover svg {
+  transform: translateX(4px);
+}
+/* Authored: keyboard focus for the CTA. */
+.vv-scan-cta-btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.vv-scan-cta-note {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #6b7a8d;
+}
+@media (max-width: 768px) {
+  .vv-scan-cta {
+    padding: 28px 22px;
+  }
+  .vv-scan-cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ——— Prototype modal shell (superseded by the Radix Dialog at runtime;
+       kept for reference fidelity — see file header). ——— */
+.vv-scan-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity 0.22s var(--ease);
+}
+.vv-scan-modal[hidden] {
+  display: none !important;
+}
+.vv-scan-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.vv-scan-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 7, 10, 0.74);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+/* ——— Terminal window (applied to the Radix panel) ——— */
+.vv-scan-window {
+  display: flex;
+  flex-direction: column;
+  width: min(920px, calc(100vw - 48px));
+  max-width: none;
+  max-height: 90vh;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0b0f16;
+  border: 1px solid rgba(59, 153, 252, 0.28);
+  box-shadow:
+    0 40px 90px -40px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+}
+.vv-scan-window.is-max {
+  width: calc(100vw - 24px);
+  max-height: 94vh;
+}
+.vv-scan-titlebar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  background: linear-gradient(180deg, #151b25, var(--dark-2));
+  border-bottom: 1px solid rgba(59, 153, 252, 0.18);
+}
+.vv-scan-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vv-dot {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition:
+    filter 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+.vv-dot:hover {
+  filter: brightness(1.3);
+  transform: scale(1.12);
+}
+.vv-dot-close {
+  background: #ff5f57;
+}
+.vv-dot-min {
+  background: #febc2e;
+}
+.vv-dot-max {
+  background: #28c840;
+}
+.vv-scan-title {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #8d9aab;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vv-scan-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.vv-scan-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.vv-scan-status[data-state='idle'] {
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+.vv-scan-status[data-state='scanning'] {
+  color: #7dd3fc;
+  background: rgba(59, 153, 252, 0.12);
+  border-color: rgba(59, 153, 252, 0.42);
+}
+.vv-scan-status[data-state='scanning'] .vv-scan-status-dot {
+  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.vv-scan-status[data-state='done'] {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.42);
+}
+
+/* ——— Body: form, chips, screen, progress, disclaimer ——— */
+.vv-scan-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  overflow-y: auto;
+}
+.vv-scan-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.vv-scan-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.vv-scan-prompt {
+  position: absolute;
+  left: 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand);
+  pointer-events: none;
+}
+.vv-scan-input {
+  width: 100%;
+  padding: 13px 14px 13px 34px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--slate-text);
+  background: var(--dark-deep);
+  border: 1px solid rgba(59, 153, 252, 0.24);
+  border-radius: var(--r-sm);
+  outline: none;
+  transition:
+    border-color 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+.vv-scan-input::placeholder {
+  color: #55637a;
+}
+.vv-scan-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(59, 153, 252, 0.16);
+}
+.vv-scan-input.is-invalid {
+  border-color: var(--critical);
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.16);
+}
+.vv-scan-execute {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 22px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #04121f;
+  background: linear-gradient(135deg, var(--brand-soft), var(--brand));
+  border-radius: var(--r-sm);
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s var(--ease),
+    filter 0.2s var(--ease),
+    opacity 0.2s var(--ease);
+}
+.vv-scan-execute:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+.vv-scan-execute:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+/* Authored: keyboard focus for Execute. */
+.vv-scan-execute:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.vv-scan-reset {
+  flex: 0 0 auto;
+  padding: 13px 18px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--slate-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition:
+    color 0.2s var(--ease),
+    border-color 0.2s var(--ease),
+    background-color 0.2s var(--ease);
+}
+.vv-scan-reset:hover {
+  color: var(--slate-text);
+  border-color: rgba(59, 153, 252, 0.4);
+  background: rgba(59, 153, 252, 0.1);
+}
+.vv-scan-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.vv-scan-chips-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #55637a;
+}
+.vv-chip {
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8d9aab;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  transition:
+    color 0.2s var(--ease),
+    border-color 0.2s var(--ease),
+    background-color 0.2s var(--ease);
+}
+.vv-chip:hover {
+  color: var(--brand-soft);
+  border-color: rgba(59, 153, 252, 0.45);
+  background: rgba(59, 153, 252, 0.1);
+}
+.vv-scan-screen {
+  height: 340px;
+  overflow-y: auto;
+  padding: 16px 18px;
+  border-radius: var(--r-field);
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(59, 153, 252, 0.07), transparent 60%), #05080d;
+  border: 1px solid rgba(59, 153, 252, 0.16);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.85;
+  scroll-behavior: smooth;
+}
+.vv-scan-progress {
+  height: 3px;
+  width: 100%;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.vv-scan-progress > span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--brand-strong), var(--brand-soft));
+  transition: width 0.3s var(--ease);
+}
+.vv-scan-disclaimer {
+  font-size: 10.5px;
+  line-height: 1.65;
+  color: #55637a;
+}
+
+/* Authored: log-row palette (class names come from the prototype; its embed
+ * omits the colour rules). Kinds map onto the severity tokens. */
+.vv-line {
+  display: flex;
+  gap: 10px;
+}
+.vv-line-ts {
+  flex: 0 0 auto;
+  color: #55637a;
+}
+.vv-line-msg {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--slate-text);
+}
+.vv-line--sys .vv-line-msg {
+  color: var(--brand-soft);
+  font-weight: 700;
+}
+.vv-line--muted .vv-line-msg {
+  color: var(--slate-muted);
+}
+.vv-line--info .vv-line-msg {
+  color: #7dd3fc;
+}
+.vv-line--ok .vv-line-msg {
+  color: var(--ok);
+}
+.vv-line--warn .vv-line-msg {
+  color: var(--high);
+}
+.vv-line--crit .vv-line-msg {
+  color: var(--critical);
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .vv-scan-modal {
+    padding: 12px;
+  }
+  .vv-scan-screen {
+    height: 260px;
+    font-size: 11px;
+  }
+  .vv-scan-title {
+    display: none;
+  }
+  .vv-scan-titlebar {
+    grid-template-columns: auto 1fr;
+  }
+  .vv-scan-status {
+    justify-self: end;
+  }
+  .vv-scan-execute,
+  .vv-scan-reset {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+.vv-scan-screen::-webkit-scrollbar,
+.vv-scan-body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.vv-scan-screen::-webkit-scrollbar-track,
+.vv-scan-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.vv-scan-screen::-webkit-scrollbar-thumb,
+.vv-scan-body::-webkit-scrollbar-thumb {
+  background: rgba(59, 153, 252, 0.28);
+  border-radius: var(--r-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.vv-scan-screen::-webkit-scrollbar-thumb:hover,
+.vv-scan-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 153, 252, 0.6);
+  background-clip: padding-box;
+}
+.vv-scan-screen,
+.vv-scan-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 153, 252, 0.35) transparent;
+}
+.vv-scan-input:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(59, 153, 252, 0.22);
+}
+.vv-scan-input.is-invalid {
+  border-color: var(--critical);
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18);
+  animation: vvShake 0.32s var(--ease);
+}
+.vv-dot:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 153, 252, 0.45);
+}
+@media (max-width: 480px) {
+  .vv-scan-window {
+    width: calc(100vw - 24px);
+    max-height: 94vh;
+  }
+  .vv-scan-titlebar {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .vv-scan-body {
+    padding: 14px;
+    gap: 10px;
+  }
+  .vv-scan-screen {
+    height: 220px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vv-scan-modal,
+  .vv-scan-window,
+  .vv-line,
+  .vv-scan-input.is-invalid {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    transform: none !important;
+  }
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+@keyframes vvShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}

@@ -1,0 +1,28 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vv-api
+  labels:
+    {{- include "vv-lib.labels" (dict "name" "api" "release" .Release.Name "managedBy" .Release.Service) | nindent 4 }}
+  annotations:
+    # The origin hostname (DNS-only, Task 99) terminates here; TLS at the
+    # Cloudflare edge plus authenticated origin pulls in front of it.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: {{ .Values.ingress.readTimeoutSeconds | quote }}
+    nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.sendTimeoutSeconds | quote }}
+    # SSE/WS must not be buffered at the ingress either.
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vv-api
+                port:
+                  name: http
+{{- end }}
