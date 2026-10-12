@@ -22,8 +22,8 @@ interface BlogArticlePageProps {
   params: Promise<{ slug: string }>;
 }
 
-// TODO(backend-contract): GET /api/v1/content/:slug → 200 { data: PublicContentDetail } | 404 { error: "not_found" }
-export async function fetchArticle(slug: string): Promise<PublicContentDetail> {
+// ⚠️ FIXED: Removed 'export' keyword. Next.js rejects custom exports in page files.
+async function fetchArticle(slug: string): Promise<PublicContentDetail> {
   const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/v1/content/${slug}`, {
     next: { revalidate: 60 },
   });
@@ -35,6 +35,7 @@ export async function fetchArticle(slug: string): Promise<PublicContentDetail> {
   return parsed.data;
 }
 
+// ✅ This MUST have 'export async'
 export async function generateMetadata({ params }: BlogArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
   const item = await fetchArticle(slug);
