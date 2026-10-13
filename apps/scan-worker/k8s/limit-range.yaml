@@ -1,0 +1,21 @@
+# Per-container defaults (Task 86).
+#
+# A scan pod always sets its own requests and limits, so these defaults are the
+# safety net for anything that does not — an unbounded container in this
+# namespace would be an unbounded container on the scan pool.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: vv-scans-limits
+  namespace: vv-scans
+  labels:
+    app.kubernetes.io/name: vv-scan
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "1"
+        memory: 1Gi
+      defaultRequest:
+        cpu: 250m
+        memory: 256Mi

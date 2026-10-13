@@ -1,0 +1,21 @@
+# Per-environment Helm overrides — PRODUCTION (Task 110 deploy kit).
+# Same loading rules as values-staging.yaml. No secrets: hostnames and sizes.
+
+replicaCount: 2
+
+config:
+  webOrigin: https://www.vunvault.example
+  apiUrl: https://api.vunvault.example
+  apiInternalUrl: https://api.vunvault.example
+
+ingress:
+  enabled: true
+  host: origin.vunvault.example
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: '1'
+    memory: 512Mi

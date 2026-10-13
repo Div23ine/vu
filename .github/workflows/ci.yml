@@ -1,0 +1,146 @@
+name: ci
+
+# The gate on every pull request and every push to main. Least privilege by
+# default: nothing here writes to the repository, and no job outlives its
+# timeout. `verify` runs first — a policy failure is cheaper to report than a
+# five-minute test run that was never going to merge.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Public build-time values only. Nothing here is a secret, and no job may
+  # add one: application secrets live in OCI Vault (docs/ci.md).
+  NEXT_PUBLIC_API_URL: https://api.vunvault.test
+  NEXT_PUBLIC_SITE_URL: https://www.vunvault.test
+
+jobs:
+  verify:
+    name: policy, lint and types
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Policy scripts
+        run: pnpm verify
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+
+  test:
+    name: tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm install --frozen-lockfile
+      - name: Unit and integration suites
+        run: pnpm test -- --coverage
+      - name: Node policy-script suites
+        run: node --test scripts/*.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  build:
+    name: builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    needs: verify
+    # `apps/web/src/env.ts` ends with `export const env = parseEnv()`, which
+    # THROWS AT IMPORT TIME when NEXT_PUBLIC_API_URL / NEXT_PUBLIC_SITE_URL are
+    # missing — and `src/middleware.ts` imports it, so `next build` cannot even
+    # prerender the marketing pages without them. These are compile-gate
+    # placeholders on a reserved TLD (RFC 2606), not endpoints: nothing is
+    # deployed from this job and no route fetches at build time (there is no
+    # generateStaticParams). deploy.yml passes the real values from repository
+    # variables; the e2e job sets its own in playwright.config.ts.
+    env:
+      NEXT_PUBLIC_API_URL: https://api.invalid
+      NEXT_PUBLIC_SITE_URL: https://www.invalid
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm install --frozen-lockfile
+      - name: Build packages and services
+        run: pnpm build
+      # `pnpm build` above already ran `next build` for web (turbo restores
+      # `.next` from cache on a hit), so the adapter is told to skip the Next
+      # build and only do its own transform + Worker bundle. Gating that here is
+      # the point: a route that is fine under `next build` can still fail to
+      # bundle for workerd. Requires the previous step — do not reorder.
+      - name: Build the web Worker (@opennextjs/cloudflare)
+        run: pnpm --filter web exec opennextjs-cloudflare build --skipNextBuild
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: opennext-build-log
+          path: apps/web/.open-next/
+          retention-days: 3
+          if-no-files-found: ignore
+
+  e2e:
+    name: browser smoke (playwright)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run the E2E suite (dev server + MSW mock layer)
+        run: pnpm exec playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  contracts:
+    # Named separately so a conformance regression says which contract broke
+    # instead of appearing as one failed test among six hundred.
+    name: contract conformance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm install --frozen-lockfile
+      - name: API route-table and audit conformance
+        run: pnpm --filter api test -- conformance
+      - name: Scan-worker isolation conformance
+        run: pnpm --filter scan-worker test -- conformance

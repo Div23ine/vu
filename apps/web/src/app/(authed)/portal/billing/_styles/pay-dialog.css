@@ -1,0 +1,328 @@
+/**
+ * Pay-invoice dialog stylesheet (Task 66b).
+ *
+ * The dialog itself is the Task 11 `Dialog` primitive wearing the billing
+ * page's `vbb-*` language — `billing.css` (imported by the page) already owns
+ * `.vbb-btn*`, `.vbb-field`, `.vbb-input`, `.vbb-select`, `.vbb-modal-*`,
+ * `.vbb-field-error`, `.vbb-status*`; this file adds ONLY the pieces the pay
+ * flow introduces: the dialog shell overrides, the summary row, the FX quote
+ * panel, the channel radio cards, the saved-card source radios, the waiting
+ * and success states, and the button spinner.
+ *
+ * All values are tokens (`--brand*`, `--ink*`, `--line*`, `--warn*`, `--paper`,
+ * `--white`, `--r-*`, `--dur`, `--ease`, `--font-mono`); the channel cards
+ * follow the radio-card pattern the signup prototype established (Task 61).
+ * AUTHORED (this dialog has no prototype — the planner spec pins the copy and
+ * the structure); every animation has a reduced-motion fallback below.
+ */
+
+/* ——— Shell overrides on the Radix panel ——— */
+.vbb-pay-dialog {
+  padding: 28px 30px 26px;
+  border-radius: var(--r-2xl);
+  border: 1px solid rgba(59, 153, 252, 0.22);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(59, 153, 252, 0.08), transparent 55%), var(--white);
+}
+.vbb-pay-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.vbb-pay-head .vbb-modal-title {
+  margin-top: 12px;
+  color: var(--ink);
+}
+.vbb-pay-head .vbb-modal-text {
+  color: var(--ink-muted);
+}
+.vbb-pay-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ——— Invoice summary row ——— */
+.vbb-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+.vbb-summary-service {
+  min-width: 0;
+}
+.vbb-summary-due {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+/* ——— FX quote panel ——— */
+.vbb-fx {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.vbb-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 16px;
+  border: 1px dashed var(--brand-line);
+  border-radius: var(--r-md);
+  background: var(--brand-tint);
+}
+.vbb-quote--loading {
+  display: grid;
+  place-items: center;
+  min-height: 64px;
+}
+.vbb-quote--expired {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--warn-bg);
+  border-color: var(--warn-line);
+}
+.vbb-quote-amount {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.vbb-quote-rate {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+}
+.vbb-quote-timer {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--brand-strong);
+}
+.vbb-quote-expired-text {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--warn-ink);
+}
+.vbb-charge-note {
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+/* ——— Channel picker (radio-card family) ——— */
+.vbb-channel-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.vbb-channel-legend {
+  padding: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.vbb-channel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 640px) {
+  .vbb-channel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.vbb-channel-card {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+.vbb-channel-card.is-unavailable {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.vbb-channel-card input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.vbb-channel-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--white);
+  transition:
+    border-color 0.2s var(--ease),
+    background-color 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+.vbb-channel-card:hover:not(.is-unavailable) .vbb-channel-body {
+  border-color: var(--brand-line);
+}
+.vbb-channel-dot {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  position: relative;
+  transition: border-color 0.2s var(--ease);
+}
+.vbb-channel-dot::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--brand);
+  transform: scale(0);
+  transition: transform 0.2s var(--ease);
+}
+.vbb-channel-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.vbb-channel-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.vbb-channel-sub {
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  line-height: 1.4;
+}
+.vbb-channel-card input:checked + .vbb-channel-body {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+  box-shadow: 0 0 0 3px rgba(59, 153, 252, 0.1);
+}
+.vbb-channel-card input:checked + .vbb-channel-body .vbb-channel-dot {
+  border-color: var(--brand);
+}
+.vbb-channel-card input:checked + .vbb-channel-body .vbb-channel-dot::after {
+  transform: scale(1);
+}
+.vbb-channel-card input:focus-visible + .vbb-channel-body {
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+
+/* ——— Saved-card source radios ——— */
+.vbb-card-source {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vbb-card-source-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.vbb-card-source-option input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+.vbb-card-source-option input:disabled {
+  cursor: not-allowed;
+}
+.vbb-card-fields {
+  margin-top: 2px;
+}
+
+/* ——— Waiting + success states ——— */
+.vbb-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 30px 0 22px;
+  text-align: center;
+}
+.vbb-waiting-text {
+  font-size: 0.84rem;
+  line-height: 1.65;
+  color: var(--ink-muted);
+  max-width: 40ch;
+}
+.vbb-pay-success {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  text-align: center;
+  padding: 26px 0 8px;
+}
+.vbb-pay-success .vbb-modal-title {
+  color: var(--ink);
+  margin-top: 0;
+}
+.vbb-pay-success-text {
+  font-size: 0.84rem;
+  line-height: 1.7;
+  color: var(--ink-muted);
+  max-width: 42ch;
+}
+.vbb-pay-success .vbb-modal-actions {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ——— Button/quote spinner ——— */
+.vbb-btn-spinner {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid var(--brand-tint);
+  border-top-color: var(--brand);
+  animation: vbbSpin 0.7s linear infinite;
+}
+.vbb-btn--primary .vbb-btn-spinner {
+  border-color: rgba(255, 255, 255, 0.32);
+  border-top-color: var(--white);
+}
+@keyframes vbbSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vbb-btn-spinner {
+    animation: none !important;
+  }
+}
