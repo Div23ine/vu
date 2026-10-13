@@ -29,7 +29,7 @@ RUN pnpm --filter scan-worker build:runner
 RUN pnpm --filter scan-worker prune --prod || true
 
 # ——————————————————————————————————————————— tools: fetch and verify
-FROM debian:12-slim AS tools
+FROM debian:13-slim AS tools
 ARG NMAP_VERSION
 ARG NUCLEI_VERSION
 ARG NUCLEI_SHA256
@@ -85,7 +85,7 @@ RUN set -eux; \
     apt-get purge -y git; apt-get autoremove -y; rm -rf /var/lib/apt/lists/*
 
 # ——————————————————————————————————————————— final: nothing but what is needed
-FROM debian:12-slim AS final
+FROM debian:13-slim AS final
 ARG BUILD_DATE
 ARG SOURCE_COMMIT
 LABEL org.opencontainers.image.title="vunvault-scan-runner" \
