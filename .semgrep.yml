@@ -1,0 +1,69 @@
+# Semgrep policy (Task 108): the rules no ESLint config in this repo carries,
+# because they are security invariants rather than style.
+# CI: the `semgrep` job in security.yml runs `semgrep scan --error --config .semgrep.yml`.
+rules:
+  - id: vv-no-dangerously-set-inner-html
+    languages: [typescript, tsx, javascript]
+    severity: ERROR
+    message: >-
+      dangerouslySetInnerHTML is banned: every rendered string in this codebase
+      is a React text node (the scan terminal and audit trail render
+      attacker-adjacent output — the structural guarantee is the defence).
+    pattern: dangerouslySetInnerHTML
+
+  - id: vv-no-eval
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: eval/new Function are banned in application code.
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: new Function(...)
+
+  - id: vv-no-innerhtml-assignment
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Direct .innerHTML assignment is banned for the same reason as dangerouslySetInnerHTML.
+    pattern-either:
+      - pattern: $EL.innerHTML = $X
+      - pattern: $EL.outerHTML = $X
+
+  - id: vv-no-secret-in-public-env
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      A NEXT_PUBLIC_ value is inlined into the browser bundle at build time.
+      Assigning anything key/secret/token-shaped to one publishes it.
+    patterns:
+      - pattern: process.env.$NEXT_PUBLIC_VAR = $VALUE
+      - metavariable-regex:
+          metavariable: $NEXT_PUBLIC_VAR
+          regex: ^NEXT_PUBLIC_.*(KEY|SECRET|TOKEN|PASSWORD).*$
+
+  - id: vv-no-child-process-in-web
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: The web app runs on workerd (@opennextjs/cloudflare) — Node child processes cannot exist there.
+    paths:
+      include:
+        - apps/web/
+    pattern-either:
+      - pattern: import $X from "child_process"
+      - pattern: import $X from "node:child_process"
+      - pattern: require("child_process")
+      - pattern: require("node:child_process")
+
+  - id: vv-prefer-pino-in-services
+    languages: [typescript]
+    severity: WARNING
+    message: Server workspaces log with pino; console.log bypasses redaction and structure.
+    paths:
+      include:
+        - apps/api/src/
+        - apps/broadcast-worker/src/
+        - apps/notify-worker/src/
+        - apps/maintenance-worker/src/
+        - apps/scan-worker/src/
+      exclude:
+        - '*.test.ts'
+    pattern: console.log(...)

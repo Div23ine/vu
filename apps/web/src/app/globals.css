@@ -1,0 +1,25 @@
+/*
+ * The app stylesheet is one import and one override.
+ *
+ * Everything visual — tokens, theme mapping, base resets, motion primitives and
+ * the reduced-motion block — is owned by `@vunvault/ui` (Task 5). Nothing here
+ * re-declares a colour, a radius or an easing curve, so there is exactly one place
+ * in the repository where a design token can be changed.
+ *
+ * `@source` points Tailwind's scanner at the component library's source: its class
+ * names are used inside `packages/ui`, and without this the utilities they need
+ * would be tree-shaken out of the app's CSS.
+ *
+ * The `@theme inline` block comes AFTER the import on purpose. Task 5 defines
+ * `--font-sans` with a generic stack; remapping it to the self-hosted Inter
+ * variable means every `font-sans` utility in the app and in the component library
+ * resolves to the same face, with no per-component override and no runtime fetch
+ * from a third-party font CDN.
+ */
+@import '@vunvault/ui/styles.css';
+
+@source '../../../../packages/ui/src';
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}

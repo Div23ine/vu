@@ -1,0 +1,10 @@
+apiVersion: v2
+name: vv-notify-worker
+description: VUNVAULT the notification + PDF worker on OKE (Task 100). Secrets arrive from OCI Vault through External Secrets (store `oci-vault`) — this file and its values carry OCIDs and configuration, never values.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+dependencies:
+  - name: vv-lib
+    version: 1.0.0
+    repository: file://../vv-lib

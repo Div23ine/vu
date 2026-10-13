@@ -1,0 +1,59 @@
+name: rollback
+
+# Manual rollback (Task 102): one release, one environment, previous revision
+# by default. This is the 3 a.m. path — it asks for nothing but a choice.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options: [staging, production]
+      release:
+        description: Release to roll back
+        required: true
+        type: choice
+        options:
+          [vv-api, vv-broadcast-worker, vv-notify-worker, vv-maintenance-worker, vv-scan-controller]
+      revision:
+        description: Revision number (empty = previous)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    name: helm rollback
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oracle-actions/configure-oci-cli@v1
+        with:
+          user: ${{ secrets.OCI_USER_OCID }}
+          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+          tenancy: ${{ secrets.OCI_TENANCY_OCID }}
+          region: ${{ vars.OCI_REGION }}
+          key: ${{ secrets.OCI_PRIVATE_KEY }}
+      - name: Tunnel to the right cluster and roll back
+        env:
+          COMPARTMENT_ID: ${{ vars.COMPARTMENT_OCID }}
+        run: |
+          set -euo pipefail
+          RELEASE="${{ inputs.release }}"
+          if [ "$RELEASE" = "vv-scan-controller" ]; then
+            BASTION_ID="${{ vars.SCAN_BASTION_ID }}" bash scripts/deploy/oci-bastion-tunnel.sh k3s
+            NAMESPACE=vv-scans
+          else
+            BASTION_ID="${{ vars.OKE_BASTION_ID }}" bash scripts/deploy/oci-bastion-tunnel.sh oke
+            NAMESPACE=vunvault
+          fi
+          REVISION="${{ inputs.revision }}"
+          helm rollback "$RELEASE" "${REVISION:-0}" --namespace "$NAMESPACE" --wait --timeout 10m

@@ -1,0 +1,41 @@
+# Controller RBAC (Task 86, delivered by Helm in Task 100). Namespaced, eight
+# verbs, and the absence of pods/exec is load-bearing: it is why pause/resume
+# are no-ops and why a compromised controller cannot inject commands into a
+# pod running attacker-chosen tooling. No secrets, no configmaps, nothing
+# cluster-wide.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: vv-scan-controller
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: vv-scan
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["create", "get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: vv-scan-controller
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: vv-scan
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: vv-scan-controller
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.serviceAccount.controller }}
+    namespace: {{ .Values.namespace }}

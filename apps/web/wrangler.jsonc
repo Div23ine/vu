@@ -1,0 +1,96 @@
+{
+  // VUNVAULT web — an OpenNext Worker on Cloudflare (static assets + SSR Worker).
+  //
+  // Built by `@opennextjs/cloudflare` (`pnpm --filter web cf:build`), which runs
+  // `next build` and then transforms the output into `.open-next/`:
+  //   .open-next/worker.js  — the SSR Worker (`main` below)
+  //   .open-next/assets/    — the static half (`assets.directory` below)
+  // `main` and `assets` must not be changed unless the build output moves.
+  //
+  // THREE rules this file exists to enforce:
+  //
+  //  1. `nodejs_compat` is REQUIRED. OpenNext runs Next's *Node.js* runtime on
+  //     Workers (unlike the deprecated next-on-pages, which was Edge-only), and
+  //     `compatibility_date` must be >= 2024-09-23 for the flag to take effect.
+  //     Because the runtime is Node.js, source files must NOT declare
+  //     `export const runtime = "edge"` — it is unsupported by this adapter.
+  //  2. `global_fetch_strictly_public` keeps a server-side `fetch` to our own API
+  //     origin on the public network instead of short-circuiting inside this
+  //     Worker. `/blog/[slug]` server-fetches `/api/v1/content/:slug`.
+  //  3. The DEFAULT environment is STAGING. Production deploys must pass
+  //     `--env production` explicitly (the `cf:deploy:production` script does),
+  //     so an absent-minded `wrangler deploy` can never touch production.
+  //
+  // NEXT_PUBLIC_* variables are BUILD-TIME: Next inlines them into the client
+  // bundle during the build, so they come from the building shell (CI passes them
+  // from repository variables) — putting them here would do nothing. This Worker
+  // needs no runtime secrets: every API call goes from the browser straight to
+  // the vv-edge Worker with cookies.
+  //
+  // Custom domains are declared here (`custom_domain: true`), exactly as the
+  // vv-edge Worker does, so `wrangler deploy` owns them. Terraform deliberately
+  // does NOT create DNS records for www/apex — see infra/terraform/cloudflare/
+  // dns.tf. Replace the `vunvault.example` hostnames with the real zone.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vunvault-web-staging",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-12",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    // Exactly the shape the adapter's own template ships: a request that does not
+    // match a static file falls through to the Worker, which is what Next needs
+    // for SSR/ISR routes and for its own 404. Do NOT add `not_found_handling:
+    // "single-page-application"` — that would serve index.html for every
+    // unmatched route and swallow Next's 404s and dynamic renders.
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "services": [
+    {
+      // Required by OpenNext: the Worker calls itself to serve internal requests.
+      // `service` must match this environment's `name`.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "vunvault-web-staging",
+    },
+  ],
+  // Two bindings the adapter's template offers are deliberately NOT enabled —
+  // both add an external prerequisite to the first deploy:
+  //
+  //   "images": { "binding": "IMAGES" }        — needs the Cloudflare Images
+  //     product enabled on the account. Instead `next.config.ts` sets
+  //     `images.unoptimized`; only two components use next/image and their
+  //     sources are already CDN-served from R2.
+  //   "r2_buckets": [{ "binding": "NEXT_INC_CACHE_R2_BUCKET",
+  //     "bucket_name": "vunvault-web-<env>-opennext-cache" }] — makes ISR and
+  //     `'use cache'` durable across isolates (see open-next.config.ts). Without
+  //     it the cache is per-isolate: correct, just warmer on a miss. The
+  //     Terraform stack already manages R2, so adding a bucket there is the
+  //     recommended follow-up if blog ISR efficiency matters.
+  "observability": {
+    "enabled": true,
+  },
+
+  "env": {
+    "staging": {
+      "name": "vunvault-web-staging",
+      "workers_dev": true,
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "vunvault-web-staging" },
+      ],
+ "vars": {
+    "NEXT_PRIVATE_MINIMAL_MODE": "1",
+  },
+    },
+
+    "production": {
+      "name": "vunvault-web-production",
+      "workers_dev": true,
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "vunvault-web-production" },
+      ],
+ "vars": {
+    "NEXT_PRIVATE_MINIMAL_MODE": "1",
+  },
+    },
+  },
+}
