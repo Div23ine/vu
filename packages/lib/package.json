@@ -19,8 +19,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.726.0",
-    "@aws-sdk/s3-request-presigner": "^3.726.0",
+    "@aws-sdk/client-s3": "^3.1149.0",
+    "@aws-sdk/s3-request-presigner": "^3.1149.0",
     "@tanstack/react-query": "^5.62.7",
     "@vunvault/contracts": "workspace:*",
     "clsx": "^2.1.1",
