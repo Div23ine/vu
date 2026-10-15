@@ -16,6 +16,21 @@
  * resolves to the same face, with no per-component override and no runtime fetch
  * from a third-party font CDN.
  */
+/* apps/web/src/app/globals.css */
+
+/* Ensure the font-inter class applies the font correctly */
+.font-inter {
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+/* ... keep the rest of your existing globals.css below this ... */
 @import '@vunvault/ui/styles.css';
 
 @source '../../../../packages/ui/src';

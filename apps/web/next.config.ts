@@ -3,8 +3,13 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
 
-/** Where the CDN serves user-uploaded and generated images from. */
-const ASSETS_HOST = process.env.NEXT_PUBLIC_R2_HOST ?? 'assets.vunvault.com';
+/**
+ * Where the CDN serves user-uploaded and generated images from.
+ * We use `||` instead of `??` because an empty string `""` from `.env.local`
+ * is not nullish, but Next.js will throw "Expected a non-empty string"
+ * if `hostname` in `remotePatterns` is empty.
+ */
+const ASSETS_HOST = process.env.NEXT_PUBLIC_R2_HOST || 'assets.vunvault.com';
 
 /**
  * Real data is the default; the MSW mock layer is opt-in and cannot reach a
@@ -63,13 +68,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ['@vunvault/ui', '@vunvault/lib', '@vunvault/contracts'],
-
-  // 👇 AGGRESSIVE EXCLUSION: Use full glob patterns to block sharp entirely
-  outputFileTracingExcludes: {
-    '*': ['**/node_modules/sharp/**', '**/node_modules/@img/**'],
-  },
-  serverExternalPackages: ['sharp', '@img/*'],
-
   images: {
     unoptimized: true,
     remotePatterns: [{ protocol: 'https', hostname: ASSETS_HOST }],
@@ -77,7 +75,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
-
   async headers() {
     return [
       {
@@ -99,11 +96,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-
   async redirects() {
     return [];
   },
-
   async rewrites() {
     return [];
   },
@@ -111,6 +106,10 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 
+/**
+ * Local development only: expose the Cloudflare bindings declared in
+ * `wrangler.jsonc` to server code running under `next dev`.
+ */
 if (process.env.NODE_ENV !== 'production') {
   void initOpenNextCloudflareForDev();
 }

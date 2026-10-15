@@ -1,5 +1,3 @@
-import { Inter } from 'next/font/google';
-
 /**
  * Self-hosted Inter.
  *
@@ -11,8 +9,10 @@ import { Inter } from 'next/font/google';
  * `display: "swap"` keeps text visible during the swap; the variable is what
  * `globals.css` maps `--font-sans` onto.
  */
-export const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
+export const inter = {
+  className: 'font-inter',
+  style: {
+    fontFamily:
+      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  },
+};

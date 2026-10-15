@@ -31,8 +31,9 @@ Accounts: **Cloudflare** (zone already delegated), **Oracle Cloud**,
 **Supabase**, **Upstash**, **Stripe**, **Paystack**, **Resend**, **Africa's
 Talking** and/or **Twilio**, optional **NVD** key and **Sentry**.
 
-Tools on your machine: Node 22 (`nvm use 22`), `corepack enable` (pnpm 9.15
-comes from the repo's `packageManager` field), Docker + buildx (images only),
+Tools on your machine: Node 22 (`nvm use 22`), `corepack enable` (the pnpm version
+comes from the repo's `packageManager` field — do not install pnpm separately,
+and do not pin it in a Dockerfile: `corepack prepare --activate` reads it), Docker + buildx (images only),
 Terraform ≥ 1.8 (estate only), OCI CLI, and:
 
 ```sh
@@ -234,8 +235,15 @@ AFRICASTALKING_USERNAME=…
 AFRICASTALKING_API_KEY=…
 TWILIO_ACCOUNT_SID=…
 TWILIO_AUTH_TOKEN=…
-AUDIT_HMAC_KEY=<64 hex chars: openssl rand -hex 32>
-AUDIT_AES_KEY=<64 hex chars: openssl rand -hex 32>
+# 32 bytes of BASE64, not hex: packages/lib/src/audit-chain/crypto.ts base64-decodes
+# these and throws unless the result is exactly 32 bytes. A 64-char hex string
+# decodes to 48 bytes and the API dies at boot with
+# "AUDIT_HMAC_KEY key must be 32 bytes of base64, got 48".
+AUDIT_HMAC_KEY=<openssl rand -base64 32>
+AUDIT_AES_KEY=<openssl rand -base64 32>
+# REQUIRED by maintenance-worker (z.string().min(1)): the id a bare base64 key is
+# filed under, and the id the chain VERIFIES with. Appends stay in the API.
+AUDIT_HMAC_KEY_ID=v1
 TURNSTILE_SECRET_KEY=0x…            # test key until the widget is wired
 # broadcast/notify/maintenance workers read the same names from this file:
 REDIS_URL=$UPSTASH_REDIS_URL        # (duplicate the value; no interpolation in dotenv)
@@ -301,7 +309,7 @@ exist for. Sequence (each step's details live in the referenced file):
    commit (CD does it) or run `release.yml` by hand with the SHA.
 6. **Deploy** — `deploy.yml` (dispatch, environment=staging): migrate →
    OKE charts (api first) → k3s scan-controller → edge Worker (its
-   `EDGE_ORIGIN_SECRET` is piped from Vault, masked) → Pages → smoke.
+   `EDGE_ORIGIN_SECRET` is piped from Vault, masked) → web Worker → smoke.
    Manual equivalent: every command is written out in `docs/deploy.md`
    (bastion tunnel → `scripts/deploy/helm-deploy.sh <chart> digests.json`).
 7. **Verify staging** — smoke script, `k6 run perf/k6/headers-audit.js`, click

@@ -43,14 +43,14 @@
     // "single-page-application"` — that would serve index.html for every
     // unmatched route and swallow Next's 404s and dynamic renders.
     "directory": ".open-next/assets",
-    "binding": "ASSETS",
+    "binding": "DIVINE",
   },
   "services": [
     {
       // Required by OpenNext: the Worker calls itself to serve internal requests.
       // `service` must match this environment's `name`.
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "vunvault-web-staging",
+      "service": "vunvault-web-DIVINE",
     },
   ],
   // Two bindings the adapter's template offers are deliberately NOT enabled —
@@ -69,28 +69,17 @@
   "observability": {
     "enabled": true,
   },
-
   "env": {
     "staging": {
       "name": "vunvault-web-staging",
-      "workers_dev": true,
-      "services": [
-        { "binding": "WORKER_SELF_REFERENCE", "service": "vunvault-web-staging" },
-      ],
- "vars": {
-    "NEXT_PRIVATE_MINIMAL_MODE": "1",
-  },
+      "routes": [{ "pattern": "www.staging.vunvault.example", "custom_domain": true }],
     },
-
     "production": {
       "name": "vunvault-web-production",
-      "workers_dev": true,
-      "services": [
-        { "binding": "WORKER_SELF_REFERENCE", "service": "vunvault-web-production" },
+      "routes": [
+        { "pattern": "www.vunvault.example", "custom_domain": true },
+        { "pattern": "vunvault.example", "custom_domain": true },
       ],
- "vars": {
-    "NEXT_PRIVATE_MINIMAL_MODE": "1",
-  },
     },
   },
 }

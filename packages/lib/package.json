@@ -19,15 +19,15 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.726.0",
-    "@aws-sdk/s3-request-presigner": "^3.726.0",
-    "@tanstack/react-query": "^5.62.7",
+    "@aws-sdk/client-s3": "^3.1149.0",
+    "@aws-sdk/s3-request-presigner": "^3.1149.0",
+    "@tanstack/react-query": "^5.104.2",
     "@vunvault/contracts": "workspace:*",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^3.0.2"
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^22.20.5",
     "@vunvault/config": "workspace:*",
     "eslint": "catalog:",
     "typescript": "catalog:",

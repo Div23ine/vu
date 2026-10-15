@@ -10,13 +10,12 @@ export interface OpenApiOptions {
 }
 
 /**
- * OpenAPI 3.1 generation from the Zod schemas themselves — the document cannot
- * drift from the validation that actually runs.
- *
- * Two security schemes describe how the API is called: the HttpOnly session
- * cookie (`vv_at`) and the double-submit CSRF header. The JSON document is always
- * served; the interactive UI is not exposed in production.
- */
+OpenAPI 3.1 generation from the Zod schemas themselves — the document cannot
+drift from the validation that actually runs.
+Two security schemes describe how the API is called: the HttpOnly session
+cookie (`vv_at`) and the double-submit CSRF header. The JSON document is always
+served; the interactive UI is not exposed in production.
+*/
 const openApi: FastifyPluginAsync<OpenApiOptions> = async (app, options) => {
   await app.register(swagger, {
     openapi: {
@@ -33,8 +32,21 @@ const openApi: FastifyPluginAsync<OpenApiOptions> = async (app, options) => {
     transform: jsonSchemaTransform,
   });
 
+  // Swagger UI is wrapped in try/catch because it can hang in certain
+  // network-restricted environments (WSL, corporate proxies, etc.)
   if (options.env.NODE_ENV !== 'production') {
-    await app.register(swaggerUi, { routePrefix: '/docs' });
+    try {
+      await app.register(swaggerUi, {
+        routePrefix: '/docs',
+        // Prevent swagger-ui from trying to fetch external resources
+        theme: {
+          title: 'VUNVAULT API Docs',
+        },
+      });
+      app.log.info('Swagger UI available at /docs');
+    } catch (error) {
+      app.log.warn({ err: error }, 'Failed to register Swagger UI, continuing without it');
+    }
   }
 
   app.get(

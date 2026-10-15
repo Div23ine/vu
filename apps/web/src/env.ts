@@ -1,31 +1,76 @@
 import { z } from 'zod';
 
+/**
+ * Public, build-time configuration.
+ * Every variable here starts with `NEXT_PUBLIC_`, which means Next inlines it into
+ * the client bundle at build time. That has two consequences this module is written
+ * around.
+ *
+ * Nothing secret may ever be added here. A browser can read all of it, so a
+ * secret in this file is a published secret. Credentials live in the API's OCI
+ * Vault and never reach this app.
+ *
+ * `process.env` as an object does not exist in the browser — Next replaces
+ * individual `process.env.NEXT_PUBLIC_X` references statically. So the source
+ * object is assembled field by field in `readPublicEnv()` rather than handed
+ * over wholesale, which keeps this module importable from a client component.
+ *
+ * Validation is eager and fatal: a build without an API origin produces a page that
+ * cannot reach the API, and that is much harder to diagnose than a boot failure
+ * naming the variable.
+ */
 export const API_MOCKING_ENABLED = 'enabled';
 
+/**
+ * Environment variables loaded from `.env` files are always strings. If a line
+ * is empty (e.g., `NEXT_PUBLIC_SENTRY_DSN=`), Next.js provides an empty string
+ * `""` rather than `undefined`. Zod's `.optional()` allows `undefined` but fails
+ * on `""` when a URL format is expected. These helpers preprocess empty strings
+ * into `undefined` so copying `.env.example` to `.env.local` doesn't break the build.
+ */
+const optionalString = z.preprocess((val) => (val === '' ? undefined : val), z.string().optional());
+const optionalUrl = z.preprocess(
+  (val) => (val === '' ? undefined : val),
+  z.string().url().optional(),
+);
+const optionalMockingFlag = z.preprocess(
+  (val) => (val === '' ? undefined : val),
+  z.literal(API_MOCKING_ENABLED).optional(),
+);
+
 export const PublicEnvSchema = z.object({
+  /** Origin of the Fastify API, e.g. `https://api.vunvault.com`. */
   NEXT_PUBLIC_API_URL: z.string().url(),
+  /** Canonical origin of this site; used for `metadataBase` and Open Graph URLs. */
   NEXT_PUBLIC_SITE_URL: z.string().url(),
-  NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
-  NEXT_PUBLIC_API_MOCKING: z.literal(API_MOCKING_ENABLED).optional(),
-  NEXT_PUBLIC_R2_HOST: z.string().optional(),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-  NEXT_PUBLIC_BUILD_LABEL: z.string().optional(),
-  NEXT_PUBLIC_NODE_LABEL: z.string().optional(),
+  /** Optional browser-side error reporting. */
+  NEXT_PUBLIC_SENTRY_DSN: optionalUrl,
+  /** Exactly `enabled`, or absent: a typo must not silently turn mocking off. */
+  NEXT_PUBLIC_API_MOCKING: optionalMockingFlag,
+  /** Host the CDN serves uploaded and generated images from. */
+  NEXT_PUBLIC_R2_HOST: optionalString,
+  /**
+   * Stripe publishable key (Task 66). Publishable by design — it tokenises
+   * card fields in the browser; raw card data never reaches VUNVAULT. Absent
+   * means stored-card updates are unavailable (the dialog says so).
+   */
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: optionalString,
+  /** Human-readable build label, shown in the admin footer. */
+  NEXT_PUBLIC_BUILD_LABEL: optionalString,
+  /** Verifying-node label shown on the audit chain panel. */
+  NEXT_PUBLIC_NODE_LABEL: optionalString,
 });
 
 export type Env = z.infer<typeof PublicEnvSchema>;
 
-/**
- * Read the public variables directly from process.env so Next.js can
- * statically inline them into the client bundle. Fallbacks are provided
- * for local development in case .env.local is not read.
- */
+/** Read the public variables directly from process.env so Next/Turbopack
+ * can statically replace them in the browser bundle. */
 export function readPublicEnv(): Record<keyof Env, string | undefined> {
   return {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787',
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    NEXT_PUBLIC_API_MOCKING: process.env.NEXT_PUBLIC_API_MOCKING || 'enabled',
+    NEXT_PUBLIC_API_MOCKING: process.env.NEXT_PUBLIC_API_MOCKING,
     NEXT_PUBLIC_R2_HOST: process.env.NEXT_PUBLIC_R2_HOST,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_BUILD_LABEL: process.env.NEXT_PUBLIC_BUILD_LABEL,
@@ -33,19 +78,21 @@ export function readPublicEnv(): Record<keyof Env, string | undefined> {
   };
 }
 
+/** One readable line per problem: a boot failure must say what to set. */
 export function formatIssues(error: z.ZodError): string {
   return error.issues
-    .map((issue) => `  - ${issue.path.join('.') || '(root)'}: ${issue.message}`)
+    .map((issue) => `- ${issue.path.join('.') || '(root)'}: ${issue.message}`)
     .join('\n');
 }
 
+/** Parse and validate the environment. */
 export function parseEnv(): Env {
-  const source = readPublicEnv();
-  const result = PublicEnvSchema.safeParse(source);
+  const result = PublicEnvSchema.safeParse(readPublicEnv());
   if (!result.success) {
     throw new Error(`Invalid public environment configuration:\n${formatIssues(result.error)}`);
   }
   return result.data;
 }
 
+/** The validated configuration. Throws at import time when it is incomplete. */
 export const env: Env = parseEnv();
