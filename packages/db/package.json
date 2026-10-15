@@ -18,14 +18,14 @@
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^22.20.5",
     "@vunvault/config": "workspace:*",
     "drizzle-kit": "catalog:",
     "eslint": "catalog:",
-    "tsx": "^4.19.2",
+    "tsx": "^4.23.15",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

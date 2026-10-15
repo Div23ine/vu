@@ -7,7 +7,6 @@ import { SiteHeader } from './_components/site-header';
 /**
  * `(marketing)` — the public site: `/`, `/about`, `/services`, `/products`,
  * `/blog`, `/blog/[slug]`, `/contact`, `/academy`.
- *
  * Task 44 chrome: the first-load preloader gate, the sticky auth-aware
  * header, and the footer whose variant is derived from the route (or passed
  * explicitly). The column is a flex stack so the footer sits at the bottom of

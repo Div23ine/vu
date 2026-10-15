@@ -9,24 +9,21 @@ import { ArticleReader } from '../_components/article-reader';
 
 /**
  * `/blog/[slug]` — the article reader route.
- *
  * Server-fetched with a 60 s revalidation window (the public content API is
  * cacheable). A 404 — or a payload that fails the contract parse — calls
  * `notFound()`. Metadata comes from the item itself: title, excerpt, and the
  * featured image for Open Graph.
- *
  * This route deliberately does NOT declare `export const runtime = "edge"`.
  * `@opennextjs/cloudflare` runs Next's Node.js runtime on Workers and does not
  * support the Edge runtime for pages; declaring it here would break the build.
  * The `revalidate: 60` window is per-isolate unless the R2 incremental cache is
  * bound (see `wrangler.jsonc`).
  */
-
 interface BlogArticlePageProps {
   params: Promise<{ slug: string }>;
 }
 
-// ⚠️ FIXED: Removed 'export'. Next.js rejects custom exports in page files.
+// TODO(backend-contract): GET /api/v1/content/:slug → 200 { data: PublicContentDetail } | 404 { error: "not_found" }
 async function fetchArticle(slug: string): Promise<PublicContentDetail> {
   const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/v1/content/${slug}`, {
     next: { revalidate: 60 },

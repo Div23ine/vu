@@ -7,7 +7,7 @@
 #
 # --atomic --wait: a failed rollout rolls ITSELF back, so the pipeline never
 # leaves a half-deployed release behind. Per-environment values come from
-# infra/helm/values-<env>.yaml when that file exists, and the Vault OCID map
+# infra/helm-values/values-<env>.yaml when that file exists, and the Vault OCID map
 # rendered by render-secret-map.mjs when it does.
 set -euo pipefail
 

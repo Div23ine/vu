@@ -16,10 +16,14 @@
 
 # ——————————————————————————————————————————— build: compile the runner
 FROM node:22-bookworm-slim AS build
-ARG PNPM_VERSION=9.15.0
 WORKDIR /workspace
-RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+# The manifests are copied BEFORE corepack runs, so `corepack prepare` can read
+# the `packageManager` pin from package.json — the same single source of truth
+# CI and developers use. A hard-coded PNPM_VERSION here drifted to pnpm 9 while
+# the repo moved to 12, which would have installed a pnpm-12 lockfile with pnpm 9
+# and ignored the `allowBuilds` policy in pnpm-workspace.yaml entirely.
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+RUN corepack enable && corepack prepare --activate
 COPY packages/contracts ./packages/contracts
 COPY packages/db ./packages/db
 COPY apps/scan-worker ./apps/scan-worker
