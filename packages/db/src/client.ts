@@ -5,15 +5,10 @@ import * as schema from './schema';
 /**
  * Connection rules (Supabase Postgres 15 is the only database):
  *
- * - App traffic uses `DATABASE_URL` → the Supabase **Supavisor transaction pooler
- *   on port 6543**. Transaction pooling means a session is not guaranteed between
- *   statements, so `prepare: false` is MANDATORY — prepared statements would be
- *   pinned to a server connection that the pooler may hand to someone else.
- * - Migrations use `DIRECT_URL` → direct Postgres on port 5432, because DDL and
- *   session-level features (advisory locks, `SET LOCAL`) need a real session.
- *   See `src/migrate.ts`.
- * - Supabase Auth owns identity (`auth.users`); `profiles` mirrors it and
- *   references `authUsers.id`.
+ * - App traffic uses `DATABASE_URL` → the Supabase Supavisor transaction pooler
+ *   on port 6543. Transaction pooling means a session is not guaranteed between
+ *   statements, so `prepare: false` is MANDATORY.
+ * - Migrations use `DIRECT_URL` → direct Postgres on port 5432.
  */
 
 /** A Drizzle database bound to the full VUNVAULT schema. */
@@ -24,10 +19,6 @@ export interface CreateDbOptions {
   max?: number;
 }
 
-/**
- * Build the Drizzle client used by the API and the workers.
- * Defaults to `DATABASE_URL` (the Supavisor transaction pooler).
- */
 export function createDb(
   url: string | undefined = process.env.DATABASE_URL,
   options: CreateDbOptions = {},
@@ -39,10 +30,19 @@ export function createDb(
   }
 
   const client = postgres(url, {
-    // Required for transaction pooling — see the note at the top of this file.
     prepare: false,
     max: options.max ?? 10,
     ssl: 'require',
+
+    // Serialize every JS `Date` as timestamptz on the wire. Without this,
+    // postgres-js sends an un-cast Date param as text (OID 25) and then
+    // calls Buffer.byteLength(new Date()) → ERR_INVALID_ARG_TYPE.
+    types: {
+      date: {
+        to: 1184, // bind Dates as timestamptz
+        from: [1082, 1114, 1184], // decode date/timestamp/timestamptz as Date
+      },
+    },
   });
 
   return drizzle(client, { schema });

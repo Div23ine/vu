@@ -9,6 +9,11 @@ export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 interface PostgresClient {
   end: (options?: { timeout?: number }) => Promise<unknown>;
   unsafe: (query: string) => Promise<unknown>;
+  options?: {
+    types?: {
+      date?: unknown;
+    };
+  };
 }
 
 interface WithClient extends Db {
@@ -40,6 +45,8 @@ export interface DbPluginOptions {
  */
 const dbPlugin: FastifyPluginAsync<DbPluginOptions> = async (app, options) => {
   const db = options.db ?? createDb(await app.secrets.get('DATABASE_URL'));
+
+  console.warn('[db] client has types?', Boolean((db as WithClient).$client?.options?.types?.date));
 
   app.decorate('db', db);
   app.decorate('withTx', <T>(work: (tx: Tx) => Promise<T>): Promise<T> => db.transaction(work));

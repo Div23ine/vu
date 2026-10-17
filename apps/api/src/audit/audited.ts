@@ -24,9 +24,7 @@ export interface AuditSpec<Req, Res> {
   subject?: (req: Req, res: Res) => string | undefined;
   message: (req: Req, res: Res) => string;
   details?: (req: Req, res: Res) => Record<string, unknown>;
-  /** Sensitive fields, sealed rather than stored in `details`. */
   sealed?: (req: Req, res: Res) => Record<string, unknown>;
-  /** Defaults to the authenticated user, labelled by their email local-part. */
   actor?: (req: Req) => { id: string | null; label: string };
 }
 
@@ -89,6 +87,13 @@ export function audited<Req extends FastifyRequest, Res>(
           const row = await app.audit.append(executor, buildAuditInput(spec, request, outcome));
           view = toView(row);
         } catch (error) {
+          // CHANGED: log the *real* failure before rolling back. Without this,
+          // every audit-append bug surfaces as a generic 500 "audit_unavailable"
+          // and the actual cause is invisible.
+          app.log.error(
+            { err: error, requestId: request.id, eventType: spec.eventType },
+            'audit append failed; rolling back the domain write',
+          );
           // Rolling back the domain write is the point: no write without a record.
           auditFailureError = error;
           throw error;
@@ -147,7 +152,12 @@ export async function auditFailure(
         ip: request.clientIp === '' ? request.ip : request.clientIp,
       });
     });
-  } catch {
-    app.log.error({ requestId: request.id }, 'could not record a rejected attempt');
+  } catch (err) {
+    // CHANGED: include the error so audit failures on rejected attempts are
+    // also visible in the log rather than swallowed.
+    app.log.error(
+      { err, requestId: request.id, eventType: spec.eventType },
+      'could not record a rejected attempt',
+    );
   }
 }

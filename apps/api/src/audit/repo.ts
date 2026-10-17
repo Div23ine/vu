@@ -13,22 +13,50 @@ export interface SqlExecutor {
   unsafe: <T = unknown>(query: string, params?: unknown[]) => Promise<T>;
 }
 
-/** Extract a driver executor from a Drizzle connection or transaction. */
+/**
+ * Extract a driver executor from a Drizzle connection or transaction.
+ *
+ * Drizzle's postgres-js wrapper hides the raw `Sql` under different keys
+ * depending on what you hand us:
+ *
+ *   1. a raw `postgres` client                          → `value.unsafe`
+ *   2. the top-level `drizzle(client)` database         → `value.$client.unsafe`
+ *   3. a `PostgresJsTransaction` (`db.transaction(tx)`) → `value.session.client.unsafe`
+ *   4. anything that just exposes `client.unsafe`       → `value.client.unsafe`
+ */
 export function asExecutor(value: unknown): SqlExecutor {
   const candidate = value as {
-    unsafe?: SqlExecutor['unsafe'];
-    $client?: { unsafe?: SqlExecutor['unsafe'] };
+    unsafe?: unknown;
+    $client?: { unsafe?: unknown };
+    client?: { unsafe?: unknown };
+    session?: { client?: { unsafe?: unknown } };
   };
 
-  const direct = candidate?.unsafe;
-  if (typeof direct === 'function') {
-    return { unsafe: direct.bind(value) as SqlExecutor['unsafe'] };
+  if (typeof candidate?.unsafe === 'function') {
+    return {
+      unsafe: (candidate.unsafe as SqlExecutor['unsafe']).bind(value),
+    };
   }
 
-  const client = candidate?.$client;
-  const nested = client?.unsafe;
-  if (client !== undefined && typeof nested === 'function') {
-    return { unsafe: nested.bind(client) as SqlExecutor['unsafe'] };
+  const topClient = candidate?.$client;
+  if (topClient !== undefined && typeof topClient.unsafe === 'function') {
+    return {
+      unsafe: (topClient.unsafe as SqlExecutor['unsafe']).bind(topClient),
+    };
+  }
+
+  const midClient = candidate?.client;
+  if (midClient !== undefined && typeof midClient.unsafe === 'function') {
+    return {
+      unsafe: (midClient.unsafe as SqlExecutor['unsafe']).bind(midClient),
+    };
+  }
+
+  const sessionClient = candidate?.session?.client;
+  if (sessionClient !== undefined && typeof sessionClient.unsafe === 'function') {
+    return {
+      unsafe: (sessionClient.unsafe as SqlExecutor['unsafe']).bind(sessionClient),
+    };
   }
 
   throw new Error('no SQL executor available on this connection');
@@ -133,13 +161,16 @@ function toRow(raw: RawRow): AuditEntryRow {
   };
 }
 
+// CHANGED: `$18` now has an explicit `::timestamptz` cast. Without it, the
+// server tells postgres-js the param is text (OID 25) and the driver tries
+// Buffer.byteLength(new Date()) → ERR_INVALID_ARG_TYPE.
 const INSERT_SQL = `
   insert into audit_entries (
     id, category, event_type, severity, sev_level, actor_id, actor_label, ip, subject,
     message, details, sealed_details, nonce, prev_hash, hash, signature, key_id, created_at
   ) values (
     $1::uuid, $2::audit_category, $3, $4::audit_severity, $5::smallint, $6::uuid, $7, $8::inet, $9,
-    $10, $11::jsonb, $12::bytea, $13::bytea, $14, $15, $16, $17, $18
+    $10, $11::jsonb, $12::bytea, $13::bytea, $14, $15, $16, $17, $18::timestamptz
   ) returning seq
 `;
 
@@ -193,7 +224,7 @@ export class AuditRepo {
       entry.hash,
       entry.signature,
       entry.keyId,
-      entry.createdAt,
+      entry.createdAt.toISOString(),
     ]);
     const seq = Number(rows[0]?.seq ?? 0);
     return { ...entry, seq };

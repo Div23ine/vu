@@ -100,11 +100,42 @@ export class SupabaseError extends Error {
   }
 }
 
-function fail(error: { message?: string; status?: number; name?: string } | null): never {
+/**
+ * CHANGED: recognise "email already registered". The SDK returns
+ * `code: "user_already_exists"` on GoTrue 422s, but some versions only
+ * populate the message — so we check the code first, then fall back to a
+ * case-insensitive message match. Both paths produce `email_taken`, which
+ * the signup route converts to HTTP 409.
+ */
+function fail(
+  error: {
+    message?: string;
+    status?: number;
+    name?: string;
+    code?: string;
+  } | null,
+): never {
   const status = error?.status ?? 400;
-  const code =
-    error?.name === 'AuthApiError' && status === 400 ? 'invalid_credentials' : 'supabase_error';
-  throw new SupabaseError(code, error?.message ?? 'Supabase request failed', status);
+  const message = error?.message ?? 'Supabase request failed';
+  const rawCode = error?.code;
+  const lower = message.toLowerCase();
+
+  let code: string;
+  if (rawCode === 'user_already_exists' || rawCode === 'email_exists') {
+    code = 'email_taken';
+  } else if (
+    lower.includes('already been registered') ||
+    lower.includes('already registered') ||
+    lower.includes('user already exists')
+  ) {
+    code = 'email_taken';
+  } else if (error?.name === 'AuthApiError' && status === 400) {
+    code = 'invalid_credentials';
+  } else {
+    code = 'supabase_error';
+  }
+
+  throw new SupabaseError(code, message, status);
 }
 
 export interface SupabaseAdminOptions {
@@ -136,9 +167,12 @@ function toSession(
 }
 
 export function createSupabaseAdmin(options: SupabaseAdminOptions): SupabaseAdmin {
+  // Strip a trailing slash so paths like `/auth/v1/...` don't become `//auth/v1/...`.
+  const baseUrl = options.url.replace(/\/+$/, '');
+
   const admin =
     options.client ??
-    createClient(options.url, options.serviceRoleKey, {
+    createClient(baseUrl, options.serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
@@ -150,7 +184,7 @@ export function createSupabaseAdmin(options: SupabaseAdminOptions): SupabaseAdmi
   const asUser =
     options.userClient ??
     ((accessToken: string): SupabaseClient =>
-      createClient(options.url, options.serviceRoleKey, {
+      createClient(baseUrl, options.serviceRoleKey, {
         auth: { persistSession: false, autoRefreshToken: false },
         global: { headers: { Authorization: `Bearer ${accessToken}` } },
       }));
@@ -242,7 +276,7 @@ export function createSupabaseAdmin(options: SupabaseAdminOptions): SupabaseAdmi
         code_challenge_method: 's256',
         state,
       });
-      return `${options.url}/auth/v1/authorize?${params.toString()}`;
+      return `${baseUrl}/auth/v1/authorize?${params.toString()}`;
     },
 
     /**
@@ -253,7 +287,7 @@ export function createSupabaseAdmin(options: SupabaseAdminOptions): SupabaseAdmi
      * SDK would send: `grant_type=pkce` with the auth code and OUR verifier.
      */
     async exchangeCodeForSession(authCode, codeVerifier) {
-      const response = await fetch(`${options.url}/auth/v1/token?grant_type=pkce`, {
+      const response = await fetch(`${baseUrl}/auth/v1/token?grant_type=pkce`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -332,7 +366,7 @@ export function createSupabaseAdmin(options: SupabaseAdminOptions): SupabaseAdmi
      */
     async deleteSession(sessionId) {
       const response = await fetch(
-        `${options.url}/auth/v1/admin/sessions/${encodeURIComponent(sessionId)}`,
+        `${baseUrl}/auth/v1/admin/sessions/${encodeURIComponent(sessionId)}`,
         {
           method: 'DELETE',
           headers: {

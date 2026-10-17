@@ -8,7 +8,7 @@
 import { ProviderError } from './error';
 
 export const RESEND_URL = 'https://api.resend.com/emails';
-export const DEFAULT_FROM = 'VUNVAULT <no-reply@vunvault.com>';
+export const DEFAULT_FROM = 'VUNVAULT <no-reply@info.vunvault.com>';
 export const PROVIDER_TIMEOUT_MS = 8000;
 
 export interface EmailMessage {
