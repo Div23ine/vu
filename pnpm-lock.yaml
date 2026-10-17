@@ -226,6 +226,9 @@ importers:
       '@vunvault/config':
         specifier: workspace:*
         version: link:packages/config
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
       husky:
         specifier: ^9.1.7
         version: 9.1.7
