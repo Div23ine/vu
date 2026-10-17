@@ -210,6 +210,22 @@ interface SqlItemRow {
   updated_at: Date | string;
 }
 
+/**
+ * Bind a `Date` as an ISO-8601 string. postgres-js sends an un-cast Date
+ * parameter as text (OID 25) and then tries `Buffer.byteLength(new Date())`,
+ * which throws `ERR_INVALID_ARG_TYPE`. Every placeholder that carries a
+ * timestamp is cast to `::timestamptz` in the SQL, so a string here parses on
+ * the server without issue.
+ */
+function ts(value: Date): string {
+  return value.toISOString();
+}
+
+/** Same, but the value may be `null` (an explicit clear of a nullable column). */
+function tsOrNull(value: Date | null): string | null {
+  return value === null ? null : value.toISOString();
+}
+
 export class SqlContentRepo implements ContentRepo {
   private readonly executor: SqlExecutor;
 
@@ -275,28 +291,30 @@ export class SqlContentRepo implements ContentRepo {
     weekAgo: Date;
     monthAgo: Date;
   }): Promise<SummaryCounts> {
+    // Bind the timestamps as ISO strings; the SQL casts them to `::timestamptz`.
+    const params = [ts(bounds.startOfToday), ts(bounds.weekAgo), ts(bounds.monthAgo)];
     const counts = await this.executor.unsafe<Array<Record<string, string | number>>>(
       `select
          count(*) filter (where ci.status in ('pending_review','in_review'))::text as awaiting_review,
          count(*) filter (where ci.status = 'changes_requested')::text as changes_requested,
-         count(*) filter (where ci.status = 'published' and ci.published_at >= $3)::text as published_last_30_days
+         count(*) filter (where ci.status = 'published' and ci.published_at >= $3::timestamptz)::text as published_last_30_days
        from content_items ci`,
-      [bounds.startOfToday, bounds.weekAgo, bounds.monthAgo],
+      params,
     );
     const reviews = await this.executor.unsafe<Array<Record<string, string | number>>>(
       `select
-         count(*) filter (where cr.action = 'approve' and cr.created_at >= $1)::text as approved_today,
-         count(*) filter (where cr.action = 'reject' and cr.created_at >= $2)::text as rejected_last_7_days,
+         count(*) filter (where cr.action = 'approve' and cr.created_at >= $1::timestamptz)::text as approved_today,
+         count(*) filter (where cr.action = 'reject' and cr.created_at >= $2::timestamptz)::text as rejected_last_7_days,
          coalesce(avg(
            extract(epoch from (first_action - submitted_at)) / 3600
-         ) filter (where submitted_at >= $3), 0)::text as avg_review_hours
+         ) filter (where submitted_at >= $3::timestamptz), 0)::text as avg_review_hours
        from (
          select cr.action, cr.created_at, ci.submitted_at,
                 min(cr.created_at) over (partition by ci.id) as first_action
            from content_reviews cr
            join content_items ci on ci.id = cr.item_id
        ) cr`,
-      [bounds.startOfToday, bounds.weekAgo, bounds.monthAgo],
+      params,
     );
     const row = counts[0] ?? {};
     const reviewRow = reviews[0] ?? {};
@@ -320,9 +338,9 @@ export class SqlContentRepo implements ContentRepo {
     // Append-only. There is no UPDATE and no DELETE for this table anywhere.
     const rows = await this.executor.unsafe<Array<{ id: string }>>(
       `insert into content_reviews (item_id, reviewer_id, action, note, created_at)
-       values ($1::uuid, $2::uuid, $3::content_review_action, $4, $5)
+       values ($1::uuid, $2::uuid, $3::content_review_action, $4, $5::timestamptz)
        returning id::text as id`,
-      [input.itemId, input.reviewerId, input.action, input.note, input.at],
+      [input.itemId, input.reviewerId, input.action, input.note, ts(input.at)],
     );
     return rows[0]?.id ?? '';
   }
@@ -347,9 +365,17 @@ export class SqlContentRepo implements ContentRepo {
     if (patch.featuredImageUrl !== undefined) add('featured_image_url', patch.featuredImageUrl);
     if (patch.imageAlt !== undefined) add('image_alt', patch.imageAlt);
     if (patch.readMinutes !== undefined) add('read_minutes', patch.readMinutes);
-    if (patch.submittedAt !== undefined) add('submitted_at', patch.submittedAt);
-    if (patch.publishedAt !== undefined) add('published_at', patch.publishedAt);
-    if (patch.scheduledFor !== undefined) add('scheduled_for', patch.scheduledFor);
+    // Nullable timestamps: `null` clears the column, a Date binds as an ISO
+    // string and is cast to `::timestamptz` server-side.
+    if (patch.submittedAt !== undefined) {
+      add('submitted_at', tsOrNull(patch.submittedAt), 'timestamptz');
+    }
+    if (patch.publishedAt !== undefined) {
+      add('published_at', tsOrNull(patch.publishedAt), 'timestamptz');
+    }
+    if (patch.scheduledFor !== undefined) {
+      add('scheduled_for', tsOrNull(patch.scheduledFor), 'timestamptz');
+    }
 
     await this.executor.unsafe(
       `update content_items set ${sets.join(', ')} where id = $1::uuid`,
@@ -500,10 +526,10 @@ export class SqlContentRepo implements ContentRepo {
       `select ${ITEM_COLUMNS} ${ITEM_FROM}
         where ci.status = 'published'
           and ci.published_at is not null
-          and ci.published_at <= $2
+          and ci.published_at <= $2::timestamptz
           and reverse(split_part(reverse(ci.slug_path), '/', 1)) = $1
         limit 1`,
-      [slug, now],
+      [slug, ts(now)],
     );
     const row = rows[0];
     return row === undefined ? null : mapItem(row);
@@ -518,11 +544,12 @@ export class SqlContentRepo implements ContentRepo {
  * timestamp is a parameter rather than `now()`.
  */
 function publicWhere(filters: PublicContentFilters): { where: string; values: unknown[] } {
-  const values: unknown[] = [filters.now];
+  // Bound as an ISO string; the SQL casts it to `::timestamptz`.
+  const values: unknown[] = [ts(filters.now)];
   const clauses = [
     "ci.status = 'published'",
     'ci.published_at is not null',
-    'ci.published_at <= $1',
+    'ci.published_at <= $1::timestamptz',
   ];
   const add = (clause: string, value: unknown, cast?: string): void => {
     values.push(value);

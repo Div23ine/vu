@@ -25,7 +25,8 @@ import {
   readSessionCookies,
   setSessionCookies,
 } from '../../../lib/session-cookies';
-import type { SupabaseAdmin } from '../../../lib/supabase-admin';
+// CHANGED: value import of SupabaseError, plus the type-only SupabaseAdmin.
+import { SupabaseError, type SupabaseAdmin } from '../../../lib/supabase-admin';
 import { COOKIE_NAMES } from '../../../plugins/cookies';
 import {
   deriveChallengeKey,
@@ -196,6 +197,9 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
    * Step 1 of the verified flow (Task 40d): `202` and an emailed OTP, no cookies.
    * The session opens at `/auth/signup/verify-email`; the authenticator enrolment
    * (Task 27) completes step 3 in the web app.
+   *
+   * CHANGED: a Supabase `email_taken` failure is converted to HTTP 409 here, so
+   * the route does not surface as a bare 500. Anything else re-throws unchanged.
    */
   app.post(
     '/auth/signup',
@@ -213,7 +217,21 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
       },
       async (request, reply, ctx) => {
         const body = SignupBody.parse(request.body);
-        const { email } = await serviceFor(asExecutor(ctx.tx)).signup(body);
+
+        let email: string;
+        try {
+          ({ email } = await serviceFor(asExecutor(ctx.tx)).signup(body));
+        } catch (error) {
+          if (error instanceof SupabaseError && error.code === 'email_taken') {
+            throw new HttpError(
+              409,
+              'email_taken',
+              'A user with this email address has already been registered',
+            );
+          }
+          throw error;
+        }
+
         reply.status(202);
         return SignupStartResponse.parse({
           data: {

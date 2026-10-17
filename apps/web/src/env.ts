@@ -20,6 +20,8 @@ import { z } from 'zod';
  * naming the variable.
  */
 export const API_MOCKING_ENABLED = 'enabled';
+export const API_MOCKING_DISABLED = 'disabled';
+export type ApiMockingFlag = typeof API_MOCKING_ENABLED | typeof API_MOCKING_DISABLED;
 
 /**
  * Environment variables loaded from `.env` files are always strings. If a line
@@ -33,9 +35,18 @@ const optionalUrl = z.preprocess(
   (val) => (val === '' ? undefined : val),
   z.string().url().optional(),
 );
+
+/**
+ * The mocking flag is an explicit `enabled` / `disabled` switch, or absent.
+ *
+ * It is deliberately NOT `z.string().optional()`: a typo (`enabledd`, `true`,
+ * `1`) must fail the build rather than silently leave mocking off in an
+ * environment that expected it on. Absence is treated as "disabled" by
+ * callers, so omitting the variable is also a valid, intentional choice.
+ */
 const optionalMockingFlag = z.preprocess(
   (val) => (val === '' ? undefined : val),
-  z.literal(API_MOCKING_ENABLED).optional(),
+  z.enum([API_MOCKING_ENABLED, API_MOCKING_DISABLED]).optional(),
 );
 
 export const PublicEnvSchema = z.object({
@@ -45,7 +56,10 @@ export const PublicEnvSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().url(),
   /** Optional browser-side error reporting. */
   NEXT_PUBLIC_SENTRY_DSN: optionalUrl,
-  /** Exactly `enabled`, or absent: a typo must not silently turn mocking off. */
+  /**
+   * Exactly `enabled` or `disabled`, or absent. A typo must not silently turn
+   * mocking off; absence means "disabled" at the call site.
+   */
   NEXT_PUBLIC_API_MOCKING: optionalMockingFlag,
   /** Host the CDN serves uploaded and generated images from. */
   NEXT_PUBLIC_R2_HOST: optionalString,
@@ -96,3 +110,12 @@ export function parseEnv(): Env {
 
 /** The validated configuration. Throws at import time when it is incomplete. */
 export const env: Env = parseEnv();
+
+/**
+ * True only when the environment explicitly says `NEXT_PUBLIC_API_MOCKING=enabled`.
+ * Absence, empty, or `disabled` all yield `false`, so the default path is the
+ * real API — mocking is opt-in and never turns itself on by accident.
+ */
+export function isApiMockingEnabled(): boolean {
+  return env.NEXT_PUBLIC_API_MOCKING === API_MOCKING_ENABLED;
+}
