@@ -107,7 +107,6 @@ export {
 } from './components/select';
 export { Switch, type SwitchProps } from './components/switch';
 export { Logo, LogoMark, type LogoProps } from './components/logo';
-export { Preloader, type PreloaderProps } from './components/preloader';
 export { ProgressBar, type ProgressBarProps } from './components/progress-bar';
 export { Skeleton, type SkeletonProps } from './components/skeleton';
 export { Spinner, spinnerVariants, type SpinnerProps } from './components/spinner';

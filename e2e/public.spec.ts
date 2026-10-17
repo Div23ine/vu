@@ -12,7 +12,7 @@ test('the home page renders the brand without page errors', async ({ page }) => 
   failOnPageErrors(page);
   await page.goto('/');
   await expect(page.locator('body')).toContainText('VUNVAULT');
-  // The preloader must have finished: the hero content is in the DOM.
+  // No preloader gates the first paint: the hero content is in the DOM.
   await expect(page.locator('main, [data-testid="hero"], section').first()).toBeVisible();
 });
 

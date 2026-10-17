@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 describe('AboutTeam', () => {
-  it('renders the four members with their credential chips, verbatim', () => {
+  it('renders the six roster cards with photographs', () => {
     render(<AboutTeam />);
     expect(screen.getByText('Contributors & Core Team')).toBeInTheDocument();
     expect(
@@ -43,46 +43,56 @@ describe('AboutTeam', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Four disciplines, one floor. Every engagement is staffed by the people below — not subcontracted, not anonymised behind a logo.',
+        'Every engagement is staffed by the people below — not subcontracted, not anonymised behind a logo.',
       ),
     ).toBeInTheDocument();
 
-    expect(TEAM_MEMBERS).toHaveLength(4);
-    expect(document.querySelectorAll('article.vv-team-card')).toHaveLength(4);
+    expect(TEAM_MEMBERS).toHaveLength(6);
+    expect(document.querySelectorAll('article.vv-team-card')).toHaveLength(6);
+    // The initials tiles are gone — every avatar is a photograph.
+    expect(document.querySelectorAll('.vv-team-initials')).toHaveLength(0);
+
     for (const member of TEAM_MEMBERS) {
-      // Scoped per card: badge/skill labels repeat across members
-      // ('Nairobi, KE', 'ISO 27001', 'OSINT' …).
       const heading = screen.getByRole('heading', { name: member.name });
       const card = heading.closest('article.vv-team-card');
       if (card === null) throw new Error(`Team card for ${member.name} is missing.`);
       const within_ = within(card as HTMLElement);
       expect(within_.getByText(member.role)).toBeInTheDocument();
-      expect(within_.getByText(member.initials)).toBeInTheDocument();
-      for (const badge of member.badges) {
+      expect(within_.getByRole('img')).toHaveAttribute('src', member.photo);
+
+      // Optional sections render only when the member has the data.
+      if (member.bio) {
+        expect(within_.getByText(member.bio)).toBeInTheDocument();
+      } else {
+        expect(card.querySelector('.vv-team-bio')).toBeNull();
+      }
+      for (const badge of member.badges ?? []) {
         expect(within_.getByText(badge.label, { selector: '.vv-team-badge' })).toBeInTheDocument();
       }
-      for (const skill of member.skills) {
+      if ((member.badges?.length ?? 0) === 0) {
+        expect(card.querySelector('.vv-team-badges')).toBeNull();
+      }
+      for (const skill of member.skills ?? []) {
         expect(within_.getByText(skill, { selector: '.vv-team-skill' })).toBeInTheDocument();
       }
-      expect(within_.getByText(member.bio)).toBeInTheDocument();
-      expect(within_.getByText(member.meta)).toBeInTheDocument();
+      if ((member.skills?.length ?? 0) === 0) {
+        expect(card.querySelector('.vv-team-skills')).toBeNull();
+      }
     }
-
-    // Amara's chips, spelled out (the catalogue's named example).
-    expect(screen.getByText('OSCP')).toBeInTheDocument();
-    expect(screen.getByText('CRTO')).toBeInTheDocument();
-    expect(screen.getByText('9+ yrs')).toBeInTheDocument();
   });
 
   it('renders no /team/* anchors — the prototype routes do not exist', () => {
     render(<AboutTeam />);
     expect(document.querySelectorAll('a[href^="/team"]')).toHaveLength(0);
-    // The social buttons go to the company profiles instead.
-    expect(screen.getByRole('link', { name: 'Amara Njoroge on GitHub' })).toHaveAttribute(
+    const first = TEAM_MEMBERS[0];
+    const last = TEAM_MEMBERS[TEAM_MEMBERS.length - 1];
+    if (first === undefined || last === undefined) throw new Error('Roster is empty.');
+    // The social buttons go to the company profiles.
+    expect(screen.getByRole('link', { name: `${first.name} on GitHub` })).toHaveAttribute(
       'href',
       'https://github.com/vunvault',
     );
-    expect(screen.getByRole('link', { name: 'Brian Otieno on LinkedIn' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: `${last.name} on LinkedIn` })).toHaveAttribute(
       'href',
       'https://www.linkedin.com/company/vunvault',
     );

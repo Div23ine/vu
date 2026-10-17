@@ -7,24 +7,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createQueryClient } from '@vunvault/lib';
 import { useToastStore } from '@vunvault/ui';
 import { server } from '../../../../mocks/server';
-import { PRELOADER_DONE_EVENT } from '../preloader-gate';
 import { ConsentBanner } from './consent-banner';
 import { useConsentStore } from './consent-store';
 
 /**
- * Cookie-consent tests (Task 58) — mount rules (preloader event, 6 s
- * fallback, cookie suppression), the three recording paths, the customize
- * panel's live chips/announcements, and the leave transition. Fake timers
- * drive the fallback, the panel focus timeout and the 400 ms unmount.
+ * Cookie-consent tests (Task 58) — mount rules (shows on mount while
+ * undecided, cookie/store suppression), the three recording paths, the
+ * customize panel's live chips/announcements, and the leave transition.
+ * Fake timers drive the panel focus timeout and the 400 ms unmount. The
+ * preloader gate (and its done-event / 6 s fallback) no longer exists, so
+ * nothing delays the banner.
  */
 
 let lastPayload: Record<string, unknown> | null = null;
-
-function preloaderDone() {
-  act(() => {
-    document.dispatchEvent(new CustomEvent(PRELOADER_DONE_EVENT));
-  });
-}
 
 function renderBanner() {
   return render(
@@ -59,10 +54,8 @@ afterEach(() => {
 });
 
 describe('ConsentBanner — mount rules', () => {
-  it('stays hidden until the preloader-done event, then shows and focuses Accept All', () => {
+  it('shows on mount while undecided and focuses Accept All', () => {
     renderBanner();
-    expect(screen.queryByRole('dialog')).toBeNull();
-    preloaderDone();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'We value your privacy' })).toBeInTheDocument();
     expect(screen.getByText('Privacy & Consent')).toBeInTheDocument();
@@ -71,19 +64,18 @@ describe('ConsentBanner — mount rules', () => {
     expect(document.body).toHaveClass('vv-consent-open');
   });
 
-  it('shows after the 6 s fallback without the event', async () => {
+  it('never shows when the in-memory store already records a decision', async () => {
+    useConsentStore.setState({ decided: true });
     renderBanner();
-    expect(screen.queryByRole('dialog')).toBeNull();
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(6000);
+      await vi.advanceTimersByTimeAsync(1000);
     });
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('never shows when the vv_consent cookie already records a decision', async () => {
     document.cookie = 'vv_consent=1; path=/';
     renderBanner();
-    preloaderDone();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(7000);
     });
@@ -94,7 +86,6 @@ describe('ConsentBanner — mount rules', () => {
 describe('ConsentBanner — recording', () => {
   it('Accept All posts all-true and unmounts after the leave transition', async () => {
     renderBanner();
-    preloaderDone();
 
     fireEvent.click(screen.getByRole('button', { name: 'Accept All' }));
     await act(async () => {
@@ -122,7 +113,6 @@ describe('ConsentBanner — recording', () => {
 
   it('Essential Only posts only strictlyNecessary', async () => {
     renderBanner();
-    preloaderDone();
     fireEvent.click(screen.getByRole('button', { name: 'Essential Only' }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(10);
@@ -145,7 +135,6 @@ describe('ConsentBanner — recording', () => {
       ),
     );
     renderBanner();
-    preloaderDone();
     fireEvent.click(screen.getByRole('button', { name: 'Accept All' }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(10);
@@ -163,7 +152,6 @@ describe('ConsentBanner — recording', () => {
 
 describe('ConsentBanner — customize panel', () => {
   function openPanel() {
-    preloaderDone();
     fireEvent.click(screen.getByRole('button', { name: 'Customize Preferences' }));
   }
 

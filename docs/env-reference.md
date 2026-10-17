@@ -48,7 +48,7 @@ deliberately NOT process env in production).
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`                | P     | Stripe publishable key (tokenises in-browser by design)          |
 | `NEXT_PUBLIC_SENTRY_DSN`                            | P     | optional browser error reporting                                 |
 | `NEXT_PUBLIC_API_MOCKING`                           | P     | exactly `enabled` turns on the MSW mock layer (dev/preview only) |
-| `NEXT_PUBLIC_BUILD_LABEL`, `NEXT_PUBLIC_NODE_LABEL` | P     | build provenance strings for the preloader/footer                |
+| `NEXT_PUBLIC_BUILD_LABEL`, `NEXT_PUBLIC_NODE_LABEL` | P     | build provenance strings for the admin footer                    |
 
 ### Build-only (not in `env.ts`, never inlined into the bundle)
 

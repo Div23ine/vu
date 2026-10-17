@@ -51,30 +51,40 @@ describe('PressMedia', () => {
 });
 
 describe('Contributors', () => {
-  it('renders the four cards in order with initials tiles', () => {
+  it('renders the six photo cards in order with names and roles', () => {
     render(<Contributors />);
     expect(screen.getByText('CONTRIBUTORS')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'The people behind the defense' }),
     ).toBeInTheDocument();
-    expect(CONTRIBUTORS).toHaveLength(4);
+    expect(CONTRIBUTORS).toHaveLength(6);
 
     const cards = document.querySelectorAll('article.contributor-card');
-    expect(cards).toHaveLength(4);
+    expect(cards).toHaveLength(6);
     expect(
       Array.from(cards).map((card) => within(card as HTMLElement).getByRole('heading').textContent),
-    ).toEqual(['Amara Njoroge', 'Daniel Mwangi', 'Fatima Hassan', 'Brian Otieno']);
+    ).toEqual(CONTRIBUTORS.map((contributor) => contributor.name));
 
     for (const contributor of CONTRIBUTORS) {
       expect(screen.getByText(contributor.role)).toBeInTheDocument();
-      expect(screen.getByText(contributor.bio)).toBeInTheDocument();
-      expect(screen.getByText(contributor.initials)).toBeInTheDocument();
+      const photo = document.querySelector(`img[src="${contributor.photo}"]`);
+      expect(photo).not.toBeNull();
+      expect(photo).toHaveClass('contributor-avatar');
+      expect(photo).toHaveAccessibleDescription('');
     }
     expect(
       screen.getByText(
         'Ethical hackers, security engineers and threat researchers building VUNVAULT’s detection, automation and education stack.',
       ),
     ).toBeInTheDocument();
+  });
+
+  it('labels every photograph with an accessible name', () => {
+    render(<Contributors />);
+    for (const contributor of CONTRIBUTORS) {
+      const photo = document.querySelector(`img[src="${contributor.photo}"]`);
+      expect(photo?.getAttribute('alt')).toBeTruthy();
+    }
   });
 });
 

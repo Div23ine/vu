@@ -1,44 +1,54 @@
+/* eslint-disable @next/next/no-img-element -- avatars are pre-optimised 640px
+   square crops served statically from public/images/contributors; a plain
+   <img> keeps the section a dependency-free server component. */
 import '../../_styles/home-end.css';
 
 /**
- * Contributors section (Task 52) — "The people behind the defense".
+ * Contributors section — "The people behind the defense".
  *
- * Four cards in prototype order. Per the catalogue the avatars are circular
- * INITIALS tiles built from the name (`AN`, `DM`, `FH`, `BO`) — no
- * photographs are added anywhere in this task. Names and bios are verbatim.
+ * Six photo cards in team order. The avatars are photographs served from
+ * `public/images/contributors/` (square crops, circular frame via the
+ * prototype's `.contributor-avatar` rules). Names, roles and photos are
+ * edited in the `CONTRIBUTORS` array below; the `/about` team roster
+ * (`about/_data/about-data.ts`) mirrors this list and adds the bios.
  */
 
 export interface Contributor {
   name: string;
   role: string;
-  bio: string;
-  initials: string;
+  photo: string;
 }
 
 export const CONTRIBUTORS: readonly Contributor[] = [
   {
-    name: 'Amara Njoroge',
-    role: 'Offensive Security Lead',
-    bio: 'Designs and runs red-team engagements for SACCOs, fintechs and M-Pesa gateway providers across East Africa.',
-    initials: 'AN',
+    name: 'Esther',
+    role: 'Cybersecurity and Digital Operations',
+    photo: '/images/contributors/contributor-01.jpg',
   },
   {
-    name: 'Daniel Mwangi',
-    role: 'Security Automation Engineer',
-    bio: 'Builds the continuous attack-surface enumeration agents and automated patch-validation CLI behind the VUNVAULT engine.',
-    initials: 'DM',
+    name: 'Natasha',
+    role: 'Cybersecurity Analyst',
+    photo: '/images/contributors/contributor-02.jpg',
   },
   {
-    name: 'Fatima Hassan',
-    role: 'Threat Intelligence Analyst',
-    bio: 'Curates the zero-day tracking feed, correlates CVE data with vendor advisories and authors VUNVAULT threat briefings.',
-    initials: 'FH',
+    name: 'Jaymit Sarena',
+    role: 'Security Analyst VAPT',
+    photo: '/images/contributors/contributor-03.jpg',
   },
   {
-    name: 'Brian Otieno',
-    role: 'Compliance & Curriculum Lead',
-    bio: 'Maps audit findings to Central Bank frameworks and authors the VUNVAULT Academy cybersecurity foundations course.',
-    initials: 'BO',
+    name: 'Raphunga Tshepiso',
+    role: 'Research Analyst',
+    photo: '/images/contributors/contributor-04.jpg',
+  },
+  {
+    name: 'Daniel Okafor',
+    role: 'Security and Project Coordinator',
+    photo: '/images/contributors/contributor-05.jpg',
+  },
+  {
+    name: 'Divine',
+    role: 'Marketing Strategist and Social Media Manager',
+    photo: '/images/contributors/contributor-06.jpg',
   },
 ];
 
@@ -67,15 +77,20 @@ export function Contributors() {
 
         <div className="contributors-grid">
           {CONTRIBUTORS.map((contributor) => (
-            <article key={contributor.name} className="contributor-card circular">
+            <article key={contributor.photo} className="contributor-card circular">
               <div className="contributor-avatar-wrap">
-                <span className="contributor-avatar contributor-avatar-initials" aria-hidden="true">
-                  {contributor.initials}
-                </span>
+                <img
+                  className="contributor-avatar"
+                  src={contributor.photo}
+                  alt={`Portrait of ${contributor.name}`}
+                  width={640}
+                  height={640}
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
               <h4 className="contributor-name">{contributor.name}</h4>
               <p className="contributor-role">{contributor.role}</p>
-              <p className="contributor-bio">{contributor.bio}</p>
             </article>
           ))}
         </div>

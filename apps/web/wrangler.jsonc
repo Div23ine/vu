@@ -26,16 +26,12 @@
   // from repository variables) — putting them here would do nothing. This Worker
   // needs no runtime secrets: every API call goes from the browser straight to
   // the vv-edge Worker with cookies.
-  //
-  // Custom domains are declared here (`custom_domain: true`), exactly as the
-  // vv-edge Worker does, so `wrangler deploy` owns them. Terraform deliberately
-  // does NOT create DNS records for www/apex — see infra/terraform/cloudflare/
-  // dns.tf. Replace the `vunvault.example` hostnames with the real zone.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vunvault-web-staging",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-10-12",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
   "assets": {
     // Exactly the shape the adapter's own template ships: a request that does not
     // match a static file falls through to the Worker, which is what Next needs
@@ -43,16 +39,19 @@
     // "single-page-application"` — that would serve index.html for every
     // unmatched route and swallow Next's 404s and dynamic renders.
     "directory": ".open-next/assets",
-    "binding": "DIVINE",
+    "binding": "DIVINE"
   },
   "services": [
     {
       // Required by OpenNext: the Worker calls itself to serve internal requests.
       // `service` must match this environment's `name`.
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "vunvault-web-DIVINE",
-    },
+      "service": "vunvault-web-staging"
+    }
   ],
+  "observability": {
+    "enabled": true
+  },
   // Two bindings the adapter's template offers are deliberately NOT enabled —
   // both add an external prerequisite to the first deploy:
   //
@@ -66,20 +65,42 @@
   //     it the cache is per-isolate: correct, just warmer on a miss. The
   //     Terraform stack already manages R2, so adding a bucket there is the
   //     recommended follow-up if blog ISR efficiency matters.
-  "observability": {
-    "enabled": true,
-  },
   "env": {
     "staging": {
       "name": "vunvault-web-staging",
-      "routes": [{ "pattern": "www.staging.vunvault.example", "custom_domain": true }],
+      "workers_dev": true,
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "vunvault-web-staging"
+        }
+      ]
     },
     "production": {
       "name": "vunvault-web-production",
+      // Set to `false` if you don't want the `*.workers.dev` URL live alongside
+      // the custom domain below.
+      "workers_dev": true,
+      // Attaches vunvault.com and www.vunvault.com to this Worker via Custom
+      // Domain. Wrangler creates the DNS records on deploy, but requires you to
+      // delete any existing conflicting A/CNAME records in the Cloudflare
+      // Dashboard first.
       "routes": [
-        { "pattern": "www.vunvault.example", "custom_domain": true },
-        { "pattern": "vunvault.example", "custom_domain": true },
+        {
+          "pattern": "vunvault.com",
+          "custom_domain": true
+        },
+        {
+          "pattern": "www.vunvault.com",
+          "custom_domain": true
+        }
       ],
-    },
-  },
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "vunvault-web-production"
+        }
+      ]
+    }
+  }
 }

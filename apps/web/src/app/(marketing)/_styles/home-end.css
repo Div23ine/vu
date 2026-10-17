@@ -5,10 +5,9 @@
  * `--white`, `--r-full`, `--dark-abyss`, `--ease`); one-off literals without
  * tokens stay inside this file only — never in TSX.
  *
- * AUTHORED additions, marked below: `.contributor-avatar-initials` (the
- * catalogue mandates initials tiles instead of photographs; the prototype's
- * `.contributor-avatar` rules style an `<img>`), and a `:focus-visible`
- * outline for the press-band CTAs.
+ * AUTHORED additions, marked below: a `:focus-visible` outline for the
+ * press-band CTAs. The contributor avatars are photographs styled by the
+ * prototype's `.contributor-avatar` rules (circular frame, cover fit).
  *
  * Reduced motion: the prototype block is reproduced verbatim; the global
  * fallback in `@vunvault/ui`'s `motion.css` collapses every hover transform.
@@ -114,7 +113,7 @@
 }
 .contributors-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 34px 26px;
   margin-top: 54px;
 }
@@ -175,18 +174,6 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   pointer-events: none;
 }
-/* Authored: initials tile (no photographs — see component header). */
-.contributor-avatar-initials {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--grad-brand);
-  color: var(--white);
-  font-size: 2.4rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  object-fit: initial;
-}
 .contributor-name {
   margin-top: 18px;
   font-size: 1rem;
@@ -207,11 +194,6 @@
   line-height: 1.7;
   color: var(--ink-muted);
   max-width: 30ch;
-}
-@media (max-width: 1180px) {
-  .contributors-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 @media (max-width: 900px) {
   .contributors-grid {

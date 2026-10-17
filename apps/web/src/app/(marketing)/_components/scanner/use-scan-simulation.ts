@@ -71,7 +71,7 @@ const SCAN_STEPS: readonly ScanStep[] = [
 ];
 
 function prefersReducedMotion(): boolean {
-  // Same defensive shape as Task 13's Preloader: jsdom ships no matchMedia.
+  // Defensive shape: jsdom ships no matchMedia.
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
