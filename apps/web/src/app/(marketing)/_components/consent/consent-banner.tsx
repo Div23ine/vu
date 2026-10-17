@@ -7,19 +7,18 @@ import type { ContactCategories } from '@vunvault/contracts';
 import { cn } from '@vunvault/lib';
 import { toast } from '@vunvault/ui';
 import { useRecordConsent } from '../../_hooks/use-record-consent';
-import { PRELOADER_DONE_EVENT } from '../preloader-gate';
 import { CONSENT_POLICY_VERSION, ConsentProvider, useConsentStore } from './consent-store';
 import '../../_styles/consent.css';
 
 /**
- * Cookie consent banner (Task 58) — mounted from the marketing layout after
- * the preloader gate.
+ * Cookie consent banner (Task 58) — mounted from the marketing layout.
  *
- * Mount rules: the dialog appears after the `vunvault:preloader-done` event
- * (Task 44) or a 6 s fallback, unless the decision is already known (the
- * API-set `vv_consent` cookie or an in-memory decision). Escape does NOT
- * dismiss it — a choice is required — and the first button is focused with
- * `preventScroll`.
+ * Mount rules: the dialog appears as soon as the layout mounts, unless the
+ * decision is already known (the API-set `vv_consent` cookie or an in-memory
+ * decision). The first-load preloader gate (and its `vunvault:preloader-done`
+ * event / 6 s fallback) was removed with the preloader, so nothing delays the
+ * banner any more. Escape does NOT dismiss it — a choice is required — and
+ * the first button is focused with `preventScroll`.
  *
  * Recording: `POST /api/v1/consent` `{ categories, policyVersion: "1" }`;
  * on `204` the banner adds `is-leaving`, unmounts after 400 ms and drops
@@ -54,7 +53,6 @@ const TOGGLEABLE: { key: ToggleKey; name: string; desc: string }[] = [
   },
 ];
 
-const SHOW_FALLBACK_MS = 6000;
 const LEAVE_MS = 400;
 
 function ConsentDialog() {
@@ -74,18 +72,10 @@ function ConsentDialog() {
   const customizeRef = useRef<HTMLButtonElement>(null);
   const firstSwitchRef = useRef<HTMLInputElement>(null);
 
-  // Mount rules: preloader event or the 6 s fallback, unless already decided.
+  // Mount rules: show on mount unless a decision is already known.
   useEffect(() => {
-    const show = () => {
-      if (!useConsentStore.getState().decided) setShown(true);
-    };
     if (useConsentStore.getState().decided) return;
-    document.addEventListener(PRELOADER_DONE_EVENT, show);
-    const timer = setTimeout(show, SHOW_FALLBACK_MS);
-    return () => {
-      document.removeEventListener(PRELOADER_DONE_EVENT, show);
-      clearTimeout(timer);
-    };
+    setShown(true);
   }, []);
 
   // Visible: lock marker on <body> + focus the first button (preventScroll),

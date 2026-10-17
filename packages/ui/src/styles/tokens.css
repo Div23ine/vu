@@ -62,7 +62,7 @@
   /* Semantic tokens promoted from literals used by prototype components */
   --dark-deep: #070b11; /* second stop of dark gradients */
   --dark-abyss: #05070a; /* modal backdrop base, dark button end stop */
-  --brand-bright: #44a7fc; /* preloader wordmark + caption */
+  --brand-bright: #44a7fc; /* bright brand accent (theme mapping) */
 
   --ok-ink: #065f46;
   --ok-bg: #ecfdf5;

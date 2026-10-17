@@ -1,14 +1,13 @@
 // Registers the jest-dom matchers and their Vitest type augmentation.
 import '@testing-library/jest-dom/vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createQueryClient } from '@vunvault/lib';
 import { mockClientSession, mockStaffSession } from '../../../mocks/handlers/auth';
 import { server } from '../../../mocks/server';
-import { PRELOADER_DONE_EVENT, PreloaderGate } from './preloader-gate';
 import { OPEN_SCANNER_EVENT, SiteFooter } from './site-footer';
 import { SiteHeader } from './site-header';
 import type { FooterVariant } from './footer-data';
@@ -195,37 +194,5 @@ describe('SiteFooter', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Free Security Scan' }));
     expect(spy).toHaveBeenCalledTimes(1);
     window.removeEventListener(OPEN_SCANNER_EVENT, spy);
-  });
-});
-
-describe('PreloaderGate', () => {
-  // LAST on purpose: the gate's once-per-page-load flag is module state, so
-  // completing the sequence here must not run before the other suites.
-  it('shows the caption once, unmounts after onDone and announces completion', () => {
-    vi.useFakeTimers();
-    try {
-      const done = vi.fn();
-      document.addEventListener(PRELOADER_DONE_EVENT, done);
-
-      const first = render(<PreloaderGate />);
-      expect(screen.getByText('Establishing secure channel')).toBeInTheDocument();
-
-      // 4000ms visible → is-hidden fade → unmount + onDone at 4700ms (Task 13).
-      act(() => {
-        vi.advanceTimersByTime(4700);
-      });
-      expect(screen.queryByText('Establishing secure channel')).toBeNull();
-      expect(done).toHaveBeenCalledTimes(1);
-      first.unmount();
-
-      // Same page load: a later mount never replays the preloader.
-      render(<PreloaderGate />);
-      expect(screen.queryByText('Establishing secure channel')).toBeNull();
-      expect(done).toHaveBeenCalledTimes(1);
-
-      document.removeEventListener(PRELOADER_DONE_EVENT, done);
-    } finally {
-      vi.useRealTimers();
-    }
   });
 });

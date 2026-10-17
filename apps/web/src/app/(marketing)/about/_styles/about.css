@@ -555,7 +555,7 @@
   flex: 0 0 auto;
   width: 76px;
   height: 76px;
-  border-radius: 20px;
+  border-radius: 50%;
   overflow: hidden;
   background:
     radial-gradient(circle at 50% 30%, rgba(59, 153, 252, 0.22), transparent 70%),
@@ -572,20 +572,6 @@
 }
 .vv-team-card:hover .vv-team-avatar img {
   transform: scale(1.07);
-}
-/* Authored: initials tile (no photographs — see component header). */
-.vv-team-initials {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.45rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: var(--white);
-  background: var(--grad-brand);
-  opacity: 0.92;
 }
 .vv-team-id {
   min-width: 0;

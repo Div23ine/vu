@@ -162,8 +162,6 @@ describe('index.css', () => {
       './theme.css',
       './base.css',
       './motion.css',
-      // Appended last by the brand-components task; component CSS always follows.
-      '../components/preloader.css',
     ]);
   });
 });

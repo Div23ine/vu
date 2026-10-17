@@ -84,9 +84,9 @@ describe('home route assembly', () => {
     expect(document.querySelector('img[src="soft1.jpg"]')).toBeNull();
   });
 
-  it('renders four contributor cards and the ticker inside the full page', () => {
+  it('renders six contributor cards and the ticker inside the full page', () => {
     renderPage();
-    expect(document.querySelectorAll('article.contributor-card')).toHaveLength(4);
+    expect(document.querySelectorAll('article.contributor-card')).toHaveLength(6);
     expect(screen.getAllByText('CVE-2026-9122').length).toBeGreaterThan(0);
   });
 

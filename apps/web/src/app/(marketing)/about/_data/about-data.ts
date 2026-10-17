@@ -1,8 +1,8 @@
 // TODO(backend-contract): team + telemetry constants for the marketing page
 
 /**
- * About page data (Task 53b) — the core-team roster and the System Telemetry
- * panel's constants, verbatim from the prototype. The telemetry figures
+ * About page data — the live core-team roster (photographs included) and the
+ * System Telemetry panel's constants, verbatim from the prototype. The telemetry figures
  * mirror the home zero-day widget's fixtures (same sensor network story);
  * when a public telemetry endpoint exists, both consumers switch to it.
  */
@@ -15,98 +15,59 @@ export interface TeamBadge {
 export interface TeamMember {
   name: string;
   role: string;
-  initials: string;
-  badges: readonly TeamBadge[];
-  bio: string;
-  skills: readonly string[];
-  /** The prototype's `/team/<slug>` meta line — plain text, no route exists. */
-  meta: string;
+  /** Square crop served from `apps/web/public/images/contributors/`. */
+  photo: string;
+  /** Optional rich fields — the card renders them only when present. */
+  badges?: readonly TeamBadge[];
+  bio?: string;
+  skills?: readonly string[];
+  /** Monospace foot label (the prototype's `/team/<slug>` line). */
+  meta?: string;
 }
 
+/**
+ * The live roster — same people, order and photographs as the home page's
+ * `CONTRIBUTORS` (`(marketing)/_components/home/contributors.tsx`); keep the
+ * two in sync. Credential chips, bios, skill chips and meta lines render as
+ * soon as they are added per member. Card 6 carries placeholders until the
+ * name and role are listed.
+ */
 export const TEAM_MEMBERS: readonly TeamMember[] = [
   {
-    name: 'Amara Njoroge',
-    role: 'Lead Offensive Security Engineer',
-    initials: 'AN',
-    badges: [
-      { label: 'OSCP', variant: 'brand' },
-      { label: 'CRTO', variant: 'brand' },
-      { label: '9+ yrs', variant: 'plain' },
-      { label: 'Nairobi, KE', variant: 'dark' },
-    ],
-    bio: 'Leads VUNVAULT’s red-team engagements across SACCOs, fintechs and M-Pesa gateway providers. Amara specialises in web application penetration testing, custom parameter fuzzing pipelines and zero-day research — the kind of work that finds the bug a scanner’s signature list will never reach. She has disclosed seven responsibly-handled vulnerabilities in payment and identity platforms operating in East Africa, and runs the internal exploit-development review that every VUNVAULT finding passes through before it reaches a client report.',
-    skills: [
-      'Web Pentesting',
-      'Parameter Fuzzing',
-      'Zero-Day Research',
-      'Burp Suite',
-      'API Security',
-      'Exploit Dev',
-    ],
-    meta: '/team/amara-njoroge',
+    name: 'Esther',
+    role: 'Cybersecurity and Digital Operations',
+    photo: '/images/contributors/contributor-01.jpg',
+    bio: 'Esther sits at the intersection of security and operations at VUNVAULT. She keeps the team’s digital workspace, tooling and internal processes hardened and running smoothly — from identity and access hygiene to automating the routine operational work that surrounds every engagement. She also coordinates the digital operations behind client projects, so each one moves securely from kickoff to final report.',
   },
   {
-    name: 'Daniel Mwangi',
-    role: 'Security Automation & Recon Architect',
-    initials: 'DM',
-    badges: [
-      { label: 'Automation', variant: 'brand' },
-      { label: 'Recon', variant: 'brand' },
-      { label: '7+ yrs', variant: 'plain' },
-      { label: 'Remote · KE', variant: 'dark' },
-    ],
-    bio: 'Builds the reconnaissance and validation engine underneath every VUNVAULT engagement. Daniel owns the multi-threaded SSL/TLS validation tooling, the endpoint-crawling pipeline that turns a single domain into a scored asset map, and the Python and Bash automation that keeps the whole stack reproducible. His rule is blunt: if a check cannot run unattended at 03:00 against a 4,000-host estate and return the same result twice, it does not ship. He also maintains the internal patch-validation CLI used to confirm remediation before we close an engagement.',
-    skills: [
-      'SSL/TLS Validation',
-      'Endpoint Crawling',
-      'Python',
-      'Bash',
-      'Multi-threading',
-      'CI Automation',
-    ],
-    meta: '/team/daniel-mwangi',
+    name: 'Natasha',
+    role: 'Cybersecurity Analyst',
+    photo: '/images/contributors/contributor-02.jpg',
+    bio: 'Natasha monitors, triages and investigates security events across VUNVAULT’s client environments, turning noisy alert streams into clear, actionable findings. She digs into malware behaviour, phishing campaigns and misconfigurations, and documents every step so remediation can be verified rather than assumed. Her analysis feeds directly into the threat briefings VUNVAULT publishes for clients.',
   },
   {
-    name: 'Fatima Hassan',
-    role: 'Threat Intelligence Analyst',
-    initials: 'FH',
-    badges: [
-      { label: 'Threat Intel', variant: 'brand' },
-      { label: 'OSINT', variant: 'brand' },
-      { label: '6+ yrs', variant: 'plain' },
-      { label: 'Mombasa · KE', variant: 'dark' },
-    ],
-    bio: 'Owns the zero-day tracking feed and the attack-surface mapping methodology that opens every engagement. Fatima spends her week correlating NVD entries, vendor advisories and VUNVAULT sensor telemetry into a single exploitation-status view, and profiling how WAFs actually behave against the payloads we throw at them. Her briefings on ransomware playbooks targeting East African SACCOs are now read by security teams in four countries. She writes the weekly threat note that goes to every retainer client.',
-    skills: [
-      'Attack Surface Mapping',
-      'WAF Analysis',
-      'CVE Correlation',
-      'MITRE ATT&CK',
-      'OSINT',
-      'Threat Briefings',
-    ],
-    meta: '/team/fatima-hassan',
+    name: 'Jaymit Sarena',
+    role: 'Security Analyst VAPT',
+    photo: '/images/contributors/contributor-03.jpg',
+    bio: 'Jaymit runs vulnerability assessments and penetration tests across web applications, APIs and network perimeters. He reproduces real-world attack paths, validates every finding to rule out false positives, and pairs each issue with practical, prioritised remediation guidance. His VAPT work helps clients fix what actually matters before an attacker finds it first.',
   },
   {
-    name: 'Brian Otieno',
-    role: 'Compliance & Governance Lead',
-    initials: 'BO',
-    badges: [
-      { label: 'ISO 27001', variant: 'brand' },
-      { label: 'GDPR', variant: 'brand' },
-      { label: '10+ yrs', variant: 'plain' },
-      { label: 'Nairobi, KE', variant: 'dark' },
-    ],
-    bio: 'Translates raw technical findings into the language regulators and boards actually use. Brian owns the Central Bank cybersecurity standards mapping, GDPR and Kenya Data Protection Act framework alignment, and the rules-of-engagement and non-disclosure agreements that govern every engagement VUNVAULT accepts. He also authors the Academy compliance curriculum and sits in on every scope call, because the fastest way to break a client is to test something nobody authorised you to touch.',
-    skills: [
-      'CBK Standards',
-      'GDPR Mapping',
-      'ISO 27001',
-      'NDAs & RoE',
-      'Policy Design',
-      'Curriculum',
-    ],
-    meta: '/team/brian-otieno',
+    name: 'Raphunga Tshepiso',
+    role: 'Research Analyst',
+    photo: '/images/contributors/contributor-04.jpg',
+    bio: 'Raphunga tracks the evolving threat landscape and turns open-source intelligence, vendor advisories and CVE data into structured research the team can act on. She maintains the evidence base behind VUNVAULT’s zero-day tracking and writes the background analysis that supports the advisories and threat briefings the team publishes.',
+  },
+  {
+    name: 'Daniel Okafor',
+    role: 'Security and Project Coordinator',
+    photo: '/images/contributors/contributor-05.jpg',
+    bio: 'Daniel keeps VUNVAULT’s engagements on schedule and in scope, coordinating between clients, analysts and the compliance workload. He pairs that project coordination with hands-on security work: tracking findings through to remediation, maintaining engagement documentation, and making sure every deliverable is reviewed, approved and delivered on time.',
+  },
+  {
+    name: 'Divine',
+    role: 'Marketing Strategist and Social Media Manager',
+    photo: '/images/contributors/contributor-06.jpg',
+    bio: 'Divine shapes how VUNVAULT communicates its work to the world. He plans and runs the company’s marketing strategy and social media presence, translating deep technical research into clear stories for executives, developers and the wider security community. He also grows the reach of the VUNVAULT Academy and keeps the community channels active and well informed.',
   },
 ];
 
