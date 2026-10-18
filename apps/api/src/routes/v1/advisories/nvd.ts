@@ -1,7 +1,7 @@
 import type { NvdImportResult } from '@vunvault/contracts';
 import { CVE_ID_PATTERN } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
-import { severityFromCvss } from './validation';
+import { HttpError } from '../../../lib/http-error.js';
+import { severityFromCvss } from './validation.js';
 
 /**
  * The NIST National Vulnerability Database, for pre-filling the editor.

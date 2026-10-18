@@ -4,17 +4,17 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { SignJWT } from 'jose';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { MfaMethod } from '@vunvault/contracts';
-import type { Env } from '../../../config/env';
-import { tokenIssuer } from '../../../lib/jwt';
-import type { SignInResult, SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin';
-import { memoryKvStore, MfaChallengeStore, deriveChallengeKey } from './challenge';
-import cookiesPlugin from '../../../plugins/cookies';
-import errorHandler from '../../../plugins/error-handler';
-import authPlugin from '../../../plugins/auth';
-import { SessionRegistry, type SessionRecord } from '../../../lib/session-registry';
-import type { AuthRepo, AuthProfileRow, NewSession } from './repo';
-import authRoutes from './index';
-import type { AuditEntryRow } from '../../../audit/repo';
+import type { Env } from '../../../config/env.js';
+import { tokenIssuer } from '../../../lib/jwt.js';
+import type { SignInResult, SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
+import { memoryKvStore, MfaChallengeStore, deriveChallengeKey } from './challenge.js';
+import cookiesPlugin from '../../../plugins/cookies.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import authPlugin from '../../../plugins/auth.js';
+import { SessionRegistry, type SessionRecord } from '../../../lib/session-registry.js';
+import type { AuthRepo, AuthProfileRow, NewSession } from './repo.js';
+import authRoutes from './index.js';
+import type { AuditEntryRow } from '../../../audit/repo.js';
 
 const SECRET = 'test-jwt-secret-that-is-long-enough-to-be-safe';
 const USER_ID = 'c0000000-0000-4000-8000-000000000001';

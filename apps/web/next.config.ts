@@ -75,6 +75,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
+
+  // ADDED: Resolve .js imports to .ts/.tsx files (required for ESM monorepos)
+  webpack: (config) => {
+    config.resolve.extensionAlias = {
+      '.js': ['.ts', '.tsx', '.js', '.jsx'],
+    };
+    return config;
+  },
+
   async headers() {
     return [
       {

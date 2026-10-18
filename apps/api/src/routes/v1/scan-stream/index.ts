@@ -4,13 +4,13 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import websocketPlugin from '@fastify/websocket';
 import type { WebSocket } from 'ws';
-import { asExecutor } from '../../../audit/repo';
-import { HttpError } from '../../../lib/http-error';
-import type { Tx } from '../../../plugins/db';
-import { SqlScansRepo, type ScansRepo } from '../scans/repo';
-import { liveChannel, replayBufferKey } from './channels';
-import { ScanStreamSession, type RelaySocket } from './session';
-import { ScanStreamService, type ScanStreamActor, type ScanStreamTarget } from './service';
+import { asExecutor } from '../../../audit/repo.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { Tx } from '../../../plugins/db.js';
+import { SqlScansRepo, type ScansRepo } from '../scans/repo.js';
+import { liveChannel, replayBufferKey } from './channels.js';
+import { ScanStreamSession, type RelaySocket } from './session.js';
+import { ScanStreamService, type ScanStreamActor, type ScanStreamTarget } from './service.js';
 
 /**
  * `GET /api/v1/scans/:id/stream` — the scan terminal relay (Task 95).

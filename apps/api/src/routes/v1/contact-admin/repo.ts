@@ -1,4 +1,4 @@
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 import type { ContactCategory, ContactStatus } from '@vunvault/contracts';
 
 /**

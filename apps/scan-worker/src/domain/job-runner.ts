@@ -1,6 +1,6 @@
 import type { ScanType } from '@vunvault/contracts';
-import { uploadLog } from './log-archive';
-import type { RunHooksHandle } from './run-hooks';
+import { uploadLog } from './log-archive.js';
+import type { RunHooksHandle } from './run-hooks.js';
 import type {
   ApiClient,
   Clock,
@@ -11,9 +11,9 @@ import type {
   RunHooks,
   RunResult,
   SlotSemaphore,
-} from '../ports';
-import { NOOP_HOOKS } from '../ports';
-import { resolveTarget, validateTarget, type Resolver } from './target-guard';
+} from '../ports.js';
+import { NOOP_HOOKS } from '../ports.js';
+import { resolveTarget, validateTarget, type Resolver } from './target-guard.js';
 
 /**
  * Job runner (Task 84) — the orchestration around one scan.

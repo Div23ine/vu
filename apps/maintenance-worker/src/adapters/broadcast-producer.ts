@@ -1,6 +1,6 @@
 import type { Queue } from 'bullmq';
 import type { BroadcastJobPayload } from '@vunvault/contracts';
-import type { BroadcastProducer, StuckBroadcastRow } from '../ports';
+import type { BroadcastProducer, StuckBroadcastRow } from '../ports.js';
 
 /**
  * Re-enqueue stuck broadcasts onto the `broadcast` queue (Task 92).

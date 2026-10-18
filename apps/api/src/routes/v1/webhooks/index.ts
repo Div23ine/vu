@@ -2,13 +2,13 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { WebhookAck } from '@vunvault/contracts';
-import { AUDITED } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import type { Tx } from '../../../plugins/db';
-import { HttpError } from '../../../lib/http-error';
-import { LedgerService } from '../../../billing/ledger';
-import { SqlPaymentsRepo, type PaymentsRepo } from '../payments-admin/repo';
-import { SYSTEM_ACTOR, WebhookService, type WebhookEvent } from './service';
+import { AUDITED } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import type { Tx } from '../../../plugins/db.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { LedgerService } from '../../../billing/ledger.js';
+import { SqlPaymentsRepo, type PaymentsRepo } from '../payments-admin/repo.js';
+import { SYSTEM_ACTOR, WebhookService, type WebhookEvent } from './service.js';
 
 /**
  * Provider webhooks (Task 34).

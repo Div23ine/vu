@@ -8,11 +8,11 @@ import type {
   PodRunner,
   RedisBus,
   SlotSemaphore,
-} from '../ports';
-import { LogArchive } from './log-archive';
-import { makeRunHooks } from './run-hooks';
-import { JobRunner } from './job-runner';
-import type { OutputChannel } from './output-channel';
+} from '../ports.js';
+import { LogArchive } from './log-archive.js';
+import { makeRunHooks } from './run-hooks.js';
+import { JobRunner } from './job-runner.js';
+import type { OutputChannel } from './output-channel.js';
 
 /**
  * Job-runner integration tests (Task 88) — the whole flow with fakes.

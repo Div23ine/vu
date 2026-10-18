@@ -3,21 +3,26 @@ import fp from 'fastify-plugin';
 import type { FastifyPluginAsync } from 'fastify';
 
 /**
- * Credentialed CORS, locked to the one web origin.
+ * Credentialed CORS, locked to an explicit allowlist of web origins.
  *
- * The origin is compared exactly — never a wildcard, never reflected — because a
- * credentialed response to an arbitrary origin is how a session gets read from
- * another site. A request from any other origin simply receives no CORS headers.
+ * The origin is compared exactly against a list — never a wildcard, never reflected —
+ * because a credentialed response to an arbitrary origin is how a session gets read
+ * from another site. A request from any other origin simply receives no CORS headers.
  */
 const corsPlugin: FastifyPluginAsync = async (app) => {
-  const allowedOrigin = app.env.WEB_ORIGIN;
+  // Split the comma-separated string from .env into an array and trim any spaces
+  const allowedOrigins = app.env.WEB_ORIGIN.split(',').map((o) => o.trim());
 
   await app.register(cors, {
-    // A function, not a string: `@fastify/cors` echoes a string origin back to
-    // every caller, which would be reflection. Comparing here means a request
-    // from any other origin receives no CORS headers at all.
     origin: (origin, callback) => {
-      callback(null, origin === allowedOrigin);
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Check if the incoming origin is in our allowed list
+      const isAllowed = allowedOrigins.includes(origin);
+      callback(null, isAllowed);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

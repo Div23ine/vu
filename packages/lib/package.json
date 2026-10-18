@@ -1,36 +1,46 @@
 {
   "name": "@vunvault/lib",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./advisory-matching": "./src/advisory-matching.ts",
-    "./money": "./src/money.ts",
-    "./providers": "./src/providers/index.ts",
-    "./storage": "./src/storage.ts",
-    "./audit-chain": "./src/audit-chain/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./audit-chain": {
+      "types": "./dist/audit-chain/index.d.ts",
+      "import": "./dist/audit-chain/index.js",
+      "default": "./dist/audit-chain/index.js"
+    },
+    "./storage": {
+      "types": "./dist/storage.d.ts",
+      "import": "./dist/storage.js",
+      "default": "./dist/storage.js"
+    },
+    "./advisory-matching": {
+      "types": "./dist/advisory-matching.d.ts",
+      "import": "./dist/advisory-matching.js",
+      "default": "./dist/advisory-matching.js"
+    },
+    "./providers": {
+      "types": "./dist/providers/index.d.ts",
+      "import": "./dist/providers/index.js",
+      "default": "./dist/providers/index.js"
+    }
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "test": "vitest run --passWithNoTests"
+    "build": "tsc"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1149.0",
-    "@aws-sdk/s3-request-presigner": "^3.1149.0",
-    "@tanstack/react-query": "^5.104.2",
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.600.0",
+    "@tanstack/react-query": "^5.0.0",
     "@vunvault/contracts": "workspace:*",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.7.0"
-  },
-  "devDependencies": {
-    "@types/node": "^22.20.5",
-    "@vunvault/config": "workspace:*",
-    "eslint": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.0.0"
   }
 }

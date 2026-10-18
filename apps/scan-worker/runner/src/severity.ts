@@ -1,4 +1,4 @@
-import type { Severity } from './emit';
+import type { Severity } from './emit.js';
 
 /**
  * Severity mapping (Task 87).

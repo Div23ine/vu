@@ -1,5 +1,5 @@
-import type { PodSpec } from '../ports';
-import { SCAN_NAMESPACE, jobResourceName } from './pod-manifest';
+import type { PodSpec } from '../ports.js';
+import { SCAN_NAMESPACE, jobResourceName } from './pod-manifest.js';
 
 /**
  * Per-job egress NetworkPolicy (Task 86).

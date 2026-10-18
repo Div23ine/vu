@@ -1,12 +1,12 @@
-import { INVALID_CONFIG_EXIT, INVALID_CONFIG_LINE, parseRunnerEnv, type RunnerEnv } from './env';
-import { PREFIX, createEmitter } from './emit';
-import { progressPercent, planFor, nucleiStepsForWebPorts, type PlanStep } from './plan';
-import { runTool, type ToolOutcome } from './exec';
-import { parseNmapXml, isPortOpen, webPortUrls, type NmapParseResult } from './adapters/nmap';
-import { parseHttpxOutput } from './adapters/httpx';
-import { parseNucleiOutput } from './adapters/nuclei';
-import { parseTestsslJson } from './adapters/testssl';
-import type { Severity } from './emit';
+import { INVALID_CONFIG_EXIT, INVALID_CONFIG_LINE, parseRunnerEnv, type RunnerEnv } from './env.js';
+import { PREFIX, createEmitter } from './emit.js';
+import { progressPercent, planFor, nucleiStepsForWebPorts, type PlanStep } from './plan.js';
+import { runTool, type ToolOutcome } from './exec.js';
+import { parseNmapXml, isPortOpen, webPortUrls, type NmapParseResult } from './adapters/nmap.js';
+import { parseHttpxOutput } from './adapters/httpx.js';
+import { parseNucleiOutput } from './adapters/nuclei.js';
+import { parseTestsslJson } from './adapters/testssl.js';
+import type { Severity } from './emit.js';
 
 /**
  * Runner entrypoint (Task 87) — the program inside the unprivileged pod.

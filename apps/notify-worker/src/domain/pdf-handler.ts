@@ -1,8 +1,8 @@
 import { UnrecoverableError } from 'bullmq';
 import type { PdfJobPayload } from '@vunvault/contracts';
-import { InvoiceDocument } from '../pdf/invoice';
-import { ReportDocument } from '../pdf/report';
-import type { Clock, Logger, NotifyRepo, ObjectWriter, PdfRenderer } from '../ports';
+import { InvoiceDocument } from '../pdf/invoice.js';
+import { ReportDocument } from '../pdf/report.js';
+import type { Clock, Logger, NotifyRepo, ObjectWriter, PdfRenderer } from '../ports.js';
 
 /**
  * PDF-queue handling (Task 90).

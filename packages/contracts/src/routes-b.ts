@@ -1,4 +1,4 @@
-import type { RouteDoc } from './routes-a';
+import type { RouteDoc } from './routes-a.js';
 
 /**
  * Route documentation for billing & FX, content moderation, the audit trail,

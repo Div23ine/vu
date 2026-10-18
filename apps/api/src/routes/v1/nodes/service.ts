@@ -1,8 +1,8 @@
 import { createPublicKey, verify as verifySignature, type KeyObject } from 'node:crypto';
 import type { NodeHeartbeatBody } from '@vunvault/contracts';
 import type { NodeStatus } from '@vunvault/db/enum-values';
-import { HttpError } from '../../../lib/http-error';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import { HttpError } from '../../../lib/http-error.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 
 /**
  * Sensor-node heartbeats (Task 37).

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AuditCategory, AuditSeverity } from '@vunvault/contracts';
-import { computeHash, computeSignature, ZERO_HASH } from './crypto';
-import { checkEntry, entryPayload, verifyEntries, type VerifiableAuditEntry } from './verify';
+import { computeHash, computeSignature, ZERO_HASH } from './crypto.js';
+import { checkEntry, entryPayload, verifyEntries, type VerifiableAuditEntry } from './verify.js';
 
 const KEY_V1 = Buffer.alloc(32, 7);
 

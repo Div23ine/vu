@@ -11,12 +11,12 @@ import {
   PublicContentItem,
   PublicContentQuery,
 } from '@vunvault/contracts';
-import { AUDITED } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import type { Tx } from '../../../plugins/db';
-import { HttpError } from '../../../lib/http-error';
-import { SqlContentRepo, type ContentRepo } from './repo';
-import { ModerationService, type AuditInstruction } from './service';
+import { AUDITED } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import type { Tx } from '../../../plugins/db.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { SqlContentRepo, type ContentRepo } from './repo.js';
+import { ModerationService, type AuditInstruction } from './service.js';
 
 /**
  * Content moderation and the public feed (Task 36).

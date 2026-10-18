@@ -1,4 +1,4 @@
-import type { Logger, MaintenanceRepo, Summary, ThreatCounts } from '../ports';
+import type { Logger, MaintenanceRepo, Summary, ThreatCounts } from '../ports.js';
 
 /**
  * `threat_level` (Task 91) — the hourly threat posture snapshot.

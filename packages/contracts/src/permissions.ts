@@ -11,7 +11,7 @@ import type {
   ScanType,
   Team,
   UserRole,
-} from './enums';
+} from './enums.js';
 
 /**
  * The permission catalogue and the role → permission map.

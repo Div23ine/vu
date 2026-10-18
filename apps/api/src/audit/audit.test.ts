@@ -1,6 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { describe, expect, it } from 'vitest';
-import { canonicalJson, CanonicalJsonError } from './canonical';
+import { canonicalJson, CanonicalJsonError } from './canonical.js';
 import {
   computeHash,
   computeSignature,
@@ -12,7 +12,7 @@ import {
   sealWith,
   ZERO_HASH,
   type AuditKeyRing,
-} from './crypto';
+} from './crypto.js';
 import {
   actorLabelFor,
   audited,
@@ -20,8 +20,8 @@ import {
   defaultActor,
   isAudited,
   type AuditSpec,
-} from './audited';
-import type { Tx } from '../plugins/db';
+} from './audited.js';
+import type { Tx } from '../plugins/db.js';
 import {
   AUDIT_SEV1_CHANNEL,
   AUDIT_STREAM_CHANNEL,
@@ -31,10 +31,10 @@ import {
   redactDetails,
   verifyEntries,
   type AuditEntryView,
-} from './service';
-import { asExecutor, type SqlExecutor } from './repo';
-import errorHandler from '../plugins/error-handler';
-import { HttpError } from '../lib/http-error';
+} from './service.js';
+import { asExecutor, type SqlExecutor } from './repo.js';
+import errorHandler from '../plugins/error-handler.js';
+import { HttpError } from '../lib/http-error.js';
 
 /** An in-memory `audit_entries` table that speaks the exact SQL the repo emits. */
 interface StoredRow {

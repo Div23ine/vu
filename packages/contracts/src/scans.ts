@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IsoDateTime, PageQuery, Uuid, UsdCents } from './common';
+import { IsoDateTime, PageQuery, Uuid, UsdCents } from './common.js';
 import {
   FindingSeveritySchema,
   FindingStatusSchema,
@@ -13,7 +13,7 @@ import {
   ScanPrioritySchema,
   ScanStatusSchema,
   ScanTypeSchema,
-} from './enums';
+} from './enums.js';
 import { REVIEW_CHECK_KEYS } from '@vunvault/db/enum-values';
 
 /**

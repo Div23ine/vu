@@ -10,10 +10,10 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { NEWSLETTER_STATUSES } from '../enum-values';
-import { citext, idCol, timestamps, tz, usdCents } from './_columns';
-import { invoices } from './billing';
-import { organizations } from './identity';
+import { NEWSLETTER_STATUSES } from '../enum-values.js';
+import { citext, idCol, timestamps, tz, usdCents } from './_columns.js';
+import { invoices } from './billing.js';
+import { organizations } from './identity.js';
 
 /**
  * The public store (Task 40b): premium products, the licence entitlements a paid

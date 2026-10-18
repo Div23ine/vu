@@ -1,4 +1,4 @@
-import type { Logger, MaintenanceRepo, Summary } from '../ports';
+import type { Logger, MaintenanceRepo, Summary } from '../ports.js';
 
 /**
  * `media_scan` (Task 92) — hourly validation sweep over user-uploaded media

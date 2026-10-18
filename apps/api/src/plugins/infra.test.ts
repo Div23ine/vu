@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildApp } from '../app';
-import type { Env } from '../config/env';
+import { buildApp } from '../app.js';
+import type { Env } from '../config/env.js';
 import {
   EnvSecretProvider,
   OciVaultSecretProvider,
@@ -11,10 +11,10 @@ import {
   type OciSecretsClientLike,
   type SecretName,
   type SecretProvider,
-} from '../lib/secrets/provider';
-import { pingDb } from './db';
-import { redisOptionsFromUrl } from './redis';
-import { DEFAULT_JOB_OPTIONS, QUEUE_JOB_OPTIONS } from '../queues';
+} from '../lib/secrets/provider.js';
+import { pingDb } from './db.js';
+import { redisOptionsFromUrl } from './redis.js';
+import { DEFAULT_JOB_OPTIONS, QUEUE_JOB_OPTIONS } from '../queues/index.js';
 import { QUEUE_NAMES } from '@vunvault/contracts';
 
 vi.mock('ioredis', () => {

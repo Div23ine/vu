@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { ControlMessage, type RedisBus, type Unsubscribe, type Logger } from '../ports';
+import { ControlMessage, type RedisBus, type Unsubscribe, type Logger } from '../ports.js';
 
 /**
  * Redis control bus (Task 84) — the `scan:ctl:<jobId>` subscription.

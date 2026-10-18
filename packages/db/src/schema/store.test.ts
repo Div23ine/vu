@@ -7,10 +7,10 @@ import {
   productEntitlements,
   products,
   PRODUCT_UNIT_LABELS,
-} from './store';
-import { contentItems } from './content';
-import { invoiceLines } from './billing';
-import { NEWSLETTER_STATUSES } from '../enum-values';
+} from './store.js';
+import { contentItems } from './content.js';
+import { invoiceLines } from './billing.js';
+import { NEWSLETTER_STATUSES } from '../enum-values.js';
 
 /**
  * The public store's schema (Task 40b).

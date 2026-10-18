@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { tokens } from './tokens';
+import { tokens } from './tokens.js';
 
 const stylesDir = join(dirname(fileURLToPath(import.meta.url)), 'styles');
 const read = (file: string): string => readFileSync(join(stylesDir, file), 'utf8');

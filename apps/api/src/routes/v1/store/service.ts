@@ -1,12 +1,12 @@
 import type { EntitlementView, ProductView, PurchaseResponse } from '@vunvault/contracts';
-import type { AuditEventType } from '../../../audit/events';
-import type { AuditService } from '../../../audit/service';
-import type { SqlExecutor } from '../../../audit/repo';
-import { HttpError } from '../../../lib/http-error';
-import type { ObjectStorage } from '../../../lib/object-storage';
-import type { InvoiceIssuer } from '../../../billing/invoice-issuer';
-import { generateUniqueLicenseKey } from './license-key';
-import type { EntitlementRow, ProductRow, StoreRepo } from './repo';
+import type { AuditEventType } from '../../../audit/events.js';
+import type { AuditService } from '../../../audit/service.js';
+import type { SqlExecutor } from '../../../audit/repo.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage } from '../../../lib/object-storage.js';
+import type { InvoiceIssuer } from '../../../billing/invoice-issuer.js';
+import { generateUniqueLicenseKey } from './license-key.js';
+import type { EntitlementRow, ProductRow, StoreRepo } from './repo.js';
 
 /**
  * The store: what is for sale, what a purchase produces, and what owning one

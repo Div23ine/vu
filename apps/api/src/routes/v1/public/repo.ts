@@ -1,5 +1,5 @@
 import type { ContactCategories as ConsentCategories } from '@vunvault/contracts';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 
 /**
  * Public intake and the blogger badge (Task 40).

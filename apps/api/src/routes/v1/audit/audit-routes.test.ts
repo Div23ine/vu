@@ -3,14 +3,14 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { UserRole } from '@vunvault/contracts';
 import { ROLE_PERMISSIONS } from '@vunvault/contracts';
-import type { Env } from '../../../config/env';
-import errorHandler from '../../../plugins/error-handler';
-import type { AuthUser } from '../../../plugins/auth';
-import { HttpError } from '../../../lib/http-error';
-import type { AuditEntryRow, SqlExecutor } from '../../../audit/repo';
-import type { AuditEntryView } from '../../../audit/service';
-import auditRoutes from './index';
-import { AUDIT_CSV_HEADER, EXPORT_MAX_ROWS, auditCsvFilename } from './csv';
+import type { Env } from '../../../config/env.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import type { AuthUser } from '../../../plugins/auth.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { AuditEntryRow, SqlExecutor } from '../../../audit/repo.js';
+import type { AuditEntryView } from '../../../audit/service.js';
+import auditRoutes from './index.js';
+import { AUDIT_CSV_HEADER, EXPORT_MAX_ROWS, auditCsvFilename } from './csv.js';
 import {
   AlwaysAvailableLock,
   AuditReadService,
@@ -20,8 +20,8 @@ import {
   integrityPercent,
   nodeLabel,
   shortHash,
-} from './service';
-import type { AuditReadFilters, AuditReadRepo, CheckpointRow, SummaryCounts } from './repo';
+} from './service.js';
+import type { AuditReadFilters, AuditReadRepo, CheckpointRow, SummaryCounts } from './repo.js';
 
 /**
  * The audit trail, read-only.

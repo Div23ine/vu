@@ -42,7 +42,7 @@ import {
   type AuditCategory,
   type ReviewGateState,
   type UserRole,
-} from './enum-values';
+} from './enum-values.js';
 
 /**
  * The tuples are the contract between the database and every wire schema, so the

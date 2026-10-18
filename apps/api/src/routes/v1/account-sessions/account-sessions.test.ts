@@ -5,8 +5,8 @@ import {
   type ChannelToggles,
   type NotificationEvent,
 } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
-import { NotificationDispatcher } from '../../../lib/notify';
+import { HttpError } from '../../../lib/http-error.js';
+import { NotificationDispatcher } from '../../../lib/notify.js';
 import type {
   AccountSessionsRepo,
   DeactivationRow,
@@ -14,13 +14,13 @@ import type {
   SessionRow,
   SuperAdminRow,
   ToggleRow,
-} from './repo';
+} from './repo.js';
 import {
   AccountSessionsService,
   DEACTIVATION_COOLDOWN_MS,
   DeactivationService,
   NotificationPreferencesService,
-} from './service';
+} from './service.js';
 
 const USER_ID = 'f0000000-0000-4000-8000-000000000001';
 const OTHER_ID = 'f0000000-0000-4000-8000-000000000002';

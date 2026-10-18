@@ -3,16 +3,16 @@ import { readFileSync } from 'node:fs';
 import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { parseProtocolLine, PROTOCOL_PREFIX } from '../../src/output/protocol';
-import { parseHttpxOutput } from './adapters/httpx';
-import { parseNmapXml, isPortOpen, webPortUrls } from './adapters/nmap';
-import { parseNucleiOutput } from './adapters/nuclei';
-import { parseTestsslJson } from './adapters/testssl';
-import { INVALID_CONFIG_EXIT, INVALID_CONFIG_LINE, parseRunnerEnv } from './env';
-import { CHILD_ENV, runTool, validateTargetArgument } from './exec';
-import { createEmitter, PREFIX } from './emit';
-import { NUCLEI_EXCLUDED_TAGS, TOOL_PATHS, planFor, progressPercent } from './plan';
-import type { RunnerEnv } from './env';
+import { parseProtocolLine, PROTOCOL_PREFIX } from '../../src/output/protocol.js';
+import { parseHttpxOutput } from './adapters/httpx.js';
+import { parseNmapXml, isPortOpen, webPortUrls } from './adapters/nmap.js';
+import { parseNucleiOutput } from './adapters/nuclei.js';
+import { parseTestsslJson } from './adapters/testssl.js';
+import { INVALID_CONFIG_EXIT, INVALID_CONFIG_LINE, parseRunnerEnv } from './env.js';
+import { CHILD_ENV, runTool, validateTargetArgument } from './exec.js';
+import { createEmitter, PREFIX } from './emit.js';
+import { NUCLEI_EXCLUDED_TAGS, TOOL_PATHS, planFor, progressPercent } from './plan.js';
+import type { RunnerEnv } from './env.js';
 
 /**
  * Runner tests (Task 87) — fixtures instead of real tools.

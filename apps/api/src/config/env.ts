@@ -21,7 +21,20 @@ export const EnvSchema = z
     LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
 
     /** Exact origin of the web app, e.g. `https://www.vunvault.com`. */
-    WEB_ORIGIN: z.string().url(),
+    WEB_ORIGIN: z.string().refine(
+      (val) => {
+        return val.split(',').every((url) => {
+          try {
+            const parsed = new URL(url.trim());
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+          } catch {
+            return false;
+          }
+        });
+      },
+      { message: 'Must be a comma-separated list of valid URLs' },
+    ),
+
     /** e.g. `.vunvault.com`. Empty is allowed in development. */
     COOKIE_DOMAIN: z.string().default(''),
     /** Public base URL of this API, used as the OpenAPI server. */
@@ -53,12 +66,6 @@ export const EnvSchema = z
 
     /**
      * FX rate feed for display-only quotes (Task 33).
-     *
-     * Declared optional rather than `.default(...)`: a Zod default makes the key
-     * REQUIRED in the inferred output type, which would break every `Env` literal
-     * in the existing test harnesses — files this task must not touch. The
-     * catalogue's default is applied by `resolveFxConfig()` instead, so an unset
-     * variable still yields the documented endpoint and TTL.
      */
     FX_API_URL: z.string().url().optional(),
     /** Lifetime of a locked display rate, and of the cached rate payload. */
@@ -66,9 +73,7 @@ export const EnvSchema = z
 
     /**
      * Comma-separated CIDR allow-list for the internal scan-controller
-     * callbacks (Task 40g). Empty/absent = no IP restriction (the HMAC
-     * signature remains mandatory either way). Optional — not `.default('')` —
-     * so existing `Env` literals in test harnesses stay valid.
+     * callbacks (Task 40g). Empty/absent = no IP restriction.
      */
     SCAN_CONTROLLER_CIDRS: z.string().optional(),
   })
@@ -92,9 +97,6 @@ export interface FxConfig {
 
 /**
  * The rate-feed configuration with its defaults applied.
- *
- * Display-only: quotes are shown to a client in KES, NGN, GHS or ZAR, and the
- * charge that follows is always USD. Nothing about this feed can change an amount.
  */
 export function resolveFxConfig(env: Env): FxConfig {
   return {

@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { IsoDateTime, Uuid } from './common';
-import { BlogCategorySchema, ContentStatusSchema } from './enums';
-import type { BlogCategory } from './enums';
+import { IsoDateTime, Uuid } from './common.js';
+import { BlogCategorySchema, ContentStatusSchema } from './enums.js';
+import type { BlogCategory } from './enums.js';
 
 /**
  * Content Studio — the self-service authoring surface for verified journalists /

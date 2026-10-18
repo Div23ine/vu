@@ -1,6 +1,6 @@
 import type { Queue } from 'bullmq';
 import type { NotifyJobPayload } from '@vunvault/contracts';
-import type { NotifyEnqueuer } from '../ports';
+import type { NotifyEnqueuer } from '../ports.js';
 
 /**
  * E-mail enqueue onto the `notify` queue (consumed by Task 90's worker).

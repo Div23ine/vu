@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { randomBytes } from 'node:crypto';
-import { COOKIE_NAMES, cookieOptions, type CookieName } from '../plugins/cookies';
+import { COOKIE_NAMES, cookieOptions, type CookieName } from '../plugins/cookies.js';
 
 /**
  * Session cookies.

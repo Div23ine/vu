@@ -1,7 +1,7 @@
 import { is } from 'drizzle-orm';
 import { getTableConfig, PgTable, type AnyPgTable } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
-import * as schema from './index';
+import * as schema from './index.js';
 import {
   loginAttempts,
   notificationPreferences,
@@ -12,9 +12,9 @@ import {
   userRecoveryCodes,
   userSessions,
   SUPPORTED_LANGUAGES,
-} from './account';
-import { contentItems } from './content';
-import { profiles } from './identity';
+} from './account.js';
+import { contentItems } from './content.js';
+import { profiles } from './identity.js';
 import {
   BLOG_CATEGORIES,
   CAREER_ROLES,
@@ -22,7 +22,7 @@ import {
   NOTIFICATION_CHANNELS,
   NOTIFICATION_EVENTS,
   RECOVERY_QUESTIONS,
-} from '../enum-values';
+} from '../enum-values.js';
 
 function columnNames(table: Parameters<typeof getTableConfig>[0]): string[] {
   return getTableConfig(table).columns.map((column) => column.name);

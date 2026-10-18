@@ -1,5 +1,5 @@
 import { setupServer } from 'msw/node';
-import { handlers } from './handlers';
+import { handlers } from './handlers/index';
 
 /**
  * Node MSW server for Vitest. The lifecycle (listen / resetHandlers / close)

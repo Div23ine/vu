@@ -1,7 +1,7 @@
 import { Worker, type Job } from 'bullmq';
 import { BroadcastJobPayload, QUEUE_NAMES } from '@vunvault/contracts';
-import type { Logger } from '../ports';
-import type { BroadcastDeliveryService, DeliverySummary } from '../domain/delivery';
+import type { Logger } from '../ports.js';
+import type { BroadcastDeliveryService, DeliverySummary } from '../domain/delivery.js';
 
 /**
  * BullMQ consumer (Task 89) — the `broadcast` queue.

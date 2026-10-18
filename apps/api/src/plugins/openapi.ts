@@ -3,7 +3,7 @@ import swaggerUi from '@fastify/swagger-ui';
 import fp from 'fastify-plugin';
 import { jsonSchemaTransform } from 'fastify-type-provider-zod';
 import type { FastifyPluginAsync } from 'fastify';
-import type { Env } from '../config/env';
+import type { Env } from '../config/env.js';
 
 export interface OpenApiOptions {
   env: Env;

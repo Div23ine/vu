@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BroadcastProgressEvent } from '@vunvault/contracts';
-import { BroadcastDeliveryService, dedupeContacts, mapPool } from './delivery';
+import { BroadcastDeliveryService, dedupeContacts, mapPool } from './delivery.js';
 import type {
   AdvisoryDeliveryView,
   BroadcastRepo,
@@ -13,7 +13,7 @@ import type {
   OrgContact,
   ProgressBus,
   SmsSender,
-} from '../ports';
+} from '../ports.js';
 
 const BROADCAST_ID = '3f2b8c1e-9d4a-4e7b-8c2f-1a5d6e7f8090';
 const ADVISORY_ID = '9a8b7c6d-5e4f-4a3b-2c1d-0e9f8a7b6c5d';

@@ -1,4 +1,4 @@
-import type { ClientProfile } from '../src/profile';
+import type { ClientProfile } from '../src/profile.js';
 
 /** Client portal profile fixture for Acme Fintech Ltd. */
 export const clientProfile: ClientProfile = {

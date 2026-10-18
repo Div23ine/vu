@@ -1,4 +1,4 @@
-import type { Logger, MaintenanceRepo, Summary } from '../ports';
+import type { Logger, MaintenanceRepo, Summary } from '../ports.js';
 
 /**
  * `expire_invitations` (Task 92) — hourly.

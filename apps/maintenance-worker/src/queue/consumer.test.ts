@@ -8,8 +8,8 @@ import {
   makeProcessor,
   startConsumer,
   type HandlerDeps,
-} from './consumer';
-import type { Logger } from '../ports';
+} from './consumer.js';
+import type { Logger } from '../ports.js';
 
 function makeLogger(): Logger & { lines: Array<{ level: string; message: string }> } {
   const lines: Array<{ level: string; message: string }> = [];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { PROTOCOL_PREFIX, isProtocolLine, parseProtocolLine } from './protocol';
+import { PROTOCOL_PREFIX, isProtocolLine, parseProtocolLine } from './protocol.js';
 
 /**
  * Protocol tests (Task 85).

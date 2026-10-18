@@ -1,4 +1,4 @@
-import type { Severity } from '../emit';
+import type { Severity } from '../emit.js';
 
 /**
  * httpx adapter (Task 87) — JSONL in, tech/header lines and findings out.

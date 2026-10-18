@@ -5,7 +5,7 @@ import {
   formatUsdWhole,
   usdCentsToLocalMinor,
   type DisplayCurrency,
-} from './money';
+} from './money.js';
 
 describe('formatUsd', () => {
   it('renders grouped USD with two decimals', () => {

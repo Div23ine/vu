@@ -1,4 +1,4 @@
-import type { Logger, MaintenanceRepo, NotifyEnqueuer, Summary } from '../ports';
+import type { Logger, MaintenanceRepo, NotifyEnqueuer, Summary } from '../ports.js';
 
 /**
  * `scheduled_publish` (Task 91) — content that was approved and scheduled goes

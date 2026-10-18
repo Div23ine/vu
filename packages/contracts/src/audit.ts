@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { IsoDateTime, PageQuery, Uuid } from './common';
-import { AuditCategorySchema, AuditSeveritySchema } from './enums';
-import type { AuditCategory, AuditSeverity } from './enums';
+import { IsoDateTime, PageQuery, Uuid } from './common.js';
+import { AuditCategorySchema, AuditSeveritySchema } from './enums.js';
+import type { AuditCategory, AuditSeverity } from './enums.js';
 
 /**
  * The audit trail read model.

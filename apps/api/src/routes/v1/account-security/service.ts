@@ -1,13 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import type { MfaMethod } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
-import { isStaff } from '../../../lib/staff';
-import type { BreachCheck } from '../../../lib/breach';
-import type { EmailProvider } from '../../../providers/email';
-import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin';
-import type { QueueRegistry } from '../../../queues';
-import { computePosture } from './posture';
-import { validatePassword } from './password-policy';
+import { HttpError } from '../../../lib/http-error.js';
+import { isStaff } from '../../../lib/staff.js';
+import type { BreachCheck } from '../../../lib/breach.js';
+import type { EmailProvider } from '../../../providers/email.js';
+import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
+import type { QueueRegistry } from '../../../queues/index.js';
+import { computePosture } from './posture.js';
+import { validatePassword } from './password-policy.js';
 import {
   generateRecoveryBatch,
   hashRecoveryCode,
@@ -15,10 +15,10 @@ import {
   newBatchId,
   normalise,
   RECOVERY_BATCH_SIZE,
-} from './recovery-codes';
-import type { AccountSecurityRepo, SecurityProfileRow, WebauthnKeyRow } from './repo';
-import type { WebauthnService } from './webauthn';
-import type { KvStore } from '../auth/challenge';
+} from './recovery-codes.js';
+import type { AccountSecurityRepo, SecurityProfileRow, WebauthnKeyRow } from './repo.js';
+import type { WebauthnService } from './webauthn.js';
+import type { KvStore } from '../auth/challenge.js';
 
 /**
  * Password Manager: password change, TOTP, WebAuthn, recovery codes and the

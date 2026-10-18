@@ -3,12 +3,12 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { UserRole } from '@vunvault/contracts';
 import { ROLE_PERMISSIONS } from '@vunvault/contracts';
-import type { Env } from '../../../config/env';
-import errorHandler from '../../../plugins/error-handler';
-import type { AuthUser } from '../../../plugins/auth';
-import { HttpError } from '../../../lib/http-error';
-import dashboardRoutes from './index';
-import { memoryCache } from './cache';
+import type { Env } from '../../../config/env.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import type { AuthUser } from '../../../plugins/auth.js';
+import { HttpError } from '../../../lib/http-error.js';
+import dashboardRoutes from './index.js';
+import { memoryCache } from './cache.js';
 import {
   boundsFor,
   changePerDayPercent,
@@ -17,7 +17,7 @@ import {
   largestRemainderShares,
   periodLabel,
   trailingWeekdays,
-} from './service';
+} from './service.js';
 import type {
   DashboardRepo,
   DateBounds,
@@ -28,7 +28,7 @@ import type {
   ThreatSnapshotRow,
   TrafficRaw,
   TransactionRow,
-} from './repo';
+} from './repo.js';
 
 /**
  * The Command Center.

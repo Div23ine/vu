@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { IsoDateTime, PageQuery, Uuid } from './common';
-import { ContactCategorySchema, ContactStatusSchema } from './enums';
-import type { ContactCategory } from './enums';
+import { IsoDateTime, PageQuery, Uuid } from './common.js';
+import { ContactCategorySchema, ContactStatusSchema } from './enums.js';
+import type { ContactCategory } from './enums.js';
 
 /**
  * Public contact intake and cookie consent.

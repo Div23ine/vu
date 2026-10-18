@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import type { KvStore } from './challenge';
+import type { KvStore } from './challenge.js';
 
 /**
  * The password-reset token store (Task 40d).

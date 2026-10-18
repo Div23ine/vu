@@ -1,11 +1,11 @@
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 import {
   NOTIFICATION_EVENT_ORDER,
   type ChannelToggles,
   type MfaMethod,
   type NotificationEvent,
 } from '@vunvault/contracts';
-import type { NotifyRecipient, QuietHours } from '../../../lib/notify';
+import type { NotifyRecipient, QuietHours } from '../../../lib/notify.js';
 
 /**
  * Data access for notification preferences, device sessions and the deactivation

@@ -12,8 +12,8 @@ import type {
   RunResult,
   SlotSemaphore,
   Unsubscribe,
-} from '../ports';
-import { JobRunner, truncate } from './job-runner';
+} from '../ports.js';
+import { JobRunner, truncate } from './job-runner.js';
 
 /**
  * Job-runner tests (Task 84) — the orchestration invariants, all with fakes:

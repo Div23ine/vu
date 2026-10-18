@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import worker, { buildUpstreamRequest, type EdgeContext, type Env } from './index';
-import { metricPayload } from './metrics';
+import worker, { buildUpstreamRequest, type EdgeContext, type Env } from './index.js';
+import { metricPayload } from './metrics.js';
 
 /**
  * The edge Worker's behaviour (Task 99) with a fake upstream `fetch`, a fake

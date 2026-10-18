@@ -11,12 +11,12 @@ export {
   getApiConfig,
   type ApiConfig,
   type ApiFetchInit,
-} from './api/client';
-export { ApiError, isApiError, type ErrorEnvelope } from './api/errors';
-export { createQueryClient } from './api/query-client';
-export { queryKeys, type QueryKeys } from './api/query-keys';
-export { assertNever } from './assert';
-export { cn } from './cn';
+} from './api/client.js';
+export { ApiError, isApiError, type ErrorEnvelope } from './api/errors.js';
+export { createQueryClient } from './api/query-client.js';
+export { queryKeys, type QueryKeys } from './api/query-keys.js';
+export { assertNever } from './assert.js';
+export { cn } from './cn.js';
 export {
   formatDayMonth,
   formatEta,
@@ -26,7 +26,7 @@ export {
   formatRelativeActive,
   formatUtcClock,
   formatUtcStamp,
-} from './format';
+} from './format.js';
 export {
   formatClientCode,
   formatInvoiceNumber,
@@ -36,7 +36,7 @@ export {
   parseInvoiceNumber,
   parseJobCode,
   parsePentestRef,
-} from './ids';
+} from './ids.js';
 export {
   formatLocalDisplay,
   formatUsd,
@@ -45,4 +45,4 @@ export {
   type DisplayCurrency,
   type LocalMinor,
   type UsdCents,
-} from './money';
+} from './money.js';

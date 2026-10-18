@@ -4,8 +4,8 @@ import {
   SmsRouter,
   TwilioSmsProvider,
 } from '@vunvault/lib/providers';
-import type { EmailSender, SmsSender } from '../ports';
-import type { Env } from '../config/env';
+import type { EmailSender, SmsSender } from '../ports.js';
+import type { Env } from '../config/env.js';
 
 /**
  * Delivery providers built from the validated environment.

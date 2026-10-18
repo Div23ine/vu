@@ -1,15 +1,20 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Env } from '../../../config/env';
-import errorHandler from '../../../plugins/error-handler';
-import rawBodyPlugin from '../../../plugins/raw-body';
-import type { AuditEntryRow } from '../../../audit/repo';
+import type { Env } from '../../../config/env.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import rawBodyPlugin from '../../../plugins/raw-body.js';
+import type { AuditEntryRow } from '../../../audit/repo.js';
 import type { ScanAbortReason } from '@vunvault/contracts';
-import internalScansRoutes from './index';
-import { signInternalRequest, type NonceStore } from './hmac-auth';
-import type { InternalJobRow, InternalScansRepo, NewInternalFinding, SeverityCounts } from './repo';
-import type { NotifyInput } from './service';
+import internalScansRoutes from './index.js';
+import { signInternalRequest, type NonceStore } from './hmac-auth.js';
+import type {
+  InternalJobRow,
+  InternalScansRepo,
+  NewInternalFinding,
+  SeverityCounts,
+} from './repo.js';
+import type { NotifyInput } from './service.js';
 import { createHash } from 'node:crypto';
 
 /**

@@ -1,6 +1,6 @@
 import type { Queue } from 'bullmq';
 import type { NotificationEvent, NotifyJobPayload } from '@vunvault/contracts';
-import type { NotifyEnqueuer } from '../ports';
+import type { NotifyEnqueuer } from '../ports.js';
 
 /**
  * In-app notifications are enqueued for the notify worker (Task 90), not
