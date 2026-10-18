@@ -13,13 +13,13 @@ import { MfaDialog } from './_components/mfa-dialog';
 import { useMfaDialogStore, type MfaUiMethod } from './_store/mfa-dialog-store';
 
 /**
- * MFA dialog tests (Task 60) — the six-box UX (digits only, paste-and-submit
+ * MFA dialog tests — the six-box UX (digits only, paste-and-submit
  * once, backspace navigation), the verbatim error copy, the success view and
  * navigation (including the staff recovery-login bounce), the method
  * switcher, Escape, the resend cooldown (fake timers) and the WebAuthn path
  * with a mocked `navigator.credentials`.
  *
- * The MFA endpoints live in `server.use` overrides inside this file: Task 60's
+ * The MFA endpoints live in `server.use` overrides inside this file: an earlier iteration's
  * deliverables do not include the shared auth handler, and per-test routes
  * keep the failure paths (401/410/cancel) controllable.
  */

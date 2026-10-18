@@ -10,17 +10,17 @@ import {
 import '../_styles/services.css';
 
 /**
- * Inline OSINT CLI (Task 54) — the services page's terminal window.
+ * Inline OSINT CLI — the services page's terminal window.
  *
- * Per the catalogue's behaviour spec this REUSES Task 48's simulation engine
+ * Per the spec's behaviour spec this REUSES an earlier iteration's simulation engine
  * verbatim ("same validation and the same 19-step script", and "do not
  * duplicate the scan engine" is an explicit out-of-scope rule): all three
  * tools run `useScanSimulation`. The tool tabs swap the hint, placeholder and
- * suggestion chips; switching a tool resets the terminal, as the prototype's
+ * suggestion chips; switching a tool resets the terminal, as the design's
  * per-tool form implies.
  *
  * The reference JS embeds per-tool result scripts, but it is truncated in the
- * catalogue mid-DNS-module and the IMEI module is absent entirely — the
+ * catalog mid-DNS-module and the IMEI module is absent entirely — the
  * engine reuse mandated by the behaviour text is what ships. The IMEI tool's
  * hint/placeholder/chip have no recorded copy; minimal consistent strings are
  * authored for them and flagged in the report.
@@ -38,7 +38,7 @@ const CLI_TOOLS: readonly CliTool[] = [
   {
     key: 'ip',
     tabLabel: '1 · IP / Reverse Lookup',
-    placeholder: 'example.com   or   203.0.113.42',
+    placeholder: 'example.com  or  203.0.113.42',
     hint: 'Resolves reverse DNS, WHOIS ownership and geolocation for a domain or IPv4 address.',
     chips: ['example.com', '203.0.113.42', 'api.vunvault.com'],
   },
@@ -50,7 +50,7 @@ const CLI_TOOLS: readonly CliTool[] = [
     chips: ['example.com', 'vunvault.com', 'mail.example.com'],
   },
   {
-    // Authored copy — the catalogue's reference JS is truncated before this
+    // Authored copy — the spec's reference JS is truncated before this
     // tool (see file header).
     key: 'imei',
     tabLabel: '3 · IMEI / Device Registry',

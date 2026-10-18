@@ -5,9 +5,9 @@ import { STUDIO_LIMITS } from '@vunvault/contracts';
 import '../../_styles/editor.css';
 
 /**
- * Title + URL slug fields (Task 72). The slug auto-follows the title until
+ * Title + URL slug fields . The slug auto-follows the title until
  * the author locks it (or edits it by hand, which locks it); the lock toggle
- * carries the prototype's verbatim state strings as its accessible name.
+ * carries the design's verbatim state strings as its accessible name.
  */
 
 interface TitleSlugProps {

@@ -14,8 +14,8 @@ import { formatUsdWhole } from '@vunvault/lib';
 import '../_styles/products.css';
 
 /**
- * Product card (Task 55) — presentational. The `action` slot is filled by the
- * catalogue section (login link, or the Buy Now mutation button, depending on
+ * Product card — presentational. The `action` slot is filled by the
+ * catalog section (login link, or the Buy Now mutation button, depending on
  * the session), keeping auth logic out of the card. Price is USD through
  * `formatUsdWhole`; a local currency never appears on this page.
  */

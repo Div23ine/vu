@@ -15,12 +15,12 @@ import '../_styles/blog.css';
  * next.config.ts). */
 
 /**
- * Article reader (Task 56) — the `/blog/[slug]` detail view.
+ * Article reader — the `/blog/[slug]` detail view.
  *
  * Server component: the page fetches the detail on the edge and hands the
  * parsed `PublicContentDetail` down. The body renders through `SafeMarkdown`
  * only — never `dangerouslySetInnerHTML`, never raw HTML. The back control
- * appears above and below the body, exactly as in the prototype (as links,
+ * appears above and below the body, exactly as in the design (as links,
  * since it navigates).
  */
 

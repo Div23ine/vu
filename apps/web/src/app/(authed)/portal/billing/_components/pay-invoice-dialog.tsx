@@ -25,25 +25,25 @@ import { PaymentChannelPicker, type PaymentChannelChoice } from './payment-chann
 import { StripeCardFields, type CardFieldsComplete } from './stripe-card-fields';
 
 /**
- * Pay-invoice dialog (Task 66b) — mounted once by `/portal/billing`, driven
- * by the `usePayDialogStore` Task 66 created (Pay Now buttons and the
- * `?invoice=` hand-off both fill it). Built on the Task 11 `Dialog` primitive
+ * Pay-invoice dialog — mounted once by `/portal/billing`, driven
+ * by the `usePayDialogStore` an earlier iteration created (Pay Now buttons and the
+ * `?invoice=` hand-off both fill it). Built on the an earlier iteration `Dialog` primitive
  * (Radix supplies `role="dialog"`, `aria-modal`, the focus trap and
  * Escape-to-close) with the billing page's `vbb-*` styling language.
  *
  * Hard rules, enforced here:
- *  - the amount sent to any provider is ALWAYS the server-derived USD amount
- *    — the checkout body carries no amount field at all, and the local
- *    currency is display-only (locked FX quote, mm:ss countdown);
- *  - `idempotencyKey = crypto.randomUUID()` is generated ONCE per dialog open
- *    and reused across retries, so a double-click cannot double-charge;
- *  - the synchronous checkout result is never trusted for ledger state:
- *    every success path polls the invoices list (3 s, 60 s budget) until the
- *    row reads `paid` before showing `Payment received`.
+ * - the amount sent to any provider is ALWAYS the server-derived USD amount
+ * — the checkout body carries no amount field at all, and the local
+ * currency is display-only (locked FX quote, mm:ss countdown);
+ * - `idempotencyKey = crypto.randomUUID()` is generated ONCE per dialog open
+ * and reused across retries, so a double-click cannot double-charge;
+ * - the synchronous checkout result is never trusted for ledger state:
+ * every success path polls the invoices list (3 s, 60 s budget) until the
+ * row reads `paid` before showing `Payment received`.
  *
  * Channel mapping: Card → `stripe`/`card` (saved method, or Stripe Elements
- * tokenisation as in Task 66); M-Pesa → `paystack`/`mpesa`; Bank transfer →
- * `paystack`/`bank_transfer`. Planner note: `CheckoutBody` has no phone
+ * tokenisation as in an earlier iteration); M-Pesa → `paystack`/`mpesa`; Bank transfer →
+ * `paystack`/`bank_transfer`. Spec note: `CheckoutBody` has no phone
  * field — the M-Pesa number is validated here for the Paystack prompt, but
  * the wire body stays exactly the contract.
  */
@@ -198,7 +198,7 @@ function PayInvoiceInner({ invoice, onDone }: PayInvoiceFlowProps) {
       invalidateBilling();
     } else if (attemptState === 'timed_out') {
       setPolling(false);
-      // Authored toast title (the planner pinned the message copy only).
+      // Authored toast title (the spec pinned the message copy only).
       toast({ kind: 'info', title: 'Payment processing', message: TIMEOUT_COPY });
       onDone();
     }
@@ -345,7 +345,7 @@ function PayInvoiceInner({ invoice, onDone }: PayInvoiceFlowProps) {
       <div className="vbb-pay-success" role="status">
         <DialogTitle className="vbb-modal-title">Payment received</DialogTitle>
         {/* Screen-reader description so Radix never warns about an
-            undescribed dialog; not part of the visible planner copy. */}
+      undescribed dialog; not part of the visible spec copy. */}
         <DialogDescription className="sr-only">
           The payment was confirmed and the invoice is paid.
         </DialogDescription>

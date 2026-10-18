@@ -9,7 +9,7 @@ import { env } from '../env';
 import { can, isStaffRole } from './permissions';
 
 /**
- * Server-side session (Task 43).
+ * Server-side session .
  *
  * Server components and layout guards cannot use the client's TanStack Query
  * cache, so they read the session the same way the browser does — from the
@@ -21,7 +21,7 @@ import { can, isStaffRole } from './permissions';
  */
 
 // TODO(backend-contract): GET /api/v1/auth/session (server-side, cookie forwarded)
-//   → 200 { data: SessionUser } | 401 { error: "unauthorized" }
+//  → 200 { data: SessionUser } | 401 { error: "unauthorized" }
 
 /**
  * Fetch the current session for the incoming request, or `null` when there is
@@ -63,10 +63,10 @@ export interface RequireSessionOptions {
 /**
  * Layout/page guard: returns the session or redirects.
  *
- *  - no session            → `/login`
- *  - `staff` and not staff → `/forbidden`
- *  - `permission` missing  → `/forbidden`
- *  - staff without MFA     → `/login?error=mfa_required` (see below)
+ * - no session      → `/login`
+ * - `staff` and not staff → `/forbidden`
+ * - `permission` missing → `/forbidden`
+ * - staff without MFA   → `/login?error=mfa_required` (see below)
  */
 export async function requireSession(options: RequireSessionOptions = {}): Promise<SessionUser> {
   const user = await getServerSession();
@@ -75,7 +75,7 @@ export async function requireSession(options: RequireSessionOptions = {}): Promi
   if (options.permission !== undefined && !can(user, options.permission)) redirect('/forbidden');
 
   if (options.staff === true && !user.mfaEnrolled) {
-    // PLACEHOLDER (per Task 43): staff that authenticated at aal1 (password only)
+    // PLACEHOLDER (per an earlier iteration): staff that authenticated at aal1 (password only)
     // are not sent to an enrolment screen. The intended destination,
     // `/admin/profile#security`, cannot host the enrolment yet — the API answers
     // `mfa_required` on admin calls for aal1 staff, so the very page that would

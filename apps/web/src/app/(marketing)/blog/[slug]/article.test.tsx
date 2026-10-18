@@ -9,7 +9,7 @@ import { SafeMarkdown } from '../_components/safe-markdown';
 import { fetchArticle } from './page';
 
 /**
- * Article reader tests (Task 56) — the safe-markdown renderer (including the
+ * Article reader tests — the safe-markdown renderer (including the
  * mandated XSS probes), the edge loader's 404 behaviour against the MSW
  * detail handler, and the reader's composition of a contract-shaped
  * `PublicContentDetail`.

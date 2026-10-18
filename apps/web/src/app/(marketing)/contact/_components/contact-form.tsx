@@ -13,14 +13,14 @@ import { contactReference, useSubmitContact, type ContactPayload } from '../_hoo
 import '../_styles/contact.css';
 
 /**
- * Secure request form (Task 57) — RHF + Zod over the contract's `ContactBody`.
+ * Secure request form — RHF + Zod over the contract's `ContactBody`.
  *
- * The prototype queued submissions in `localStorage`; this posts to the public
+ * The design queued submissions in `localStorage`; this posts to the public
  * contact API and shows the reference banner instead:
- *  - `201` → ok banner `Request received — reference REQ-XXXXXX.` plus the
- *    category-specific sentence, then a form reset;
- *  - `400 validation_failed` / `429` / network failure → the planner-authored
- *    alert banners, verbatim below.
+ * - `201` → ok banner `Request received — reference REQ-XXXXXX.` plus the
+ * category-specific sentence, then a form reset;
+ * - `400 validation_failed` / `429` / network failure → the authored
+ * alert banners, verbatim below.
  *
  * The hidden `website` honeypot rides along in the payload (the API answers
  * 201 and silently drops anything where it is filled — a bot gets the same
@@ -56,7 +56,7 @@ const CATEGORY_VALUES = new Set<string>(CATEGORY_OPTIONS.map(([value]) => value)
 /**
  * Per-category success sentences. The reference JS is truncated after the
  * journalist and whistleblower entries, and its localStorage-queue wording is
- * replaced per the catalogue's instruction ("An administrator will review it
+ * replaced per the spec's instruction ("An administrator will review it
  * shortly."); the remaining categories fall back to that sentence.
  */
 const CATEGORY_SUCCESS: Partial<Record<ContactCategory, string>> = {

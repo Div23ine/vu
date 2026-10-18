@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { AdmKpi, AdminPageHead } from './admin-page-head';
 
 /**
- * Admin page-head + KPI tests (Task 75) — the spec's list: the head renders
+ * Admin page-head + KPI tests — the spec's list: the head renders
  * eyebrow/title/description verbatim and an actions slot; the KPI tile
  * renders a value with a unit and the delta tone classes. The copy is the
  * reference markup's (Command Center head, traffic KPIs).

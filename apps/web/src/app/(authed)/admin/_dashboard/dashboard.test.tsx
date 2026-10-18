@@ -25,11 +25,11 @@ import { server } from '../../../../mocks/server';
 import AdminDashboardPage from '../page';
 
 /**
- * Command Center tests (Task 76) — the spec's list: KPI values + USD
+ * Command Center tests — the spec's list: KPI values + USD
  * formatting from MSW, each panel renders its rows, a 403 HIDES its panel,
  * Refresh Metrics sends `refresh=1` on all nine queries (with the verbatim
  * toast), and no charting library exists in the dependency tree. Every
- * expected figure is fixture-derived — no prototype number is hard-coded.
+ * expected figure is fixture-derived — no design number is hard-coded.
  */
 
 let queryClient: QueryClient;

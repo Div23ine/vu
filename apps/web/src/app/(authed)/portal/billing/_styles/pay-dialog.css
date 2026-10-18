@@ -1,7 +1,7 @@
 /**
- * Pay-invoice dialog stylesheet (Task 66b).
+ * Pay-invoice dialog stylesheet .
  *
- * The dialog itself is the Task 11 `Dialog` primitive wearing the billing
+ * The dialog itself is the an earlier iteration `Dialog` primitive wearing the billing
  * page's `vbb-*` language — `billing.css` (imported by the page) already owns
  * `.vbb-btn*`, `.vbb-field`, `.vbb-input`, `.vbb-select`, `.vbb-modal-*`,
  * `.vbb-field-error`, `.vbb-status*`; this file adds ONLY the pieces the pay
@@ -11,8 +11,8 @@
  *
  * All values are tokens (`--brand*`, `--ink*`, `--line*`, `--warn*`, `--paper`,
  * `--white`, `--r-*`, `--dur`, `--ease`, `--font-mono`); the channel cards
- * follow the radio-card pattern the signup prototype established (Task 61).
- * AUTHORED (this dialog has no prototype — the planner spec pins the copy and
+ * follow the radio-card pattern the signup design established .
+ * AUTHORED (this dialog has no design — the spec spec pins the copy and
  * the structure); every animation has a reduced-motion fallback below.
  */
 

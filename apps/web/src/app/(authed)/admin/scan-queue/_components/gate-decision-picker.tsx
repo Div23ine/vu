@@ -7,7 +7,7 @@ import { cn } from '@vunvault/lib';
 import '../_styles/scan-queue.css';
 
 /**
- * Gate decision picker (Task 78) — the three decision radio cards
+ * Gate decision picker — the three decision radio cards
  * (`GATE_DECISION_LABELS` titles/descriptions verbatim). Without
  * `scans:release` the `Approve & Release` card is disabled and carries the
  * verbatim tooltip `Requires administrator authority.`

@@ -9,9 +9,9 @@ import { SubmissionsTable } from './submissions-table';
 import '../_styles/studio.css';
 
 /**
- * Studio gate (Task 71) — `GET /studio/status` decides the whole page:
+ * Studio gate — `GET /studio/status` decides the whole page:
  * without the Verified-Blogger badge the access-denied card renders (copy
- * verbatim from the reference markup, with the prototype's demo-grant button
+ * verbatim from the reference markup, with the design's demo-grant button
  * and its localStorage note REMOVED — the badge is granted by an
  * administrator after a Contact-page verification request, never from the
  * browser). Verified users get the header chip and the submissions table.

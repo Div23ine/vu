@@ -13,7 +13,7 @@ import { queryKeys } from '@vunvault/lib';
 import { apiGet, apiPost } from '../../../../../lib/api';
 
 /**
- * Scan-queue hooks (Task 77) — the admin scans API (Task 35): the summary
+ * Scan-queue hooks — the admin scans API : the summary
  * tiles, the filtered/sortable/paginated list, the bulk action and the two
  * row writes (request-payment, cancel). The list and summary poll every 15 s
  * while the tab is visible (the real-time push arrives in Layer L12); the
@@ -70,7 +70,7 @@ export function useScanQueueSummary() {
 export function useAdminScans(filters: ScanQueueFilters) {
   return useQuery({
     // TODO(backend-contract): GET /api/v1/admin/scans?q=&status=&gate=&payment=&type=&page=&pageSize=
-    //   → 200 { data: ScanJob[]; total }
+    //  → 200 { data: ScanJob[]; total }
     queryKey: queryKeys.scans.adminQueue(filters),
     queryFn: () =>
       apiGet<{ data: ScanJob[]; total: number }>(`/api/v1/admin/scans?${searchOf(filters)}`),
@@ -101,7 +101,7 @@ export function useBulkScanAction() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): POST /api/v1/admin/scans/bulk body BulkScanActionBody
-    //   → 200 { data: { updated; skippedIds } }
+    //  → 200 { data: { updated; skippedIds } }
     mutationFn: (body: BulkScanActionBody) =>
       apiPost<{ data: BulkResult }>('/api/v1/admin/scans/bulk', body).then(
         (response) => response.data,

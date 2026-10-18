@@ -15,7 +15,7 @@ import PortalHomePage from './page';
 import ScanDetailPage from './scans/[id]/page';
 
 /**
- * Portal scans tests (Task 69) — the spec's list: the table renders the MSW
+ * Portal scans tests — the spec's list: the table renders the MSW
  * rows and links to the detail, the empty state, the New-scan dialog requires
  * the PDF and runs the THREE requests in order (authorisation-url → PUT
  * upload → create), both 422 mappings, the detail renders findings sorted

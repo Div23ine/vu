@@ -3,11 +3,11 @@
 import { cn } from '@vunvault/lib';
 
 /**
- * Verification step tracker (Task 62) — the `Email → 2FA → Done` rail at the
+ * Verification step tracker — the `Email → 2FA → Done` rail at the
  * top of the signup verification dialog. Numbers 1–3 with the verbatim labels;
  * the active node carries `aria-current="step"`, completed nodes `is-done`
  * (green, per the reference CSS). Non-interactive: unlike the onboarding
- * stepper (Task 64), the catalogue gives this tracker no click behaviour —
+ * stepper , the spec gives this tracker no click behaviour —
  * the flow is strictly forward.
  */
 

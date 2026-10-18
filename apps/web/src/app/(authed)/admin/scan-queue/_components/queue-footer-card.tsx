@@ -2,10 +2,10 @@ import { ShieldCheck } from 'lucide-react';
 import '../_styles/scan-queue.css';
 
 /**
- * Mandatory Admin Review Gate card (Task 77) — the dark policy card that
+ * Mandatory Admin Review Gate card — the dark policy card that
  * closes the page: the four numbered verification steps and the release-lock
  * alert, all verbatim from the reference. Presentational; the five CHECKS
- * themselves are the Task 78 dialog's (contract `REVIEW_CHECK_LABELS`).
+ * themselves are the an earlier iteration dialog's (contract `REVIEW_CHECK_LABELS`).
  */
 
 const GATE_STEPS = [

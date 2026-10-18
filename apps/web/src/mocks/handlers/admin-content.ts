@@ -6,10 +6,10 @@ import { ModerationActionBody } from '@vunvault/contracts';
 import { moderationItems, moderationSummary } from '@vunvault/contracts/fixtures/content';
 
 /**
- * Admin content-moderation mock handlers (Task 83).
+ * Admin content-moderation mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock mode.
- * The Task 20 fixtures ARE the queue (ten items across every review state and
+ * The an earlier iteration fixtures ARE the queue (ten items across every review state and
  * flag combination) and the summary; the list endpoint applies the real filter
  * semantics (`q` over title, slug path, author name and team; exact `type` /
  * `status`; `flag`, where the contract's `"none"` means "no flags at all";
@@ -23,12 +23,12 @@ import { moderationItems, moderationSummary } from '@vunvault/contracts/fixtures
  * see, so tests install those with `server.use(...)` — the per-test override
  * pattern `vitest.setup.ts` documents.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 36):
- *   GET  /api/v1/admin/content?…          → 200 { data: ModerationItem[]; total }
- *   GET  /api/v1/admin/content/summary    → 200 { data: ModerationSummary }
- *   POST /api/v1/admin/content/:id/actions → 200 { data: ModerationItem }
- *        | 400 validation_failed | 403 legal_review_required
- *        | 409 own_submission | 409 invalid_transition
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET /api/v1/admin/content?…     → 200 { data: ModerationItem[]; total }
+ * GET /api/v1/admin/content/summary  → 200 { data: ModerationSummary }
+ * POST /api/v1/admin/content/:id/actions → 200 { data: ModerationItem }
+ *   | 400 validation_failed | 403 legal_review_required
+ *   | 409 own_submission | 409 invalid_transition
  */
 
 let items: ModerationItem[] = moderationItems.map((item) => ({ ...item }));

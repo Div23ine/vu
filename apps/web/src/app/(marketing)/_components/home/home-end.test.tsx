@@ -7,7 +7,7 @@ import { ContactStrip } from './contact-strip';
 import { PressMedia } from './press-media';
 
 /**
- * Home end-section tests (Task 52) — press band, contributors and the
+ * Home end-section tests — press band, contributors and the
  * contact strip. All three are static server components; the suites pin the
  * verbatim copy and every destination.
  */

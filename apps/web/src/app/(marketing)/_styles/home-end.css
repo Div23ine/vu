@@ -1,15 +1,15 @@
 /**
- * Home end-sections stylesheet (Task 52) — contributors, glass cards and the
- * social links, reproduced from the prototype's CSS. Tokenised values use
+ * Home end-sections stylesheet — contributors, glass cards and the
+ * social links, reproduced from the design's CSS. Tokenised values use
  * `var(--token)` (`--paper`, `--line`, `--line-soft`, `--ink*`, `--brand*`,
  * `--white`, `--r-full`, `--dark-abyss`, `--ease`); one-off literals without
  * tokens stay inside this file only — never in TSX.
  *
  * AUTHORED additions, marked below: a `:focus-visible` outline for the
  * press-band CTAs. The contributor avatars are photographs styled by the
- * prototype's `.contributor-avatar` rules (circular frame, cover fit).
+ * design's `.contributor-avatar` rules (circular frame, cover fit).
  *
- * Reduced motion: the prototype block is reproduced verbatim; the global
+ * Reduced motion: the design block is reproduced verbatim; the global
  * fallback in `@vunvault/ui`'s `motion.css` collapses every hover transform.
  */
 

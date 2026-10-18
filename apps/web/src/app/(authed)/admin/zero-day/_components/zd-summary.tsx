@@ -7,9 +7,9 @@ import { AdmKpi } from '../../_components/admin-page-head';
 import { useAdvisorySummary } from '../_hooks/use-advisories-admin';
 
 /**
- * Zero-day summary tiles (Task 81) — the six `adm-kpi` tiles that open the
- * desk, every value driven by `GET /admin/advisories/summary` (the Task 76
- * rule: no prototype number appears in code). A 403 hides the strip; any
+ * Zero-day summary tiles — the six `adm-kpi` tiles that open the
+ * desk, every value driven by `GET /admin/advisories/summary` (the an earlier iteration
+ * rule: no design number appears in code). A 403 hides the strip; any
  * other failure degrades to `Metrics unavailable` + Retry.
  *
  * The delta glyph (▲ / ●) is part of the caller's text, exactly as the
@@ -25,9 +25,9 @@ function formatCount(value: number): string {
 }
 
 /**
- * The first tile's weekly movement. `AdvisorySummary` (Task 20d) carries no
+ * The first tile's weekly movement. `AdvisorySummary` carries no
  * weekly-delta field, so this line is the reference's own copy rather than a
- * derived figure — the prototype number the contract cannot supply.
+ * derived figure — the design number the contract cannot supply.
  */
 // TODO(backend-contract): add `newThisWeek` to AdvisorySummary and derive this.
 const ACTIVE_ZERO_DAYS_DELTA = '▲ 62 this week';

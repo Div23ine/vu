@@ -15,7 +15,7 @@ import { server } from '../../../../mocks/server';
 import AdminUsersPage from './page';
 
 /**
- * User & Access Management tests (Task 79) — the spec's list: the summary
+ * User & Access Management tests — the spec's list: the summary
  * tiles, the roster columns and chips for the ten fixture members, the
  * URL-driven filters, action visibility by permission, the suspend confirm →
  * API call → toast chain and the last-super-admin error mapping.

@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Bell, Image, KeyRound, UserRound } from 'lucide-react';
 
 /**
- * Profile tab bar (Task 83c) — a real ARIA `tablist`.
+ * Profile tab bar — a real ARIA `tablist`.
  *
  * The active tab lives in the URL hash so a deep link works: the invitation
  * flow sends staff to `/admin/profile#security` and they must land on the

@@ -13,7 +13,7 @@ import { queryKeys } from '@vunvault/lib';
 import { apiDelete, apiGet, apiPost } from '../../../../../lib/api';
 
 /**
- * Security hooks (Task 67) — the account-security surface built in Task 27:
+ * Security hooks — the account-security surface built in an earlier iteration:
  * the combined status read, the password change, the TOTP enrol/verify/disable
  * trio, WebAuthn registration + removal, and the recovery-code pair.
  *
@@ -48,7 +48,7 @@ export function useSecurityInvalidator() {
 export function useChangePassword() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/password body ChangePasswordBody
-    //   → 204 | 401 invalid_credentials | 422 breached_password
+    //  → 204 | 401 invalid_credentials | 422 breached_password
     mutationFn: (body: ChangePasswordBody) => apiPost<void>('/api/v1/account/password', body),
   });
 }
@@ -64,7 +64,7 @@ export function useTotpEnroll() {
 export function useTotpVerify() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/mfa/totp/verify body { factorId; code }
-    //   → 204 | 401 mfa_failed
+    //  → 204 | 401 mfa_failed
     mutationFn: (body: TotpVerifyBody) => apiPost<void>('/api/v1/account/mfa/totp/verify', body),
   });
 }
@@ -79,7 +79,7 @@ export function useDisableTotp() {
 export function useWebauthnRegisterOptions() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/mfa/webauthn/register/options
-    //   → 200 { data: PublicKeyCredentialCreationOptionsJSON }
+    //  → 200 { data: PublicKeyCredentialCreationOptionsJSON }
     mutationFn: () =>
       apiPost<{ data: WebAuthnCreationOptionsJson }>(
         '/api/v1/account/mfa/webauthn/register/options',
@@ -90,7 +90,7 @@ export function useWebauthnRegisterOptions() {
 export function useWebauthnRegisterVerify() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/mfa/webauthn/register/verify body { deviceName?; credential }
-    //   → 201 { data: WebauthnKey }
+    //  → 201 { data: WebauthnKey }
     mutationFn: (body: WebauthnRegisterVerifyBody) =>
       apiPost<{ data: WebauthnKey }>('/api/v1/account/mfa/webauthn/register/verify', body).then(
         (response) => response.data,
@@ -108,7 +108,7 @@ export function useRemoveWebauthnKey() {
 export function useGenerateRecoveryCodes() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/recovery-codes
-    //   → 201 RecoveryCodesResponse | 409 already_generated
+    //  → 201 RecoveryCodesResponse | 409 already_generated
     mutationFn: () =>
       apiPost<RecoveryCodesResponse>('/api/v1/account/recovery-codes').then(
         (response) => response.data,
@@ -129,7 +129,7 @@ export function useRegenerateRecoveryCodes() {
 /**
  * The JSON (base64url) shape the API sends for WebAuthn registration options
  * — the browser API wants ArrayBuffers, so `_lib/webauthn-register.ts`
- * converts. Mirrors Task 60's request-options interface.
+ * converts. Mirrors an earlier iteration's request-options interface.
  */
 export interface WebAuthnCreationOptionsJson {
   challenge: string;

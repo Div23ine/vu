@@ -17,7 +17,7 @@ import { MISSING_PHRASES, incompleteMessage, joinMissing } from './_components/b
 import AdminZeroDayPage from './page';
 
 /**
- * Emergency Broadcast tests (Task 82) — the spec's list: the confirm button
+ * Emergency Broadcast tests — the spec's list: the confirm button
  * locked until five acks + the phrase, a wrong phrase keeping it locked, the
  * four status-line transitions, the success toasts carrying the REAL counts,
  * the 409 and 422 mappings, the incomplete pre-check listing exactly the
@@ -320,7 +320,7 @@ describe('Emergency Broadcast — dispatch', () => {
       message: `CVE-2026-44120 pushed to ${broadcastEstimate.dashboards} client dashboards, ${broadcastEstimate.emailContacts} email contacts and ${broadcastEstimate.smsContacts} on-call SMS numbers.`,
     });
     expect(toasts()[1]).toMatchObject({ kind: 'info', title: 'Audit event recorded' });
-    // The session reference follows the Task 46 format.
+    // The session reference follows the an earlier iteration format.
     expect(toasts()[1]?.message).toMatch(
       /^SEV-1 broadcast event written with session reference ADM-\d{4}-\d{4}-C000\.$/,
     );
@@ -482,9 +482,9 @@ describe('Emergency Broadcast — dispatch', () => {
 });
 
 /**
- * Live delivery progress (Task 94).
+ * Live delivery progress .
  *
- * The dispatch flow above ends with the strip on the Task 82 poll. Here the
+ * The dispatch flow above ends with the strip on the an earlier iteration poll. Here the
  * SSE relay feeds the SAME cache slot: the frames move the numbers with no
  * HTTP request between them, the strip settles from a pushed `sent` frame, and
  * the socket is released the moment there is nothing left to watch. jsdom has

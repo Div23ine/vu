@@ -3,7 +3,7 @@
 import { Button, Logo } from '@vunvault/ui';
 
 /**
- * Route-level error boundary (Task 43). Next renders this inside the root
+ * Route-level error boundary . Next renders this inside the root
  * layout, so the chrome (styles, fonts, Providers) survives; only the failed
  * segment is replaced. The `Try again` button calls Next's `reset()`, which
  * re-attempts rendering the segment.

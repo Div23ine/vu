@@ -33,7 +33,7 @@ import {
 import './_styles/audit.css';
 
 /**
- * `/admin/audit` (Task 83b) — the Cryptographic System Audit Trail: the summary
+ * `/admin/audit` — the Cryptographic System Audit Trail: the summary
  * tiles, the URL-driven filter bar, the live-style console table, the
  * hash-chain panel and the read-only event detail dialog.
  *
@@ -43,9 +43,9 @@ import './_styles/audit.css';
  * signed compliance CSV. Every row control opens a dialog.
  *
  * Client page inside a Suspense boundary: it reads `useSearchParams` (the
- * Task 77/79 precedent), so every filtered view is linkable.
+ * an earlier iteration/79 precedent), so every filtered view is linkable.
  *
- * Permission: `audit:read`. Since Task 93 the tail is live: page 1 subscribes
+ * Permission: `audit:read`. Since an earlier iteration the tail is live: page 1 subscribes
  * to `GET …/admin/audit/stream` over SSE, the chrome's `LIVE` pill reports the
  * real connection state, arriving rows are inserted at the head (filtered
  * client-side, because the stream itself is unfiltered) and the reviewer can
@@ -153,7 +153,7 @@ function AuditView() {
 
   // The distribution and the alert feed are derived from the trail on screen:
   // the contract has no per-category breakdown and no anomaly endpoint, so
-  // both are computed rather than hardcoded (the Task 76 rule).
+  // both are computed rather than hardcoded (the an earlier iteration rule).
   const distribution = useMemo(() => {
     const counts: Record<AuditCategory, number> = {
       authentication: 0,

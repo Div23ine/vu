@@ -23,6 +23,7 @@ import {
   ANONYMOUS_COOKIE,
   dailySalt,
   type NewConsentRecord,
+  type OpenToolRow,
   type NewContactMessage,
   type PublicRepo,
 } from './repo.js';
@@ -60,6 +61,8 @@ const TEST_ENV: Env = {
 class FakePublicRepo implements PublicRepo {
   messages: NewContactMessage[] = [];
   consents: NewConsentRecord[] = [];
+  tools: OpenToolRow[] = [];
+  waitlist: Array<{ email: string; topic: string }> = [];
   badges: Record<string, { email: string; verifiedBloggerAt: string | null }> = {
     [BLOGGER_ID]: { email: 'wanjiru@example.test', verifiedBloggerAt: null },
   };
@@ -89,6 +92,12 @@ class FakePublicRepo implements PublicRepo {
   async revokeBadge(userId: string) {
     const badge = this.badges[userId];
     if (badge !== undefined) badge.verifiedBloggerAt = null;
+  }
+  async listOpenTools() {
+    return this.tools;
+  }
+  async joinWaitlist(email: string, topic: string) {
+    this.waitlist.push({ email, topic });
   }
 }
 
@@ -443,7 +452,7 @@ describe('POST /api/v1/consent', () => {
     expect(harness.repo.consents).toHaveLength(0);
   });
 
-  it('attaches the record to a signed-in user and issues no cookie', async () => {
+  it('attaches the record to a signed-in user and skips the anonymous cookie', async () => {
     harness.user.current = adminUser();
     const response = await harness.app.inject({
       method: 'POST',
@@ -451,7 +460,11 @@ describe('POST /api/v1/consent', () => {
       payload: { categories: categories(), policyVersion: 'v1.2' },
     });
     expect(response.statusCode).toBe(204);
-    expect(response.headers['set-cookie']).toBeUndefined();
+    // No anonymous identifier for a known user — but the consent version
+    // cookie is always stored, signed-in or not.
+    const names = response.cookies.map((entry) => entry.name);
+    expect(names).not.toContain('vv_anon');
+    expect(names).toContain('vv_consent');
     const record = harness.repo.consents[0] as NewConsentRecord;
     expect(record.userId).toBe(ADMIN_ID);
     expect(record.anonymousId).toBeNull();
@@ -467,6 +480,26 @@ describe('POST /api/v1/consent', () => {
     expect((harness.repo.consents[0] as NewConsentRecord).anonymousId).toBe(
       '11111111-2222-4333-8444-555555555555',
     );
+  });
+
+  it('stores the agreed policy version in the vv_consent cookie', async () => {
+    const { app } = await makeHarness();
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/consent',
+      payload: {
+        categories: {
+          strictlyNecessary: true,
+          analytics: false,
+          marketing: false,
+          functional: false,
+        },
+        policyVersion: '2',
+      },
+    });
+    expect(response.statusCode).toBe(204);
+    const cookie = response.cookies.find((entry) => entry.name === 'vv_consent');
+    expect(cookie?.value).toBe('2');
   });
 });
 
@@ -557,5 +590,48 @@ describe('ContactService outcome shape', () => {
     const outcome: ContactOutcome = { stored: false, id: 'x', audit: [], emails: [] };
     expect(outcome.stored).toBe(false);
     expect(outcome.audit).toEqual([]);
+  });
+});
+
+describe('open tools + waitlist', () => {
+  it('GET /api/v1/tools lists the catalogue with nullable file URLs', async () => {
+    const { app, repo } = await makeHarness();
+    repo.tools = [
+      {
+        id: 'cve-tracker',
+        name: 'CVE Tracker CLI',
+        summary: 'Prioritised patch queue from the NVD feed.',
+        tags: ['CLI'],
+        sizeLabel: '2.4 MB · .zip',
+        fileUrl: null,
+        icon: 'terminal',
+      },
+    ];
+    const response = await app.inject({ method: 'GET', url: '/api/v1/tools' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ data: repo.tools });
+  });
+
+  it('POST /api/v1/waitlist records the signup and swallows duplicates', async () => {
+    const { app, repo } = await makeHarness();
+    const body = { email: 'early@example.test', topic: 'cve-tracker' };
+    const first = await app.inject({ method: 'POST', url: '/api/v1/waitlist', payload: body });
+    expect(first.statusCode).toBe(202);
+    const second = await app.inject({ method: 'POST', url: '/api/v1/waitlist', payload: body });
+    expect(second.statusCode).toBe(202);
+    expect(repo.waitlist).toEqual([
+      { email: 'early@example.test', topic: 'cve-tracker' },
+      { email: 'early@example.test', topic: 'cve-tracker' },
+    ]);
+  });
+
+  it('POST /api/v1/waitlist rejects a malformed address', async () => {
+    const { app } = await makeHarness();
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/waitlist',
+      payload: { email: 'not-an-email' },
+    });
+    expect(response.statusCode).toBe(400);
   });
 });

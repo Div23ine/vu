@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { ForgotForm } from './_components/forgot-form';
 
 /**
- * `/forgot-password` (Task 63) — enumeration-safe reset request: the card
+ * `/forgot-password` — enumeration-safe reset request: the card
  * always ends on `Check your inbox` (except on a network failure), so the
  * flow never reveals whether the address has an account.
  */

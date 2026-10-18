@@ -12,22 +12,22 @@ import { isAdminRouteActive, visibleAdminNavItems } from './admin-nav';
 import '../_styles/admin-chrome.css';
 
 /* Brand tile: static operator SVG from `/public`; `next/image` refuses SVGs
- * without `dangerouslyAllowSVG` (same reasoning as Tasks 44/45). */
+ * without `dangerouslyAllowSVG` (same reasoning as earlier iterations/45). */
 /* eslint-disable @next/next/no-img-element */
 
 /**
- * Command Center header (Task 46).
+ * Command Center header .
  *
- * Brand lockup → live status pill (`StatusPill`, Task 8) → session chip →
+ * Brand lockup → live status pill (`StatusPill`, an earlier iteration) → session chip →
  * permission-filtered navigation → hamburger/drawer. `Sign Out` is a BUTTON
- * wired to `useLogout()` (the prototype's `/logout` anchor became a mutation:
+ * wired to `useLogout()` (the design's `/logout` anchor became a mutation:
  * no navigation to a dead route, cache cleared before the redirect). The
  * drawer mirrors the marketing one: `aria-expanded` in sync, closes on Escape
  * and on route change.
  *
  * Nothing here assumes a permission beyond what the session carries: the
  * server guard (`requireSession({ staff: true })`) already ran in the layout,
- * and each admin page re-checks its own permission (Task 43's `<Can>` /
+ * and each admin page re-checks its own permission (an earlier iteration's `<Can>` /
  * `requireSession({ permission })`).
  */
 

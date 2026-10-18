@@ -10,7 +10,7 @@ import { InsightsGrid } from './insights-grid';
 import { Segments } from './segments';
 
 /**
- * Home mid-page tests (Task 49).
+ * Home mid-page tests .
  *
  * The grid runs against the MSW public-content handler (the six fixture
  * posts, newest first), so the rotation assertions derive their expected

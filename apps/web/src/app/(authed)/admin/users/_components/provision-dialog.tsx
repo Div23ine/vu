@@ -28,7 +28,7 @@ import { useProvisionInvite } from '../_hooks/use-provision';
 import '../_styles/users.css';
 
 /**
- * Provision New Team Member (Task 80) — the scoped invitation form on RHF +
+ * Provision New Team Member — the scoped invitation form on RHF +
  * Zod (`ProvisionInviteBody`): the verbatim field labels and helpers, the
  * staff-only role select (Super Administrator / Administrator are disabled
  * unless the CALLER is a super admin — the API enforces the same rule), the

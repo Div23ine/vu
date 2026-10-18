@@ -2,7 +2,7 @@ import { markdownToBlocks, type MarkdownBlock } from '../../_lib/markdown';
 import '../../_styles/editor.css';
 
 /**
- * Subheading list (Task 72) — the live outline of the body's `##`/`###`
+ * Subheading list — the live outline of the body's `##`/`###`
  * headings, parsed by `markdownToBlocks`. Hidden while the body has no
  * headings. Presentational; rendered inside the Article Content card.
  */

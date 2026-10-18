@@ -4,8 +4,8 @@ import { cn } from '@vunvault/lib';
 import '../_styles/scan-queue.css';
 
 /**
- * Payment chip (Task 77) — `PAYMENT_STATUS_LABELS` text on the admin badge
- * families, with the prototype's verbatim state tooltips for the two
+ * Payment chip — `PAYMENT_STATUS_LABELS` text on the admin badge
+ * families, with the design's verbatim state tooltips for the two
  * outstanding cases.
  */
 

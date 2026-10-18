@@ -6,8 +6,8 @@ import { cn } from '@vunvault/lib';
 import { tokens } from '@vunvault/ui';
 
 /**
- * Stripe Elements card fields (Task 66) — the REQUIRED CHANGE over the
- * prototype: the raw Card Number / Expiry / CVC inputs are replaced by
+ * Stripe Elements card fields — the REQUIRED CHANGE over the
+ * design: the raw Card Number / Expiry / CVC inputs are replaced by
  * Stripe-hosted Elements, so card data is tokenised in the browser and NEVER
  * touches VUNVAULT (the API only ever receives a PaymentMethod token).
  *
@@ -16,7 +16,7 @@ import { tokens } from '@vunvault/ui';
  * no hex literal appears in this file. Must render inside `<Elements>`.
  *
  * `onChange` reports per-field completeness so the dialog can gate Save and
- * surface the prototype's `Please complete all card fields` inline.
+ * surface the design's `Please complete all card fields` inline.
  */
 
 export interface CardFieldsComplete {

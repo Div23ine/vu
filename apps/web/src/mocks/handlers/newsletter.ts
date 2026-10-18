@@ -2,11 +2,11 @@ import { http, HttpResponse } from 'msw';
 import { NewsletterSubscribeBody } from '@vunvault/contracts';
 
 /**
- * Newsletter mock handler (Task 56).
+ * Newsletter mock handler .
  *
- *   POST /api/v1/newsletter → 202 {} | 400 validation_failed
+ * POST /api/v1/newsletter → 202 {} | 400 validation_failed
  *
- * The real endpoint (Task 40c) records the address and sends the double
+ * The real endpoint records the address and sends the double
  * opt-in confirmation; it NEVER reveals whether the address already existed,
  * and neither does this mock — every valid body answers an identical 202.
  */

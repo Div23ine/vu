@@ -15,7 +15,7 @@ import { server } from '../../../../mocks/server';
 import ScanQueuePage from './page';
 
 /**
- * Review-gate dialog tests (Task 78) — the spec's list: Confirm stays
+ * Review-gate dialog tests — the spec's list: Confirm stays
  * disabled until five checks + a valid note for approve (hold does NOT need
  * the checks), the three verbatim success toasts, the 409 payment lock shows
  * the blocked panel and NO success toast, an analyst sees Approve disabled
@@ -135,7 +135,7 @@ describe('review gate — gating', () => {
     await tickAllChecks(user);
     expect(within(dialog).getByRole('button', { name: 'Approve & Release' })).toBeDisabled();
 
-    // A short note is invalid — the planner error shows on blur.
+    // A short note is invalid — the spec error shows on blur.
     const note = within(dialog).getByLabelText('Reviewer Note (recorded in the audit log)');
     await user.type(note, 'short');
     await user.tab();

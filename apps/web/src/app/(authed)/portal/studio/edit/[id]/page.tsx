@@ -18,7 +18,7 @@ import { TitleSlug } from '../../_components/editor/title-slug';
 import '../../_styles/editor.css';
 
 /**
- * `/portal/studio/edit/[id]` (Task 72) — the full article editor. `new`
+ * `/portal/studio/edit/[id]` — the full article editor. `new`
  * starts an empty draft (created server-side on the first qualifying
  * autosave, then `router.replace`d to its real id); any other id loads from
  * the submissions feed (the API has no single-draft GET). After submit the

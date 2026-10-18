@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { failOnPageErrors, loginClient } from './helpers';
 
 /**
- * Client portal smoke (Task 107): the signed-in client sees the fixture
+ * Client portal smoke : the signed-in client sees the fixture
  * estate — dashboard tiles and the scan list — and the release lock keeps
  * unreleased reports invisible (no report link for a non-released job).
  */

@@ -3,9 +3,9 @@ import { ContactBody } from '@vunvault/contracts';
 import { z } from 'zod';
 
 /**
- * Contact mock handler (Task 57).
+ * Contact mock handler .
  *
- *   POST /api/v1/contact → 201 { data: { id } } | 400 validation_failed
+ * POST /api/v1/contact → 201 { data: { id } } | 400 validation_failed
  *
  * Mirrors the real public route exactly, including the honeypot contract: a
  * filled `website` field answers 201 with a throwaway id and stores nothing —

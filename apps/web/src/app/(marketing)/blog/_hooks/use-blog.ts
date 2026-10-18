@@ -11,10 +11,10 @@ import { queryKeys } from '@vunvault/lib';
 import { apiGet, apiPost } from '../../../../lib/api';
 
 /**
- * Blog data hooks (Task 56) — the public content API (Task 40c) consumed
+ * Blog data hooks — the public content API consumed
  * from the client.
  *
- * The Task 49 `usePublicContent` hook stays as the home grid's fixed
+ * The an earlier iteration `usePublicContent` hook stays as the home grid's fixed
  * `{ pageSize, sort }` reader; this file carries the full filter surface
  * (`q`, `category`, `sort`, `page`) the blog needs, plus the detail and
  * newsletter calls.
@@ -45,7 +45,7 @@ function listQuery(params: Required<Pick<BlogListParams, 'page' | 'pageSize'>> &
 }
 
 // TODO(backend-contract): GET /api/v1/content?q=&category=&sort=newest|priority&page=&pageSize=12
-//   → 200 { data: PublicContentItem[]; total } (public, cacheable 60s)
+//  → 200 { data: PublicContentItem[]; total } (public, cacheable 60s)
 export function useBlogList({
   page = 1,
   pageSize = 12,
@@ -64,7 +64,7 @@ export function useBlogList({
 }
 
 /**
- * The unfiltered catalogue snapshot the category pills are derived from — one
+ * The unfiltered catalog snapshot the category pills are derived from — one
  * pill per category present in the loaded data, so the pill row must not
  * shrink when a filter is active.
  */
@@ -91,7 +91,7 @@ export function useFeaturedReport() {
   });
 }
 
-/** Detail key: the shared factory has no content-detail slot (Task 7 predates 40c). */
+/** Detail key: the shared factory has no content-detail slot (an earlier iteration predates 40c). */
 export const blogDetailQueryKey = (slug: string) => ['content', 'detail', slug] as const;
 
 // TODO(backend-contract): GET /api/v1/content/:slug → 200 { data: PublicContentDetail } | 404

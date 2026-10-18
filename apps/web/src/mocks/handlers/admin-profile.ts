@@ -15,37 +15,37 @@ import {
 } from '@vunvault/contracts/fixtures/account';
 
 /**
- * Admin account-settings mock handlers (Task 83c).
+ * Admin account-settings mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock mode.
- * The Task 20d fixture IS the profile (Dr. Evelyn Reed), and the writes mutate a
+ * The an earlier iteration fixture IS the profile (Dr. Evelyn Reed), and the writes mutate a
  * module-level copy so a save is visible on the next read; tests reset it with
  * `resetAdminProfile()`.
  *
  * The avatar chain is modelled end to end, because the ORDER of the three
- * requests is part of what Task 83c must prove: the upload-url call mints a
+ * requests is part of what an earlier iteration must prove: the upload-url call mints a
  * presigned PUT on a separate storage origin (intercepted here so no test ever
  * reaches the network), the PUT stores the bytes, and the confirm call is what
  * actually sets `avatarUrl`. A confirm without a preceding PUT would be a bug
  * the mock cannot detect, so `confirm` refuses an unknown object key.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 30):
- *   GET    /api/v1/account/settings              → 200 { data: ProfileSettings }
- *   PATCH  /api/v1/account/settings              → 200 { data: ProfileSettings } | 422
- *   POST   /api/v1/account/avatar/upload-url     → 200 { data: { uploadUrl; objectKey; expiresAt } }
- *   PUT    <presigned uploadUrl>                 → 200
- *   POST   /api/v1/account/avatar/confirm        → 200 { data: ProfileSettings } | 404
- *   DELETE /api/v1/account/avatar                → 204
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET  /api/v1/account/settings       → 200 { data: ProfileSettings }
+ * PATCH /api/v1/account/settings       → 200 { data: ProfileSettings } | 422
+ * POST  /api/v1/account/avatar/upload-url   → 200 { data: { uploadUrl; objectKey; expiresAt } }
+ * PUT  <presigned uploadUrl>         → 200
+ * POST  /api/v1/account/avatar/confirm    → 200 { data: ProfileSettings } | 404
+ * DELETE /api/v1/account/avatar        → 204
  *
- * Task 83d adds the account surfaces the client Password Manager does NOT
+ * an earlier iteration adds the account surfaces the client Password Manager does NOT
  * already mock (`mocks/handlers/security.ts` owns `/account/security`, the
  * password change and the MFA routes, and is deliberately not duplicated here):
- *   GET    /api/v1/account/sessions              → 200 { data: SessionView[] }
- *   DELETE /api/v1/account/sessions/:id          → 204 | 409 current_session
- *   POST   /api/v1/account/revoke-others         → 200 { data: { revoked } }
- *   POST   /api/v1/account/deactivation-request  → 202 | 409 already_requested | 422
- *   GET    /api/v1/account/notifications         → 200 { data: NotificationPrefs }
- *   PUT    /api/v1/account/notifications         → 200 { data: NotificationPrefs } | 422
+ * GET  /api/v1/account/sessions       → 200 { data: SessionView[] }
+ * DELETE /api/v1/account/sessions/:id     → 204 | 409 current_session
+ * POST  /api/v1/account/revoke-others     → 200 { data: { revoked } }
+ * POST  /api/v1/account/deactivation-request → 202 | 409 already_requested | 422
+ * GET  /api/v1/account/notifications     → 200 { data: NotificationPrefs }
+ * PUT  /api/v1/account/notifications     → 200 { data: NotificationPrefs } | 422
  */
 
 /** The storage origin the presigned URLs point at. */
@@ -141,7 +141,7 @@ export const adminProfileHandlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  // ——— Task 83d: sessions, deactivation, notifications ———
+  // ——— an earlier iteration: sessions, deactivation, notifications ———
   http.get('*/api/v1/account/sessions', () => HttpResponse.json({ data: sessionList })),
 
   http.delete('*/api/v1/account/sessions/:id', ({ params }) => {

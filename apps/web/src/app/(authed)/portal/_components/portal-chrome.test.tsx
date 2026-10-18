@@ -20,7 +20,7 @@ import {
 } from './request-pentest-dialog';
 
 /**
- * Portal chrome + Request PenTest dialog tests (Task 45).
+ * Portal chrome + Request PenTest dialog tests .
  *
  * The header and the dialog are rendered together (as the portal layout does)
  * so the CTA → store → dialog wiring is exercised for real. Requests hit the

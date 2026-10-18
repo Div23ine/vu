@@ -6,9 +6,9 @@ import { STUDIO_TAG_SUGGESTIONS } from '@vunvault/contracts';
 import '../../_styles/editor.css';
 
 /**
- * Tag input (Task 72) — chips with Enter/comma to add and Backspace-on-empty
+ * Tag input — chips with Enter/comma to add and Backspace-on-empty
  * to remove the last one, the `STUDIO_TAG_SUGGESTIONS` quick-adds and the
- * verbatim limit note. Limit and duplicate enforcement (with the prototype's
+ * verbatim limit note. Limit and duplicate enforcement (with the design's
  * verbatim toasts) lives in the hook; this is the input surface.
  */
 

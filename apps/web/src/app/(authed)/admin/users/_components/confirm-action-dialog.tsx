@@ -6,7 +6,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import '../_styles/users.css';
 
 /**
- * Confirm-action dialog (Task 79) — the shared confirm surface for the row
+ * Confirm-action dialog — the shared confirm surface for the row
  * writes: Suspend (optional reason), Change role (the caller passes the role
  * select as `children`) and the destructive Delete. Radix supplies
  * `role="dialog"`, `aria-modal`, the focus trap and Escape-to-close.

@@ -19,14 +19,14 @@ import { ScanTerminalDialog } from './scan-terminal-dialog';
 import '../_styles/scan-queue.css';
 
 /**
- * Row actions (Tasks 77 + 78) — state-dependent, permission-gated:
+ * Row actions (earlier iterations + 78) — state-dependent, permission-gated:
  * `Review Findings` (gate `in_review`, needs `scans:review`) opens the Task
  * 78 review-gate dialog, the report preview is a read-only toast (
  * the preview endpoint does not exist yet), `Request Payment` (unpaid jobs)
  * and `Cancel Job` (open jobs, behind a confirm dialog). Items the session
- * lacks `scans:review` for are hidden entirely. Task 96 adds `Live output`:
+ * lacks `scans:review` for are hidden entirely. an earlier iteration adds `Live output`:
  * the staff terminal dialog for a running job (and for a job finished within
- * the hour, whose replay buffer still exists), streaming over the Task 95
+ * the hour, whose replay buffer still exists), streaming over the an earlier iteration
  * WebSocket relay.
  */
 
@@ -45,7 +45,7 @@ export function RowActions({ job, canReview }: RowActionsProps) {
   const [gateOpen, setGateOpen] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
 
-  // Task 96: the live terminal. The session is read here rather than threaded
+  // an earlier iteration: the live terminal. The session is read here rather than threaded
   // through the table (the `use-login.ts` pattern); the relay re-checks it on
   // every handshake regardless, so the button's visibility is a courtesy, not
   // the gate.

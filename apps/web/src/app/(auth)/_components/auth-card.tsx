@@ -1,19 +1,19 @@
 import '../_styles/auth.css';
 
 /**
- * Generic auth card shell (Task 63) — the login card's chrome (Task 59
+ * Generic auth card shell — the login card's chrome (an earlier iteration
  * classes, reproduced exactly: `vv-auth-card`, `vv-auth-head`, `vv-brand`,
  * `vv-brand-mark`, `vv-brand-name`, `vv-auth-title`, `vv-auth-sub`) around a
- * planner-specified title/sub, with the page-specific body as children.
+ * spec-specified title/sub, with the page-specific body as children.
  *
  * As a full page the card is `<main aria-labelledby>`, never `role="dialog"`
- * (Task 59 planner note for this card family). Directive-free on purpose: the
+ * (an earlier iteration spec note for this card family). Directive-free on purpose: the
  * four route pages render it from client components, so it ships in their
  * bundle either way.
  */
 
 export interface AuthCardProps {
-  /** Card heading (verbatim planner copy, state-dependent). */
+  /** Card heading (verbatim spec copy, state-dependent). */
   title: string;
   /** Optional sub-line under the heading; may contain markup (`<strong>`). */
   sub?: React.ReactNode;
@@ -27,7 +27,7 @@ export function AuthCard({ title, sub, children }: AuthCardProps) {
         <span className="vv-brand">
           <span className="vv-brand-mark" aria-hidden="true">
             {/* The operator's static brand SVG, same source as the login card
-                (Task 59) and the marketing header (Task 44). */}
+         and the marketing header . */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/logo.svg" alt="" />
           </span>

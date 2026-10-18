@@ -3,10 +3,10 @@
 import type { ClientProfile } from '@vunvault/contracts';
 
 /**
- * Account stats (Task 68) — the three hero metrics. `engagements` and
- * `openFindings` render zero-padded to two digits (the prototype's `07`);
+ * Account stats — the three hero metrics. `engagements` and
+ * `openFindings` render zero-padded to two digits (the design's `07`);
  * `nextAssessmentInDays` renders `<n> days` per the behaviour spec (the
- * prototype's `14d` yields to it), or `—` when null.
+ * design's `14d` yields to it), or `—` when null.
  */
 
 function pad2(value: number): string {

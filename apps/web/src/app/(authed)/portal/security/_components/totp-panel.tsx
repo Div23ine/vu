@@ -10,17 +10,17 @@ import { useDisableTotp, useTotpEnroll, useTotpVerify } from '../_hooks/use-secu
 import { qrCodeSrc } from '../../../../(auth)/signup/_hooks/use-verify-signup';
 
 /**
- * Authenticator-app (TOTP) panel (Task 67).
+ * Authenticator-app (TOTP) panel .
  *
- * Enabling runs the Task 27 ceremony: `POST …/totp/enroll` → the QR rendered
+ * Enabling runs the an earlier iteration ceremony: `POST …/totp/enroll` → the QR rendered
  * through an `<img>` data-URI (NEVER `innerHTML`), the setup key grouped in
  * 4s with Copy, then `POST …/totp/verify`. Disabling asks for confirmation
- * first; `422 last_factor` keeps the factor standing with the planner's
+ * first; `422 last_factor` keeps the factor standing with the spec's
  * verbatim sentence. The secret lives in component state only — cleared on
  * cancel/verify/unmount, never stored or logged.
  */
 
-/** The prototype's `JBSWY3DPEHPK3PXP` display: base32 grouped in 4s. */
+/** The design's `JBSWY3DPEHPK3PXP` display: base32 grouped in 4s. */
 export function groupSetupKey(secret: string): string {
   return (secret.match(/.{1,4}/g) ?? []).join(' ');
 }

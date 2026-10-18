@@ -11,7 +11,7 @@ import { apiGet, apiPut } from '../../../../../lib/api';
 import { env } from '../../../../../env';
 
 /**
- * Billing hooks + download helpers (Task 66).
+ * Billing hooks + download helpers .
  *
  * The queries ride the shared api client (cookies + CSRF). The two DOWNLOADS
  * (invoice PDF, CSV export) use `fetch` directly on purpose: they are binary
@@ -62,8 +62,8 @@ export function useUpdatePaymentMethod() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): PUT /api/v1/billing/payment-method body
-    //   { provider: "stripe"; providerPaymentMethodToken; cardholderName; billingCountry }
-    //   → 200 { data: PaymentMethodView } | 422 { error: "payment_method_rejected" }
+    //  { provider: "stripe"; providerPaymentMethodToken; cardholderName; billingCountry }
+    //  → 200 { data: PaymentMethodView } | 422 { error: "payment_method_rejected" }
     mutationFn: (body: UpdatePaymentMethodBody) =>
       apiPut<{ data: PaymentMethodView }>('/api/v1/billing/payment-method', body).then(
         (response) => response.data,

@@ -11,15 +11,15 @@ import { queryKeys } from '@vunvault/lib';
 import { apiGet, apiPost } from '../../../../../lib/api';
 
 /**
- * Content-moderation hooks (Task 83) — the pre-publication review queue built
- * in Task 36: the summary tiles, the filtered queue and the single action
+ * Content-moderation hooks — the pre-publication review queue built
+ * in an earlier iteration: the summary tiles, the filtered queue and the single action
  * endpoint every editorial decision goes through.
  *
- * The key namespace is the canonical `queryKeys.content` (Task 7), so a
+ * The key namespace is the canonical `queryKeys.content` , so a
  * decision invalidates `content.all()` and both the queue and the tiles
  * refresh together. The summary key extends that namespace locally because
  * packages/lib has no `content.summary` entry and this task must not add one
- * (the Task 67 `SECURITY_STATUS_KEY` precedent).
+ * (the an earlier iteration `SECURITY_STATUS_KEY` precedent).
  *
  * No `'use client'` directive (the `use-login.ts` pattern).
  */
@@ -63,7 +63,7 @@ export function useModerationSummary() {
 export function useModerationQueue(filters: ModerationFilters) {
   return useQuery({
     // TODO(backend-contract): GET /api/v1/admin/content?type=&status=&flag=&q=&page=&pageSize=
-    //   → 200 { data: ModerationItem[]; total }
+    //  → 200 { data: ModerationItem[]; total }
     queryKey: queryKeys.content.moderation(filters),
     queryFn: () =>
       apiGet<{ data: ModerationItem[]; total: number }>(
@@ -95,7 +95,7 @@ export interface QueueSnapshot {
  *
  * `ModerationSummary` carries no in-review count and no oldest-item age, and
  * there is no per-type breakdown endpoint, so both are computed from the rows
- * the API already returns rather than hardcoded (the Task 76 rule).
+ * the API already returns rather than hardcoded (the an earlier iteration rule).
  */
 export function snapshotOf(items: readonly ModerationItem[], now: Date): QueueSnapshot {
   const pendingByType: Record<ContentType, number> = {
@@ -144,8 +144,8 @@ export function useModerationAction() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): POST /api/v1/admin/content/:id/actions
-    //   body { action; note?; scheduledFor? } → 200 { data: ModerationItem }
-    //   | 403 legal_review_required | 409 own_submission | 409 invalid_transition
+    //  body { action; note?; scheduledFor? } → 200 { data: ModerationItem }
+    //  | 403 legal_review_required | 409 own_submission | 409 invalid_transition
     mutationFn: ({ id, ...body }: ModerationActionInput) =>
       apiPost<{ data: ModerationItem }>(`/api/v1/admin/content/${id}/actions`, body),
     onSuccess: () => {

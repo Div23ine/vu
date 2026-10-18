@@ -5,16 +5,16 @@ import { SecurityHero } from './_components/security-hero';
 import { TwoFactorCard } from './_components/two-factor-card';
 
 /**
- * `/portal/security` (Task 67) — the Password Manager: change password with
+ * `/portal/security` — the Password Manager: change password with
  * the live rule checklist and strength meter, authenticator-app enrolment,
  * WebAuthn hardware keys and one-time recovery codes, all on the real
- * account-security API (Task 27). The portal layout (Task 45) owns the
+ * account-security API . The portal layout owns the
  * chrome and the session guard.
  */
 
 export const metadata: Metadata = {
   title: 'Password Manager & Security',
-  // Authed portal page — never indexable (the Task 63 auth-page family rule).
+  // Authed portal page — never indexable (the an earlier iteration auth-page family rule).
   robots: { index: false },
 };
 

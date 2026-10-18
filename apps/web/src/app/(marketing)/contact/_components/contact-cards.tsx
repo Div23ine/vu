@@ -1,68 +1,12 @@
-import {
-  Building2,
-  Download,
-  Mail,
-  MessageCircle,
-  Newspaper,
-  Rss,
-  ShieldAlert,
-} from 'lucide-react';
+import { Building2, Download, Mail, MessageCircle, Rss, ShieldAlert } from 'lucide-react';
 import '../_styles/contact.css';
 
 /**
- * Contact side cards (Task 57) — the `#direct-channels` column: email and
- * WhatsApp channels, the whistleblower/PGP card, Follow & Engage, the
- * six-step press workflow and operational info. Copy verbatim; the PGP file
- * link points at `/vunvault-pgp.asc` — a static asset the OPERATOR adds under
- * `public/` (the catalogue: do not create it).
- *
- * The press-workflow steps mention the prototype's `user-management.html` /
- * `admin.html` as inline text (kept verbatim as copy — they are not links;
- * "do not copy href values such as *.html").
+ * Contact side cards — the `#direct-channels` column: email and WhatsApp
+ * channels, the whistleblower/PGP card, Follow & Engage and operational info.
+ * The PGP file link points at `/vunvault-pgp.asc` — a static asset the
+ * OPERATOR adds under `public/`.
  */
-
-const PRESS_STEPS = [
-  {
-    n: '01',
-    body: (
-      <>
-        Submit a <strong>Journalist / Blogger Profile Request</strong> using the form.
-      </>
-    ),
-  },
-  {
-    n: '02',
-    body: (
-      <>
-        The request is routed to <code>user-management.html</code> for manual identity verification.
-      </>
-    ),
-  },
-  {
-    n: '03',
-    body: <>On approval, your account is upgraded to an authorised Journalist / Blogger profile.</>,
-  },
-  {
-    n: '04',
-    body: (
-      <>
-        Draft posts with embedded images or video and click <strong>Publish</strong>.
-      </>
-    ),
-  },
-  {
-    n: '05',
-    body: (
-      <>
-        Posts enter the moderation queue in <code>admin.html</code> — nothing goes live immediately.
-      </>
-    ),
-  },
-  {
-    n: '06',
-    body: <>Once an admin approves, the article publishes to the blog and dynamic feeds.</>,
-  },
-] as const;
 
 const OPERATIONAL_INFO = [
   { label: 'Based in', value: 'Nairobi, Kenya' },
@@ -156,25 +100,6 @@ export function ContactCards() {
             </p>
           </div>
         </div>
-      </div>
-
-      <div className="glass-card rounded-3xl p-6 sm:p-7 border border-neutral-200/90">
-        <div className="flex items-start gap-4">
-          <span className="vv-channel-icon vv-channel-icon--dark" aria-hidden="true">
-            <Newspaper size={20} />
-          </span>
-          <div className="min-w-0">
-            <span className="vv-channel-label">Press &amp; Publishing Workflow</span>
-          </div>
-        </div>
-        <ol className="vv-steps">
-          {PRESS_STEPS.map((step) => (
-            <li key={step.n}>
-              <span className="vv-steps-num">{step.n}</span>
-              <span>{step.body}</span>
-            </li>
-          ))}
-        </ol>
       </div>
 
       <div className="glass-card rounded-3xl p-6 sm:p-7 border border-neutral-200/90">

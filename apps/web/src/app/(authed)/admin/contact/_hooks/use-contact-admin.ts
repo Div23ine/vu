@@ -10,18 +10,18 @@ import { queryKeys } from '@vunvault/lib';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../../../../../lib/api';
 
 /**
- * Contact-inbox hooks (Task 83e) — the admin surface over the public contact
- * form (Task 40f): the triage queue, the per-message write, the client
+ * Contact-inbox hooks — the admin surface over the public contact
+ * form : the triage queue, the per-message write, the client
  * directory and the Verified-Blogger badge grant/revoke.
  *
- * The assignee roster reuses Task 79's `GET /admin/users?status=active` rather
+ * The assignee roster reuses an earlier iteration's `GET /admin/users?status=active` rather
  * than a new endpoint: an assignee must be an active staff profile, and that
  * route already filters exactly that way.
  *
  * Keys: `queryKeys.users` for the roster and the badge writes (a badge changes
  * a user, so the roster must refresh), and a local `contact-admin` namespace for
  * the inbox and directory — packages/lib has neither and this task must not add
- * them (the Task 67 `SECURITY_STATUS_KEY` precedent).
+ * them (the an earlier iteration `SECURITY_STATUS_KEY` precedent).
  *
  * No `'use client'` directive (the `use-login.ts` pattern).
  */
@@ -67,7 +67,7 @@ function contactSearchOf(filters: ContactFilters): string {
 export function useContactMessages(filters: ContactFilters) {
   return useQuery({
     // TODO(backend-contract): GET /api/v1/admin/contact?status=&category=&q=&page=&pageSize=
-    //   → 200 { data: ContactMessageView[]; total }
+    //  → 200 { data: ContactMessageView[]; total }
     queryKey: [...CONTACT_MESSAGES_KEY, filters],
     queryFn: () =>
       apiGet<{ data: ContactMessageView[]; total: number }>(
@@ -85,7 +85,7 @@ export function useTriageMessage() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): PATCH /api/v1/admin/contact/:id body { status?; assignedTo? }
-    //   → 200 { data: ContactMessageView } | 422 validation_failed
+    //  → 200 { data: ContactMessageView } | 422 validation_failed
     mutationFn: ({ id, body }: TriageInput) =>
       apiPatch<{ data: ContactMessageView }>(`/api/v1/admin/contact/${id}`, body),
     onSuccess: () => {
@@ -98,7 +98,7 @@ export function useTriageMessage() {
 export function useAssignableStaff() {
   return useQuery({
     // TODO(backend-contract): GET /api/v1/admin/users?status=active&pageSize=100
-    //   → 200 { data: StaffMember[]; total }
+    //  → 200 { data: StaffMember[]; total }
     queryKey: [...queryKeys.users.all(), 'assignable'],
     queryFn: () =>
       apiGet<{ data: StaffMember[]; total: number }>(
@@ -120,7 +120,7 @@ export function useClientDirectory(filters: DirectoryFilters) {
   const search = params.toString();
   return useQuery({
     // TODO(backend-contract): GET /api/v1/admin/clients?q=&verifiedBlogger=&page=&pageSize=
-    //   → 200 { data: ClientDirectoryItem[]; total }
+    //  → 200 { data: ClientDirectoryItem[]; total }
     queryKey: [...CLIENT_DIRECTORY_KEY, search],
     queryFn: () =>
       apiGet<{ data: ClientDirectoryItem[]; total: number }>(

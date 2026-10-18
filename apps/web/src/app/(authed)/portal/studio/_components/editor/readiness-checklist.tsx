@@ -5,7 +5,7 @@ import { cn } from '@vunvault/lib';
 import '../../_styles/editor.css';
 
 /**
- * Publication-readiness checklist (Task 72) — the dark card. Six items in
+ * Publication-readiness checklist — the dark card. Six items in
  * the contract's display order with the verbatim `STUDIO_READINESS_LABELS`;
  * the first three (`STUDIO_REQUIRED_READINESS`) carry the `Required` mark
  * and gate Submit. A `422 not_ready` response's readiness object lands in

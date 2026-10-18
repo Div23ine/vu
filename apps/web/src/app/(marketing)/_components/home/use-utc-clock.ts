@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 /**
- * UTC clock hook (Task 50).
+ * UTC clock hook .
  *
  * Ticks every second and returns `HH:MM:SS` in UTC — or `null` until mounted.
  * The `null` matters: the server (and the first client render) must produce

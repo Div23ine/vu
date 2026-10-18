@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 /**
- * Client-portal footer (Task 45) — the compact `vbb-footer` strip: the portal
+ * Client-portal footer — the compact `vbb-footer` strip: the portal
  * copyright and four links. No hooks, so it stays a server component.
  */
 export function PortalFooter() {

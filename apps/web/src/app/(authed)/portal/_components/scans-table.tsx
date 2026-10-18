@@ -14,7 +14,7 @@ import { SeverityBar, type SeverityCounts } from './severity-bar';
 import '../_styles/scans.css';
 
 /**
- * Released-reports table (Task 69) — the portal's scan list on the shared
+ * Released-reports table — the portal's scan list on the shared
  * `DataTable`. RELEASE LOCK: the rows are exactly what `GET /api/v1/scans`
  * returns (the API excludes unreleased jobs); nothing here infers or renders
  * review, gate or payment state.

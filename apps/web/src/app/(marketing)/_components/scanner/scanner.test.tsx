@@ -9,7 +9,7 @@ import { OPEN_SCANNER_EVENT, useScannerStore } from './scanner-store';
 import { INVALID_TARGET_LINE } from './use-scan-simulation';
 
 /**
- * Free Scanner tests (Task 48).
+ * Free Scanner tests .
  *
  * The dialog is a Radix primitive wired to the deterministic simulation
  * engine, so the 19-step run is driven with fake timers and asserted line by
@@ -111,7 +111,7 @@ describe('ScannerCta', () => {
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 
-    // Minimise also closes (per the catalogue's dialog semantics).
+    // Minimise also closes (per the spec's dialog semantics).
     await user.click(screen.getByRole('button', { name: 'Request Free Scan' }));
     const reopened = await screen.findByRole('dialog');
     await user.click(within(reopened).getByRole('button', { name: 'Minimize scanner' }));

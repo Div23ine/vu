@@ -13,7 +13,7 @@ import {
 import { isWebAuthnCancel, registerSecurityKey } from '../_lib/webauthn-register';
 
 /**
- * Hardware security key panel (Task 67) — `Register Key` runs the WebAuthn
+ * Hardware security key panel — `Register Key` runs the WebAuthn
  * registration ceremony: `POST …/register/options` → `navigator.credentials
  * .create` (the `_lib/webauthn-register.ts` bridge converts JSON ↔
  * ArrayBuffer) → `POST …/register/verify { credential }`. Registered keys are

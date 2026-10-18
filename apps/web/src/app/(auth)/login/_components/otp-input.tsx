@@ -5,9 +5,9 @@ import { cn } from '@vunvault/lib';
 import '../../_styles/auth.css';
 
 /**
- * Six-box OTP input (Task 60, reused by Task 62).
+ * Six-box OTP input (an earlier iteration, reused by an earlier iteration).
  *
- * The prototype's UX, ported: digits only, auto-advance on entry, Backspace
+ * The design's UX, ported: digits only, auto-advance on entry, Backspace
  * on an empty box moves back (and clears the previous), arrow keys move
  * focus, and pasting a run of digits fills as many boxes as it has digits —
  * completing the sixth fires `onComplete` exactly once (guarded while a

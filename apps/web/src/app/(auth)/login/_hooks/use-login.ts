@@ -3,7 +3,7 @@ import type { LoginBody, LoginResponse } from '@vunvault/contracts';
 import { apiPost } from '../../../../lib/api';
 
 /**
- * Login hooks + helpers (Task 59).
+ * Login hooks + helpers .
  *
  * No `'use client'` directive on purpose: `safeNextPath` is a pure guard the
  * SERVER route uses to sanitise `?next=`, and `useLogin` is only ever called
@@ -26,8 +26,8 @@ export function safeNextPath(raw: string | undefined | null): string | null {
 export function useLogin() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/auth/login body { email; password(min8); remember? }
-    //   → 200 { data: { user: SessionUser | null; mfaRequired; mfaMethods } }
-    //   | 401 { error: "invalid_credentials" } | 429 { error: "rate_limited" }
+    //  → 200 { data: { user: SessionUser | null; mfaRequired; mfaMethods } }
+    //  | 401 { error: "invalid_credentials" } | 429 { error: "rate_limited" }
     mutationFn: (body: LoginBody) =>
       apiPost<LoginResponse>('/api/v1/auth/login', body).then((response) => response.data),
   });

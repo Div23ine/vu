@@ -12,11 +12,11 @@ import { cn } from '@vunvault/lib';
 import type { StepPanelProps } from './step-personal';
 
 /**
- * Step 2 — Career & account type (Task 64). Real `<input type="radio">`
+ * Step 2 — Career & account type . Real `<input type="radio">`
  * groups inside `<fieldset><legend>` (the spec's semantics); the card IS the
  * label. Options and copy come straight from the contracts' label/description
  * records — nothing is written out by hand, so the wizard and the API enums
- * cannot drift. Required messages are the planner's copy, surfaced by the
+ * cannot drift. Required messages are the spec's copy, surfaced by the
  * wizard's form schema (see `onboarding-wizard.tsx`).
  */
 

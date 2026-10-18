@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { CLIENT_EMAIL, PASSWORD, failOnPageErrors, loginClient } from './helpers';
 
 /**
- * Auth smoke (Task 107): the client login flow against the MSW mock layer —
+ * Auth smoke : the client login flow against the MSW mock layer —
  * success lands in the portal, bad credentials stay on the form with an error.
  */
 

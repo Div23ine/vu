@@ -7,10 +7,10 @@ import { useLogout } from '../../../../lib/use-logout';
 import '../_styles/admin-chrome.css';
 
 /**
- * Command Center footer (Task 46) — the audit-aware meta strip.
+ * Command Center footer — the audit-aware meta strip.
  *
- * Values per the catalogue: `System Build` and `Node Identifier` come from
- * the public env with the prototype's strings as defaults; the encryption
+ * Values per the spec: `System Build` and `Node Identifier` come from
+ * the public env with the design's strings as defaults; the encryption
  * standard is the constant; the `Session Reference` is derived from the
  * session — `ADM-<YYYY>-<MMDD>-<first 4 hex of the session id, uppercased>`.
  * `SessionUser` carries no login timestamp, so the reference is dated with

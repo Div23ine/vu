@@ -6,8 +6,8 @@ import {
 import type { WebAuthnCreationOptionsJson } from '../_hooks/use-security';
 
 /**
- * WebAuthn REGISTRATION bridge (Task 67) — the sign-in assertion bridge is
- * Task 60's `(auth)/login/_lib/webauthn-client.ts`; its base64url codecs and
+ * WebAuthn REGISTRATION bridge — the sign-in assertion bridge is
+ * an earlier iteration's `(auth)/login/_lib/webauthn-client.ts`; its base64url codecs and
  * cancel detector are reused, and this module adds the `navigator.credentials
  * .create` half: JSON options in (challenge/user.id/excludeCredentials as
  * base64url), a JSON-serialisable attestation out — exactly the

@@ -1,8 +1,8 @@
 /**
- * Home-page constants (Task 47).
+ * Home-page constants .
  *
  * The public site has no stats endpoint yet — the hero metrics and the CVE
- * ticker are the prototype's values, kept verbatim until a public API feeds
+ * ticker are the design's values, kept verbatim until a public API feeds
  * them.
  */
 

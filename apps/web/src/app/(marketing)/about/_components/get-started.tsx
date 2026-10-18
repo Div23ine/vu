@@ -7,8 +7,8 @@ import { useReveal } from './about-hero';
 import '../_styles/about.css';
 
 /**
- * Closing call-to-action band (Task 53) — the dark `vv-cta` panel. Both
- * buttons route per the catalogue: `Explore Services` → `/services`,
+ * Closing call-to-action band — the dark `vv-cta` panel. Both
+ * buttons route per the spec: `Explore Services` → `/services`,
  * `Book a Scoping Call` → `/contact`.
  */
 export function GetStarted() {

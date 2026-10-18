@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, LifeBuoy, Network } from 'lucide-react';
 import { AttackSurface } from './_components/home/attack-surface';
-import { AcademyTracks } from './_components/home/academy-tracks';
 import { Contributors } from './_components/home/contributors';
 import { ContactStrip } from './_components/home/contact-strip';
 import { Hero } from './_components/home/hero';
@@ -11,26 +10,27 @@ import { PressMedia } from './_components/home/press-media';
 import { Segments } from './_components/home/segments';
 import { ZeroDayWidget } from './_components/home/zero-day-widget';
 import { CveTicker } from './_components/cve-ticker';
+import { ComingSoonBanner } from './_components/coming-soon-banner';
 import { PricingPlans } from './_components/pricing-plans';
 import { ScannerCta } from './_components/scanner/scanner-cta';
 
 /**
- * The home route (Task 52) — every section assembled in the prototype's
+ * The home route — every section assembled in the design's
  * exact order: hero → `#get-started` anchor → CVE ticker → scanner CTA →
  * attack-surface mapping → insights grid → segments → the Proactive Security
  * Ecosystem band (zero-day widget + the two side cards + the Soft Protection
- * panel) → academy → pricing → press → contributors → contact.
+ * panel) → pricing → press → contributors → contact.
  *
- * Replaces (and its assembly deletes) Task 41's placeholder `src/app/page.tsx`.
- * The ecosystem band's grid is rebuilt from Task 50's section markup (the
+ * Replaces (and its assembly deletes) an earlier iteration's placeholder `src/app/page.tsx`.
+ * The ecosystem band's grid is rebuilt from an earlier iteration's section markup (the
  * extraction's `lg:col-span-*` wrappers imply a 12-column grid); the Soft
- * Protection panel ships WITHOUT the prototype's `soft1.jpg` photograph —
+ * Protection panel ships WITHOUT the design's `soft1.jpg` photograph —
  * "do not add images" is this task's own out-of-scope rule.
  */
 
 export const metadata: Metadata = {
   // `absolute` opts out of the root layout's `%s — VUNVAULT` template, exactly
-  // as the catalogue specifies.
+  // as the spec specifies.
   title: { absolute: 'VUNVAULT — We Find The Cracks Before They Do' },
   description:
     'Advanced vulnerability management through intelligent automation and proactive defense strategies.',
@@ -39,6 +39,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
+      <ComingSoonBanner />
       <Hero />
       <span id="get-started" className="anchor-offset" aria-hidden="true" />
       <CveTicker />
@@ -146,7 +147,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <AcademyTracks />
       <PricingPlans />
       <PressMedia />
       <Contributors />

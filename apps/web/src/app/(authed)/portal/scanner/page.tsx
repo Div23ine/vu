@@ -2,15 +2,15 @@ import type { Metadata } from 'next';
 import { ComingSoon } from '../../../../components/coming-soon';
 
 /**
- * `/portal/scanner` (Task 74) — reserved portal route. The scanner dialog is
+ * `/portal/scanner` — reserved portal route. The scanner dialog is
  * mounted in the MARKETING layout only, so the CTA deep-links to the public
- * site's `#free-scanner` anchor. The portal layout (Task 45) owns the chrome
+ * site's `#free-scanner` anchor. The portal layout owns the chrome
  * and the session guard.
  */
 
 export const metadata: Metadata = {
   title: 'Free Vulnerability Scanner',
-  // Authed portal page — never indexable (the Task 63 auth-page family rule).
+  // Authed portal page — never indexable (the an earlier iteration auth-page family rule).
   robots: { index: false },
 };
 

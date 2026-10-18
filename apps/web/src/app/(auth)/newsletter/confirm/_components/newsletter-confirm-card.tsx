@@ -6,20 +6,20 @@ import { AuthCard } from '../../../_components/auth-card';
 import { useConfirmNewsletter } from '../../../_hooks/use-auth-misc';
 
 /**
- * Newsletter confirmation card (Task 63) — the double-opt-in landing. The
+ * Newsletter confirmation card — the double-opt-in landing. The
  * confirm POST fires once on mount (guarded against StrictMode double-effects);
  * the token is read from the URL by the route and kept in props only.
  *
- * States (all planner copy): pending shows the confirmation line as the card
+ * States (all spec copy): pending shows the confirmation line as the card
  * heading (the spec gives no separate pending title); `204` → `Subscription
  * confirmed`; `404` — and, documented decision, any other failure, since a
  * confirm that cannot complete has no other honest state — → `Link not valid`.
  * A missing `?token=` is the invalid state from the first render.
  *
- * NOTE (disclosed): the catalogue's deliverables list names only this route's
+ * NOTE (disclosed): the spec's deliverables list names only this route's
  * `page.tsx`; a client card component is unavoidable because the page must
  * stay a server component to export `metadata.robots`. Same split as the
- * other three Task 63 routes.
+ * other three an earlier iteration routes.
  */
 
 export interface NewsletterConfirmCardProps {

@@ -9,16 +9,16 @@ import { AccountStats } from './account-stats';
 import '../_styles/profile.css';
 
 /**
- * Profile hero (Task 68) — the dark identity header (initials avatar, name,
+ * Profile hero — the dark identity header (initials avatar, name,
  * company · jobTitle line, the CLIENT ID / plan / subscription chips and the
- * three account stats) plus the four shortcut tiles from the prototype.
+ * three account stats) plus the four shortcut tiles from the design.
  *
- * Tile targets: Academy → `/portal/academy` (Task 74 placeholder), Billing →
- * `/portal/billing` (Task 66), Password Manager → `/portal/security` (Task
- * 67); the Free Vulnerability Scanner lives on the marketing home (Task 48's
+ * Tile targets: Academy → `/portal/academy` (an earlier iteration placeholder), Billing →
+ * `/portal/billing` , Password Manager → `/portal/security` (Task
+ * 67); the Free Vulnerability Scanner lives on the marketing home (an earlier iteration's
  * dialog is mounted there, not in the portal), so its tile links to `/`.
  * The plan chip's status label maps `active` → `Subscription Active`
- * (the prototype's copy); other statuses get the same sentence pattern.
+ * (the design's copy); other statuses get the same sentence pattern.
  */
 
 function initialsOf(fullName: string): string {

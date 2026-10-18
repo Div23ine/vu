@@ -6,17 +6,17 @@ import { PaymentMethodCard } from './_components/payment-method-card';
 import { SubscriptionCard } from './_components/subscription-card';
 
 /**
- * `/portal/billing` (Task 66; Task 66b mounts the Pay dialog). Subscription,
+ * `/portal/billing` (an earlier iteration; an earlier iteration mounts the Pay dialog). Subscription,
  * tokenised payment method with the Stripe-hosted Edit dialog, and the
  * invoice history with PDF/CSV downloads. `?invoice=<id>` (the Products
- * purchase hand-off, Task 55) is read once here and handed to the table,
- * which opens the Pay dialog through the store. The portal layout (Task 45)
+ * purchase hand-off, an earlier iteration) is read once here and handed to the table,
+ * which opens the Pay dialog through the store. The portal layout
  * owns the chrome and the session guard.
  */
 
 export const metadata: Metadata = {
   title: 'Billing & Invoices',
-  // Authed portal page — never indexable (the Task 63 auth-page family rule).
+  // Authed portal page — never indexable (the an earlier iteration auth-page family rule).
   robots: { index: false },
 };
 

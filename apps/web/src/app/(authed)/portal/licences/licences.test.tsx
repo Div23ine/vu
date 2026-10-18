@@ -13,7 +13,7 @@ import { server } from '../../../../mocks/server';
 import LicencesPage from './page';
 
 /**
- * Portal licences tests (Task 73) — the spec's list: the rows render, the
+ * Portal licences tests — the spec's list: the rows render, the
  * key reveals and copies, the expired chip shows by date, the download runs
  * the presigned flow through `window.location.assign`, and a 409
  * `not_available` toasts the verbatim warn pair. Plus the empty state.

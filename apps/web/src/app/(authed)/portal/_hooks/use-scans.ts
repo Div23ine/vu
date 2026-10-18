@@ -4,8 +4,8 @@ import { isApiError, queryKeys } from '@vunvault/lib';
 import { apiGet, apiPost } from '../../../../lib/api';
 
 /**
- * Portal scans hooks (Task 69) — the release-locked client views of the
- * scans API (Task 35). The list endpoint ALREADY excludes unreleased jobs
+ * Portal scans hooks — the release-locked client views of the
+ * scans API . The list endpoint ALREADY excludes unreleased jobs
  * (the API's `clientVisibleWhere`), and a job the caller may not see is a
  * 404 — the UI never infers review, gate or payment state.
  *
@@ -21,7 +21,7 @@ export interface AuthorisationUpload {
 export function useScans(params: { page: number; pageSize: number }) {
   return useQuery({
     // TODO(backend-contract): GET /api/v1/scans?page=&pageSize= → 200 { data: ScanJob[]; total }
-    //   (released jobs of the caller's org only)
+    //  (released jobs of the caller's org only)
     queryKey: queryKeys.scans.list(params),
     queryFn: () =>
       apiGet<{ data: ScanJob[]; total: number }>(
@@ -51,7 +51,7 @@ export function useScanFindings(id: string) {
 export function useAuthorisationUrl() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/scans/authorisation-url body { contentType: "application/pdf"; sizeBytes }
-    //   → 200 { data: { uploadUrl; objectKey; expiresAt } }
+    //  → 200 { data: { uploadUrl; objectKey; expiresAt } }
     mutationFn: (body: { contentType: 'application/pdf'; sizeBytes: number }) =>
       apiPost<{ data: AuthorisationUpload }>('/api/v1/scans/authorisation-url', body).then(
         (response) => response.data,
@@ -63,7 +63,7 @@ export function useCreateScan() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): POST /api/v1/scans body CreateScanBody
-    //   → 201 { data: ScanJob } | 422 { error: "authorisation_missing" | "target_not_allowed" }
+    //  → 201 { data: ScanJob } | 422 { error: "authorisation_missing" | "target_not_allowed" }
     mutationFn: (body: CreateScanBody) =>
       apiPost<{ data: ScanJob }>('/api/v1/scans', body).then((response) => response.data),
     onSuccess: () => {

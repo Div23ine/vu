@@ -24,6 +24,31 @@ export interface SqlExecutor {
  *   3. a `PostgresJsTransaction` (`db.transaction(tx)`) → `value.session.client.unsafe`
  *   4. anything that just exposes `client.unsafe`       → `value.client.unsafe`
  */
+/**
+ * postgres.js binds parameters by the OID the server infers for them; a JS
+ * `Date` that reaches a slot inferred as text/unknown crashes the bind with
+ * ERR_INVALID_ARG_TYPE (seen in production on the login and OTP paths).
+ * ISO-8601 strings are accepted by Postgres for every timestamp family and
+ * by text columns alike, so dates are normalised here — once, for every
+ * repository — instead of cast by cast at each call site.
+ */
+function normalizeParams(params: unknown[] | undefined): unknown[] | undefined {
+  if (params === undefined) return params;
+  return params.map((param) =>
+    param instanceof Date
+      ? param.toISOString()
+      : Array.isArray(param)
+        ? param.map((entry) => (entry instanceof Date ? entry.toISOString() : entry))
+        : param,
+  );
+}
+
+function wrapped(fn: unknown, ctx: unknown): SqlExecutor['unsafe'] {
+  const unsafe = fn as SqlExecutor['unsafe'];
+  return ((sql: string, params?: unknown[]) =>
+    unsafe.call(ctx, sql, normalizeParams(params))) as SqlExecutor['unsafe'];
+}
+
 export function asExecutor(value: unknown): SqlExecutor {
   const candidate = value as {
     unsafe?: unknown;
@@ -33,30 +58,22 @@ export function asExecutor(value: unknown): SqlExecutor {
   };
 
   if (typeof candidate?.unsafe === 'function') {
-    return {
-      unsafe: (candidate.unsafe as SqlExecutor['unsafe']).bind(value),
-    };
+    return { unsafe: wrapped(candidate.unsafe, value) };
   }
 
   const topClient = candidate?.$client;
   if (topClient !== undefined && typeof topClient.unsafe === 'function') {
-    return {
-      unsafe: (topClient.unsafe as SqlExecutor['unsafe']).bind(topClient),
-    };
+    return { unsafe: wrapped(topClient.unsafe, topClient) };
   }
 
   const midClient = candidate?.client;
   if (midClient !== undefined && typeof midClient.unsafe === 'function') {
-    return {
-      unsafe: (midClient.unsafe as SqlExecutor['unsafe']).bind(midClient),
-    };
+    return { unsafe: wrapped(midClient.unsafe, midClient) };
   }
 
   const sessionClient = candidate?.session?.client;
   if (sessionClient !== undefined && typeof sessionClient.unsafe === 'function') {
-    return {
-      unsafe: (sessionClient.unsafe as SqlExecutor['unsafe']).bind(sessionClient),
-    };
+    return { unsafe: wrapped(sessionClient.unsafe, sessionClient) };
   }
 
   throw new Error('no SQL executor available on this connection');

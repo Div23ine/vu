@@ -16,7 +16,7 @@ import { useSession, useSessionStore } from './session';
 import { useLogout } from './use-logout';
 
 /**
- * Client-runtime tests (Task 42).
+ * Client-runtime tests .
  *
  * The MSW node server (started in `vitest.setup.ts`) serves the contract
  * fixtures, so these exercise the real `@vunvault/lib` transport, the real

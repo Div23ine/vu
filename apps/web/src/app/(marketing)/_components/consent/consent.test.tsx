@@ -8,10 +8,10 @@ import { createQueryClient } from '@vunvault/lib';
 import { useToastStore } from '@vunvault/ui';
 import { server } from '../../../../mocks/server';
 import { ConsentBanner } from './consent-banner';
-import { useConsentStore } from './consent-store';
+import { CONSENT_POLICY_VERSION, useConsentStore } from './consent-store';
 
 /**
- * Cookie-consent tests (Task 58) — mount rules (shows on mount while
+ * Cookie-consent tests — mount rules (shows on mount while
  * undecided, cookie/store suppression), the three recording paths, the
  * customize panel's live chips/announcements, and the leave transition.
  * Fake timers drive the panel focus timeout and the 400 ms unmount. The
@@ -64,6 +64,17 @@ describe('ConsentBanner — mount rules', () => {
     expect(document.body).toHaveClass('vv-consent-open');
   });
 
+  it('returns when the stored decision predates the current policy version', async () => {
+    // A terms/privacy development bumps CONSENT_POLICY_VERSION; an older
+    // cookie value no longer matches, so the banner asks again.
+    document.cookie = 'vv_consent=1; path=/';
+    renderBanner();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
   it('never shows when the in-memory store already records a decision', async () => {
     useConsentStore.setState({ decided: true });
     renderBanner();
@@ -73,8 +84,8 @@ describe('ConsentBanner — mount rules', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('never shows when the vv_consent cookie already records a decision', async () => {
-    document.cookie = 'vv_consent=1; path=/';
+  it('never shows when the vv_consent cookie records the current policy version', async () => {
+    document.cookie = `vv_consent=${CONSENT_POLICY_VERSION}; path=/`;
     renderBanner();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(7000);
@@ -98,7 +109,7 @@ describe('ConsentBanner — recording', () => {
         marketing: true,
         functional: true,
       },
-      policyVersion: '1',
+      policyVersion: CONSENT_POLICY_VERSION,
     });
 
     // Leaving: still mounted (transition) but flagged.
@@ -124,7 +135,7 @@ describe('ConsentBanner — recording', () => {
         marketing: false,
         functional: false,
       },
-      policyVersion: '1',
+      policyVersion: CONSENT_POLICY_VERSION,
     });
   });
 
@@ -215,7 +226,7 @@ describe('ConsentBanner — customize panel', () => {
         marketing: true,
         functional: false,
       },
-      policyVersion: '1',
+      policyVersion: CONSENT_POLICY_VERSION,
     });
     expect(useConsentStore.getState().decided).toBe(true);
   });

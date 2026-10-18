@@ -7,7 +7,7 @@ import { HERO_METRICS, TICKER_ITEMS } from './home-data';
 import { Hero } from './hero';
 
 /**
- * Home hero + CVE ticker tests (Task 47). Both are server components with
+ * Home hero + CVE ticker tests . Both are server components with
  * static data, so the tests render them bare — no providers, no mocks.
  */
 

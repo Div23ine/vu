@@ -1,10 +1,10 @@
 /**
- * Command Center page stylesheet (Task 76).
+ * Command Center page stylesheet .
  *
  * ONLY the rules specific to this page — every shared class (`adm-card`,
  * `adm-kpi*`, `adm-table*`, `adm-badge*`, `adm-btn*`, `adm-tag*`,
  * `adm-node*`, `adm-bars`, `adm-threat*`, `adm-progress*`, `adm-figure`…)
- * lives in `admin-shared.css` (Task 75), imported by `AdminPageHead`. No
+ * lives in `admin-shared.css` , imported by `AdminPageHead`. No
  * hard-coded colours, radii or easings here; the two layout literals are
  * grid metrics only.
  */

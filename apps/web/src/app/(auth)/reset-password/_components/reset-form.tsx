@@ -14,8 +14,8 @@ import { useResetPassword } from '../../_hooks/use-auth-misc';
 import { PasswordStrength } from '../../signup/_components/password-strength';
 
 /**
- * Reset-password form (Task 63) — RHF + the contract's `ResetPasswordBody`
- * (the planner's spec names the schema directly, so its messages are the
+ * Reset-password form — RHF + the contract's `ResetPasswordBody`
+ * (the spec's spec names the schema directly, so its messages are the
  * contract's: the `NewPassword` rule refines and `Both entries must match
  * exactly.` on the confirm field). The token is read from the URL once by the
  * route and lives in form state only — never stored anywhere else.

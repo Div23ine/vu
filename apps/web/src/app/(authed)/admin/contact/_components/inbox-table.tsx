@@ -6,7 +6,7 @@ import { DataTable, type DataTableProps } from '@vunvault/ui';
 import { CONTACT_STATUS_LABELS } from '../_hooks/use-contact-admin';
 
 /**
- * Contact inbox table (Task 83e) — the shared `DataTable` (Task 12) over the
+ * Contact inbox table — the shared `DataTable` over the
  * public contact queue.
  *
  * Columns are exactly the spec's: `Received`, `From` (name + email +

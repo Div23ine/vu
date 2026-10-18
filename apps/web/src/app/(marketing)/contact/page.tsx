@@ -4,12 +4,12 @@ import { ContactForm } from './_components/contact-form';
 import { ContactHero } from './_components/contact-hero';
 
 /**
- * `/contact` (Task 57) — hero → the two-column grid with the secure request
+ * `/contact` — hero → the two-column grid with the secure request
  * form (`#contact-form`) and the direct-channels column. The form reads
  * `?category=` through `useSearchParams`, so it sits inside a Suspense
  * boundary (Next requires one for static rendering). The marketing layout
  * supplies the chrome; the footer's dark `contact` variant is
- * pathname-derived (Task 44).
+ * pathname-derived .
  */
 export default function ContactPage() {
   return (

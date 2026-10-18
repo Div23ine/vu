@@ -1,30 +1,30 @@
 /**
- * Billing stylesheet (Task 66) — `/portal/billing`: the hero, the dark
+ * Billing stylesheet — `/portal/billing`: the hero, the dark
  * subscription plan card, the payment-method card with its credit-card
  * visual, the invoice table (styled over the shared `DataTable` output), the
  * status chips and the Edit Payment Method dialog. Reproduced from the
- * prototype's CSS with every existing token as `var(--token)` (`--white`,
+ * design's CSS with every existing token as `var(--token)` (`--white`,
  * `--ink*`, `--line*`, `--brand*`, `--dark*`, `--ok*`, `--warn*`, `--danger*`,
  * `--slate-*`, `--critical`, `--r-*`, `--dur`, `--ease`, `--font-mono`,
  * `--dark-abyss`, `--dark-deep`).
  *
- * AUTHORED additions, marked inline (the planner truncated the prototype's
+ * AUTHORED additions, marked inline (the spec truncated the design's
  * tail — "remaining rules follow the same patterns"):
- *  - `.vbb-status--pending/--overdue/--void` palettes (the reference pins only
- *    `--paid`, whose literals are exactly `--ok-ink/--ok-bg/--ok-line`; the
- *    siblings follow the semantic warn/danger/muted families), the `pulse`
- *    keyframes and the reduced-motion block.
- *  - `.vbb-dl:active`, `.vbb-pay-now`, `.vbb-table-foot*`, the Stripe Element
- *    wrappers (`.vbb-stripe-field*`), `:focus-visible` rings where the
- *    reference had none, and the completed 640px mobile tail.
- *  - Colours with no token stay literals in THIS file only (`#04121f`,
- *    `#9aa8ba`, `#7d8b9e`, `#b7c4d4`, `#fbfcfd`, the chip golds, the rgba()
- *    glow/shadow stops the reference itself carries, and the `%233B99FC`
- *    stroke inside the select chevron data-URI — `var()` cannot be used
- *    inside `url()`).
- *  - The invoice table is the shared `DataTable` (Task 12): its Tailwind
- *    utility classes are overridden here by unlayered descendant selectors
- *    scoped to `.vbb-table-wrap`.
+ * - `.vbb-status--pending/--overdue/--void` palettes (the reference pins only
+ * `--paid`, whose literals are exactly `--ok-ink/--ok-bg/--ok-line`; the
+ * siblings follow the semantic warn/danger/muted families), the `pulse`
+ * keyframes and the reduced-motion block.
+ * - `.vbb-dl:active`, `.vbb-pay-now`, `.vbb-table-foot*`, the Stripe Element
+ * wrappers (`.vbb-stripe-field*`), `:focus-visible` rings where the
+ * reference had none, and the completed 640px mobile tail.
+ * - Colours with no token stay literals in THIS file only (`#04121f`,
+ * `#9aa8ba`, `#7d8b9e`, `#b7c4d4`, `#fbfcfd`, the chip golds, the rgba()
+ * glow/shadow stops the reference itself carries, and the `%233B99FC`
+ * stroke inside the select chevron data-URI — `var()` cannot be used
+ * inside `url()`).
+ * - The invoice table is the shared `DataTable` : its Tailwind
+ * utility classes are overridden here by unlayered descendant selectors
+ * scoped to `.vbb-table-wrap`.
  */
 
 /* ——— Buttons (reference) ——— */
@@ -517,7 +517,7 @@
 }
 
 /* ——— Invoice table (reference values, applied over the shared DataTable
-   output via unlayered descendant selectors) ——— */
+  output via unlayered descendant selectors) ——— */
 .vbb-table-wrap {
   margin-top: 0;
   border-radius: var(--r-xl);
@@ -567,7 +567,7 @@
   border-bottom: 0;
 }
 .vbb-table-wrap tbody td:last-child {
-  /* authored: the Action column hugs the right edge like the prototype */
+  /* authored: the Action column hugs the right edge like the design */
   text-align: right;
 }
 .vbb-inv-id {
@@ -617,7 +617,7 @@
 }
 
 /* ——— Status chips (reference for --paid; siblings authored on the
-   semantic warn/danger/muted families) ——— */
+  semantic warn/danger/muted families) ——— */
 .vbb-status {
   display: inline-flex;
   align-items: center;
@@ -923,7 +923,7 @@
   appearance: none;
   -webkit-appearance: none;
   /* The chevron stroke is the brand colour; `var()` cannot be used inside a
-     data-URI, so the literal stays (feature-stylesheet exception). */
+   data-URI, so the literal stays (feature-stylesheet exception). */
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%233B99FC' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
@@ -939,7 +939,7 @@
 }
 
 /* ——— Stripe Element wrappers (authored; mirror `.vbb-input` so the hosted
-   fields match the plain ones — the Element renders an iframe inside) ——— */
+  fields match the plain ones — the Element renders an iframe inside) ——— */
 .vbb-stripe-field {
   width: 100%;
   padding: 12px 14px;

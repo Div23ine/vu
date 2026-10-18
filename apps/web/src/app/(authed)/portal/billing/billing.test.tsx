@@ -16,7 +16,7 @@ import { PaymentMethodCard } from './_components/payment-method-card';
 import { InvoiceTable } from './_components/invoice-table';
 
 /**
- * Billing page tests (Task 66) — subscription card values (`$2,499`,
+ * Billing page tests — subscription card values (`$2,499`,
  * `14 Oct 2026`, `Monthly`), the masked payment card (`•••• •••• •••• 4290`),
  * the six-invoice table with the right chips and `$` formatting, the PDF
  * download (including the 202-retry path under fake timers), the CSV export,
@@ -121,7 +121,7 @@ describe('Billing — subscription card', () => {
     expect(screen.getByText('Need more coverage?')).toBeInTheDocument();
   });
 
-  it('Upgrade Plan toasts the planner copy without calling the API', async () => {
+  it('Upgrade Plan toasts the spec copy without calling the API', async () => {
     const user = userEvent.setup();
     renderPage();
     await screen.findByText('Enterprise Client');
@@ -390,7 +390,7 @@ describe('Billing — edit payment dialog', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('blocks an incomplete Element set with the prototype message', async () => {
+  it('blocks an incomplete Element set with the design message', async () => {
     elementsComplete.current = false;
     const user = userEvent.setup();
     renderPage();

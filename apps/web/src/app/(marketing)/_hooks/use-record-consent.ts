@@ -5,7 +5,7 @@ import type { ConsentBody } from '@vunvault/contracts';
 import { apiPost } from '../../../lib/api';
 
 /**
- * Consent recording hook (Task 58).
+ * Consent recording hook .
  *
  * `POST /api/v1/consent` answers `204` — `apiPost<void>` resolves with
  * `undefined`, which the banner treats as success. A `400`/`429` or a network

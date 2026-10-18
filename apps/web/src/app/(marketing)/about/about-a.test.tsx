@@ -8,9 +8,9 @@ import { MissionVision } from './_components/mission-vision';
 import { Pillars } from './_components/pillars';
 
 /**
- * About page A tests (Task 53). jsdom has no IntersectionObserver, so the
+ * About page A tests . jsdom has no IntersectionObserver, so the
  * reveal hook keeps every section in its visible (unarmed) state — exactly
- * the no-JS/reduced-motion behaviour the catalogue requires.
+ * the no-JS/reduced-motion behaviour the spec requires.
  */
 
 describe('AboutHero', () => {
@@ -131,7 +131,7 @@ describe('Pillars', () => {
 });
 
 describe('AboutPage assembly', () => {
-  it('renders every section in order (team + telemetry since Task 53b)', () => {
+  it('renders every section in order (team + telemetry since an earlier iteration)', () => {
     const { container } = render(<AboutPage />);
     const headings = screen
       .getAllByRole('heading')
@@ -145,14 +145,14 @@ describe('AboutPage assembly', () => {
       'What our sensors are seeing right now.',
       'See your attack surface the way we see it.',
     ]);
-    // Task 53b replaced the two stubs with the team + telemetry sections.
+    // an earlier iteration replaced the two stubs with the team + telemetry sections.
     expect(container.querySelectorAll('section')).toHaveLength(6);
     expect(document.getElementById('mission')).not.toBeNull();
     expect(document.getElementById('pillars')).not.toBeNull();
     expect(document.getElementById('get-started')).not.toBeNull();
   });
 
-  it('routes the closing CTAs per the catalogue', () => {
+  it('routes the closing CTAs per the spec', () => {
     render(<AboutPage />);
     expect(screen.getByRole('link', { name: 'Explore Services' })).toHaveAttribute(
       'href',

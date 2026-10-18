@@ -5,7 +5,7 @@ import { AUDIT_SEVERITY_LABELS } from '@vunvault/contracts';
 import { cn } from '@vunvault/lib';
 
 /**
- * Audit severity chip (Task 83b).
+ * Audit severity chip .
  *
  * Colours follow the spec exactly — `ok` green, `info` blue, `warning` amber,
  * `critical` red — and the label comes from the contract's

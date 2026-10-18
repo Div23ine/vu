@@ -1,9 +1,9 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element -- team photographs are
-   pre-optimised square crops served statically from
-   public/images/contributors; a plain <img> keeps the reveal cards
-   dependency-free (same convention as the home contributors section). */
+  pre-optimised square crops served statically from
+  public/images/contributors; a plain <img> keeps the reveal cards
+  dependency-free (same convention as the home contributors section). */
 
 import { Github, Linkedin } from 'lucide-react';
 import { cn } from '@vunvault/lib';
@@ -15,7 +15,7 @@ import '../_styles/about.css';
  * Contributors & Core Team — the live roster.
  *
  * Six photo cards, the same people, order and photographs as the home page's
- * contributors section. The prototype's initials tiles are gone; the
+ * contributors section. The design's initials tiles are gone; the
  * credential chips, bio, skill chips and meta line are optional and render
  * only once the data exists for a member. No `/team/*` anchor is rendered —
  * those routes do not exist — and the social buttons point at the company

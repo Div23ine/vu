@@ -2,8 +2,8 @@ import { Wrench } from 'lucide-react';
 import '../_styles/products.css';
 
 /**
- * Products hero (Task 55) — headline, dual CTAs (`#catalog` → the premium
- * grid, `#free-tools` → Task 55b's free-resources section) and the four-stat
+ * Products hero — headline, dual CTAs (`#catalog` → the premium
+ * grid, `#free-tools` → an earlier iteration's free-resources section) and the four-stat
  * glass strip. Server component; copy and stats verbatim.
  */
 

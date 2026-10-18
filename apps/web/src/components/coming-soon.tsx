@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { Button, Eyebrow } from '@vunvault/ui';
 
 /**
- * ComingSoon (Task 74) — the shared placeholder for the routes the
- * navigation links to but that have no prototype yet. Planner-authored:
+ * ComingSoon — the shared placeholder for the routes the
+ * navigation links to but that have no design yet. Authored:
  * a centred column (the not-found page's shared layout) with `Eyebrow`,
  * the ink h1, the muted body and an optional CTA button.
  *

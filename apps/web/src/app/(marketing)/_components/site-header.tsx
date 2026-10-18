@@ -10,13 +10,13 @@ import '../_styles/chrome.css';
 
 /* The brand block is a static operator SVG from `/public`; `next/image`
  * refuses SVGs without `dangerouslyAllowSVG`, and the markup must stay
- * pixel-identical to the prototype (tile `w-9 h-9 rounded-xl bg-black`,
- * wordmark `tracking-wider`) — Task 13's `Logo` differs (gradient tile,
- * 0.14em tracking), so the catalogue's escape hatch applies: markup direct. */
+ * pixel-identical to the design (tile `w-9 h-9 rounded-xl bg-black`,
+ * wordmark `tracking-wider`) — an earlier iteration's `Logo` differs (gradient tile,
+ * 0.14em tracking), so the spec's escape hatch applies: markup direct. */
 /* eslint-disable @next/next/no-img-element */
 
 /**
- * Marketing header (Task 44) — sticky, on every `(marketing)` page.
+ * Marketing header — sticky, on every `(marketing)` page.
  *
  * The nav is data-driven: one `NAV_ITEMS` list feeds both the desktop row and
  * the mobile drawer (rendered by `MobileMenu`). The active item is the current
@@ -28,7 +28,6 @@ import '../_styles/chrome.css';
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'About Us', href: '/about' },
   { label: 'Services', href: '/services' },
-  { label: 'Academy', href: '/academy' },
   { label: 'Blog', href: '/blog' },
   { label: 'Products', href: '/products' },
   { label: 'Contact', href: '/contact' },

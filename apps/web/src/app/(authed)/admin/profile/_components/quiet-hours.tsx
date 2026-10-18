@@ -6,7 +6,7 @@ import { cn } from '@vunvault/lib';
 import { Switch } from '@vunvault/ui';
 
 /**
- * Quiet hours (Task 83d) — the switch and the two `time` inputs.
+ * Quiet hours — the switch and the two `time` inputs.
  *
  * The window is `HH:MM` in 24-hour form, exactly what the contract's
  * `TimeOfDay` regex accepts, and a native `<input type="time">` produces that

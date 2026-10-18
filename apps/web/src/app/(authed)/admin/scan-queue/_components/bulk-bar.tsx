@@ -6,11 +6,11 @@ import { cn } from '@vunvault/lib';
 import '../_styles/scan-queue.css';
 
 /**
- * Bulk action bar (Task 77) — slides in (`.is-active`) once at least one row
+ * Bulk action bar — slides in (`.is-active`) once at least one row
  * is selected; inert and hidden otherwise. The count line is the reference's
  * `<strong>n</strong> job(s) selected` under `aria-live="polite"`.
  *
- * BULK CAN NEVER RELEASE — releasing a job is the Task 78 review-gate
+ * BULK CAN NEVER RELEASE — releasing a job is the an earlier iteration review-gate
  * decision, one job at a time, through the five checks. The reviewer select
  * lists the active staff holding `scans:review` (default: the current user,
  * pre-selected by the page).

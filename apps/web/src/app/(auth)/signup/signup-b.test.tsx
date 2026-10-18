@@ -14,7 +14,7 @@ import { groupSecret } from './_hooks/use-verify-signup';
 import { useSignupStore } from './_store/signup-store';
 
 /**
- * Signup page B tests (Task 62) — step 1 (wrong / incomplete / expired /
+ * Signup page B tests — step 1 (wrong / incomplete / expired /
  * exhausted OTP copy, success toast + session seed), step 2 (QR through an
  * `<img>` — never `innerHTML` — grouped secret, Copy toast, TOTP verify error
  * and success), step 3 (verbatim success copy, the 2.5 s redirect under fake
@@ -22,8 +22,8 @@ import { useSignupStore } from './_store/signup-store';
  * removal of every "Test mode" scaffolding.
  *
  * The signup verification endpoints live in `server.use` overrides inside this
- * file (Task 62's deliverables do not include the shared mock handlers), the
- * same per-test-route pattern Task 60's `mfa.test.tsx` established.
+ * file (an earlier iteration's deliverables do not include the shared mock handlers), the
+ * same per-test-route pattern an earlier iteration's `mfa.test.tsx` established.
  */
 
 const routerReplace = vi.hoisted(() => vi.fn());
@@ -171,7 +171,7 @@ describe('SignupVerifyDialog — step 1 (email OTP)', () => {
     expect(screen.getByText('Done')).toBeInTheDocument();
     const active = document.querySelector('[aria-current="step"]');
     expect(active?.textContent).toContain('Email');
-    // The prototype's dev scaffolding must not exist.
+    // The design's dev scaffolding must not exist.
     expect(screen.queryByText('Test mode')).not.toBeInTheDocument();
     expect(screen.queryByText(/Your email OTP is/)).not.toBeInTheDocument();
   });
@@ -423,11 +423,11 @@ describe('SignupVerifyDialog — step 3 (done)', () => {
 });
 
 describe('SignupVerifyDialog — helpers', () => {
-  it('firstNameOf falls back to the prototype placeholder', () => {
+  it('firstNameOf falls back to the design placeholder', () => {
     expect(firstNameOf('Jane Wanjiru')).toBe('Jane');
-    expect(firstNameOf('  Jane  ')).toBe('Jane');
+    expect(firstNameOf(' Jane ')).toBe('Jane');
     expect(firstNameOf('')).toBe('friend');
-    expect(firstNameOf('   ')).toBe('friend');
+    expect(firstNameOf('  ')).toBe('friend');
   });
 
   it('the tracker marks completed steps done', async () => {

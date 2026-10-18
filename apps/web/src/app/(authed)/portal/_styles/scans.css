@@ -1,7 +1,7 @@
 /**
- * Portal scans stylesheet (Task 69).
+ * Portal scans stylesheet .
  *
- * This page has NO prototype (planner-authored): it is built from the shared
+ * This page has NO design (authored): it is built from the shared
  * primitives in the billing page's visual language. Per the spec, the needed
  * `vbb-*` card/table/chip rules are COPIED here under the `vps-` prefix —
  * features never import each other's stylesheets. Token substitutions as in
@@ -83,7 +83,7 @@
 }
 
 /* ——— Summary cards (authored row; values follow the metric language of
-   the billing plan card) ——— */
+  the billing plan card) ——— */
 .vps-summary-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -230,7 +230,7 @@
 }
 
 /* ——— Section head + table (copied from the billing table rules, applied
-   over the shared DataTable output via unlayered descendants) ——— */
+  over the shared DataTable output via unlayered descendants) ——— */
 .vps-section-head {
   display: flex;
   flex-wrap: wrap;
@@ -546,7 +546,7 @@
   word-break: break-word;
 }
 
-/* ——— Dialog form bits (authored; the shell is the Task 11 primitive) ——— */
+/* ——— Dialog form bits (authored; the shell is the an earlier iteration primitive) ——— */
 .vps-form {
   display: flex;
   flex-direction: column;

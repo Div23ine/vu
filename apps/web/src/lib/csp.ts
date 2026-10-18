@@ -1,21 +1,21 @@
 /**
- * Content-Security-Policy builder (Task 43).
+ * Content-Security-Policy builder .
  *
  * The policy is minted per request by the edge middleware around a fresh
  * nonce. Design decisions, in one place:
  *
- *  - `script-src` is nonce + `'strict-dynamic'`: no script executes unless the
- *    server rendered it with this request's nonce (or a nonce'd script loaded
- *    it). Host allowlist covers the three embedded third parties the billing
- *    and signup flows need: Stripe, Paystack and Cloudflare Turnstile.
- *  - `'unsafe-eval'` appears ONLY in development — Next's dev bundler needs
- *    eval for fast refresh. A production policy containing it is a failure.
- *  - `style-src 'unsafe-inline'` stays: Next and Radix inject inline style
- *    attributes; noncing every style tag is a later hardening pass (L14).
- *  - `frame-ancestors 'none'` is the CSP-level clickjacking kill switch (the
- *    legacy `X-Frame-Options: DENY` header is set in `next.config.ts`).
- *  - `connect-src` covers the API origin (plus its WebSocket twin for the
- *    scan terminal), the payment providers' APIs and Sentry ingest.
+ * - `script-src` is nonce + `'strict-dynamic'`: no script executes unless the
+ * server rendered it with this request's nonce (or a nonce'd script loaded
+ * it). Host allowlist covers the three embedded third parties the billing
+ * and signup flows need: Stripe, Paystack and Cloudflare Turnstile.
+ * - `'unsafe-eval'` appears ONLY in development — Next's dev bundler needs
+ * eval for fast refresh. A production policy containing it is a failure.
+ * - `style-src 'unsafe-inline'` stays: Next and Radix inject inline style
+ * attributes; noncing every style tag is a later hardening pass (L14).
+ * - `frame-ancestors 'none'` is the CSP-level clickjacking kill switch (the
+ * legacy `X-Frame-Options: DENY` header is set in `next.config.ts`).
+ * - `connect-src` covers the API origin (plus its WebSocket twin for the
+ * scan terminal), the payment providers' APIs and Sentry ingest.
  *
  * This module is edge-safe: no Node built-ins, no imports at all.
  */

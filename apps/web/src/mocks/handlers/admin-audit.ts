@@ -3,10 +3,10 @@ import type { AuditEntryView, VerifyChainResult } from '@vunvault/contracts';
 import { auditEntries, auditSummary, chainStatus } from '@vunvault/contracts/fixtures/audit';
 
 /**
- * Admin audit-trail mock handlers (Task 83b).
+ * Admin audit-trail mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock mode.
- * The Task 20 fixtures ARE the trail (ten linked entries, newest first), the
+ * The an earlier iteration fixtures ARE the trail (ten linked entries, newest first), the
  * tiles and the chain state; the list endpoint applies the real filter
  * semantics (`q` over actor, ip, subject, event type and message; exact
  * `category` / `severity` / `actor`; `page` / `pageSize` slicing) so the
@@ -20,12 +20,12 @@ import { auditEntries, auditSummary, chainStatus } from '@vunvault/contracts/fix
  * chain is append-only and the API exposes no such route, so a test that tried
  * one must fail loudly against `onUnhandledRequest: "error"`.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 39):
- *   GET  /api/v1/admin/audit?…        → 200 { data: AuditEntryView[]; total }
- *   GET  /api/v1/admin/audit/summary  → 200 { data: AuditSummary }
- *   GET  /api/v1/admin/audit/chain    → 200 { data: ChainStatus }
- *   POST /api/v1/admin/audit/verify   → 200 { data: VerifyChainResult } | 409 verify_in_progress
- *   GET  /api/v1/admin/audit/export?… → 200 text/csv | 422 range_too_large
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET /api/v1/admin/audit?…    → 200 { data: AuditEntryView[]; total }
+ * GET /api/v1/admin/audit/summary → 200 { data: AuditSummary }
+ * GET /api/v1/admin/audit/chain  → 200 { data: ChainStatus }
+ * POST /api/v1/admin/audit/verify  → 200 { data: VerifyChainResult } | 409 verify_in_progress
+ * GET /api/v1/admin/audit/export?… → 200 text/csv | 422 range_too_large
  */
 
 let entries: AuditEntryView[] = auditEntries.map((entry) => ({ ...entry }));

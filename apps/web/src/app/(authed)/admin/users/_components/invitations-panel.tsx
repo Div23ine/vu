@@ -12,14 +12,14 @@ import { useStaffRoster } from '../_hooks/use-users';
 import '../_styles/users.css';
 
 /**
- * Pending invitations panel (Task 79b — replaces the Task 79 stub).
+ * Pending invitations panel (replaces the an earlier iteration stub).
  *
  * The list is the roster's `status=pending_invite` slice (the data section's
  * source): name, email, role label and the expiry line derived from the
  * verbatim 72-hour rule (`Invitations expire after 72 hours if MFA enrolment
  * is not completed.`). `Resend` / `Revoke` need `users:manage` and hit the
  * invitation endpoints; `All invitations` is the informational workspace
- * link. The mutations live here because `use-users.ts` is a Task 79 file.
+ * link. The mutations live here because `use-users.ts` is a an earlier iteration file.
  */
 
 const INVITE_TTL_MS = 72 * 60 * 60 * 1000;
@@ -40,7 +40,7 @@ export function InvitationsPanel() {
 
   const resend = useMutation({
     // TODO(backend-contract): POST /api/v1/admin/users/invitations/:id/resend
-    //   → 200 { data: Invitation } | 409 resend_limit
+    //  → 200 { data: Invitation } | 409 resend_limit
     mutationFn: (id: string) => apiPost<unknown>(`/api/v1/admin/users/invitations/${id}/resend`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });

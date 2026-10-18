@@ -20,9 +20,9 @@ import { useProfileSettings } from './_hooks/use-account-settings';
 import './_styles/profile.css';
 
 /**
- * `/admin/profile` (Task 83c) — Profile Settings: the identity header, the
+ * `/admin/profile` — Profile Settings: the identity header, the
  * hash-driven tab bar and the Personal Details + Profile Picture panels. The
- * Password & 2FA and Notifications panels are Task 83d (null stubs here).
+ * Password & 2FA and Notifications panels are an earlier iteration (null stubs here).
  *
  * The active tab lives in the URL hash rather than in state alone, because the
  * invitation flow deep-links to `/admin/profile#security` and must land on the
@@ -121,7 +121,7 @@ export default function AdminProfilePage() {
 
       <div className="ps-col">
         {/* All four panels stay mounted so every tab's `aria-controls` target
-            exists; the inactive ones are `hidden`, per `.ps-panel[hidden]`. */}
+      exists; the inactive ones are `hidden`, per `.ps-panel[hidden]`. */}
         <div hidden={tab !== 'personal'}>
           <PersonalPanel profile={profile} onReady={onReady} />
         </div>

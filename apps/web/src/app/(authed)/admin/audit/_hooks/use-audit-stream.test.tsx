@@ -14,7 +14,7 @@ import {
 } from './use-audit-stream';
 
 /**
- * `useAuditStream` tests (Task 93) — the browser half of the live audit tail.
+ * `useAuditStream` tests — the browser half of the live audit tail.
  *
  * The socket is faked at its narrowest seam (`AuditEventSource`): the tests
  * drive `open` / `error` / frame delivery by hand and assert the status

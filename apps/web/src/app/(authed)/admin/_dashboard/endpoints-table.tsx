@@ -7,7 +7,7 @@ import { formatCount, isForbidden, useDashboardSection } from './use-dashboard';
 import './dashboard.css';
 
 /**
- * Top Endpoints by Load (Task 76) — request distribution, mean latency and
+ * Top Endpoints by Load — request distribution, mean latency and
  * error ratio per endpoint, with the computed aggregate footer row (total
  * requests, mean latency, mean error ratio across the displayed endpoints).
  */

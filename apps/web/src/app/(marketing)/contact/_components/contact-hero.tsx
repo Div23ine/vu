@@ -1,7 +1,7 @@
 import '../_styles/contact.css';
 
 /**
- * Contact hero (Task 57) — eyebrow, headline, the four-reasons lead and the
+ * Contact hero — eyebrow, headline, the four-reasons lead and the
  * two anchors (`#contact-form` → the form, `#direct-channels` → the side
  * cards). Server component; copy verbatim.
  */

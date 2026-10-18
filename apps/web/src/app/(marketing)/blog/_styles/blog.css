@@ -1,7 +1,7 @@
 /**
- * Blog stylesheet (Task 56) — hero + search, featured banner, news grid and
+ * Blog stylesheet — hero + search, featured banner, news grid and
  * empty state, article reader, newsletter band. Reproduced from the
- * prototype's CSS with every tokenised value as `var(--token)` (`--white`,
+ * design's CSS with every tokenised value as `var(--token)` (`--white`,
  * `--paper`, `--r-md`, `--r-xl`, `--r-2xl`, `--r-full`, `--font-mono`,
  * `--slate-text`, `--dark-deep`, `--grad-brand`, `--line*`, `--ink*`,
  * `--brand*`, `--critical`, `--dur`, `--ease`); one-off literals without
@@ -9,13 +9,13 @@
  * `#55637a`, the note states `#34d399`/`#fb7185`, badge ink `#04121f`) stay
  * inside this file only — never in TSX.
  *
- * AUTHORED additions, marked inline: `.vv-blog-pill` (the catalogue names the
+ * AUTHORED additions, marked inline: `.vv-blog-pill` (the spec names the
  * class and guards it in reduced motion but embeds no rule block — it follows
  * the marketing nav's pill idiom), the severity chips
  * (`.vv-chip--critical|high|medium|low` + `.vv-news-sev` placement), the news
  * cell wrapper, the reader's category/tag chips, and `:focus-visible` rings.
  *
- * Reduced motion: the prototype block below is reproduced; the global
+ * Reduced motion: the design block below is reproduced; the global
  * `motion.css` fallback collapses every other transition.
  */
 
@@ -346,8 +346,8 @@ body.vv-reader-open .vv-scan-cta-section {
   color: var(--white);
 }
 /* Authored: severity chip palette (spec names the classes; the severity
-   tokens carry the colours). `.vv-chip--static` neutralises the absolute
-   placement when the chip is inline (featured meta, reader header). */
+  tokens carry the colours). `.vv-chip--static` neutralises the absolute
+  placement when the chip is inline (featured meta, reader header). */
 .vv-news-sev.vv-chip--static,
 .vv-chip--static {
   position: static;

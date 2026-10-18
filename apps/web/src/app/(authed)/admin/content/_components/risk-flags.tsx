@@ -5,12 +5,12 @@ import { RISK_FLAG_LABELS } from '@vunvault/contracts';
 import { cn } from '@vunvault/lib';
 
 /**
- * Risk-flag chips (Task 83) — the `Risk Flags` cell.
+ * Risk-flag chips — the `Risk Flags` cell.
  *
  * Labels come from the contract's `RISK_FLAG_LABELS`; an item with no flags
  * renders the reference's em dash rather than an empty cell, so the column
  * never looks broken. The tone modifier is per flag, not per severity: legal
- * and PII are the two the prototype colours as blocking.
+ * and PII are the two the design colours as blocking.
  */
 
 /** Flag → the reference's chip modifier. */

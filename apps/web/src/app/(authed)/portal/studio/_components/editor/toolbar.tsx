@@ -6,10 +6,10 @@ import { toast } from '@vunvault/ui';
 import '../../_styles/editor.css';
 
 /**
- * Markdown toolbar (Task 72) — every button acts on the textarea's current
+ * Markdown toolbar — every button acts on the textarea's current
  * selection: inline wraps (bold/italic/code/link) and line prefixes
  * (H2/H3/list/quote). `Clear formatting` on an empty selection toasts the
- * prototype's verbatim pair. The editor value IS `bodyMd` — no
+ * design's verbatim pair. The editor value IS `bodyMd` — no
  * contentEditable anywhere (XSS/IME risk, banned by the spec).
  */
 

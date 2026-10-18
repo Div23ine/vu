@@ -3,7 +3,7 @@ import { TotpVerifyBody } from '@vunvault/contracts';
 import { mfaStatus, securityPosture } from '@vunvault/contracts/fixtures/account';
 
 /**
- * Account-security mock handlers (Task 67).
+ * Account-security mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock
  * mode. Status reads come from the contract fixtures (TOTP enabled, one
@@ -13,16 +13,16 @@ import { mfaStatus, securityPosture } from '@vunvault/contracts/fixtures/account
  * accepts for the client fixture) and answers `401 invalid_credentials`
  * otherwise; TOTP verify accepts `123456`.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 27):
- *   GET    /api/v1/account/security                       → 200 { data: MfaStatus & { posture } }
- *   POST   /api/v1/account/password                       → 204 | 401 | 422
- *   POST   /api/v1/account/mfa/totp/enroll                → 201 TotpEnrollStart
- *   POST   /api/v1/account/mfa/totp/verify                → 204 | 401 mfa_failed
- *   DELETE /api/v1/account/mfa/totp                       → 204 | 422 last_factor
- *   POST   /api/v1/account/mfa/webauthn/register/options  → 200 { data: options(JSON) }
- *   POST   /api/v1/account/mfa/webauthn/register/verify   → 201 { data: WebauthnKey }
- *   DELETE /api/v1/account/mfa/webauthn/:id               → 204
- *   POST   /api/v1/account/recovery-codes[/regenerate]    → 201 RecoveryCodesResponse
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET  /api/v1/account/security            → 200 { data: MfaStatus & { posture } }
+ * POST  /api/v1/account/password            → 204 | 401 | 422
+ * POST  /api/v1/account/mfa/totp/enroll        → 201 TotpEnrollStart
+ * POST  /api/v1/account/mfa/totp/verify        → 204 | 401 mfa_failed
+ * DELETE /api/v1/account/mfa/totp            → 204 | 422 last_factor
+ * POST  /api/v1/account/mfa/webauthn/register/options → 200 { data: options(JSON) }
+ * POST  /api/v1/account/mfa/webauthn/register/verify  → 201 { data: WebauthnKey }
+ * DELETE /api/v1/account/mfa/webauthn/:id        → 204
+ * POST  /api/v1/account/recovery-codes[/regenerate]  → 201 RecoveryCodesResponse
  */
 
 const MOCK_TOTP_SECRET = 'JBSWY3DPEHPK3PXP';

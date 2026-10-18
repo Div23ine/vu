@@ -13,8 +13,8 @@ import { env } from '../../../../../env';
 import { apiGet, apiPost } from '../../../../../lib/api';
 
 /**
- * Audit-trail hooks (Task 83b) — the read-only append-only chain built in
- * Task 39: the summary tiles, the chain-status panel, the filtered tail, the
+ * Audit-trail hooks — the read-only append-only chain built in
+ * an earlier iteration: the summary tiles, the chain-status panel, the filtered tail, the
  * verification write and the compliance CSV export.
  *
  * There is deliberately NO mutation that creates, edits or deletes an entry —
@@ -22,9 +22,9 @@ import { apiGet, apiPost } from '../../../../../lib/api';
  * cannot offer one either. The only write is `POST …/verify`, which records a
  * checkpoint.
  *
- * Keys come from the canonical `queryKeys.audit` namespace (Task 7); the
+ * Keys come from the canonical `queryKeys.audit` namespace ; the
  * summary key extends it locally because packages/lib has no `audit.summary`
- * entry and this task must not add one (the Task 67 precedent).
+ * entry and this task must not add one (the an earlier iteration precedent).
  *
  * No `'use client'` directive (the `use-login.ts` pattern).
  */
@@ -35,7 +35,7 @@ export const AUDIT_SUMMARY_KEY = [...queryKeys.audit.all(), 'summary'] as const;
 export const AUDIT_PAGE_SIZE = 18;
 
 /**
- * The tail's fallback poll (Task 83b). Since Task 93 it runs ONLY while the
+ * The tail's fallback poll . Since an earlier iteration it runs ONLY while the
  * SSE stream is offline — a browser without `EventSource`, or one the server
  * refused — so a live console never double-fetches.
  */
@@ -107,7 +107,7 @@ export function useChainStatus() {
 export function useAuditTrail(filters: AuditFilters, isStreamLive: boolean = false) {
   return useQuery({
     // TODO(backend-contract): GET /api/v1/admin/audit?q=&category=&severity=&actor=&range=&page=&pageSize=
-    //   → 200 { data: AuditEntryView[]; total }
+    //  → 200 { data: AuditEntryView[]; total }
     queryKey: queryKeys.audit.list(filters),
     queryFn: () =>
       apiGet<{ data: AuditEntryView[]; total: number }>(
@@ -183,7 +183,7 @@ export function useVerifyChain() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): POST /api/v1/admin/audit/verify body { incremental? }
-    //   → 200 { data: VerifyChainResult } | 409 verify_in_progress
+    //  → 200 { data: VerifyChainResult } | 409 verify_in_progress
     mutationFn: (body: { incremental?: boolean } = {}) =>
       apiPost<{ data: VerifyChainResult }>('/api/v1/admin/audit/verify', body).then(
         (response) => response.data,

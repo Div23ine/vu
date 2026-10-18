@@ -8,23 +8,20 @@ import {
   Terminal,
   type LucideIcon,
 } from 'lucide-react';
-import {
-  DOWNLOAD_BUTTON_TITLE,
-  FREE_RESOURCES,
-  FREE_RESOURCES_FOOTNOTE,
-  type FreeResource,
-} from '../_data/free-resources';
+import { OpenToolsResponseSchema, type OpenTool } from '@vunvault/contracts';
+import { env } from '../../../../env';
+import { ToolWaitlistButton } from './tool-waitlist-button';
 import '../_styles/products.css';
 
 /**
- * Free resources grid (Task 55b) — replaces the Task 55 stub.
- *
- * Six community cards, copy verbatim. The prototype's Download buttons carry
- * no file URLs and none are published yet, so per the catalogue they render
- * disabled with an explanatory title until the files exist.
+ * Open tooling grid — the spec lives in the `open_tools` table and is
+ * fetched from the API (60 s revalidate), never inlined here. A tool is listed
+ * the moment it is announced: when `fileUrl` is null the card offers its
+ * waitlist instead of a download, so an unpublished artifact never hides the
+ * tool from the page.
  */
 
-const ICONS: Readonly<Record<FreeResource['icon'], LucideIcon>> = {
+const ICONS: Record<string, LucideIcon> = {
   terminal: Terminal,
   'file-text': FileText,
   shield: Shield,
@@ -33,7 +30,28 @@ const ICONS: Readonly<Record<FreeResource['icon'], LucideIcon>> = {
   rss: Rss,
 };
 
-export function FreeResources() {
+const FOOTNOTE =
+  'Free resources are provided as-is for authorised testing only. Never scan systems you do not own or have written permission to assess.';
+
+export async function loadOpenTools() {
+  try {
+    const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/v1/public/tools`, {
+      next: { revalidate: 60 },
+    });
+    if (!response.ok) return [];
+    const parsed = OpenToolsResponseSchema.safeParse(await response.json());
+    return parsed.success ? parsed.data.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function FreeResources() {
+  const tools = await loadOpenTools();
+  return <FreeResourcesGrid tools={tools} />;
+}
+
+export function FreeResourcesGrid({ tools }: { tools: readonly OpenTool[] }) {
   return (
     <>
       <span id="free-tools" className="anchor-offset" aria-hidden="true" />
@@ -50,61 +68,59 @@ export function FreeResources() {
                   Free Resources
                 </span>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight">
-                Open tooling, no licence required
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-neutral-900 tracking-tight leading-[1.15]">
+                Open tooling, free forever
               </h2>
-              <p className="text-neutral-500 text-sm md:text-base max-w-2xl leading-relaxed">
-                Community resources published under permissive licences. Click download and the file
-                is fetched straight from the source — no checkout, no account, no telemetry.
+              <p className="text-neutral-500 text-base sm:text-lg leading-relaxed max-w-2xl">
+                The utilities, checklists and feeds our assessors use between engagements —
+                published for the community. Tools without a published artifact yet can be joined
+                via their waitlist.
               </p>
             </div>
-            <span className="vv-prod-badge vv-prod-badge--free">
-              {FREE_RESOURCES.length} Resources
-            </span>
           </div>
 
-          <div className="vv-prod-grid">
-            {FREE_RESOURCES.map((resource) => {
-              const Icon = ICONS[resource.icon];
+          <div className="vv-free-grid">
+            {tools.map((tool) => {
+              const Icon = ICONS[tool.icon] ?? Terminal;
               return (
-                <article key={resource.id} className="vv-prod-card vv-prod-card--free">
-                  <div className="vv-prod-head">
-                    <div className="vv-prod-icon">
-                      <Icon size={22} aria-hidden="true" />
+                <article key={tool.id} className="vv-free-card">
+                  <div className="vv-free-head">
+                    <span className="vv-free-icon" aria-hidden="true">
+                      <Icon size={20} />
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="vv-free-name">{tool.name}</h3>
+                      {tool.sizeLabel && <span className="vv-free-size">{tool.sizeLabel}</span>}
                     </div>
-                    <span className="vv-prod-badge vv-prod-badge--free">Free</span>
                   </div>
-                  <div className="vv-prod-body">
-                    <h3 className="vv-prod-title">{resource.name}</h3>
-                    <p className="vv-prod-desc">{resource.description}</p>
-                    <div className="vv-prod-tags">
-                      {resource.tags.map((tag) => (
-                        <span key={tag} className="vv-skill">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="vv-prod-foot">
-                      <span className="vv-prod-size">{resource.size}</span>
-                      {/* TODO(content): file URLs — enabled when the files ship. */}
-                      <button
-                        type="button"
-                        className="vv-prod-dl"
-                        disabled
-                        aria-disabled="true"
-                        title={DOWNLOAD_BUTTON_TITLE}
-                      >
-                        <span>Download</span>
-                        <Download size={14} aria-hidden="true" />
-                      </button>
-                    </div>
+                  <p className="vv-free-desc">{tool.summary}</p>
+                  <div className="vv-free-tags">
+                    {tool.tags.map((tag) => (
+                      <span key={tag} className="vv-free-tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="vv-free-foot">
+                    {tool.fileUrl ? (
+                      <a className="vv-free-download" href={tool.fileUrl} download>
+                        <Download size={16} aria-hidden="true" />
+                        Download
+                      </a>
+                    ) : (
+                      <ToolWaitlistButton toolId={tool.id} toolName={tool.name} />
+                    )}
                   </div>
                 </article>
               );
             })}
+            {tools.length === 0 && (
+              <p className="text-neutral-500 text-sm">
+                The open tooling catalog is being refreshed — check back shortly.
+              </p>
+            )}
           </div>
-
-          <p className="text-center text-xs text-neutral-500 mt-8">{FREE_RESOURCES_FOOTNOTE}</p>
+          <p className="vv-free-footnote">{FOOTNOTE}</p>
         </div>
       </section>
     </>

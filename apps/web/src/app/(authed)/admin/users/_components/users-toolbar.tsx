@@ -6,7 +6,7 @@ import { ResultCount } from '@vunvault/ui';
 import '../_styles/users.css';
 
 /**
- * Roster toolbar (Task 79) — search + the role/status/MFA selects, URL-driven
+ * Roster toolbar — search + the role/status/MFA selects, URL-driven
  * like the scan queue's. Option labels come from `ROLE_LABELS` (the six staff
  * roles) and the markup's status/MFA lists; the count line uses the shared
  * `ResultCount` (`Showing 10 of 24 members`).

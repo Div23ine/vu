@@ -1,8 +1,8 @@
 /**
- * Content Moderation stylesheet (Task 83).
+ * Content Moderation stylesheet .
  *
  * ONLY the rules specific to this page — the shared admin classes live in
- * `admin-shared.css` (Task 75, imported via `AdminPageHead`). Token
+ * `admin-shared.css` (an earlier iteration, imported via `AdminPageHead`). Token
  * substitutions follow every other feature sheet: `#ffffff` → `--white`,
  * `18px`/`14px`/`12px`/`10px` radii → `--r-lg`/`--r-md`/`--r-field`/`--r-sm`,
  * `9999px` → `--r-full`, `0.2s` → `--dur`, the mono stack → `--font-mono`,
@@ -46,7 +46,7 @@
 /* ——— Toolbar ——— */
 .cm-toolbar {
   /* The reference carries `margin-bottom: 18px`; `.cm-col` already gaps 20px,
-     so the margin is zeroed here (the `um-toolbar` precedent). */
+   so the margin is zeroed here (the `um-toolbar` precedent). */
   margin-bottom: 0;
   padding: 20px 22px;
   border-radius: var(--r-lg);
@@ -700,11 +700,11 @@
 }
 
 /* ————————————————————————————————————————————————————————————————
-   Review dialog. Reference CSS, token-substituted as above.
-   AUTHORED: `.cm-modal-content` (the DialogContent override — Radix owns the
-   positioning the reference's `.cm-modal` wrapper did), the checklist, the
-   decision cards, the reviewer strip and the dialog action row.
-   ———————————————————————————————————————————————————————————————— */
+  Review dialog. Reference CSS, token-substituted as above.
+  AUTHORED: `.cm-modal-content` (the DialogContent override — Radix owns the
+  positioning the reference's `.cm-modal` wrapper did), the checklist, the
+  decision cards, the reviewer strip and the dialog action row.
+  ———————————————————————————————————————————————————————————————— */
 .cm-modal-content {
   padding: 0;
   gap: 0;
@@ -865,7 +865,7 @@
   border-radius: var(--r-full);
 }
 
-/* AUTHORED — the editorial checklist, following the Task 78 `.sq-check*` family. */
+/* AUTHORED — the editorial checklist, following the an earlier iteration `.sq-check*` family. */
 .cm-checks {
   display: flex;
   flex-direction: column;

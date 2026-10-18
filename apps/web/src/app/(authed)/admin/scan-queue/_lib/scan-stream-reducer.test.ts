@@ -14,7 +14,7 @@ import {
 } from './scan-stream-reducer';
 
 /**
- * The terminal reducer (Task 96) — the whole wire protocol in pure steps:
+ * The terminal reducer — the whole wire protocol in pure steps:
  * dedupe, cap, transitions, the close-code table and the backoff schedule.
  */
 

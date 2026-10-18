@@ -17,11 +17,11 @@ import { staffMembers } from '@vunvault/contracts/fixtures/users';
  * comes from the contract fixtures — no invented people, no invented emails —
  * so the mocks and the schemas can never drift apart silently.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 26/40d):
- *   GET  /api/v1/auth/csrf    → 200 { data: { csrfToken: string } } + `vv_csrf` cookie
- *   GET  /api/v1/auth/session → 200 { data: SessionUser } | 401 { error: "unauthorized" }
- *   POST /api/v1/auth/login   → 200 LoginResponse | 401 { error: "invalid_credentials" }
- *   POST /api/v1/auth/logout  → 204
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration/40d):
+ * GET /api/v1/auth/csrf  → 200 { data: { csrfToken: string } } + `vv_csrf` cookie
+ * GET /api/v1/auth/session → 200 { data: SessionUser } | 401 { error: "unauthorized" }
+ * POST /api/v1/auth/login  → 200 LoginResponse | 401 { error: "invalid_credentials" }
+ * POST /api/v1/auth/logout → 204
  */
 
 /** Cookie a developer (or a test) sets to make the mock session endpoint answer 200. */
@@ -101,7 +101,7 @@ export const authHandlers = [
     return HttpResponse.json({ error: 'invalid_credentials' }, { status: 401 });
   }),
 
-  // Login MFA completion (Task 107): the mock accepts any well-formed code.
+  // Login MFA completion : the mock accepts any well-formed code.
   // OtpCode is six digits; the discriminated union covers totp/email_otp.
   http.post('*/api/v1/auth/mfa/verify', async ({ request }) => {
     const body: unknown = await request.json().catch(() => null);

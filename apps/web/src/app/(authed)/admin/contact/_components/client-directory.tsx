@@ -6,7 +6,7 @@ import { EmptyState, Skeleton } from '@vunvault/ui';
 import { BadgeToggle } from './badge-toggle';
 
 /**
- * Client directory (Task 83e) — the table the Verified-Blogger badge is granted
+ * Client directory — the table the Verified-Blogger badge is granted
  * from.
  *
  * Columns are the spec's: `Client`, `Email`, `Company`, `Client ID`,

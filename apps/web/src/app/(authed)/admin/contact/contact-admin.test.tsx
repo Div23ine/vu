@@ -17,7 +17,7 @@ import { server } from '../../../../mocks/server';
 import AdminContactPage from './page';
 
 /**
- * Contact Inbox tests (Task 83e) — the spec's list: the inbox rows and filters,
+ * Contact Inbox tests — the spec's list: the inbox rows and filters,
  * the message dialog saving status and assignee, the verification banner and
  * its tab hand-off, and the badge grant/revoke permission gating and toasts.
  */
@@ -134,7 +134,7 @@ beforeEach(() => {
 });
 
 describe('/admin/contact — chrome', () => {
-  it('renders the planner-authored copy and both tabs', async () => {
+  it('renders the authored copy and both tabs', async () => {
     renderInbox();
     await screen.findByRole('heading', { level: 1, name: 'Contact Inbox' });
 

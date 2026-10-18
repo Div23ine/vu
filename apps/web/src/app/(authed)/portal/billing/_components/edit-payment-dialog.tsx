@@ -11,27 +11,27 @@ import { useUpdatePaymentMethod } from '../_hooks/use-billing';
 import { StripeCardFields, type CardFieldsComplete } from './stripe-card-fields';
 
 /**
- * Edit Payment Method dialog (Task 66).
+ * Edit Payment Method dialog .
  *
- * The REQUIRED CHANGE over the prototype: Card Number / Expiry / CVC are
+ * The REQUIRED CHANGE over the design: Card Number / Expiry / CVC are
  * Stripe-hosted Elements (`stripe-card-fields.tsx`) — raw card data never
  * reaches VUNVAULT. Submit tokenises in the browser
  * (`stripe.createPaymentMethod`) and PUTs ONLY the PaymentMethod token plus
  * the holder name and billing country (`UpdatePaymentMethodBody`).
  *
  * Cardholder Name and Billing Country stay normal fields; the country options
- * are the prototype's verbatim ten (mapped to ISO codes, `Other` → `XX`).
- * Without `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` the dialog shows the planner's
+ * are the design's verbatim ten (mapped to ISO codes, `Other` → `XX`).
+ * Without `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` the dialog shows the spec's
  * `Card updates are temporarily unavailable.` and disables Save.
  *
- * Dialog semantics per the catalogue: `role="dialog"`, `aria-modal`,
+ * Dialog semantics per the spec: `role="dialog"`, `aria-modal`,
  * `aria-labelledby="vbb-payment-title"`, Tab focus trap, Escape closes.
  *
  * v1 scope: stored methods are Stripe-only; Paystack (M-Pesa, African cards,
- * bank) is per-invoice at checkout (Task 66b).
+ * bank) is per-invoice at checkout .
  */
 
-/** Verbatim option list from the prototype, mapped to ISO 3166-1 alpha-2. */
+/** Verbatim option list from the design, mapped to ISO 3166-1 alpha-2. */
 export const BILLING_COUNTRIES = [
   { code: 'KE', label: 'Kenya' },
   { code: 'NG', label: 'Nigeria' },
@@ -120,7 +120,7 @@ function PaymentForm({ method, onCancel, onDone }: PaymentFormProps) {
         setFormError(submitError.message ?? REJECTED_FALLBACK);
         return;
       }
-      // Authored fallback (the planner pinned copy for the success toast and
+      // Authored fallback (the spec pinned copy for the success toast and
       // Stripe errors only), following the auth family's pattern.
       setFormError(REJECTED_FALLBACK);
       return;

@@ -2,8 +2,8 @@ import { ClipboardCheck, Cloud, Globe, Radar, Shield, Wrench } from 'lucide-reac
 import '../_styles/services.css';
 
 /**
- * Core Services (Task 54) — the six-card grid. Server component; titles,
- * bodies and tag chips verbatim from the prototype (the `vv-skill` chip style
+ * Core Services — the six-card grid. Server component; titles,
+ * bodies and tag chips verbatim from the design (the `vv-skill` chip style
  * ships in `services.css` so this page does not depend on the About sheet).
  */
 

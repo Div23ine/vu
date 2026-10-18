@@ -7,10 +7,10 @@ import { useScanQueueSummary } from '../_hooks/use-scan-queue';
 import '../_styles/scan-queue.css';
 
 /**
- * Queue summary tiles (Task 77) — the six KPI tiles above the toolbar, all
+ * Queue summary tiles — the six KPI tiles above the toolbar, all
  * fixture/API-driven (`GET /admin/scans/summary`). Labels and delta copy are
  * verbatim from the reference markup. A 403 hides the strip; any other
- * failure degrades to `Metrics unavailable` + Retry (the Task 76 pattern).
+ * failure degrades to `Metrics unavailable` + Retry (the an earlier iteration pattern).
  */
 
 export function QueueSummary() {

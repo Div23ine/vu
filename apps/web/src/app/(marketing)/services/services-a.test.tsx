@@ -9,13 +9,13 @@ import { SERVICE_TABS, ServiceTabs } from './_components/service-tabs';
 import { ServicesHero } from './_components/services-hero';
 
 /**
- * Services page A tests (Task 54).
+ * Services page A tests .
  *
- * The CLI reuses Task 48's engine, so the scan assertions mirror the scanner
+ * The CLI reuses an earlier iteration's engine, so the scan assertions mirror the scanner
  * suite: invalid target → the exact engine error line; valid target → the
  * 19-step script under fake timers ending at COMPLETE / 100%.
  *
- * The catalogue's test note says "three core-service blocks"; the verbatim
+ * The spec's test note says "three core-service blocks"; the verbatim
  * markup embeds six cards (one shown + "+5 more siblings") — the markup wins.
  */
 
@@ -90,14 +90,14 @@ describe('CoreServices', () => {
 describe('ServiceTabs', () => {
   it('marks the first tab active and moves is-active on click', () => {
     render(<ServiceTabs />);
-    expect(SERVICE_TABS).toHaveLength(5);
+    expect(SERVICE_TABS).toHaveLength(4);
     const tabs = screen.getAllByRole('button');
     expect(tabs[0]).toHaveClass('is-active');
 
     fireEvent.click(screen.getByRole('button', { name: 'Core Services' }));
     expect(screen.getByRole('button', { name: 'Core Services' })).toHaveClass('is-active');
     expect(screen.getByRole('button', { name: 'Free Tools' })).not.toHaveClass('is-active');
-    expect(tabs).toHaveLength(5);
+    expect(tabs).toHaveLength(4);
   });
 });
 
@@ -190,7 +190,7 @@ describe('InlineCli', () => {
     try {
       render(<InlineCli />);
       const input = screen.getByLabelText('Target value for the selected tool');
-      // A suggestion chip fills the input, as in the prototype.
+      // A suggestion chip fills the input, as in the design.
       fireEvent.click(screen.getByRole('button', { name: 'api.vunvault.com' }));
       expect(input).toHaveValue('api.vunvault.com');
 

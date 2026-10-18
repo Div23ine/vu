@@ -1,5 +1,5 @@
 /**
- * Scan Queue stylesheet (Task 77).
+ * Scan Queue stylesheet .
  *
  * The reference `sq-*` blocks reproduced with every `--vg-*`/bare value that
  * has a token converted (`--white`, `--ink*`, `--line*`, `--brand*`, `--dur`,
@@ -7,7 +7,7 @@
  * `--danger-*`). Colours with NO token (`#ffffff` where `--white` fits it is
  * used, `#cbd5e1`, `#04121f`, `#fda4af`, `#9f1239`, `#fff1f2`, `#fecdd3`,
  * `#f8fafc` and the rgba() stops the reference itself carries) stay literal
- * in this file only. The planner truncated the sheet after `.sq-gate-badge`;
+ * in this file only. The spec truncated the sheet after `.sq-gate-badge`;
  * the remaining rules (gate tones, row-action buttons, the empty state, the
  * policy-card steps/alert, reviewer select, focus rings, reduced motion) are
  * AUTHORED on the same patterns, marked inline.
@@ -598,15 +598,15 @@
 }
 
 /* ————————————————————————————————————————————————————————————————
-   Task 78 — review-gate dialog. The reference `sq-modal-*` blocks with the
-   token conversions (`--white`, `--dark-deep`, `--slate-muted`,
-   `--font-mono`, `--r-lg`, `--dur`, `--ease`); the Radix `Dialog` primitive
-   owns the backdrop, positioning, focus trap and Escape, so `.sq-modal`,
-   `.sq-modal-backdrop` and `.sq-modal-window` collapse into the
-   `.sq-modal-content` override. AUTHORED (marked inline): the checklist,
-   decision cards, context dl, payment/blocked panels, note error and the
-   dialog close-button contrast on the dark head.
-   ———————————————————————————————————————————————————————————————— */
+  review-gate dialog. The reference `sq-modal-*` blocks with the
+  token conversions (`--white`, `--dark-deep`, `--slate-muted`,
+  `--font-mono`, `--r-lg`, `--dur`, `--ease`); the Radix `Dialog` primitive
+  owns the backdrop, positioning, focus trap and Escape, so `.sq-modal`,
+  `.sq-modal-backdrop` and `.sq-modal-window` collapse into the
+  `.sq-modal-content` override. AUTHORED (marked inline): the checklist,
+  decision cards, context dl, payment/blocked panels, note error and the
+  dialog close-button contrast on the dark head.
+  ———————————————————————————————————————————————————————————————— */
 
 /* The DialogContent override: flush padding, the reference's width/shadow. */
 .sq-modal-content {
@@ -1025,7 +1025,7 @@
   box-shadow: none;
 }
 
-/* ——— Reduced motion + print (reference, Task 78 list) ——— */
+/* ——— Reduced motion + print (reference, an earlier iteration list) ——— */
 @media (prefers-reduced-motion: reduce) {
   .sq-modal-content,
   .sq-check-label,

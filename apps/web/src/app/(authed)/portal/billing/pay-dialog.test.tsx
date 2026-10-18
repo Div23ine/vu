@@ -15,7 +15,7 @@ import { usePayDialogStore } from '../../../../lib/pay-dialog-store';
 import { PayInvoiceDialog } from './_components/pay-invoice-dialog';
 
 /**
- * Pay-invoice dialog tests (Task 66b) — the spec's list: switching to KES
+ * Pay-invoice dialog tests — the spec's list: switching to KES
  * requests a quote and shows the locked amount + the USD charge sentence; the
  * countdown hitting zero disables Pay and shows `Quote expired`; the Card
  * path checks out with `stripe`/`card`; M-Pesa requires a valid phone and
@@ -183,7 +183,7 @@ afterEach(() => {
 });
 
 describe('PayInvoiceDialog — layout and copy', () => {
-  it('renders the planner copy, summary row and channel cards', async () => {
+  it('renders the spec copy, summary row and channel cards', async () => {
     renderDialog();
     const dialog = await openDialog();
     expect(dialog).toHaveAttribute('aria-modal', 'true');

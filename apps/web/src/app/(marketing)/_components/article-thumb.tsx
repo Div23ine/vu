@@ -1,10 +1,10 @@
 import { useId } from 'react';
 
 /**
- * Generated article thumbnails (Task 49).
+ * Generated article thumbnails .
  *
- * ARTWORK, not UI chrome: per the catalogue's illustration exception the
- * literal fill/stroke colours of the six prototype variants stay exactly as
+ * ARTWORK, not UI chrome: per the spec's illustration exception the
+ * literal fill/stroke colours of the six design variants stay exactly as
  * they were, inside this file only. The variant is chosen deterministically
  * by `index % 6`; gradient ids come from `useId()` (sanitised — React's raw
  * ids contain characters that are awkward inside `url(#…)` references) so

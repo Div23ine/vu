@@ -4,8 +4,8 @@ import { X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@vunvault/ui';
 
 /**
- * Regenerate recovery keys confirmation (Task 67) — the prototype's
- * irreversible-action dialog on the Task 11 `Dialog` primitive (Radix supplies
+ * Regenerate recovery keys confirmation — the design's
+ * irreversible-action dialog on the an earlier iteration `Dialog` primitive (Radix supplies
  * `role="dialog"`, `aria-modal`, the focus trap and Escape-to-close), wearing
  * the `vpm-modal-*` classes reproduced in `security.css`. All copy verbatim.
  */

@@ -2,10 +2,10 @@ import { ArrowRight } from 'lucide-react';
 import '../../_styles/scanner.css';
 
 /**
- * Free Scanner CTA banner (Task 48) — the dark band that pitches the
+ * Free Scanner CTA banner — the dark band that pitches the
  * browser-side reconnaissance demo. Server component: the button carries
  * `data-vv-open-scanner`, and the scanner store's delegated click listener
- * (Task 48) opens the dialog, so no client boundary is needed here.
+ * opens the dialog, so no client boundary is needed here.
  *
  * The note is a promise, not decoration: the scan is a simulation — no
  * network request is ever made and nothing is stored.

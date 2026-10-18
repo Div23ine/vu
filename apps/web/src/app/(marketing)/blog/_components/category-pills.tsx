@@ -6,12 +6,12 @@ import { useBlogCategories } from '../_hooks/use-blog';
 import '../_styles/blog.css';
 
 /**
- * Category filter pills (Task 56) — `All` plus one pill per
- * `BLOG_CATEGORY_LABELS` value present in the loaded (unfiltered) catalogue
+ * Category filter pills — `All` plus one pill per
+ * `BLOG_CATEGORY_LABELS` value present in the loaded (unfiltered) catalog
  * data, in the label map's order. A proper `role="tablist"` with
  * `aria-selected`; clicking a pill filters the list.
  *
- * The pill styling is authored in `blog.css`: the catalogue names the class
+ * The pill styling is authored in `blog.css`: the spec names the class
  * (`vv-blog-pill`, referenced by its reduced-motion block) but embeds no rule
  * block for it — the pills follow the marketing nav's pill idiom.
  */

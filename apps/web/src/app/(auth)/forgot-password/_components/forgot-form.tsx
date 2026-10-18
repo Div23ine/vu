@@ -11,11 +11,11 @@ import { AuthCard } from '../../_components/auth-card';
 import { useForgotPassword } from '../../_hooks/use-auth-misc';
 
 /**
- * Forgot-password form (Task 63) — enumeration-safe by design: whatever the
+ * Forgot-password form — enumeration-safe by design: whatever the
  * API answers (202 or any HTTP error), the card ALWAYS ends on the
  * `Check your inbox` state, because a differing outcome would reveal whether
  * the address exists. Only a network failure (no HTTP response at all) leaves
- * the form standing so the visitor can retry — the planner's carve-out.
+ * the form standing so the visitor can retry — the spec's carve-out.
  *
  * Email validation messages are the login card's (spec: "same email
  * validation messages as login").
@@ -46,7 +46,7 @@ export function ForgotForm() {
       setSent(true);
     } catch (submitError) {
       // ANY HTTP answer still ends on the inbox state; only a network
-      // failure keeps the form (documented planner carve-out).
+      // failure keeps the form (documented spec carve-out).
       if (isApiError(submitError)) setSent(true);
     }
   });

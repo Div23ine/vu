@@ -2,9 +2,9 @@ import type { Permission, SessionUser, UserRole } from '@vunvault/contracts';
 
 /**
  * Permission helpers shared by the edge middleware, server guards and client
- * components (Task 43).
+ * components .
  *
- * The permission catalogue lives in `@vunvault/contracts` — the API mints the
+ * The permission catalog lives in `@vunvault/contracts` — the API mints the
  * same strings into the JWT — so nothing here can disagree with the backend.
  * Everything in this module is a *rendering/routing* decision; the API remains
  * the authority on every request.

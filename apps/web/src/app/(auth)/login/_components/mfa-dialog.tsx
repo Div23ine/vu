@@ -21,28 +21,28 @@ import { OtpInput, OTP_LENGTH } from './otp-input';
 import '../../_styles/auth.css';
 
 /**
- * MFA verification dialog (Task 60) — mounted by `/login`, driven by the
- * store Task 59 fills.
+ * MFA verification dialog — mounted by `/login`, driven by the
+ * store an earlier iteration fills.
  *
- * Dialog semantics per the catalogue: `role="dialog"`, `aria-modal`,
+ * Dialog semantics per the spec: `role="dialog"`, `aria-modal`,
  * `aria-labelledby="vvOtpTitle"`, a Tab focus trap, Escape closes (and
  * clears the store — nothing is called on the API; the challenge cookie
  * simply expires). Default method order: `webauthn` (auto-prompted once),
  * else `totp`, else `email_otp`; recovery is always offered in the switcher.
  *
- * Success view copy is the planner's verbatim pair (`Verification
+ * Success view copy is the spec's verbatim pair (`Verification
  * successful` / `Redirecting to VUNVAULT…`), which supersedes the
- * prototype's strings — as the Behaviour section explicitly dictates. The
- * prototype's dev scaffolding (test-OTP toasts, console logging) is gone.
+ * design's strings — as the Behaviour section explicitly dictates. The
+ * design's dev scaffolding (test-OTP toasts, console logging) is gone.
  *
  * A staff session that verified with a RECOVERY code stays at `aal1`, so it
  * is sent to `/login?error=mfa_required` instead of the admin home (the
- * Task 43 guard would bounce it anyway).
+ * an earlier iteration guard would bounce it anyway).
  */
 
 const RESEND_SECONDS = 60;
 const SUCCESS_NAV_DELAY_MS = 1400; // matches the vvSuccessBar animation
-const FOCUS_DELAY_MS = 180; // the prototype's openOtpModal focus delay
+const FOCUS_DELAY_MS = 180; // the design's openOtpModal focus delay
 const RECOVERY_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
 
 const INCORRECT_CODE = 'Incorrect code. Please check the digits and try again.';
@@ -50,7 +50,7 @@ const INCOMPLETE_CODE = 'Please enter all 6 digits.';
 const CANCELLED_KEY = 'Security key request was cancelled.';
 const NETWORK_FAILURE = 'Verification failed. Please try again.';
 
-/** Ported from the prototype JS: `re•••@example.com`. */
+/** Ported from the design JS: `re•••@example.com`. */
 export function maskEmail(value: string): string {
   const at = value.indexOf('@');
   if (at < 1) return value;

@@ -10,7 +10,7 @@ import { server } from '../../../mocks/server';
 import ContactPage from './page';
 
 /**
- * Contact page tests (Task 57) — category preselect from the URL, the
+ * Contact page tests — category preselect from the URL, the
  * required-field and consent messages, the honeypot riding along in the
  * payload, the `REQ-` success banner, and the 429 / network alert banners.
  * Submissions run through the real api client against the MSW contact

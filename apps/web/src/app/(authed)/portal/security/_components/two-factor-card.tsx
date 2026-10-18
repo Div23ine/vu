@@ -7,11 +7,11 @@ import { SecurityKeyPanel } from './security-key-panel';
 import { TotpPanel } from './totp-panel';
 
 /**
- * Two-factor card (Task 67) — `GET /account/security` supplies the MFA
+ * Two-factor card — `GET /account/security` supplies the MFA
  * status; the two panels (authenticator app, hardware keys) own their
  * ceremonies and call `onChanged` to refetch. The security POSTURE also
  * arrives on this response but has no UI on this page (the profile security
- * tab is Task 83d) — it is simply not rendered here.
+ * tab is an earlier iteration) — it is simply not rendered here.
  */
 
 export function TwoFactorCard() {

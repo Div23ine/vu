@@ -5,23 +5,23 @@ import { peekClaims } from './lib/jwt-peek';
 import { homeFor } from './lib/permissions';
 
 /**
- * Edge middleware (Task 43) — runs on Cloudflare for every non-static request.
+ * Edge middleware — runs on Cloudflare for every non-static request.
  *
  * Two jobs, deliberately shallow:
  *
- *  1. **CSP nonce.** Mint a per-request nonce (Web Crypto only — this file
- *     must stay edge-compatible), expose it to the render as the `x-nonce`
- *     request header, and set the `Content-Security-Policy` response header
- *     from `buildCsp`. Every response leaves with a CSP, redirects included.
- *     The static security headers (HSTS, X-Frame-Options, …) are already set
- *     in `next.config.ts` (Task 41) and are NOT duplicated here.
+ * 1. **CSP nonce.** Mint a per-request nonce (Web Crypto only — this file
+ *  must stay edge-compatible), expose it to the render as the `x-nonce`
+ *  request header, and set the `Content-Security-Policy` response header
+ *  from `buildCsp`. Every response leaves with a CSP, redirects included.
+ *  The static security headers (HSTS, X-Frame-Options, …) are already set
+ *  in `next.config.ts` and are NOT duplicated here.
  *
- *  2. **Route guards — cookie presence only.** The middleware checks that a
- *     session cookie EXISTS before letting a guarded path render, and steers
- *     logged-in visitors away from `/login`/`/signup`. It never validates a
- *     token: peeking the role is a routing convenience, never a security
- *     decision — the API remains the authority on every data call, and
- *     `requireSession` re-checks server-side before guarded layouts render.
+ * 2. **Route guards — cookie presence only.** The middleware checks that a
+ *  session cookie EXISTS before letting a guarded path render, and steers
+ *  logged-in visitors away from `/login`/`/signup`. It never validates a
+ *  token: peeking the role is a routing convenience, never a security
+ *  decision — the API remains the authority on every data call, and
+ *  `requireSession` re-checks server-side before guarded layouts render.
  */
 
 /** Access-token cookie (HttpOnly). */
@@ -30,7 +30,7 @@ const ACCESS_TOKEN_COOKIE = 'vv_at';
 const REFRESH_TOKEN_COOKIE = 'vv_rt';
 
 /**
- * Fallback CDN host — the same default `next.config.ts` (Task 41) uses for
+ * Fallback CDN host — the same default `next.config.ts` uses for
  * `images.remotePatterns`, so CSP `img-src` and the image optimiser agree.
  */
 const DEFAULT_R2_HOST = 'assets.vunvault.com';
@@ -89,7 +89,7 @@ export default function middleware(request: NextRequest): NextResponse {
   }
 
   // 2. Auth pages are pointless with a session — land the visitor where they belong.
-  //    If `vv_at` is missing or unreadable, do nothing: the page itself handles it.
+  //  If `vv_at` is missing or unreadable, do nothing: the page itself handles it.
   if (isAuthPage(pathname) && hasSessionCookie && peekedRole !== undefined) {
     return redirectTo(homeFor(peekedRole));
   }

@@ -10,11 +10,11 @@ import { isForbidden, useDashboardSectionRaw } from './use-dashboard';
 import './dashboard.css';
 
 /**
- * Active Running Scans Monitor (Task 76) — live worker telemetry for the
+ * Active Running Scans Monitor — live worker telemetry for the
  * scans currently executing: `ProgressBar` + percent, `formatEta` for the
  * ETA and the computed shown/total footnote. `Open Scan Queue` deep-links to
- * Task 77's route; the other two mini-buttons are the prototype's static
- * chrome (Task 76 implements no writes).
+ * an earlier iteration's route; the other two mini-buttons are the design's static
+ * chrome (an earlier iteration implements no writes).
  */
 
 export function RunningScans() {

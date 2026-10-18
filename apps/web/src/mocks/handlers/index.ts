@@ -40,7 +40,7 @@ export const handlers = [
   ...studioHandlers,
   ...dashboardHandlers,
   // admin-users BEFORE admin-scans: its filtered GET /admin/users supersedes
-  // the roster handler Task 77 parked in admin-scans.ts (MSW first-match).
+  // the roster handler an earlier iteration parked in admin-scans.ts (MSW first-match).
   ...adminUsersHandlers,
   ...adminScansHandlers,
   ...adminAdvisoriesHandlers,

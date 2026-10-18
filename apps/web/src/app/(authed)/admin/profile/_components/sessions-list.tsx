@@ -11,7 +11,7 @@ import {
 } from '../_hooks/use-admin-security';
 
 /**
- * Active sessions (Task 83d) — the administrator's own device list.
+ * Active sessions — the administrator's own device list.
  *
  * Every column is the API's `SessionView`: device label, IP, rendered location,
  * the MFA method that authenticated it, the start stamp and the `This device`

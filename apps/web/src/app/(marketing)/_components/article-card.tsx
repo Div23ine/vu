@@ -7,9 +7,9 @@ import { ArticleThumb } from './article-thumb';
 import '../_styles/home-mid.css';
 
 /**
- * Article card (Task 49, shared with the Blog list in Task 56).
+ * Article card (an earlier iteration, shared with the Blog list in an earlier iteration).
  *
- * The prototype rendered this markup from JS; here it is a component fed by
+ * The design rendered this markup from JS; here it is a component fed by
  * the public content API. The thumbnail is the item's `featuredImageUrl`
  * through `next/image` when present, otherwise the deterministic generated
  * illustration (`index % 6`). The whole card is one link to `slugPath`

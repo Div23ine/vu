@@ -17,7 +17,7 @@ vi.mock('next/image', () => ({
 }));
 
 /**
- * Blog list tests (Task 56).
+ * Blog list tests .
  *
  * Everything runs against the MSW public-content handler (the six fixture
  * posts), so search/category assertions verify the REAL request pipeline:
@@ -70,9 +70,8 @@ describe('BlogPage', () => {
     ]);
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
 
-    // The ticker and scanner CTA frame the page (Tasks 47/48).
+    // The ticker frames the page .
     expect(screen.getAllByText('CVE-2026-9122').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'Request Free Scan' })).toBeInTheDocument();
   });
 
   it('features the CRITICAL item as the highest-priority report', async () => {
@@ -146,7 +145,7 @@ describe('BlogPage', () => {
 });
 
 describe('NewsletterForm', () => {
-  it('subscribes, toasts the planner copy and clears the field', async () => {
+  it('subscribes, toasts the spec copy and clears the field', async () => {
     useToastStore.setState({ toasts: [] });
     const user = userEvent.setup();
     renderBlog();

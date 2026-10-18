@@ -1,6 +1,6 @@
 /**
- * Free Scanner stylesheet (Task 48) — CTA band, terminal window, form, log
- * screen and progress rail, reproduced from the prototype's CSS. Every value
+ * Free Scanner stylesheet — CTA band, terminal window, form, log
+ * screen and progress rail, reproduced from the design's CSS. Every value
  * with a design token uses `var(--token)` (`--white`, `--dark-2`,
  * `--dark-deep`, `--slate-text`, `--slate-muted`, `--font-mono`, `--r-sm`,
  * `--r-field`, `--r-full`, `--r-2xl`, `--brand`, `--brand-soft`,
@@ -11,17 +11,17 @@
  * macOS traffic-light reds/ambers/greens) stay inside this file only — never
  * in TSX.
  *
- * Radix adaptation: the prototype's hand-rolled modal shell (`.vv-scan-modal`
- * and its backdrop) is replaced at runtime by the Task 11 `Dialog` primitive;
+ * Radix adaptation: the design's hand-rolled modal shell (`.vv-scan-modal`
+ * and its backdrop) is replaced at runtime by the an earlier iteration `Dialog` primitive;
  * the blocks are kept below for fidelity, and `.vv-scan-window` is applied to
  * the Radix panel itself — hence the sizing overrides (`width`, `max-width`,
  * `max-height`) that supersede the panel's utility classes.
  *
  * Authored additions, marked below: the `.vv-line` log-row palette (the
- * prototype's stylesheet embeds the class names but not their colours) and
+ * design's stylesheet embeds the class names but not their colours) and
  * `:focus-visible` outlines for the CTA/execute buttons.
  *
- * Reduced motion: the prototype's block at the bottom collapses the window
+ * Reduced motion: the design's block at the bottom collapses the window
  * and shake transitions; the global fallback in `@vunvault/ui`'s `motion.css`
  * covers the pulse and marquee-style loops, and the engine itself appends the
  * whole log instantly when reduced motion is set.
@@ -155,8 +155,8 @@
   }
 }
 
-/* ——— Prototype modal shell (superseded by the Radix Dialog at runtime;
-       kept for reference fidelity — see file header). ——— */
+/* ——— Design modal shell (superseded by the Radix Dialog at runtime;
+    kept for reference fidelity — see file header). ——— */
 .vv-scan-modal {
   position: fixed;
   inset: 0;
@@ -460,7 +460,7 @@
   color: #55637a;
 }
 
-/* Authored: log-row palette (class names come from the prototype; its embed
+/* Authored: log-row palette (class names come from the design; its embed
  * omits the colour rules). Kinds map onto the severity tokens. */
 .vv-line {
   display: flex;

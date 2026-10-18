@@ -1,5 +1,5 @@
 /**
- * Academy + Pricing stylesheet (Task 51), reproduced from the prototype's
+ * Academy + Pricing stylesheet , reproduced from the design's
  * CSS. Every tokenised value uses `var(--token)` (`--white`, `--r-lg`,
  * `--r-full`, `--dark-abyss`, `--slate-muted`, `--font-mono`, `--grad-brand`,
  * `--line`, `--line-soft`, `--brand*`, `--ink*`, `--ease`); one-off literals
@@ -8,12 +8,12 @@
  * ink `#04121f`) stay inside this file only — never in TSX.
  *
  * AUTHORED additions, marked below:
- *  - `.anchor-offset` — the prototype pairs the `#services-plans` span with
- *    this class but never embeds the block; it lifts anchor landings clear of
- *    the sticky header.
- *  - `:focus-visible` outlines for the two CTA styles.
+ * - `.anchor-offset` — the design pairs the `#services-plans` span with
+ * this class but never embeds the block; it lifts anchor landings clear of
+ * the sticky header.
+ * - `:focus-visible` outlines for the two CTA styles.
  *
- * Reduced motion: the prototype's block below is reproduced verbatim, and the
+ * Reduced motion: the design's block below is reproduced verbatim, and the
  * global fallback in `@vunvault/ui`'s `motion.css` collapses every hover
  * transition; the cards keep their final layout either way.
  */

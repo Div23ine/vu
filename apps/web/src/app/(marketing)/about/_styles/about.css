@@ -1,5 +1,5 @@
 /**
- * About page stylesheet (Task 53), reproduced from the prototype's CSS.
+ * About page stylesheet , reproduced from the design's CSS.
  * Every tokenised value uses `var(--token)` (`--white`, `--r-md`, `--r-xl`,
  * `--r-2xl`, `--r-full`, `--dark-abyss`, `--font-mono`, `--line*`, `--ink*`,
  * `--brand*`, `--ease`); one-off literals without tokens (dark gradient stops
@@ -11,13 +11,13 @@
  * groups load per-page CSS independently).
  *
  * AUTHORED additions, marked below:
- *  - `.vv-cta .vv-h2` / `.vv-cta .vv-body` colour overrides — the reference
- *    block sets those classes to ink colours, which would be unreadable on
- *    the CTA's dark panel; the override mirrors the prototype's own dark-card
- *    idiom (`.vv-mv-card--dark`).
- *  - a `:focus-visible` outline for `.btn-get-started`.
- *  - the `vv-reveal` reduced-motion rule ships in the reference block below;
- *    the global `motion.css` fallback covers every other transition.
+ * - `.vv-cta .vv-h2` / `.vv-cta .vv-body` colour overrides — the reference
+ * block sets those classes to ink colours, which would be unreadable on
+ * the CTA's dark panel; the override mirrors the design's own dark-card
+ * idiom (`.vv-mv-card--dark`).
+ * - a `:focus-visible` outline for `.btn-get-started`.
+ * - the `vv-reveal` reduced-motion rule ships in the reference block below;
+ * the global `motion.css` fallback covers every other transition.
  */
 
 /* ——— Hero ——— */
@@ -441,7 +441,7 @@
   margin-top: 26px;
 }
 /* Authored: keep the shared type classes readable on the dark band (see file
- * header) — mirrors the prototype's `.vv-mv-card--dark` idiom. */
+ * header) — mirrors the design's `.vv-mv-card--dark` idiom. */
 .vv-cta .vv-h2 {
   color: var(--white);
 }
@@ -459,16 +459,16 @@
 }
 
 /* ==========================================================================
-   Task 53b — Core Team + System Telemetry (appended per the deliverable).
-   Shared type/section/reveal rules from Task 53 above are NOT repeated; the
-   reference blocks identical to them (`.vv-h2`, `.vv-body`, `.vv-section`,
-   `.vv-eyebrow`, `.vv-reveal`) already exist. Tokenised values use
-   `var(--token)`; one-off literals (slate greys, flash tints) stay in CSS.
-   AUTHORED additions are marked inline.
-   ========================================================================== */
+  Core Team + System Telemetry (appended per the deliverable).
+  Shared type/section/reveal rules from an earlier iteration above are NOT repeated; the
+  reference blocks identical to them (`.vv-h2`, `.vv-body`, `.vv-section`,
+  `.vv-eyebrow`, `.vv-reveal`) already exist. Tokenised values use
+  `var(--token)`; one-off literals (slate greys, flash tints) stay in CSS.
+  AUTHORED additions are marked inline.
+  ========================================================================== */
 
 /* ——— Social links (reference; the About page cannot rely on the home
-   sheet being loaded) ——— */
+  sheet being loaded) ——— */
 .social-link {
   display: inline-flex;
   align-items: center;
@@ -900,7 +900,7 @@
   border-color: rgba(244, 63, 94, 0.35);
 }
 /* Authored: the reference embeds only the crit variant; high/medium follow
-   the same idiom on the severity tokens. */
+  the same idiom on the severity tokens. */
 .vv-tel-sev--high {
   color: var(--high);
   background: rgba(245, 158, 11, 0.12);

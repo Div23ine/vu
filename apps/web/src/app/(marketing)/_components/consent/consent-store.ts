@@ -5,21 +5,19 @@ import { create } from 'zustand';
 import type { ContactCategories } from '@vunvault/contracts';
 
 /**
- * Consent state (Task 58) — IN-MEMORY only (the prototype used
+ * Consent state — IN-MEMORY only (the design used
  * `sessionStorage`; web storage is forbidden here).
  *
- * The decision is durable through the API-set cookie `vv_consent=1`
+ * The decision is durable through the API-set cookie `vv_consent=<version>`
  * (`Max-Age=31536000; SameSite=Lax; Secure`, readable — not HttpOnly): the
- * store initialises from it, and `ConsentProvider` re-checks on mount. Until
- * the API ships that cookie (follow-up noted in the task report), the 204
- * response is the success signal and the decision lives in memory for the
- * page load.
- *
- * `policyVersion` is the string the banner posts — the contracts schema only
- * requires `min(1)`; the catalogue pins `"1"`.
+ * store initialises from it, and `ConsentProvider` re-checks on mount. The
+ * cookie stores the POLICY VERSION the visitor agreed to, not a bare flag:
+ * a stored version older than `CONSENT_POLICY_VERSION` means the terms or
+ * privacy policy changed since, so the banner returns for a fresh choice.
+ * Bump `CONSENT_POLICY_VERSION` whenever the legal pages change materially.
  */
 
-export const CONSENT_POLICY_VERSION = '1';
+export const CONSENT_POLICY_VERSION = '2';
 export const CONSENT_COOKIE = 'vv_consent';
 
 export interface ConsentState {
@@ -31,9 +29,14 @@ export interface ConsentState {
   setLeaving: () => void;
 }
 
+function cookiePolicyVersion(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = /(?:^|;\s*)vv_consent=([^;]+)/.exec(document.cookie);
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
+}
+
 function cookieSaysDecided(): boolean {
-  if (typeof document === 'undefined') return false;
-  return /(?:^|;\s*)vv_consent=1(?:;|$)/.test(document.cookie);
+  return cookiePolicyVersion() === CONSENT_POLICY_VERSION;
 }
 
 export const useConsentStore = create<ConsentState>((set) => ({

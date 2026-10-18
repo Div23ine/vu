@@ -3,15 +3,15 @@ import { LicencesTable } from './_components/licences-table';
 import './_styles/licences.css';
 
 /**
- * `/portal/licences` (Task 73) — the client's purchased product licences:
+ * `/portal/licences` — the client's purchased product licences:
  * key copy, the twelve-month update window and the secure download on the
- * Task 40b entitlements API. The portal layout (Task 45) owns the chrome
+ * an earlier iteration entitlements API. The portal layout owns the chrome
  * and the session guard.
  */
 
 export const metadata: Metadata = {
   title: 'Your Licences',
-  // Authed portal page — never indexable (the Task 63 auth-page family rule).
+  // Authed portal page — never indexable (the an earlier iteration auth-page family rule).
   robots: { index: false },
 };
 

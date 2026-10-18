@@ -4,7 +4,7 @@ import { env } from '../env';
 /**
  * App-side API bootstrap.
  *
- * `@vunvault/lib` ships the transport (Task 7) but deliberately knows nothing
+ * `@vunvault/lib` ships the transport but deliberately knows nothing
  * about this app: the base URL and the session-expiry behaviour are configured
  * here, once, at module load. Every module that talks to the API imports its
  * helpers from this file rather than from `@vunvault/lib` directly, so the

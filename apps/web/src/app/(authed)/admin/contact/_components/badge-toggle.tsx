@@ -15,7 +15,7 @@ import {
 import { useGrantBloggerBadge, useRevokeBloggerBadge } from '../_hooks/use-contact-admin';
 
 /**
- * Verified-Blogger badge toggle (Task 83e).
+ * Verified-Blogger badge toggle .
  *
  * Both directions go through a confirmation dialog because the badge is not a
  * cosmetic flag: it grants Content Studio access, so granting it to the wrong

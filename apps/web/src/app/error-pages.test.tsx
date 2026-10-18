@@ -14,12 +14,18 @@ import { mockStaffSession } from '../mocks/handlers/auth';
 import { server } from '../mocks/server';
 
 /**
- * Smoke tests for the four Task 43 error pages: each renders, and each
- * asserts its planner-authored copy verbatim.
+ * Smoke tests for the four an earlier iteration error pages: each renders, and each
+ * asserts its authored copy verbatim.
  *
- * These pages have no prototype — the catalogue authors the copy — so the
+ * These pages have no design — the spec authors the copy — so the
  * strings below are the specification.
  */
+
+const replaceSpy = vi.hoisted(() => vi.fn());
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/missing-page',
+  useRouter: () => ({ replace: replaceSpy }),
+}));
 
 function renderWithSession(element: React.ReactElement) {
   const queryClient = createQueryClient();
@@ -31,14 +37,10 @@ function renderWithSession(element: React.ReactElement) {
 }
 
 describe('not-found', () => {
-  it('renders the 404 copy and a link home', () => {
-    render(<NotFound />);
-    expect(screen.getByText('404')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
-    expect(
-      screen.getByText('The page you requested does not exist or has moved.'),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Return home' })).toHaveAttribute('href', '/');
+  it('redirects home with the wanted path instead of showing a 404', () => {
+    renderWithSession(<NotFound />);
+    expect(replaceSpy).toHaveBeenCalledWith('/?coming-soon=%2Fmissing-page');
+    expect(screen.getByText('Taking you back to the landing page…')).toBeInTheDocument();
   });
 });
 

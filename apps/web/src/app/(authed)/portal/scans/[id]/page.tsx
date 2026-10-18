@@ -12,7 +12,7 @@ import { isScanNotFound, useScan, useScanFindings } from '../../_hooks/use-scans
 import '../../_styles/scans.css';
 
 /**
- * `/portal/scans/[id]` (Task 69) — the released report detail: header (job
+ * `/portal/scans/[id]` — the released report detail: header (job
  * code, target, type, released date), the severity summary as `Badge`s and
  * the findings list. A `404` — the release lock's answer for "not yours, not
  * released, or gone" — renders the standard not-found page via `notFound()`.

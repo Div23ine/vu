@@ -3,13 +3,12 @@ import '@testing-library/jest-dom/vitest';
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { formatUsdWhole } from '@vunvault/lib';
-import { AcademyTracks } from './academy-tracks';
 import { PLANS, PLANS_FOOTNOTE } from '../pricing-data';
 import { PricingPlans } from '../pricing-plans';
 
 /**
- * Academy + Pricing tests (Task 51). Both sections are static server
- * components, so the suites render them bare and pin the verbatim copy, the
+ * Pricing tests . The section is a static server component, so the
+ * suites render it bare and pin the verbatim copy, the
  * price formatting path and the featured-plan treatment.
  */
 
@@ -75,66 +74,5 @@ describe('PricingPlans', () => {
     expect(screen.getByText(PLANS_FOOTNOTE)).toBeInTheDocument();
     expect(document.getElementById('pricing')).not.toBeNull();
     expect(document.getElementById('services-plans')).not.toBeNull();
-  });
-});
-
-describe('AcademyTracks', () => {
-  it('renders the three tracks verbatim', () => {
-    render(<AcademyTracks />);
-    expect(screen.getByText('VUNVAULT Academy')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', {
-        name: 'Learning tracks built for the real threat landscape',
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Structured, hands-on curriculum for defenders, analysts and offensive engineers with free certificate.',
-      ),
-    ).toBeInTheDocument();
-
-    expect(screen.getByText('Foundations')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Networking & Defense Foundations' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Blue Team')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'SOC Analyst & Incident Response' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Red Team')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Ethical Hacking & Web Pentesting' }),
-    ).toBeInTheDocument();
-
-    expect(document.querySelectorAll('article.vv-track')).toHaveLength(3);
-    const ctas = screen.getAllByRole('link', { name: /Explore Track/ });
-    expect(ctas).toHaveLength(3);
-    for (const cta of ctas) {
-      expect(cta).toHaveAttribute('href', '/academy');
-    }
-  });
-
-  it('renders every skill chip', () => {
-    render(<AcademyTracks />);
-    // The markup embeds four chips per track (twelve total); the catalogue's
-    // test note says "nine" but the verbatim markup wins.
-    const chips = [
-      'TCP/IP',
-      'DNS & TLS',
-      'Firewalls',
-      'Hardening',
-      'SIEM',
-      'Threat Hunting',
-      'DFIR',
-      'MITRE ATT&CK',
-      'OWASP Top 10',
-      'Burp Suite',
-      'API Security',
-      'Reporting',
-    ];
-    for (const chip of chips) {
-      expect(screen.getByText(chip)).toBeInTheDocument();
-    }
-    expect(document.querySelectorAll('.vv-skill')).toHaveLength(chips.length);
   });
 });

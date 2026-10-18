@@ -3,23 +3,23 @@ import type { ProfileSettings, UpdateProfileSettingsBody } from '@vunvault/contr
 import { apiDelete, apiGet, apiPatch, apiPost } from '../../../../../lib/api';
 
 /**
- * Account-settings hooks (Task 83c) — the administrator's own profile: the
+ * Account-settings hooks — the administrator's own profile: the
  * settings read model, the personal-details write and the three-step avatar
  * upload.
  *
  * `queryKeys` (packages/lib) has only a client-facing `profile()` entry, and
  * this task must not touch packages/lib, so the admin keys live here — the
- * Task 67 `SECURITY_STATUS_KEY` precedent. They are deliberately distinct from
+ * an earlier iteration `SECURITY_STATUS_KEY` precedent. They are deliberately distinct from
  * the portal's `profile()` key: the client profile is a different read model
  * (`ClientProfile`) on a different route.
  *
  * The avatar upload is a three-request chain the browser drives:
- *   1. `POST /account/avatar/upload-url` — the API validates type + size and
- *      mints a short-lived presigned PUT.
- *   2. `PUT <uploadUrl>` — the bytes go straight to storage, never through the
- *      API (and never through this app's session cookie).
- *   3. `POST /account/avatar/confirm { objectKey }` — the API records the
- *      object and queues it for malware scanning.
+ * 1. `POST /account/avatar/upload-url` — the API validates type + size and
+ *  mints a short-lived presigned PUT.
+ * 2. `PUT <uploadUrl>` — the bytes go straight to storage, never through the
+ *  API (and never through this app's session cookie).
+ * 3. `POST /account/avatar/confirm { objectKey }` — the API records the
+ *  object and queues it for malware scanning.
  * Step 2 is a raw `fetch`: a presigned URL is absolute, carries no CSRF token
  * and must not be rewritten by the API transport.
  *
@@ -43,7 +43,7 @@ export function useUpdateProfileSettings() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): PATCH /api/v1/account/settings body UpdateProfileSettingsBody
-    //   → 200 { data: ProfileSettings } | 422 validation_failed
+    //  → 200 { data: ProfileSettings } | 422 validation_failed
     mutationFn: (body: UpdateProfileSettingsBody) =>
       apiPatch<{ data: ProfileSettings }>('/api/v1/account/settings', body),
     onSuccess: () => {
@@ -61,8 +61,8 @@ export interface AvatarUploadUrl {
 export function useRequestAvatarUploadUrl() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/avatar/upload-url
-    //   body { contentType; sizeBytes } → 200 { data: { uploadUrl; objectKey; expiresAt } }
-    //   | 413 too_large | 415 unsupported_type
+    //  body { contentType; sizeBytes } → 200 { data: { uploadUrl; objectKey; expiresAt } }
+    //  | 413 too_large | 415 unsupported_type
     mutationFn: (body: { contentType: string; sizeBytes: number }) =>
       apiPost<{ data: AvatarUploadUrl }>('/api/v1/account/avatar/upload-url', body).then(
         (response) => response.data,
@@ -90,7 +90,7 @@ export function useConfirmAvatar() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/avatar/confirm body { objectKey }
-    //   → 200 { data: ProfileSettings }
+    //  → 200 { data: ProfileSettings }
     mutationFn: (objectKey: string) =>
       apiPost<{ data: ProfileSettings }>('/api/v1/account/avatar/confirm', { objectKey }),
     onSuccess: () => {

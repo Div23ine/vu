@@ -1,8 +1,8 @@
 /**
- * The hero's Live Attack Surface illustration (Task 47).
+ * The hero's Live Attack Surface illustration .
  *
- * ARTWORK, not UI chrome: per the catalogue's illustration exception, the
- * literal fill/stroke colours below stay exactly as in the prototype and are
+ * ARTWORK, not UI chrome: per the spec's illustration exception, the
+ * literal fill/stroke colours below stay exactly as in the design and are
  * confined to this file. Six monitored nodes (cyan = edge/identity tier,
  * emerald = data tier) over dashed patrol links, with the pulse/dash/scan
  * animations driven from `hero.css` — the component itself is static markup,

@@ -3,11 +3,11 @@ import { NetworkMap } from './network-map';
 import '../../_styles/hero.css';
 
 /**
- * Home hero (Task 47) — headline, CTA and the animated Live Attack Surface
+ * Home hero — headline, CTA and the animated Live Attack Surface
  * panel. Server component: every animated piece is CSS-only (pulse, dash,
  * scanline, ping), driven from `hero.css`, with the global reduced-motion
  * block as the fallback. The `Get Started` CTA targets the `#get-started`
- * anchor that follows the assembled home sections (Task 52).
+ * anchor that follows the assembled home sections .
  */
 export function Hero() {
   return (

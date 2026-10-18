@@ -2,13 +2,13 @@ import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { env } from '../env';
 
 /**
- * Lazy `loadStripe` singleton (Task 66).
+ * Lazy `loadStripe` singleton .
  *
  * `@stripe/stripe-js` injects Stripe's script on first call — nothing loads
  * until a page actually opens the card dialog, and the promise is memoised so
  * the script is never fetched twice. No publishable key means stored-card
  * updates are unavailable: `getStripe()` resolves `null` and the dialog shows
- * the planner's copy instead of a broken form.
+ * the spec's copy instead of a broken form.
  *
  * The publishable key is public by design (it tokenises in the browser);
  * VUNVAULT never sees a raw card number — the API only ever receives the

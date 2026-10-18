@@ -15,7 +15,7 @@ import { server } from '../../../../mocks/server';
 import AdminProfilePage from './page';
 
 /**
- * Profile Settings tests (Task 83c) — the spec's list: the header values from
+ * Profile Settings tests — the spec's list: the header values from
  * MSW, the hash-driven tabs, the Save payload, the avatar type and size
  * rejections and the three-request upload order, avatar removal, and the
  * read-only Work Email.

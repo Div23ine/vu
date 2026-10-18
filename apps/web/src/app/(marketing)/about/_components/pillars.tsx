@@ -6,7 +6,7 @@ import { useReveal } from './about-hero';
 import '../_styles/about.css';
 
 /**
- * Core Pillars (Task 53) — three disciplines, verbatim copy and bullet lists.
+ * Core Pillars — three disciplines, verbatim copy and bullet lists.
  */
 
 const PILLARS = [

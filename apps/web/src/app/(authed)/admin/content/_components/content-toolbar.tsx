@@ -5,7 +5,7 @@ import type { ContentStatus, ContentType, RiskFlag } from '@vunvault/contracts';
 import { CONTENT_STATUS_LABELS, CONTENT_TYPE_LABELS, RISK_FLAG_LABELS } from '@vunvault/contracts';
 
 /**
- * Filter & Search Queue toolbar (Task 83).
+ * Filter & Search Queue toolbar .
  *
  * The four controls map one-to-one onto `ModerationQuery`: `q`, `type`,
  * `status` and `flag` — including the contract's own `"none"` sentinel, which
@@ -17,7 +17,7 @@ import { CONTENT_STATUS_LABELS, CONTENT_TYPE_LABELS, RISK_FLAG_LABELS } from '@v
  * all eight `CONTENT_STATUSES`: `draft`, `scheduled` and `published` are not
  * queue states and filtering to them would show an empty table by design.
  *
- * Every control is URL-driven by the page (the Task 77/79 precedent), so any
+ * Every control is URL-driven by the page (the an earlier iteration/79 precedent), so any
  * filtered view is linkable and the browser Back button works.
  */
 

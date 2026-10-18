@@ -5,8 +5,8 @@ import type { SaveState } from '../../_hooks/use-draft';
 import '../../_styles/editor.css';
 
 /**
- * Save indicator (Task 72) — the actionbar's dot + label. The STORAGE CHANGE
- * replaced the prototype's `Working copy saved locally` (localStorage copy)
+ * Save indicator — the actionbar's dot + label. The STORAGE CHANGE
+ * replaced the design's `Working copy saved locally` (localStorage copy)
  * with the server-draft states: `Unsaved changes` → `Saving…` → `Saved`.
  */
 

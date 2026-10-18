@@ -1,7 +1,7 @@
 /**
- * Command Center chrome stylesheet (Task 46) — shell, header, status pill,
+ * Command Center chrome stylesheet — shell, header, status pill,
  * user chip, permission nav, drawer and the audit footer, reproduced from the
- * prototype's CSS. Every value with a design token uses `var(--token)`
+ * design's CSS. Every value with a design token uses `var(--token)`
  * (`--grad-tile`, `--sh-tile`, `--grad-brand`, `--pill-ok-ink`, `--font-mono`,
  * `--r-field`, `--dark-abyss`, `--white` …); one-off literals without tokens
  * (the pill's ok-tints, the drawer's link colour, the sign-out red tints, the
@@ -10,11 +10,11 @@
  *
  * Authored additions, all marked below: `<button>` shares the nav/drawer item
  * rules (Sign Out is a `useLogout()` mutation, not an anchor), explicit
- * `:focus-visible` outlines, and `.adm-main` (the catalogue names the class
+ * `:focus-visible` outlines, and `.adm-main` (the spec names the class
  * but embeds no block for it — pages bring their own `adm-shell` containers,
  * so the main region only has to grow).
  *
- * Reduced motion: the prototype block below stops the status-dot ping, and
+ * Reduced motion: the design block below stops the status-dot ping, and
  * the global fallback in `@vunvault/ui`'s `motion.css` collapses every other
  * transition/animation. All states are class-driven, so layout survives.
  */

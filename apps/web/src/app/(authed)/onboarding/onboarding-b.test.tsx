@@ -13,7 +13,7 @@ import { OnboardingWizard } from './_components/onboarding-wizard';
 import { useOnboardingStore } from './_store/onboarding-store';
 
 /**
- * Onboarding wizard B tests (Task 65) — step 3's verbatim copy and question
+ * Onboarding wizard B tests — step 3's verbatim copy and question
  * list, the blocked submit until ALL three declarations are checked, the
  * exact `OnboardingSubmitBody` wire shape, the success view (toast, name,
  * redirect after the 2.2 s bar), the 409/422/400 error choreography
@@ -22,7 +22,7 @@ import { useOnboardingStore } from './_store/onboarding-store';
  * privacy rule: the recovery answer is cleared the moment the submit
  * succeeds.
  *
- * Fake timers + `fireEvent` — the harness pattern Task 60/62 established.
+ * Fake timers + `fireEvent` — the harness pattern an earlier iteration/62 established.
  */
 
 const routerReplace = vi.hoisted(() => vi.fn());
@@ -273,7 +273,7 @@ describe('Onboarding B — submit body and success', () => {
     await flush();
 
     // Privacy: the answer is cleared the moment the submit succeeds (the
-    // panel is hidden, not unmounted — the prototype's [hidden] pattern).
+    // panel is hidden, not unmounted — the design's [hidden] pattern).
     expect(screen.getByLabelText(/Recovery answer/)).toHaveValue('');
 
     expect(document.getElementById('obSuccess')).not.toHaveAttribute('hidden');
@@ -320,7 +320,7 @@ describe('Onboarding B — error choreography', () => {
     );
     await submitFromStep3();
     expect(routerReplace).toHaveBeenCalledWith('/portal');
-    // The success view stays mounted but hidden (the prototype's [hidden] pattern).
+    // The success view stays mounted but hidden (the design's [hidden] pattern).
     expect(document.getElementById('obSuccess')).toHaveAttribute('hidden');
   });
 

@@ -1,9 +1,9 @@
 // TODO(backend-contract): no public zero-day teaser endpoint exists; fixture constants for the marketing page
 
 /**
- * Zero-Day Exploit Tracking constants (Task 50).
+ * Zero-Day Exploit Tracking constants .
  *
- * The dashboard widget on the marketing site is a teaser: the prototype's
+ * The dashboard widget on the marketing site is a teaser: the design's
  * values, verbatim, until a public endpoint exists. The admin Command Center
  * (Part 4) gets the real, authenticated feed.
  */

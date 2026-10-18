@@ -6,7 +6,7 @@ import type { GateChecks } from '@vunvault/contracts';
 import '../_styles/scan-queue.css';
 
 /**
- * Mandatory verification checklist (Task 78) — the five contract checks,
+ * Mandatory verification checklist — the five contract checks,
  * titles + descriptions verbatim from `REVIEW_CHECK_LABELS`, in the
  * contract's display order.
  *

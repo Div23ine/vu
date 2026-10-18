@@ -18,12 +18,12 @@ import { useChangeRole } from '../_hooks/use-users';
 import '../_styles/users.css';
 
 /**
- * Permission dialog (Task 80) — opened from the roster's `Permissions`
+ * Permission dialog — opened from the roster's `Permissions`
  * action.
  *
  * TODO(backend-contract): per-capability overrides are not supported; role
  * changes only. The API has NO per-user override endpoint — the role is the
- * only authority — so the prototype's capability checkboxes are implemented
+ * only authority — so the design's capability checkboxes are implemented
  * as a role select plus the resulting permission DIFF (added/removed
  * capabilities computed from `ROLE_PERMISSIONS`), the verbatim
  * authorisation requirement and the `Permissions updated` toast; Save calls

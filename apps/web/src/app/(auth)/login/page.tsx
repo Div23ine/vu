@@ -4,7 +4,7 @@ import { MfaDialog } from './_components/mfa-dialog';
 import { safeNextPath } from './_hooks/use-login';
 
 /**
- * `/login` (Task 59; Task 60 mounts the MFA dialog here — the login card is
+ * `/login` (an earlier iteration; an earlier iteration mounts the MFA dialog here — the login card is
  * untouched). The route reads `?next=` (sanitised on the server before the
  * card ever sees it), `?error=` (OAuth/MFA return codes → toasts) and
  * `?mfa=1` (an OAuth return that still needs a second factor → the dialog

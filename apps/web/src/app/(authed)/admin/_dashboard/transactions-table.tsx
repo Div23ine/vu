@@ -14,10 +14,10 @@ import {
 import './dashboard.css';
 
 /**
- * Recent Payment Transactions (Task 76) — the latest six settled, pending
+ * Recent Payment Transactions — the latest six settled, pending
  * and refunded transactions across M-Pesa, card and bank transfer, with the
- * totals footer computed by the API. The mini-button row is the prototype's
- * static chrome — Task 76 implements no writes.
+ * totals footer computed by the API. The mini-button row is the design's
+ * static chrome — an earlier iteration implements no writes.
  */
 
 const STATUS_CLASS: Record<RecentTransaction['status'], string> = {

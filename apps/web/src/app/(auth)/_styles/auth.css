@@ -1,23 +1,23 @@
 /**
- * Auth stylesheet (Task 59) — the animated background, the glass auth card
- * and its form controls. Reproduced from the prototype's CSS with every
+ * Auth stylesheet — the animated background, the glass auth card
+ * and its form controls. Reproduced from the design's CSS with every
  * existing token as `var(--token)` (`--dark`, `--white`, `--ok`, `--critical`,
  * `--brand*`, `--r-md`, `--r-lg`, `--r-xl`, `--r-2xl`, `--r-full`, `--dur`,
  * `--ease`, `--ease-out`).
  *
  * AUTHORED additions, marked inline:
- *  - The prototype's page-level custom properties (`--auth-card-w`,
- *    `--txt-1..4`, `--line-glass*`) are not in `tokens.css`; they are defined
- *    HERE, scoped to `.vv-auth-overlay`, with values consistent with the dark
- *    palette the other reference blocks already use verbatim (`#e8eef6`,
- *    `#c3ccd8`, `#9aa8ba`, `#6b7a8d` — the same literals Tasks 56/58 embed).
- *  - `@keyframes vvCardIn` / `vvShake` / `spin` — referenced by the embedded
- *    rules but truncated by the planner ("remaining rules follow the same
- *    patterns"); standard entrance / shake / rotation.
- *  - `.vv-auth-overlay` layout (the centreing flex the card's `margin: auto`
- *    sits in) and `:focus-visible` rings where the reference had none.
+ * - The design's page-level custom properties (`--auth-card-w`,
+ * `--txt-1..4`, `--line-glass*`) are not in `tokens.css`; they are defined
+ * HERE, scoped to `.vv-auth-overlay`, with values consistent with the dark
+ * palette the other reference blocks already use verbatim (`#e8eef6`,
+ * `#c3ccd8`, `#9aa8ba`, `#6b7a8d` — the same literals earlier iterations/58 embed).
+ * - `@keyframes vvCardIn` / `vvShake` / `spin` — referenced by the embedded
+ * rules but truncated by the spec ("remaining rules follow the same
+ * patterns"); standard entrance / shake / rotation.
+ * - `.vv-auth-overlay` layout (the centreing flex the card's `margin: auto`
+ * sits in) and `:focus-visible` rings where the reference had none.
  *
- * Task 60 appends the OTP/dialog rules to this file (its deliverables say so).
+ * an earlier iteration appends the OTP/dialog rules to this file (its deliverables say so).
  */
 
 /* ——— Shell + scoped tokens (authored) ——— */
@@ -761,7 +761,7 @@
     opacity: 0;
   }
 }
-/* Authored (planner truncated the keyframe tail — standard patterns). */
+/* Authored (spec truncated the keyframe tail — standard patterns). */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -794,20 +794,20 @@
 }
 
 /* ————————————————————————————————————————————————————————————————
-   Task 60 — MFA / OTP overlay (appended per the task's deliverables).
-   Reproduced from the prototype's CSS; `.vv-error`, `.vv-submit`,
-   `.vv-spinner` and their states already exist above (Task 59) and are NOT
-   duplicated — only the `--center` variant is added. Tokenised values use
-   `var(--token)`; one-off literals (`#fb7185`, `#34d399`, `#059669`, the
-   overlay scrim `rgba(3, 5, 8, 0.78)`, card gradients) stay in CSS only.
-   AUTHORED: the truncated tail (responsive block, `vvShakeStrong`,
-   `vvFadeUp`, `vvSuccessPop`, `vvSuccessBar` keyframes — "remaining rules
-   follow the same patterns"), the `[hidden]` guard (the view classes set
-   `display: flex`, which would outrank the UA hidden rule), the
-   `body.vv-modal-open` dimming of the login card (the prototype toggled
-   `.is-dimmed` on the card directly; Task 60 may not edit the card), and the
-   `.vv-recovery` input centring.
-   ———————————————————————————————————————————————————————————————— */
+  MFA / OTP overlay (appended per the task's deliverables).
+  Reproduced from the design's CSS; `.vv-error`, `.vv-submit`,
+  `.vv-spinner` and their states already exist above and are NOT
+  duplicated — only the `--center` variant is added. Tokenised values use
+  `var(--token)`; one-off literals (`#fb7185`, `#34d399`, `#059669`, the
+  overlay scrim `rgba(3, 5, 8, 0.78)`, card gradients) stay in CSS only.
+  AUTHORED: the truncated tail (responsive block, `vvShakeStrong`,
+  `vvFadeUp`, `vvSuccessPop`, `vvSuccessBar` keyframes — "remaining rules
+  follow the same patterns"), the `[hidden]` guard (the view classes set
+  `display: flex`, which would outrank the UA hidden rule), the
+  `body.vv-modal-open` dimming of the login card (the design toggled
+  `.is-dimmed` on the card directly; an earlier iteration may not edit the card), and the
+  `.vv-recovery` input centring.
+  ———————————————————————————————————————————————————————————————— */
 .vv-error--center {
   text-align: center;
   padding-left: 0;
@@ -1158,8 +1158,8 @@
   box-shadow: 0 0 14px var(--brand-glow);
   animation: vvSuccessBar 1.4s var(--ease) forwards;
 }
-/* Authored: the modal-open body dims the login card (prototype toggled
-   .is-dimmed on the card from JS; the card belongs to Task 59). */
+/* Authored: the modal-open body dims the login card (design toggled
+  .is-dimmed on the card from JS; the card belongs to an earlier iteration). */
 body.vv-modal-open .vv-auth-card {
   opacity: 0.35;
   filter: blur(3px);
@@ -1169,7 +1169,7 @@ body.vv-modal-open .vv-auth-card {
 body.vv-modal-open {
   overflow: hidden;
 }
-/* Authored responsive tail (planner truncated at `@media (max-widt…`). */
+/* Authored responsive tail (spec truncated at `@media (max-widt…`). */
 @media (max-width: 480px) {
   .vv-otp-overlay {
     padding: 16px 12px;

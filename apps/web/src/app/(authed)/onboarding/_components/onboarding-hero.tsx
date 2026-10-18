@@ -2,9 +2,9 @@ import { Clock, Lock, ShieldCheck } from 'lucide-react';
 import '../_styles/onboarding.css';
 
 /**
- * Onboarding hero (Task 64) — the verbatim eyebrow, two-line title, sub and
+ * Onboarding hero — the verbatim eyebrow, two-line title, sub and
  * the three meta chips. Purely presentational: no directive, rendered by the
- * server page above the client wizard. The prototype's three
+ * server page above the client wizard. The design's three
  * `REPLACE-WITH-LUCIDE` chip icons map to Lock (encrypted submission), Clock
  * (~2 minutes) and ShieldCheck (GDPR & DPA alignment).
  */

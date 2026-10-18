@@ -14,7 +14,7 @@ import { server } from '../../../../mocks/server';
 import AdminZeroDayPage from './page';
 
 /**
- * Zero-Day Advisory Desk tests (Task 81) — the spec's list: the CVE message,
+ * Zero-Day Advisory Desk tests — the spec's list: the CVE message,
  * the NVD import filling fields without saving, the severity/CVSS mismatch
  * warning, scope add / duplicate / remove with the verbatim toast, draft
  * create versus update, the drafts panel load, the patch-status change and
@@ -112,7 +112,7 @@ describe('/admin/zero-day — page chrome and summary', () => {
     expect(screen.getByRole('button', { name: 'Import From NVD' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Broadcast History' })).toBeInTheDocument();
 
-    // Every tile is driven by the summary fixture — no prototype numbers.
+    // Every tile is driven by the summary fixture — no design numbers.
     const kpis = screen
       .getByRole('heading', { name: 'Zero-day intelligence indicators' })
       .closest('section');

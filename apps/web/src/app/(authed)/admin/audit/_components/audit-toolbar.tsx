@@ -9,7 +9,7 @@ import {
 } from '@vunvault/contracts';
 
 /**
- * Filter & Search Audit Trail toolbar (Task 83b).
+ * Filter & Search Audit Trail toolbar .
  *
  * The five controls map one-to-one onto `AuditQuery`: `q`, `category`,
  * `severity`, `actor` and `range`. Every option list is generated from the

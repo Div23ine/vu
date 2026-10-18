@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- avatars are pre-optimised 640px
-   square crops served statically from public/images/contributors; a plain
-   <img> keeps the section a dependency-free server component. */
+  square crops served statically from public/images/contributors; a plain
+  <img> keeps the section a dependency-free server component. */
 import '../../_styles/home-end.css';
 
 /**
@@ -8,7 +8,7 @@ import '../../_styles/home-end.css';
  *
  * Six photo cards in team order. The avatars are photographs served from
  * `public/images/contributors/` (square crops, circular frame via the
- * prototype's `.contributor-avatar` rules). Names, roles and photos are
+ * design's `.contributor-avatar` rules). Names, roles and photos are
  * edited in the `CONTRIBUTORS` array below; the `/about` team roster
  * (`about/_data/about-data.ts`) mirrors this list and adds the bios.
  */

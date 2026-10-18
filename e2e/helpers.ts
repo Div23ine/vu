@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 /**
- * Shared E2E flows (Task 107). The identities are the contract fixtures —
+ * Shared E2E flows . The identities are the contract fixtures —
  * the mock layer authenticates exactly these two and nobody else.
  */
 

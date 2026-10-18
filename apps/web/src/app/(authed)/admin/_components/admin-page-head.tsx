@@ -4,7 +4,7 @@ import { Eyebrow } from '@vunvault/ui';
 import '../_styles/admin-shared.css';
 
 /**
- * Admin page head + KPI tile (Task 75).
+ * Admin page head + KPI tile .
  *
  * `AdminPageHead` is the block every admin page opens with: the `Eyebrow`
  * primitive, `h1.adm-page-title`, `p.adm-page-sub` and a right-aligned
@@ -12,7 +12,7 @@ import '../_styles/admin-shared.css';
  * stylesheet — the CSS wins, per the spec).
  *
  * `AdmKpi` is the `adm-kpi` tile — the same visual and prop API as the
- * shared `KpiCard` (Task 9) rendered through the admin stylesheet so the
+ * shared `KpiCard` rendered through the admin stylesheet so the
  * dark-card contexts and the reference's delta tones apply. The tone glyph
  * (▲ / ● / ▼) is part of the caller's `delta.text`, exactly as the reference
  * markup carries it.

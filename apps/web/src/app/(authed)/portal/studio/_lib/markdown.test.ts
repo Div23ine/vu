@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { countWords, htmlToMarkdown, markdownToBlocks, readMinutes } from './markdown';
 
 /**
- * Markdown helper tests (Task 72) — the spec's round-trip: pasted HTML
+ * Markdown helper tests — the spec's round-trip: pasted HTML
  * converts to the SafeMarkdown dialect, the dialect parses back into the
  * block outline, and the contract counters are re-exported intact.
  */

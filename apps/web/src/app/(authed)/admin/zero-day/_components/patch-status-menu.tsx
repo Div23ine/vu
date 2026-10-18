@@ -9,7 +9,7 @@ import { toast } from '@vunvault/ui';
 import { useUpdatePatchStatus } from '../_hooks/use-advisories-admin';
 
 /**
- * Patch-status inline menu (Task 81) — the `Status` cell of the published
+ * Patch-status inline menu — the `Status` cell of the published
  * table. For a reader it is the plain `adm-badge`-toned chip from the
  * reference; for an analyst holding `intel:write` it opens a three-item menu
  * that PATCHes `…/patch-status`.

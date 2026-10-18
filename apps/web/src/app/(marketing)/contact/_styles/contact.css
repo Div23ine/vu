@@ -1,20 +1,20 @@
 /**
- * Contact page stylesheet (Task 57), reproduced from the prototype's CSS with
+ * Contact page stylesheet , reproduced from the design's CSS with
  * every tokenised value as `var(--token)` (`--white`, `--paper`, `--dark`,
  * `--dark-abyss`, `--r-md`, `--r-xl`, `--r-full`, `--font-mono`,
  * `--grad-brand`, `--line*`, `--ink*`, `--brand*`, `--dur`, `--ease`);
  * one-off literals without tokens (`#04121f`) stay in CSS only.
  *
  * AUTHORED additions, marked inline:
- *  - `.zero-day-label` / `.zero-day-input` — the form markup names these
- *    classes but their rules live in the prototype's zero-day dashboard sheet,
- *    which no task embeds; they follow the portal's `vbb-input` idiom.
- *  - `.vv-status--ok` / `.vv-status--err` — the banner states, on the ok/danger
- *    token triples.
- *  - `.vv-field-error`, `.vv-hp` (honeypot hide), `.vv-steps*`, `.vv-ops*`,
- *    `.glass-card` + the `#contact` hover rules (the reference block for the
- *    hover behaviour is quoted in Tasks 50/52 but this page must be
- *    self-contained), and `:focus-visible` rings.
+ * - `.zero-day-label` / `.zero-day-input` — the form markup names these
+ * classes but their rules live in the design's zero-day dashboard sheet,
+ * which no task embeds; they follow the portal's `vbb-input` idiom.
+ * - `.vv-status--ok` / `.vv-status--err` — the banner states, on the ok/danger
+ * token triples.
+ * - `.vv-field-error`, `.vv-hp` (honeypot hide), `.vv-steps*`, `.vv-ops*`,
+ * `.glass-card` + the `#contact` hover rules (the reference block for the
+ * hover behaviour is quoted in earlier iterations/52 but this page must be
+ * self-contained), and `:focus-visible` rings.
  */
 
 /* ——— Hero buttons (reference) ——— */
@@ -97,7 +97,7 @@
 }
 
 /* ——— Glass cards (authored self-contained copy + the #contact rules the
-   reference quotes for this page) ——— */
+  reference quotes for this page) ——— */
 .glass-card {
   background: rgba(255, 255, 255, 0.76);
   backdrop-filter: blur(14px) saturate(1.4);

@@ -24,6 +24,15 @@ export function createDb(
     ssl: 'require',
   });
 
+<<<<<<< HEAD
+=======
+  // postgres.js binds parameters by the OID the server infers; a JS Date that
+  // lands in a text/unknown-inferred slot crashes the bind with
+  // ERR_INVALID_ARG_TYPE. Normalising Dates (including inside arrays) to
+  // ISO-8601 strings here makes every parameter safe for any slot — Postgres
+  // parses ISO strings into any timestamp family. The API's SQL executor
+  // applies the same normalisation as a second layer.
+>>>>>>> 4e5dbed (refactor: updated)
   const client = new Proxy(rawClient, {
     get(target, prop, receiver) {
       const orig = Reflect.get(target, prop, receiver);
@@ -38,7 +47,8 @@ export function createDb(
               return p;
             });
           }
-          return orig.apply(this, args);
+
+          return Reflect.apply(orig, target, args);
         };
       }
       return orig;

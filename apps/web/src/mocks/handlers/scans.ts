@@ -3,7 +3,7 @@ import { CreateScanBody, ScanFinding } from '@vunvault/contracts';
 import { scanJobs } from '@vunvault/contracts/fixtures/scans';
 
 /**
- * Portal scans mock handlers (Task 69).
+ * Portal scans mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock
  * mode. The RELEASE LOCK is mirrored exactly: the list and the detail serve
@@ -11,21 +11,21 @@ import { scanJobs } from '@vunvault/contracts/fixtures/scans';
  * anything else is a 404, the same answer the real API gives for "not yours,
  * not released, or gone".
  *
- * Findings have no contract fixture (Task 19's fixture set predates the
+ * Findings have no contract fixture (an earlier iteration's fixture set predates the
  * client report view), so the mock synthesises a deterministic
  * critical/high/medium/low set per released job — shape-checked against the
  * `ScanFinding` schema so mock and contract cannot drift. One evidence blob
  * deliberately contains a stored-XSS payload (`<img onerror=…>`) as TEXT: the
- * detail page must render it inert (Task 69's test asserts exactly that).
+ * detail page must render it inert (an earlier iteration's test asserts exactly that).
  * The wire objects also carry `evidenceRedacted` — a superset of the current
  * contract view (see the TODO in `findings-list.tsx`).
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 35):
- *   GET  /api/v1/scans?page=&pageSize=      → 200 { data: ScanJob[]; total }
- *   GET  /api/v1/scans/:id                  → 200 { data: ScanJob } | 404 not_found
- *   GET  /api/v1/scans/:id/findings         → 200 { data: ScanFinding[] }
- *   POST /api/v1/scans/authorisation-url    → 200 { data: { uploadUrl; objectKey; expiresAt } }
- *   POST /api/v1/scans                      → 201 { data: ScanJob } | 422 authorisation_missing | 422 target_not_allowed
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET /api/v1/scans?page=&pageSize=   → 200 { data: ScanJob[]; total }
+ * GET /api/v1/scans/:id         → 200 { data: ScanJob } | 404 not_found
+ * GET /api/v1/scans/:id/findings     → 200 { data: ScanFinding[] }
+ * POST /api/v1/scans/authorisation-url  → 200 { data: { uploadUrl; objectKey; expiresAt } }
+ * POST /api/v1/scans           → 201 { data: ScanJob } | 422 authorisation_missing | 422 target_not_allowed
  */
 
 const RELEASED = scanJobs.filter((job) => job.reviewGateState === 'approved_released');

@@ -16,7 +16,7 @@ const PUBLIC_NAMES = [
   'NEXT_PUBLIC_R2_HOST',
   'NEXT_PUBLIC_BUILD_LABEL',
   'NEXT_PUBLIC_NODE_LABEL',
-  // Task 66: the Stripe publishable key (public by design — browser tokeniser).
+  // an earlier iteration: the Stripe publishable key (public by design — browser tokeniser).
   'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
 ] as const;
 

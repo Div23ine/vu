@@ -2,15 +2,15 @@ import { Github, Linkedin, Mail, MapPin, MessageCircle, Twitter } from 'lucide-r
 import '../../_styles/home-end.css';
 
 /**
- * Contact & Partnerships strip (Task 52).
+ * Contact & Partnerships strip .
  *
- * Destinations verbatim from the prototype: WhatsApp deep link, the mailto
+ * Destinations verbatim from the design: WhatsApp deep link, the mailto
  * (displayed address `info@vunvault.com`, href `mailto:support@vunvault.com`
- * — exactly as the prototype markup has it) and the Nairobi line. Socials:
+ * — exactly as the design markup has it) and the Nairobi line. Socials:
  * the X link is the one the home markup records; GitHub and LinkedIn use the
- * company URLs the catalogue records on the About page (Task 53b). The
- * prototype's fourth icon-only sibling has no recorded destination anywhere
- * in the catalogue and is therefore omitted rather than invented.
+ * company URLs the spec records on the About page . The
+ * design's fourth icon-only sibling has no recorded destination anywhere
+ * in the spec and is therefore omitted rather than invented.
  */
 
 const SOCIALS = [

@@ -8,14 +8,14 @@ import { isStaffRole } from '../../../lib/permissions';
 import { useSession } from '../../../lib/session';
 
 /**
- * Mobile drawer + hamburger (Task 44).
+ * Mobile drawer + hamburger .
  *
  * The button toggles `.is-open` on the drawer and `.is-active` on itself,
  * keeps `aria-expanded` in sync, closes on route change and on Escape, and
  * parks `nav-open` on `<body>` while open (the same body-class contract the
  * design system's dialogs use). The item list is the header's `NAV_ITEMS`;
  * the trailing `Login` item becomes `Profile` when a session exists, styled
- * with `mobile-menu-login` exactly like the prototype.
+ * with `mobile-menu-login` exactly like the design.
  */
 
 export interface NavItem {

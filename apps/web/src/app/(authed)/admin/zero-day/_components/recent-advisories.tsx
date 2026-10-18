@@ -25,7 +25,7 @@ import { SEVERITY_LABELS } from '../_lib/cvss';
 import { PatchStatusMenu } from './patch-status-menu';
 
 /**
- * Recently Published Advisories (Task 81) — the last six advisories pushed to
+ * Recently Published Advisories — the last six advisories pushed to
  * client dashboards, with broadcast reach and remediation state.
  *
  * Rows come from `GET /admin/advisories?status=published`; the head tag counts
@@ -33,12 +33,12 @@ import { PatchStatusMenu } from './patch-status-menu';
  * why the reference shows `418 Published` above six rows.
  *
  * Three row actions, each permission-gated:
- *  - `Edit` refills the editor and switches the form to `PUT`.
- *  - `Re-broadcast` is the Task 82 seam — the button renders here, the dialog
- *    it opens arrives with the broadcast task (`intel:broadcast` only).
- *  - `Retract` (`intel:broadcast` only) opens a confirm dialog whose note is
- *    required and at least 10 characters, matching `RetractBody`, before it
- *    posts `…/retract`.
+ * - `Edit` refills the editor and switches the form to `PUT`.
+ * - `Re-broadcast` is the an earlier iteration seam — the button renders here, the dialog
+ * it opens arrives with the broadcast task (`intel:broadcast` only).
+ * - `Retract` (`intel:broadcast` only) opens a confirm dialog whose note is
+ * required and at least 10 characters, matching `RetractBody`, before it
+ * posts `…/retract`.
  *
  * The `Status` cell is the inline patch-status menu (`intel:write`).
  */
@@ -72,7 +72,7 @@ export interface RecentAdvisoriesProps {
   /** `intel:broadcast` — shows Re-broadcast and Retract. */
   canBroadcast: boolean;
   onEdit(advisory: Advisory): void;
-  /** Task 82 wires this to the broadcast dialog in rebroadcast mode. */
+  /** an earlier iteration wires this to the broadcast dialog in rebroadcast mode. */
   onRebroadcast(advisory: Advisory): void;
 }
 

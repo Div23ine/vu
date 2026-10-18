@@ -4,17 +4,24 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createQueryClient } from '@vunvault/lib';
 import HomePage from './page';
 
+// The coming-soon banner reads the query string; the assembly renders bare.
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => ({ get: () => null }),
+  usePathname: () => '/',
+  useRouter: () => ({ push: () => undefined, replace: () => undefined }),
+}));
+
 /**
- * Home route assembly test (Task 52).
+ * Home route assembly test .
  *
  * Renders the whole page (inside a QueryClientProvider for the insights grid)
  * and pins what the assembly is actually about: the section ORDER, the
  * `#get-started` anchor, unique element ids across every section, and the
- * deletion of Task 41's placeholder route file.
+ * deletion of an earlier iteration's placeholder route file.
  */
 
 const EXPECTED_H1_H2_SEQUENCE = [
@@ -25,7 +32,6 @@ const EXPECTED_H1_H2_SEQUENCE = [
   'From the VUNVAULT News & Blog',
   'How Can VUNVAULT Help You?',
   'Proactive Security Ecosystem',
-  'Learning tracks built for the real threat landscape',
   'Accessible security pricing for African & global tech',
   'For journalists and partners',
   'The people behind the defense',
@@ -42,7 +48,7 @@ function renderPage() {
 }
 
 describe('home route assembly', () => {
-  it('renders every section heading in the prototype order', () => {
+  it('renders every section heading in the design order', () => {
     renderPage();
     const headings = screen
       .getAllByRole('heading')
@@ -80,7 +86,7 @@ describe('home route assembly', () => {
     expect(
       screen.getByRole('heading', { name: 'Soft Protection for Hard Data.' }),
     ).toBeInTheDocument();
-    // No photographs: the prototype's soft1.jpg is deliberately absent.
+    // No photographs: the design's soft1.jpg is deliberately absent.
     expect(document.querySelector('img[src="soft1.jpg"]')).toBeNull();
   });
 
@@ -97,7 +103,7 @@ describe('home route assembly', () => {
     expect(duplicates).toEqual([]);
   });
 
-  it('the Task 41 placeholder route file no longer exists', () => {
+  it('the an earlier iteration placeholder route file no longer exists', () => {
     expect(existsSync(resolve(process.cwd(), 'src/app/page.tsx'))).toBe(false);
     expect(existsSync(resolve(process.cwd(), 'src/app/(marketing)/page.tsx'))).toBe(true);
   });

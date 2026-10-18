@@ -20,7 +20,7 @@ import { server } from '../../../../mocks/server';
 import AdminProfilePage from './page';
 
 /**
- * Security & Credentials + Notification Preferences tests (Task 83d) — the
+ * Security & Credentials + Notification Preferences tests — the
  * spec's list: the posture card rendering the API values, the password card
  * being the IMPORTED portal component (asserted by test id, which is the only
  * honest way to prove reuse rather than a copy), the sessions list with revoke

@@ -9,8 +9,8 @@ import { useBlogList, type BlogFilters } from '../_hooks/use-blog';
 import '../_styles/blog.css';
 
 /**
- * News list (Task 56) — the filterable article grid plus the verbatim empty
- * state. Cards reuse Task 49's `ArticleCard`, wrapped in a cell that pins the
+ * News list — the filterable article grid plus the verbatim empty
+ * state. Cards reuse an earlier iteration's `ArticleCard`, wrapped in a cell that pins the
  * severity chip (`vv-chip--critical|high|medium|low`, text from the
  * contract's `SEVERITY_CHIP_LABELS`) over the thumbnail — the card component
  * itself stays untouched.

@@ -8,7 +8,7 @@ import { useSession } from '../lib/session';
  *
  * ```tsx
  * <Can permission="scans:release" fallback={<p>Release authority required.</p>}>
- *   <ReleaseButton />
+ * <ReleaseButton />
  * </Can>
  * ```
  *

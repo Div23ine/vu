@@ -15,7 +15,7 @@ import {
 } from './use-broadcast-stream';
 
 /**
- * `useBroadcastStream` tests (Task 94) — the desk half of the delivery
+ * `useBroadcastStream` tests — the desk half of the delivery
  * progress relay. The socket is faked at its narrowest seam; the assertions
  * are about the CACHE (the strip renders from it, whichever transport fed it),
  * the status the live dot reads, and the socket lifecycle.

@@ -15,9 +15,9 @@ import { useReveal } from './about-hero';
 import '../_styles/about.css';
 
 /**
- * System Telemetry panel (Task 53b) — replaces the Task 53 stub.
+ * System Telemetry panel — replaces the an earlier iteration stub.
  *
- * Reuses the Task 50 pattern exactly: the clock renders `--:--:-- UTC` on the
+ * Reuses the an earlier iteration pattern exactly: the clock renders `--:--:-- UTC` on the
  * server and first client paint (no hydration mismatch), then ticks every
  * second; the six-row alert feed rotates every 8 s (last row moves to the
  * top, flashing `is-flash` for 1.2 s) with the visible `8s…1s` countdown;

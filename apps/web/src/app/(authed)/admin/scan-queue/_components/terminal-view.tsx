@@ -6,7 +6,7 @@ import { cn } from '@vunvault/lib';
 import type { ScanLine } from '../_lib/scan-stream-reducer';
 
 /**
- * The scan terminal's log renderer (Task 96).
+ * The scan terminal's log renderer .
  *
  * `role="log"` with `aria-live="off"`: a scan emits hundreds of lines a minute
  * and a screen reader that read them aloud would drown the operator. The

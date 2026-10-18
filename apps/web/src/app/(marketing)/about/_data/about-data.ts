@@ -2,7 +2,7 @@
 
 /**
  * About page data — the live core-team roster (photographs included) and the
- * System Telemetry panel's constants, verbatim from the prototype. The telemetry figures
+ * System Telemetry panel's constants, verbatim from the design. The telemetry figures
  * mirror the home zero-day widget's fixtures (same sensor network story);
  * when a public telemetry endpoint exists, both consumers switch to it.
  */
@@ -21,7 +21,7 @@ export interface TeamMember {
   badges?: readonly TeamBadge[];
   bio?: string;
   skills?: readonly string[];
-  /** Monospace foot label (the prototype's `/team/<slug>` line). */
+  /** Monospace foot label (the design's `/team/<slug>` line). */
   meta?: string;
 }
 
@@ -64,7 +64,7 @@ export const TEAM_MEMBERS: readonly TeamMember[] = [
     bio: 'Daniel keeps VUNVAULT’s engagements on schedule and in scope, coordinating between clients, analysts and the compliance workload. He pairs that project coordination with hands-on security work: tracking findings through to remediation, maintaining engagement documentation, and making sure every deliverable is reviewed, approved and delivered on time.',
   },
   {
-    name: 'Thuku Maina',
+    name: 'Divine',
     role: 'Marketing Strategist and Social Media Manager',
     photo: '/images/contributors/contributor-06.jpg',
     bio: 'Divine shapes how VUNVAULT communicates its work to the world. He plans and runs the company’s marketing strategy and social media presence, translating deep technical research into clear stories for executives, developers and the wider security community. He also grows the reach of the VUNVAULT Academy and keeps the community channels active and well informed.',

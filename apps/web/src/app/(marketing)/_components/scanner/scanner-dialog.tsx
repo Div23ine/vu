@@ -9,9 +9,9 @@ import { INVALID_TARGET_LINE, useScanSimulation } from './use-scan-simulation';
 import '../../_styles/scanner.css';
 
 /**
- * Free Scanner terminal dialog (Task 48).
+ * Free Scanner terminal dialog .
  *
- * The OS-style window from the prototype, rebuilt on the Task 11 `Dialog`
+ * The OS-style window from the design, rebuilt on the an earlier iteration `Dialog`
  * primitive: Radix supplies `role="dialog"`, `aria-modal`, the focus trap,
  * Escape-to-close, focus restoration to the opener and the `nav-open` body
  * class. The three traffic-light buttons keep their roles — close and
@@ -34,7 +34,7 @@ export function ScannerDialog() {
   const [target, setTarget] = useState('');
   const [maximized, setMaximized] = useState(false);
   // A suggestion click clears the invalid marking without clearing the log
-  // (the prototype removes `is-invalid` and refocuses; it does not reset).
+  // (the design removes `is-invalid` and refocuses; it does not reset).
   const [invalidDismissed, setInvalidDismissed] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -131,7 +131,7 @@ export function ScannerDialog() {
                 className={cn('vv-scan-input', inputInvalid && 'is-invalid')}
                 type="text"
                 name="target"
-                placeholder="example.com   or   192.168.1.1"
+                placeholder="example.com  or  192.168.1.1"
                 autoComplete="off"
                 value={target}
                 aria-invalid={inputInvalid}

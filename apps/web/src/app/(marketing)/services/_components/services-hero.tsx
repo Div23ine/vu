@@ -3,7 +3,7 @@ import { Terminal } from 'lucide-react';
 import '../_styles/services.css';
 
 /**
- * Services hero (Task 54) — kicker, headline, lead, dual CTAs and the trust
+ * Services hero — kicker, headline, lead, dual CTAs and the trust
  * line. Server component; copy verbatim. `Try the free OSINT tools` targets
  * the inline CLI's `#free-tools` anchor further down this same page.
  */

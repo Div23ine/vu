@@ -1,9 +1,9 @@
 /**
- * Profile Settings stylesheet (Task 83c; the Security and Notifications panel
- * rules are Task 83d).
+ * Profile Settings stylesheet (an earlier iteration; the Security and Notifications panel
+ * rules are an earlier iteration).
  *
  * ONLY the rules specific to this page — the shared admin classes live in
- * `admin-shared.css` (Task 75, imported via `AdminPageHead`). Token
+ * `admin-shared.css` (an earlier iteration, imported via `AdminPageHead`). Token
  * substitutions follow every other feature sheet: `#ffffff` → `--white`,
  * `18px`/`12px`/`6px` radii → `--r-lg`/`--r-field`/`--r-sm` (the 6px chip
  * radius has no token and stays literal), `9999px` → `--r-full`, `0.2s` →
@@ -19,7 +19,7 @@
  * `.ps-input` rule, so the input/select/textarea family, the counters, the
  * error line, the avatar drop zone, the form action row and the panel footer
  * are completed here from the patterns the given rules establish (and from the
- * equivalent `zd-*` family in Task 81).
+ * equivalent `zd-*` family in an earlier iteration).
  */
 
 /* ——— Layout ——— */
@@ -105,7 +105,7 @@
   overflow: hidden;
 }
 /* SVG avatars are rendered through <img> ONLY — never inlined, so a hostile
-   upload cannot script in this origin. */
+  upload cannot script in this origin. */
 .ps-avatar img {
   width: 100%;
   height: 100%;
@@ -366,7 +366,7 @@
 }
 
 /* AUTHORED — the reference truncates inside this rule; the input/select/
-   textarea family follows the Task 81 `.zd-input` pattern exactly. */
+  textarea family follows the an earlier iteration `.zd-input` pattern exactly. */
 .ps-input,
 .ps-select,
 .ps-textarea {
@@ -559,13 +559,13 @@
 }
 
 /* ————————————————————————————————————————————————————————————————
-   TASK 83d — Security & Credentials and Notification Preferences panels.
-   All rules here are AUTHORED: the reference CSS for these two panels is not
-   supplied, so they follow the `ps-*` patterns established above and the
-   equivalent `sq-*` / `cm-*` families. Token substitutions as before;
-   literals with no token (`#f8fafc`, `#d4d4d4`, `#a16207`, `#fefce8`,
-   `#fcd34d`) stay in this file only.
-   ———————————————————————————————————————————————————————————————— */
+  Security & Credentials and Notification Preferences panels.
+  All rules here are AUTHORED: the reference CSS for these two panels is not
+  supplied, so they follow the `ps-*` patterns established above and the
+  equivalent `sq-*` / `cm-*` families. Token substitutions as before;
+  literals with no token (`#f8fafc`, `#d4d4d4`, `#a16207`, `#fefce8`,
+  `#fcd34d`) stay in this file only.
+  ———————————————————————————————————————————————————————————————— */
 
 .ps-security-body,
 .ps-notifications-body {

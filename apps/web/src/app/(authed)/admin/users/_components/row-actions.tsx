@@ -18,8 +18,8 @@ import { PermissionDialog } from './permission-dialog';
 import '../_styles/users.css';
 
 /**
- * Roster row actions (Task 79) — the `users:manage` menu: Permissions (the
- * Task 80 dialog seam), the profile-editor toast (no endpoint yet), and the
+ * Roster row actions — the `users:manage` menu: Permissions (the
+ * an earlier iteration dialog seam), the profile-editor toast (no endpoint yet), and the
  * state-dependent writes — Suspend (confirm + optional reason), Reactivate,
  * Enforce MFA (un-enrolled actives), Change role (select + confirm) and the
  * destructive Delete (suspended only). Without `users:manage` the roster is

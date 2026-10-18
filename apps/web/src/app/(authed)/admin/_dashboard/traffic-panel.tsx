@@ -7,7 +7,7 @@ import { formatCount, formatMillions, isForbidden, useDashboardSection } from '.
 import './dashboard.css';
 
 /**
- * Traffic & Network Load (Task 76) — sessions, API volume and latency dl
+ * Traffic & Network Load — sessions, API volume and latency dl
  * plus the 7-point hourly bar chart, drawn with plain CSS (NO charting
  * library — the bars are height percentages inside `.adm-bar-track`).
  */

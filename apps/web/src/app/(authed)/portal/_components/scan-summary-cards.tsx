@@ -5,9 +5,9 @@ import { useScans } from '../_hooks/use-scans';
 import '../_styles/scans.css';
 
 /**
- * Summary cards (Task 69) — `Reports released` (the list's total — the API
+ * Summary cards — `Reports released` (the list's total — the API
  * counts only released jobs), `Open findings` (the profile stat, highlighted
- * in the critical colour when non-zero: the planner's "critical+high
+ * in the critical colour when non-zero: the spec's "critical+high
  * highlighted" with no client-side severity breakdown available) and
  * `Next assessment` (`<n> days` from the profile stats, `—` when null).
  */

@@ -2,15 +2,15 @@ import { http, HttpResponse } from 'msw';
 import { ClientAdvisory } from '@vunvault/contracts';
 
 /**
- * Portal advisories mock handlers (Task 70).
+ * Portal advisories mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock
- * mode. The Task 38 client feed is mirrored exactly: published,
+ * mode. The an earlier iteration client feed is mirrored exactly: published,
  * environment-matched advisories only — a retracted advisory never appears
  * (the seed simply has none) — and acknowledge is idempotent per
  * organisation.
  *
- * The client feed has no contract fixture (Task 20d's fixture set covers the
+ * The client feed has no contract fixture (an earlier iteration's fixture set covers the
  * admin `Advisory` shape), so the mock synthesises a deterministic four-item
  * `ClientAdvisory` seed — schema-checked with `ClientAdvisory.parse` so mock
  * and contract cannot drift — plus a module-level acknowledgement set the
@@ -22,9 +22,9 @@ import { ClientAdvisory } from '@vunvault/contracts';
  * a scope entry with a `null` category and the MEDIUM entry empty
  * references.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 38):
- *   GET  /api/v1/advisories → 200 { data: ClientAdvisory[]; total }
- *   POST /api/v1/advisories/:id/acknowledge → 204
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET /api/v1/advisories → 200 { data: ClientAdvisory[]; total }
+ * POST /api/v1/advisories/:id/acknowledge → 204
  */
 
 export const advisorySeed: ClientAdvisory[] = [

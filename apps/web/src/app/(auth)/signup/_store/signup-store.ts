@@ -3,8 +3,8 @@
 import { create } from 'zustand';
 
 /**
- * Signup flow store (Task 61) — the hand-off point between the details form
- * (this task) and the verification dialog (Task 62, which reads and may
+ * Signup flow store — the hand-off point between the details form
+ * (this task) and the verification dialog (an earlier iteration, which reads and may
  * extend this file, exactly like the MFA dialog store pattern).
  *
  * The `POST /auth/signup` 202 parks `{ email, fullName }` here and flips
@@ -35,7 +35,7 @@ export const useSignupStore = create<SignupState>((set) => ({
 }));
 
 /**
- * Convenience accessor mirroring Task 59's `useMfaDialog()` shape:
+ * Convenience accessor mirroring an earlier iteration's `useMfaDialog()` shape:
  * `useSignupDialog().open({ email, fullName })` / `.close()`.
  */
 export function useSignupDialog() {

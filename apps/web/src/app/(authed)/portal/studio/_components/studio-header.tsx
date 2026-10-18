@@ -4,10 +4,10 @@ import type { StudioStatus } from '@vunvault/contracts';
 import '../_styles/studio.css';
 
 /**
- * Studio header (Task 71) — planner-authored (no prototype): the title, the
+ * Studio header — authored (no design): the title, the
  * verbatim contributor line, the author's display name, the `Verified
  * Blogger` chip with its verbatim tooltip and the `New article` action that
- * opens the Task 72 editor. Presentational; rendered by the client gate.
+ * opens the an earlier iteration editor. Presentational; rendered by the client gate.
  */
 
 const VERIFIED_TOOLTIP =

@@ -1,11 +1,11 @@
 /**
- * Marketing chrome stylesheet (Task 44) — hamburger, mobile drawer and the
- * session profile chip, reproduced from the prototype's CSS. Every value that
+ * Marketing chrome stylesheet — hamburger, mobile drawer and the
+ * session profile chip, reproduced from the design's CSS. Every value that
  * has a design token uses `var(--token)`; the few literals that remain
  * (one-off dark-gradient border tints, the drawer's link colour) have no token
  * and are allowed inside this file only — never in TSX.
  *
- * The `.nav-profile` block is authored here: the catalogue's reference block
+ * The `.nav-profile` block is authored here: the spec's reference block
  * for the chip is empty, so the styling follows the chip's description
  * (circular initial avatar + label, pill container) using tokens only.
  *

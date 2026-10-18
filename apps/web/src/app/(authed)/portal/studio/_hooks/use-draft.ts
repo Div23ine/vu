@@ -23,11 +23,11 @@ import { readMinutes } from '../_lib/markdown';
 import { STUDIO_SUBMISSIONS_KEY, useStudioSubmissions } from './use-studio';
 
 /**
- * Draft editor state machine (Task 72) — the STORAGE CHANGE: the working
+ * Draft editor state machine — the STORAGE CHANGE: the working
  * copy lives on the SERVER, never in browser storage. The first edit creates
  * the draft (`POST /studio/drafts`), later edits `PUT /studio/drafts/:id`,
  * debounced 1.5 s after the last change and only once the title reaches the
- * prototype's rule — `a title of at least 4 characters`. `/edit/new` becomes
+ * design's rule — `a title of at least 4 characters`. `/edit/new` becomes
  * `/edit/<id>` through `router.replace` once the draft exists.
  *
  * Submit gates on the three required readiness items; a `422 not_ready`
@@ -37,7 +37,7 @@ import { STUDIO_SUBMISSIONS_KEY, useStudioSubmissions } from './use-studio';
  * No `'use client'` directive (the `use-login.ts` pattern).
  */
 
-/** Long enough for a real title, from the prototype's autosave rule. */
+/** Long enough for a real title, from the design's autosave rule. */
 export const AUTOSAVE_TITLE_MIN = 4;
 const AUTOSAVE_DEBOUNCE_MS = 1_500;
 
@@ -148,7 +148,7 @@ function toDraftBody(fields: DraftFields): StudioDraftBody {
   };
 }
 
-/** The 422 toast's missing-piece phrases (verbatim fragments where the prototype had them). */
+/** The 422 toast's missing-piece phrases (verbatim fragments where the design had them). */
 function missingPhrases(readiness: StudioSubmitReadiness): string[] {
   const phrases: string[] = [];
   if (!readiness.title) phrases.push('a title of at least 4 characters');
@@ -231,7 +231,7 @@ export function useDraftEditor(routeId: string) {
     setSaveState('saving');
     try {
       // TODO(backend-contract): POST /api/v1/studio/drafts body StudioDraftBody → 201 { data: StudioItem }
-      // TODO(backend-contract): PUT  /api/v1/studio/drafts/:id → 200 { data: StudioItem } | 409 not_editable
+      // TODO(backend-contract): PUT /api/v1/studio/drafts/:id → 200 { data: StudioItem } | 409 not_editable
       const saved =
         draftId === null
           ? await apiPost<{ data: StudioItem }>('/api/v1/studio/drafts', body).then(
@@ -354,7 +354,7 @@ export function useDraftEditor(routeId: string) {
       setUploading(true);
       try {
         // TODO(backend-contract): POST /api/v1/studio/images/upload-url body { contentType; sizeBytes }
-        //   → 200 { data: { uploadUrl; objectKey; publicUrl; expiresAt } }
+        //  → 200 { data: { uploadUrl; objectKey; publicUrl; expiresAt } }
         const { uploadUrl, publicUrl } = await apiPost<{ data: ImageUploadUrl }>(
           '/api/v1/studio/images/upload-url',
           { contentType: file.type, sizeBytes: file.size },
@@ -409,7 +409,7 @@ export function useDraftEditor(routeId: string) {
     setSubmitting(true);
     try {
       // TODO(backend-contract): POST /api/v1/studio/drafts/:id/submit
-      //   → 200 { data: StudioItem } | 422 { error: "not_ready"; details: [StudioSubmitReadiness] }
+      //  → 200 { data: StudioItem } | 422 { error: "not_ready"; details: [StudioSubmitReadiness] }
       const submitted = await apiPost<{ data: StudioItem }>(
         `/api/v1/studio/drafts/${id}/submit`,
       ).then((response) => response.data);

@@ -10,11 +10,11 @@ import { useFeaturedReport } from '../_hooks/use-blog';
 import '../_styles/blog.css';
 
 /**
- * Featured report (Task 56) — the dark banner card above the grid.
+ * Featured report — the dark banner card above the grid.
  *
  * The item is the first row of `sort=priority` (severity critical→low, then
- * newest), exactly as the catalogue specifies. Hidden until the query
- * resolves (the prototype ships the section `hidden` and reveals it from JS).
+ * newest), exactly as the spec specifies. Hidden until the query
+ * resolves (the design ships the section `hidden` and reveals it from JS).
  */
 export function FeaturedReport() {
   const { data, isLoading } = useFeaturedReport();

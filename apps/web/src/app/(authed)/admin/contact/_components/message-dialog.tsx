@@ -20,7 +20,7 @@ import {
 } from '../_hooks/use-contact-admin';
 
 /**
- * Message dialog (Task 83e) — the only place a message body is rendered.
+ * Message dialog — the only place a message body is rendered.
  *
  * The body is inserted as a TEXT NODE (`{message.message}`), never as markup,
  * so a message containing HTML or script from the public form cannot execute in

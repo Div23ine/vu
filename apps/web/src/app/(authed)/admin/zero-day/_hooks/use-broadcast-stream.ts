@@ -6,17 +6,17 @@ import { env } from '../../../../../env';
 import { broadcastProgressKey } from './use-broadcast';
 
 /**
- * Broadcast delivery progress stream (Task 94) — the push half of the desk's
+ * Broadcast delivery progress stream — the push half of the desk's
  * delivery strip.
  *
  * The API relay (`GET …/admin/advisories/:id/broadcasts/stream`) sends a
  * `snapshot` frame on connect and then the broadcast worker's `progress`
  * frames filtered to this advisory. This hook writes both into the SAME
- * React Query cache slot the Task 82 poll uses (`broadcastProgressKey`), so
+ * React Query cache slot the an earlier iteration poll uses (`broadcastProgressKey`), so
  * `progressOf(...)` and the strip render live numbers without knowing which
  * transport fed them — and when the stream is offline the poll simply resumes.
  *
- * Rules inherited from the audit stream hook (Task 93): reconnection is the
+ * Rules inherited from the audit stream hook : reconnection is the
  * browser's job (the relay re-snapshots on connect, so nothing is lost),
  * cookies are the only credential, every frame is parsed with its contract
  * schema before it touches the cache, and `offline` is an honest state, not an
@@ -169,7 +169,7 @@ export function useBroadcastStream(
     source.addEventListener('error', () => {
       if (closed) return;
       // CLOSED means the browser gave up (a revoked session, a fatal status):
-      // the honest state is `offline`, and the Task 82 poll resumes.
+      // the honest state is `offline`, and the an earlier iteration poll resumes.
       setStatus(source.readyState === READY_STATE_CLOSED ? 'offline' : 'reconnecting');
     });
     source.addEventListener('snapshot', onFrame);
