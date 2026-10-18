@@ -1,5 +1,5 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
-import { domConfig } from '../../vitest.shared';
+import { domConfig } from '../../vitest.shared.js';
 
 /**
  * Web tests run in jsdom (from the shared DOM preset) with two additions:

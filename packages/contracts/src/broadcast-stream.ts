@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { BROADCAST_KINDS, BROADCAST_STATUSES } from '@vunvault/db/enum-values';
-import { BroadcastRecord } from './intel';
+import { BroadcastRecord } from './intel.js';
 
 /**
  * Broadcast delivery progress contract (Task 89).

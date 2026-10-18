@@ -1,15 +1,15 @@
 import type { MfaMethod } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
-import { isStaff } from '../../../lib/staff';
-import { codeChallengeFor, generateCodeVerifier, generateState } from '../../../lib/pkce';
-import type { OAuthUser, SupabaseAdmin } from '../../../lib/supabase-admin';
-import { actorLabelFor } from '../../../audit/audited';
-import type { AuditAppendInput } from '../../../audit/service';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import { newSessionId, type KvStore, type MfaChallengeStore } from './challenge';
-import { deviceLabel, geoCity, geoCountry, type GeoHeaders } from './device';
-import type { AuthProfileRow, AuthRepo } from './repo';
-import { splitName } from './service';
+import { HttpError } from '../../../lib/http-error.js';
+import { isStaff } from '../../../lib/staff.js';
+import { codeChallengeFor, generateCodeVerifier, generateState } from '../../../lib/pkce.js';
+import type { OAuthUser, SupabaseAdmin } from '../../../lib/supabase-admin.js';
+import { actorLabelFor } from '../../../audit/audited.js';
+import type { AuditAppendInput } from '../../../audit/service.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { newSessionId, type KvStore, type MfaChallengeStore } from './challenge.js';
+import { deviceLabel, geoCity, geoCountry, type GeoHeaders } from './device.js';
+import type { AuthProfileRow, AuthRepo } from './repo.js';
+import { splitName } from './service.js';
 
 /**
  * OAuth sign-in (Task 40e): Google, GitHub and Microsoft through Supabase PKCE.

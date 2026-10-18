@@ -1,5 +1,5 @@
-import { normaliseCwe, parseCvss, severityOf } from '../severity';
-import type { Severity } from '../emit';
+import { normaliseCwe, parseCvss, severityOf } from '../severity.js';
+import type { Severity } from '../emit.js';
 
 /**
  * nuclei adapter (Task 87) — JSONL in, findings out.

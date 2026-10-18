@@ -1,7 +1,7 @@
 import fp from 'fastify-plugin';
 import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
 import type { FastifyError, FastifyPluginAsync } from 'fastify';
-import { isHttpError } from '../lib/http-error';
+import { isHttpError } from '../lib/http-error.js';
 
 /** The wire envelope every failed request returns. */
 interface ErrorEnvelope {

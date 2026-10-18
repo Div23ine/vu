@@ -1,8 +1,8 @@
 import { Worker, type Job } from 'bullmq';
 import { NotifyJobPayload, PdfJobPayload, QUEUE_NAMES } from '@vunvault/contracts';
-import type { NotifyHandler } from '../domain/notify-handler';
-import type { PdfHandler } from '../domain/pdf-handler';
-import type { Logger } from '../ports';
+import type { NotifyHandler } from '../domain/notify-handler.js';
+import type { PdfHandler } from '../domain/pdf-handler.js';
+import type { Logger } from '../ports.js';
 
 /**
  * BullMQ consumers (Task 90) — the `notify` and `pdf` queues in one app.

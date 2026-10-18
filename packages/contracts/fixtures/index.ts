@@ -4,10 +4,10 @@ export {
   profileSettings,
   securityPosture,
   sessions,
-} from './account';
-export { auditEntries, auditSummary, chainStatus } from './audit';
-export { fxQuoteKes, invoices, openInvoice, paymentMethod, subscription } from './billing';
-export { clientDirectory, contactMessages } from './contact';
+} from './account.js';
+export { auditEntries, auditSummary, chainStatus } from './audit.js';
+export { fxQuoteKes, invoices, openInvoice, paymentMethod, subscription } from './billing.js';
+export { clientDirectory, contactMessages } from './contact.js';
 export {
   dashboardKpis,
   endpointStats,
@@ -19,9 +19,9 @@ export {
   threatLevel,
   trafficSummary,
   transactions,
-} from './dashboard';
-export { advisories, advisorySummary, broadcastEstimate, drafts } from './intel';
-export { clientProfile } from './profile';
-export { gateChecklistDefaults, gateChecklistPassed, scanJobs, scanQueueSummary } from './scans';
-export { invitations, staffMembers, staffSummary } from './users';
-export { products, publicContent } from './store';
+} from './dashboard.js';
+export { advisories, advisorySummary, broadcastEstimate, drafts } from './intel.js';
+export { clientProfile } from './profile.js';
+export { gateChecklistDefaults, gateChecklistPassed, scanJobs, scanQueueSummary } from './scans.js';
+export { invitations, staffMembers, staffSummary } from './users.js';
+export { products, publicContent } from './store.js';

@@ -1,13 +1,13 @@
 import { TEAMS, USER_ROLES, type Team, type UserRole } from '@vunvault/db/enum-values';
 import { z } from 'zod';
-import { IsoDateTime, PageQuery, Uuid } from './common';
+import { IsoDateTime, PageQuery, Uuid } from './common.js';
 import {
   AccountStatusSchema,
   AccessTierSchema,
   MfaMethodSchema,
   TeamSchema,
   UserRoleSchema,
-} from './enums';
+} from './enums.js';
 
 /**
  * Staff roster, invitations and the administrative actions on a member.

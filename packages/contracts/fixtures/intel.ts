@@ -1,4 +1,4 @@
-import type { Advisory, AdvisorySummary, BroadcastEstimate, DraftListItem } from '../src/intel';
+import type { Advisory, AdvisorySummary, BroadcastEstimate, DraftListItem } from '../src/intel.js';
 
 /**
  * Zero-Day desk fixtures, published on 2026-09-24 (all times UTC).

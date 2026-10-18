@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { advisories, advisoryBroadcasts, clientAssets, profiles, type Db } from '@vunvault/db';
 import type { ClientAsset } from '@vunvault/lib/advisory-matching';
-import type { AdvisoryDeliveryView, BroadcastRow, CounterDelta, OrgContact } from '../ports';
+import type { AdvisoryDeliveryView, BroadcastRow, CounterDelta, OrgContact } from '../ports.js';
 
 /**
  * Postgres adapter for the broadcast worker (Task 89).

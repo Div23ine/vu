@@ -13,7 +13,7 @@ import {
   scheduleIsInFuture,
   TRANSITIONS,
   type AnyAction,
-} from './state-machine';
+} from './state-machine.js';
 
 /**
  * The transition table, exhaustively: every status × every action, with the

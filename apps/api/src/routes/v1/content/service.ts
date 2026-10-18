@@ -10,8 +10,8 @@ import type {
 } from '@vunvault/contracts';
 import { BLOG_CATEGORY_LABELS } from '@vunvault/contracts';
 import type { ContentStatus } from '@vunvault/db/enum-values';
-import type { AuditEventType } from '../../../audit/events';
-import { HttpError } from '../../../lib/http-error';
+import type { AuditEventType } from '../../../audit/events.js';
+import { HttpError } from '../../../lib/http-error.js';
 import {
   canTransition,
   DEFAULT_QUEUE_STATUSES,
@@ -20,8 +20,8 @@ import {
   requiresNote,
   scheduleIsInFuture,
   type ContentAction,
-} from './state-machine';
-import type { ContentItemRow, ContentRepo } from './repo';
+} from './state-machine.js';
+import type { ContentItemRow, ContentRepo } from './repo.js';
 
 /**
  * Content moderation.

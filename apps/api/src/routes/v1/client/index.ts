@@ -10,12 +10,12 @@ import {
   PentestRequest,
   UpdateProfileBody,
 } from '@vunvault/contracts';
-import { AUDITED } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import type { Tx } from '../../../plugins/db';
-import { HttpError } from '../../../lib/http-error';
-import { SqlClientRepo } from './repo';
-import { ClientProfileService, OnboardingService, PentestRequestService } from './service';
+import { AUDITED } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import type { Tx } from '../../../plugins/db.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { SqlClientRepo } from './repo.js';
+import { ClientProfileService, OnboardingService, PentestRequestService } from './service.js';
 
 /**
  * Client intake (Task 30): profile, onboarding and pen-test requests.

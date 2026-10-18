@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { clientProfile } from '../fixtures/profile';
+import { clientProfile } from '../fixtures/profile.js';
 import {
   gateChecklistDefaults,
   gateChecklistPassed,
   scanJobs,
   scanQueueSummary,
-} from '../fixtures/scans';
-import { invitations, staffMembers, staffSummary } from '../fixtures/users';
+} from '../fixtures/scans.js';
+import { invitations, staffMembers, staffSummary } from '../fixtures/users.js';
 import {
   ForgotPasswordBody,
   JwtClaims,
@@ -19,15 +19,15 @@ import {
   SignupResendBody,
   SignupStartResponse,
   SignupVerifyBody,
-} from './auth';
-import { ErrorEnvelope, IsoDateTime, PageQuery, paginated, Uuid, UsdCents } from './common';
+} from './auth.js';
+import { ErrorEnvelope, IsoDateTime, PageQuery, paginated, Uuid, UsdCents } from './common.js';
 import {
   AuditCategorySchema,
   DisplayCurrencySchema,
   ReviewGateStateSchema,
   ScanStatusSchema,
   UserRoleSchema,
-} from './enums';
+} from './enums.js';
 import {
   COUNTRIES,
   GATE_DECISION_LABELS,
@@ -37,9 +37,9 @@ import {
   ROLE_LABELS,
   ROLE_PERMISSIONS,
   TEAM_LABELS,
-} from './permissions';
-import { ClientProfile, UpdateProfileBody } from './profile';
-import { ROUTES_A } from './routes-a';
+} from './permissions.js';
+import { ClientProfile, UpdateProfileBody } from './profile.js';
+import { ROUTES_A } from './routes-a.js';
 import {
   BulkScanActionBody,
   CreatePentestRequestBody,
@@ -51,7 +51,7 @@ import {
   ScanJob,
   ScanListQuery,
   ScanQueueSummary,
-} from './scans';
+} from './scans.js';
 import {
   ChangeRoleBody,
   Invitation,
@@ -62,7 +62,7 @@ import {
   STAFF_ROLES,
   STAFF_TEAMS,
   UserActionBody,
-} from './users';
+} from './users.js';
 
 const UUID = 'c0000000-0000-4000-8000-000000000001';
 

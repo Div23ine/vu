@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { buildApp, REDACT_PATHS, type App } from './app';
-import { loadEnv, parseEnv, SECRETS_PROVIDER_MESSAGE, type Env } from './config/env';
-import { HttpError } from './lib/http-error';
-import { REQUEST_ID_PATTERN, resolveRequestId } from './plugins/request-context';
+import { buildApp, REDACT_PATHS, type App } from './app.js';
+import { loadEnv, parseEnv, SECRETS_PROVIDER_MESSAGE, type Env } from './config/env.js';
+import { HttpError } from './lib/http-error.js';
+import { REQUEST_ID_PATTERN, resolveRequestId } from './plugins/request-context.js';
 
 const TEST_ENV: Env = {
   NODE_ENV: 'test',

@@ -1,6 +1,6 @@
-import type { Logger } from '../ports';
-import type { NetworkPolicyManifest } from './network-policy';
-import type { JobManifest } from './pod-manifest';
+import type { Logger } from '../ports.js';
+import type { NetworkPolicyManifest } from './network-policy.js';
+import type { JobManifest } from './pod-manifest.js';
 
 /** The container name inside every scan pod. */
 export const RUNNER_CONTAINER = 'runner';

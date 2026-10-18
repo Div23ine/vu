@@ -19,7 +19,7 @@ import {
   statusFor,
   type GateDecisionInput,
   type GateJobRow,
-} from './gate';
+} from './gate.js';
 
 /**
  * The gate as pure rules: every combination of status, payment state, permission

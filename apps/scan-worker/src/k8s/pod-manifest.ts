@@ -1,4 +1,4 @@
-import type { PodSpec } from '../ports';
+import type { PodSpec } from '../ports.js';
 
 /**
  * Job manifest builder (Task 86) — the locked-down pod a single scan runs in.

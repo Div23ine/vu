@@ -11,32 +11,32 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
-import { loadEnv, parseEnv, type Env } from './config/env';
-import type { DbPluginOptions } from './plugins/db';
-import type { ProvidersPluginOptions } from './plugins/providers';
-import type { RedisPluginOptions } from './plugins/redis';
-import type { SecretsPluginOptions } from './plugins/secrets';
-import errorHandler from './plugins/error-handler';
-import dbPlugin, { pingDb } from './plugins/db';
-import openApi from './plugins/openapi';
-import providersPlugin from './plugins/providers';
-import redisPlugin from './plugins/redis';
-import { resolveRequestId } from './plugins/request-context';
-import requestContext from './plugins/request-context';
-import cookiesPlugin from './plugins/cookies';
-import corsPlugin from './plugins/cors';
-import originVerifyPlugin, { type OriginVerifyOptions } from './plugins/origin-verify';
-import csrfPlugin from './plugins/csrf';
-import rawBodyPlugin from './plugins/raw-body';
-import rateLimitPlugin, { type RateLimitPluginOptions } from './plugins/rate-limit';
-import auditPlugin, { type AuditPluginOptions } from './plugins/audit';
-import authPlugin, { type AuthPluginOptions } from './plugins/auth';
-import secretsPlugin from './plugins/secrets';
-import securityHeadersPlugin from './plugins/security-headers';
-import sentryPlugin, { type SentryPluginOptions } from './plugins/sentry';
-import queuesPlugin from './queues';
-import healthRoutes from './routes/health';
-import v1Routes from './routes/v1';
+import { loadEnv, parseEnv, type Env } from './config/env.js';
+import type { DbPluginOptions } from './plugins/db.js';
+import type { ProvidersPluginOptions } from './plugins/providers.js';
+import type { RedisPluginOptions } from './plugins/redis.js';
+import type { SecretsPluginOptions } from './plugins/secrets.js';
+import errorHandler from './plugins/error-handler.js';
+import dbPlugin, { pingDb } from './plugins/db.js';
+import openApi from './plugins/openapi.js';
+import providersPlugin from './plugins/providers.js';
+import redisPlugin from './plugins/redis.js';
+import { resolveRequestId } from './plugins/request-context.js';
+import requestContext from './plugins/request-context.js';
+import cookiesPlugin from './plugins/cookies.js';
+import corsPlugin from './plugins/cors.js';
+import originVerifyPlugin, { type OriginVerifyOptions } from './plugins/origin-verify.js';
+import csrfPlugin from './plugins/csrf.js';
+import rawBodyPlugin from './plugins/raw-body.js';
+import rateLimitPlugin, { type RateLimitPluginOptions } from './plugins/rate-limit.js';
+import auditPlugin, { type AuditPluginOptions } from './plugins/audit.js';
+import authPlugin, { type AuthPluginOptions } from './plugins/auth.js';
+import secretsPlugin from './plugins/secrets.js';
+import securityHeadersPlugin from './plugins/security-headers.js';
+import sentryPlugin, { type SentryPluginOptions } from './plugins/sentry.js';
+import queuesPlugin from './queues/index.js';
+import healthRoutes from './routes/health.js';
+import v1Routes from './routes/v1/index.js';
 
 /** The application instance every route module and plugin receives. */
 export type App = FastifyInstance<

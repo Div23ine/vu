@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { PodSpec } from '../ports';
+import type { PodSpec } from '../ports.js';
 import {
   FORBIDDEN_CIDRS,
   allowedIpBlocks,
   buildNetworkPolicy,
   networkPolicyName,
-} from './network-policy';
+} from './network-policy.js';
 
 /**
  * NetworkPolicy tests (Task 86).

@@ -8,7 +8,7 @@ import {
   formatRelativeActive,
   formatUtcClock,
   formatUtcStamp,
-} from './format';
+} from './format.js';
 
 const utc = (iso: string): Date => new Date(iso);
 

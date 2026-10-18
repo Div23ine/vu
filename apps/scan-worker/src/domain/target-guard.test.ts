@@ -5,7 +5,7 @@ import {
   classifyIp,
   resolveTarget,
   validateTarget,
-} from './target-guard';
+} from './target-guard.js';
 
 /**
  * Target-guard tests (Task 84). This is a security control, so it is tested

@@ -5,7 +5,7 @@ import {
   profileSettings,
   securityPosture,
   sessions,
-} from '../fixtures/account';
+} from '../fixtures/account.js';
 import {
   dashboardKpis,
   endpointStats,
@@ -17,8 +17,8 @@ import {
   threatLevel,
   trafficSummary,
   transactions,
-} from '../fixtures/dashboard';
-import { advisories, advisorySummary, broadcastEstimate, drafts } from '../fixtures/intel';
+} from '../fixtures/dashboard.js';
+import { advisories, advisorySummary, broadcastEstimate, drafts } from '../fixtures/intel.js';
 import {
   AvatarConfirmBody,
   AvatarUploadRequest,
@@ -50,7 +50,7 @@ import {
   WebauthnRegisterVerifyBody,
   postureScore,
   SECURITY_POSTURE_ITEMS,
-} from './account';
+} from './account.js';
 import {
   DashboardKpis,
   EndpointStat,
@@ -67,7 +67,7 @@ import {
   TrafficSummary,
   TransactionsResponse,
   WEEKDAYS,
-} from './dashboard';
+} from './dashboard.js';
 import {
   ADVISORY_STATUS_LABELS,
   ADVISORY_TITLE_MESSAGE,
@@ -93,7 +93,7 @@ import {
   SCOPE_CATEGORY_LABELS,
   SEVERITY_CVSS_HINTS,
   severityMatchesCvss,
-} from './intel';
+} from './intel.js';
 import {
   CAREER_DESCRIPTIONS,
   CAREER_LABELS,
@@ -107,9 +107,9 @@ import {
   OnboardingStep3,
   OnboardingStatus,
   OnboardingSubmitBody,
-} from './onboarding';
-import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions';
-import { ROUTES_C, type RouteDocC } from './routes-c';
+} from './onboarding.js';
+import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions.js';
+import { ROUTES_C, type RouteDocC } from './routes-c.js';
 import {
   BLOG_CATEGORY_LABELS,
   countWords,
@@ -125,7 +125,7 @@ import {
   StudioStatus,
   StudioSubmitReadiness,
   STUDIO_TAG_SUGGESTIONS,
-} from './studio';
+} from './studio.js';
 
 const UUID = 'c0000000-0000-4000-8000-000000000001';
 const ALL_ACKS = {

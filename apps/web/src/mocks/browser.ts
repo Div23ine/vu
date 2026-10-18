@@ -1,5 +1,5 @@
 import { setupWorker } from 'msw/browser';
-import { handlers } from './handlers';
+import { handlers } from './handlers/index';
 
 /**
  * Service-worker MSW setup for the opt-in browser mock mode

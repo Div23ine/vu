@@ -1,5 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
-import type { Severity } from '../emit';
+import type { Severity } from '../emit.js';
 
 /**
  * nmap adapter (Task 87) — XML in, summary lines and findings out.

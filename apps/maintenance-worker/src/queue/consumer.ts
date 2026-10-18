@@ -1,17 +1,17 @@
 import { Worker, type Job } from 'bullmq';
 import { MaintenanceJobPayload, QUEUE_NAMES, type MaintenanceTask } from '@vunvault/contracts';
-import { runAuditSnapshot } from '../domain/audit-snapshot';
-import { runExpireInvitations } from '../domain/expire-invitations';
-import { runFlagDormantAccounts } from '../domain/flag-dormant';
-import { runMediaScan } from '../domain/media-scan';
-import { runMetricsRollup } from '../domain/metrics-rollup';
-import { runNodeHealth } from '../domain/node-health';
-import { runOutboxReenqueue } from '../domain/outbox-reenqueue';
-import { runPurgeLoginAttempts } from '../domain/purge-login-attempts';
-import { runScheduledPublish } from '../domain/scheduled-publish';
-import { runStaleSignups } from '../domain/stale-signups';
-import { runThreatLevel } from '../domain/threat-level';
-import { runVerifyChain } from '../domain/verify-chain';
+import { runAuditSnapshot } from '../domain/audit-snapshot.js';
+import { runExpireInvitations } from '../domain/expire-invitations.js';
+import { runFlagDormantAccounts } from '../domain/flag-dormant.js';
+import { runMediaScan } from '../domain/media-scan.js';
+import { runMetricsRollup } from '../domain/metrics-rollup.js';
+import { runNodeHealth } from '../domain/node-health.js';
+import { runOutboxReenqueue } from '../domain/outbox-reenqueue.js';
+import { runPurgeLoginAttempts } from '../domain/purge-login-attempts.js';
+import { runScheduledPublish } from '../domain/scheduled-publish.js';
+import { runStaleSignups } from '../domain/stale-signups.js';
+import { runThreatLevel } from '../domain/threat-level.js';
+import { runVerifyChain } from '../domain/verify-chain.js';
 import type {
   BroadcastProducer,
   Clock,
@@ -20,7 +20,7 @@ import type {
   NotifyEnqueuer,
   ObjectWriter,
   Summary,
-} from '../ports';
+} from '../ports.js';
 
 /**
  * BullMQ consumer (Task 91) — the `maintenance` queue.

@@ -10,7 +10,7 @@ import {
   WEIGHT_UNPATCHED_CRITICAL,
   WEIGHT_WEAPONIZED,
   type ThreatInputs,
-} from './threat-level';
+} from './threat-level.js';
 
 /**
  * The threat-level formula.

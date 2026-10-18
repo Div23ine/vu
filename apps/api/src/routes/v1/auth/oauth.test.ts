@@ -2,14 +2,14 @@ import { createHash } from 'node:crypto';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Env } from '../../../config/env';
+import type { Env } from '../../../config/env.js';
 import type {
   OAuthUser,
   SignInResult,
   SupabaseAdmin,
   SupabaseSession,
-} from '../../../lib/supabase-admin';
-import { memoryKvStore } from './challenge';
+} from '../../../lib/supabase-admin.js';
+import { memoryKvStore } from './challenge.js';
 import {
   OAUTH_COOKIE_NAME,
   OAUTH_STATE_PREFIX,
@@ -17,15 +17,15 @@ import {
   sanitizeNext,
   type OAuthState,
   type OnboardingRepo,
-} from './oauth-service';
-import { codeChallengeFor } from '../../../lib/pkce';
-import cookiesPlugin from '../../../plugins/cookies';
-import errorHandler from '../../../plugins/error-handler';
-import authPlugin from '../../../plugins/auth';
-import { SessionRegistry, type SessionRecord } from '../../../lib/session-registry';
-import type { AuthRepo, AuthProfileRow, NewSession } from './repo';
-import authRoutes from './index';
-import type { AuditEntryRow } from '../../../audit/repo';
+} from './oauth-service.js';
+import { codeChallengeFor } from '../../../lib/pkce.js';
+import cookiesPlugin from '../../../plugins/cookies.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import authPlugin from '../../../plugins/auth.js';
+import { SessionRegistry, type SessionRecord } from '../../../lib/session-registry.js';
+import type { AuthRepo, AuthProfileRow, NewSession } from './repo.js';
+import authRoutes from './index.js';
+import type { AuditEntryRow } from '../../../audit/repo.js';
 
 /**
  * OAuth sign-in (Task 40e): the start leg, the callback leg and every refusal.

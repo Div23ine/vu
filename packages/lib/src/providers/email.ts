@@ -5,7 +5,7 @@
  * Retries are BullMQ's job (`notify` queue, three attempts, exponential backoff),
  * so a provider must fail fast and classify honestly.
  */
-import { ProviderError } from './error';
+import { ProviderError } from './error.js';
 
 export const RESEND_URL = 'https://api.resend.com/emails';
 export const DEFAULT_FROM = 'VUNVAULT <no-reply@info.vunvault.com>';

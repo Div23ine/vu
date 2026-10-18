@@ -1,5 +1,5 @@
 import { checkEntry, type VerifiableAuditEntry } from '@vunvault/lib/audit-chain';
-import type { Logger, MaintenanceRepo, NotifyEnqueuer, Summary } from '../ports';
+import type { Logger, MaintenanceRepo, NotifyEnqueuer, Summary } from '../ports.js';
 
 /**
  * `verify_chain` (Task 92) — the tamper-evidence sweep, every 6 hours.

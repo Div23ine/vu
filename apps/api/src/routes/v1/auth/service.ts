@@ -6,25 +6,25 @@ import {
   type Permission,
   type UserRole,
 } from '@vunvault/contracts';
-import type { BreachCheck } from '../../../lib/breach';
-import { HttpError } from '../../../lib/http-error';
-import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin';
-import type { EmailProvider } from '../../../providers/email';
-import { isStaff } from '../../../lib/staff';
-import { validatePassword } from '../account-security/password-policy';
+import type { BreachCheck } from '../../../lib/breach.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
+import type { EmailProvider } from '../../../providers/email.js';
+import { isStaff } from '../../../lib/staff.js';
+import { validatePassword } from '../account-security/password-policy.js';
 import {
   EmailOtpStore,
   generateOtpCode,
   MfaChallengeStore,
   newSessionId,
   type MfaChallenge,
-} from './challenge';
-import { deviceLabel, geoCity, geoCountry, type GeoHeaders } from './device';
-import { generateResetToken, resetTokenHash, type PasswordResetStore } from './password-reset';
-import type { SignupOtpStore } from './email-otp';
-import type { AuthProfileRow, AuthRepo } from './repo';
-import { emailHash } from './repo';
-import type { MfaVerifierRegistry, VerifierMethod } from './mfa-registry';
+} from './challenge.js';
+import { deviceLabel, geoCity, geoCountry, type GeoHeaders } from './device.js';
+import { generateResetToken, resetTokenHash, type PasswordResetStore } from './password-reset.js';
+import type { SignupOtpStore } from './email-otp.js';
+import type { AuthProfileRow, AuthRepo } from './repo.js';
+import { emailHash } from './repo.js';
+import type { MfaVerifierRegistry, VerifierMethod } from './mfa-registry.js';
 import type { FastifyRequest } from 'fastify';
 
 /**

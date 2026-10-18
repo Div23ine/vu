@@ -11,7 +11,7 @@
  * compile error for every consumer.
  */
 
-export { ProviderError, isProviderError } from './error';
+export { ProviderError, isProviderError } from './error.js';
 
 export {
   DEFAULT_FROM,
@@ -20,7 +20,7 @@ export {
   ResendEmailProvider,
   type EmailMessage,
   type EmailProvider,
-} from './email';
+} from './email.js';
 
 export {
   AFRICA_CALLING_CODES,
@@ -35,4 +35,4 @@ export {
   TwilioSmsProvider,
   type SmsMessage,
   type SmsProvider,
-} from './sms';
+} from './sms.js';

@@ -9,21 +9,21 @@ import type {
   RedisBus,
   RunResult,
   SlotSemaphore,
-} from '../ports';
-import { LogArchive } from '../domain/log-archive';
-import { makeRunHooks } from '../domain/run-hooks';
-import { JobRunner, type QueuedJob } from '../domain/job-runner';
-import { createOutputChannel, type OutputRedis } from '../domain/output-channel';
+} from '../ports.js';
+import { LogArchive } from '../domain/log-archive.js';
+import { makeRunHooks } from '../domain/run-hooks.js';
+import { JobRunner, type QueuedJob } from '../domain/job-runner.js';
+import { createOutputChannel, type OutputRedis } from '../domain/output-channel.js';
 // The relay (Task 95) and the terminal reducer (Task 96), imported across app
 // boundaries: this suite is the contract between three processes, and only the
 // REAL modules on both ends can prove it.
-import { ScanStreamSession } from '../../../api/src/routes/v1/scan-stream/session';
-import type { RelaySocket } from '../../../api/src/routes/v1/scan-stream/session';
+import { ScanStreamSession } from '../../../api/src/routes/v1/scan-stream/session.js';
+import type { RelaySocket } from '../../../api/src/routes/v1/scan-stream/session.js';
 import {
   initialStreamState,
   scanStreamReducer,
   type StreamState,
-} from '../../../web/src/app/(authed)/admin/scan-queue/_lib/scan-stream-reducer';
+} from '../../../web/src/app/(authed)/admin/scan-queue/_lib/scan-stream-reducer.js';
 
 /**
  * Integration suite B (Task 106): scan queue → controller → relay → terminal.

@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { IsoDateTime } from './common';
-import { CareerRoleSchema, EntityTypeSchema, RecoveryQuestionSchema } from './enums';
-import type { CareerRole, EntityType } from './enums';
+import { IsoDateTime } from './common.js';
+import { CareerRoleSchema, EntityTypeSchema, RecoveryQuestionSchema } from './enums.js';
+import type { CareerRole, EntityType } from './enums.js';
 
 /**
  * The three-step client onboarding wizard.

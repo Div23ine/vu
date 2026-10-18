@@ -1,7 +1,7 @@
 import { is } from 'drizzle-orm';
 import { getTableConfig, getViewConfig, PgTable, type AnyPgTable } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
-import * as schema from './index';
+import * as schema from './index.js';
 import {
   fxQuotes,
   invoiceBalances,
@@ -15,7 +15,7 @@ import {
   plans,
   providerWebhookEvents,
   subscriptions,
-} from './billing';
+} from './billing.js';
 
 /** Every table declared anywhere in the schema, keyed by its SQL name. */
 function allTables(): Array<[string, AnyPgTable]> {

@@ -1,5 +1,5 @@
 import type { MaintenanceTask } from '@vunvault/contracts';
-import type { Logger } from '../ports';
+import type { Logger } from '../ports.js';
 
 /**
  * The repeatable-job scheduler (Tasks 91–92).

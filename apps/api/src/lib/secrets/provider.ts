@@ -11,7 +11,7 @@
  *  - Vault reads are cached for five minutes so a request path never blocks on
  *    the Vault API.
  */
-import type { Env } from '../../config/env';
+import type { Env } from '../../config/env.js';
 
 /** Every secret the API can ask for. Adding a name here is a deliberate act. */
 export const SECRET_NAMES = [

@@ -7,7 +7,7 @@ import {
   isHigherSevLevel,
   isMoreSevere,
   type AuditEventType,
-} from './events';
+} from './events.js';
 
 describe('AUDIT_EVENTS catalog', () => {
   it('assigns every event a known category and severity', () => {

@@ -1,7 +1,7 @@
 import { createHash, createHmac } from 'node:crypto';
 import type { InternalCompleteBody, InternalFailBody, InternalFinding } from '@vunvault/contracts';
 import { InternalClaimResponse, InternalLogUrlResponse } from '@vunvault/contracts';
-import type { ApiClient, ClaimOutcome, Clock, Logger } from '../ports';
+import type { ApiClient, ClaimOutcome, Clock, Logger } from '../ports.js';
 
 /**
  * Signed API client (Task 84) — the controller's ONLY path to platform state.

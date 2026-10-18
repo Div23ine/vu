@@ -4,20 +4,20 @@ import { describe, expect, it } from 'vitest';
 import type { Permission } from '@vunvault/contracts';
 import { LICENSE_KEY_PATTERN, ROLE_PERMISSIONS } from '@vunvault/contracts';
 import { products as catalogue } from '@vunvault/contracts/fixtures/store';
-import type { Env } from '../../../config/env';
-import type { AuditEntryRow, SqlExecutor } from '../../../audit/repo';
-import { asExecutor } from '../../../audit/repo';
-import type { AuthUser } from '../../../plugins/auth';
-import { HttpError } from '../../../lib/http-error';
-import type { ObjectStorage } from '../../../lib/object-storage';
-import errorHandler from '../../../plugins/error-handler';
-import type { InvoiceIssuer } from '../../../billing/invoice-issuer';
-import type { PaymentsRepo, WebhookAttemptRow } from '../payments-admin/repo';
-import { WebhookService, type WebhookEvent } from '../webhooks/service';
-import storeRoutes from './index';
-import { generateLicenseKey, generateUniqueLicenseKey, isLicenseKey } from './license-key';
-import type { EntitlementRow, InvoiceProductLine, ProductRow, StoreRepo } from './repo';
-import { addMonths, EntitlementService, invoiceDetailFor } from './service';
+import type { Env } from '../../../config/env.js';
+import type { AuditEntryRow, SqlExecutor } from '../../../audit/repo.js';
+import { asExecutor } from '../../../audit/repo.js';
+import type { AuthUser } from '../../../plugins/auth.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage } from '../../../lib/object-storage.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import type { InvoiceIssuer } from '../../../billing/invoice-issuer.js';
+import type { PaymentsRepo, WebhookAttemptRow } from '../payments-admin/repo.js';
+import { WebhookService, type WebhookEvent } from '../webhooks/service.js';
+import storeRoutes from './index.js';
+import { generateLicenseKey, generateUniqueLicenseKey, isLicenseKey } from './license-key.js';
+import type { EntitlementRow, InvoiceProductLine, ProductRow, StoreRepo } from './repo.js';
+import { addMonths, EntitlementService, invoiceDetailFor } from './service.js';
 
 /**
  * The store's HTTP contract (Task 40c).

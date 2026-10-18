@@ -1,4 +1,4 @@
-import type { AuditEntryView, AuditSummary, ChainStatus } from '../src/audit';
+import type { AuditEntryView, AuditSummary, ChainStatus } from '../src/audit.js';
 
 /**
  * Audit-trail fixtures — the ten most recent entries of the chain, newest first,

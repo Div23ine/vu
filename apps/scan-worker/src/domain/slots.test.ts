@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SLOT_LEASE_SECONDS, createMemorySlotSemaphore, createSlotSemaphore } from './slots';
+import { SLOT_LEASE_SECONDS, createMemorySlotSemaphore, createSlotSemaphore } from './slots.js';
 
 /**
  * Slot-semaphore tests (Task 84).

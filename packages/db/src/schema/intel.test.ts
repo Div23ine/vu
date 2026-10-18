@@ -12,17 +12,17 @@ import {
   platformMetricsHourly,
   sensorNodes,
   threatLevelSnapshots,
-} from './intel';
-import { invoices, paymentAttempts, plans, invoiceLines } from './billing';
-import { organizations } from './identity';
-import { scanJobs } from './scans';
+} from './intel.js';
+import { invoices, paymentAttempts, plans, invoiceLines } from './billing.js';
+import { organizations } from './identity.js';
+import { scanJobs } from './scans.js';
 import {
   ADVISORY_PATCH_STATUSES,
   ADVISORY_STATUSES,
   BROADCAST_KINDS,
   NODE_STATUSES,
   SCOPE_CATEGORIES,
-} from '../enum-values';
+} from '../enum-values.js';
 
 const sqlDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'sql');
 const addendumSql = readFileSync(join(sqlDir, '0020_intel_and_txn.sql'), 'utf8');

@@ -1,20 +1,20 @@
 import type { NotifyJobPayload } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
-import { isProviderError } from '../../../providers/error';
-import type { PaymentProviders } from '../../../billing/providers';
-import type { StripeWebhookEvent } from '../../../billing/providers/stripe';
-import { usd } from '../billing/service';
-import type { SqlExecutor } from '../../../audit/repo';
-import { asExecutor } from '../../../audit/repo';
-import type { AuditService } from '../../../audit/service';
-import type { LedgerService } from '../../../billing/ledger';
+import { HttpError } from '../../../lib/http-error.js';
+import { isProviderError } from '../../../providers/error.js';
+import type { PaymentProviders } from '../../../billing/providers/index.js';
+import type { StripeWebhookEvent } from '../../../billing/providers/stripe.js';
+import { usd } from '../billing/service.js';
+import type { SqlExecutor } from '../../../audit/repo.js';
+import { asExecutor } from '../../../audit/repo.js';
+import type { AuditService } from '../../../audit/service.js';
+import type { LedgerService } from '../../../billing/ledger.js';
 import {
   clearingAccountFor,
   type PaymentsRepo,
   type WebhookAttemptRow,
-} from '../payments-admin/repo';
-import { SqlStoreRepo } from '../store/repo';
-import { EntitlementService } from '../store/service';
+} from '../payments-admin/repo.js';
+import { SqlStoreRepo } from '../store/repo.js';
+import { EntitlementService } from '../store/service.js';
 
 /**
  * Provider webhooks.

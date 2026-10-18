@@ -3,12 +3,12 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { UserRole } from '@vunvault/contracts';
 import { STUDIO_LIMITS } from '@vunvault/contracts';
-import type { Env } from '../../../config/env';
-import errorHandler from '../../../plugins/error-handler';
-import type { AuthUser } from '../../../plugins/auth';
-import { HttpError } from '../../../lib/http-error';
-import type { ObjectStorage } from '../../../lib/object-storage';
-import type { AuditEntryRow } from '../../../audit/repo';
+import type { Env } from '../../../config/env.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import type { AuthUser } from '../../../plugins/auth.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage } from '../../../lib/object-storage.js';
+import type { AuditEntryRow } from '../../../audit/repo.js';
 import type {
   BadgeRow,
   ContentItemRow,
@@ -17,11 +17,11 @@ import type {
   ModerationFilters,
   NewContentItem,
   SummaryCounts,
-} from '../content/repo';
-import studioRoutes from './index';
-import { isSafeLinkTarget, normaliseTags, sanitiseMarkdown } from './markdown';
-import { blogSlugPath, nextSlugCandidate, slugify } from './slug';
-import { readinessFor } from './service';
+} from '../content/repo.js';
+import studioRoutes from './index.js';
+import { isSafeLinkTarget, normaliseTags, sanitiseMarkdown } from './markdown.js';
+import { blogSlugPath, nextSlugCandidate, slugify } from './slug.js';
+import { readinessFor } from './service.js';
 
 /**
  * The Content Studio.

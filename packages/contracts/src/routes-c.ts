@@ -1,5 +1,5 @@
-import type { RouteDoc } from './routes-a';
-import type { Permission } from './permissions';
+import type { RouteDoc } from './routes-a.js';
+import type { Permission } from './permissions.js';
 
 /**
  * Route documentation for the zero-day desk, the Command Center dashboard,

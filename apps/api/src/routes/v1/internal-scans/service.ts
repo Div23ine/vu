@@ -9,12 +9,12 @@ import type {
   ScanAbortReason,
 } from '@vunvault/contracts';
 import { INTERNAL_SCAN_DEADLINE_SECONDS } from '@vunvault/contracts';
-import type { AuditService } from '../../../audit/service';
-import type { SqlExecutor } from '../../../audit/repo';
-import { HttpError } from '../../../lib/http-error';
-import type { ObjectStorage } from '../../../lib/object-storage';
-import { PRESIGN_PUT_SECONDS } from '../../../lib/object-storage';
-import type { InternalScansRepo, NewInternalFinding, SeverityCounts } from './repo';
+import type { AuditService } from '../../../audit/service.js';
+import type { SqlExecutor } from '../../../audit/repo.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage } from '../../../lib/object-storage.js';
+import { PRESIGN_PUT_SECONDS } from '../../../lib/object-storage.js';
+import type { InternalScansRepo, NewInternalFinding, SeverityCounts } from './repo.js';
 
 /**
  * Internal scan-callback operations (Task 40g).

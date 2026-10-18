@@ -1,11 +1,11 @@
-export { Badge, badgeVariants, type BadgeProps, type BadgeTone } from './components/badge';
+export { Badge, badgeVariants, type BadgeProps, type BadgeTone } from './components/badge.js';
 export {
   Button,
   buttonVariants,
   type ButtonProps,
   type ButtonSize,
   type ButtonVariant,
-} from './components/button';
+} from './components/button.js';
 export {
   Card,
   CardBody,
@@ -17,7 +17,7 @@ export {
   type CardProps,
   type CardTitleProps,
   type DarkCardProps,
-} from './components/card';
+} from './components/card.js';
 export {
   Dialog,
   DialogBody,
@@ -32,8 +32,8 @@ export {
   DialogTitle,
   DialogTrigger,
   type DialogContentProps,
-} from './components/dialog';
-export { ToastProvider, ToastViewport, Toaster } from './components/toast';
+} from './components/dialog.js';
+export { ToastProvider, ToastViewport, Toaster } from './components/toast.js';
 export {
   DEFAULT_TOAST_DURATION_MS,
   dismissToast,
@@ -43,32 +43,32 @@ export {
   type ToastInput,
   type ToastItem,
   type ToastKind,
-} from './lib/toast-store';
+} from './lib/toast-store.js';
 export {
   Tooltip,
   TooltipProvider,
   type TooltipProps,
   type TooltipProviderProps,
-} from './components/tooltip';
-export { DataTable } from './components/data-table';
+} from './components/tooltip.js';
+export { DataTable } from './components/data-table.js';
 export type {
   DataTableEmpty,
   DataTableProps,
   PaginationProps,
   ResultCountProps,
-} from './components/data-table.types';
-export { selectColumn } from './components/select-column';
-export { Pagination, ResultCount } from './components/table-footer';
-export { EmptyState, type EmptyStateProps } from './components/empty-state';
-export { Eyebrow, type EyebrowProps } from './components/eyebrow';
+} from './components/data-table.types.js';
+export { selectColumn } from './components/select-column.js';
+export { Pagination, ResultCount } from './components/table-footer.js';
+export { EmptyState, type EmptyStateProps } from './components/empty-state.js';
+export { Eyebrow, type EyebrowProps } from './components/eyebrow.js';
 export {
   KpiCard,
   KpiGrid,
   type KpiCardProps,
   type KpiDeltaTone,
   type KpiGridProps,
-} from './components/kpi-card';
-export { Checkbox, type CheckboxProps } from './components/checkbox';
+} from './components/kpi-card.js';
+export { Checkbox, type CheckboxProps } from './components/checkbox.js';
 export {
   Form,
   FormControl,
@@ -84,15 +84,15 @@ export {
   type FormItemProps,
   type FormLabelProps,
   type FormMessageProps,
-} from './components/form';
+} from './components/form.js';
 export {
   Input,
   Textarea,
   fieldSurface,
   type InputProps,
   type TextareaProps,
-} from './components/input';
-export { Label, type LabelProps } from './components/label';
+} from './components/input.js';
+export { Label, type LabelProps } from './components/label.js';
 export {
   Select,
   SelectContent,
@@ -104,12 +104,12 @@ export {
   type SelectContentProps,
   type SelectItemProps,
   type SelectTriggerProps,
-} from './components/select';
-export { Switch, type SwitchProps } from './components/switch';
-export { Logo, LogoMark, type LogoProps } from './components/logo';
-export { ProgressBar, type ProgressBarProps } from './components/progress-bar';
-export { Skeleton, type SkeletonProps } from './components/skeleton';
-export { Spinner, spinnerVariants, type SpinnerProps } from './components/spinner';
-export { StatusPill, type StatusPillProps } from './components/status-pill';
-export { tokens } from './tokens';
-export type { TokenColor, TokenRadius, Tokens } from './tokens';
+} from './components/select.js';
+export { Switch, type SwitchProps } from './components/switch.js';
+export { Logo, LogoMark, type LogoProps } from './components/logo.js';
+export { ProgressBar, type ProgressBarProps } from './components/progress-bar.js';
+export { Skeleton, type SkeletonProps } from './components/skeleton.js';
+export { Spinner, spinnerVariants, type SpinnerProps } from './components/spinner.js';
+export { StatusPill, type StatusPillProps } from './components/status-pill.js';
+export { tokens } from './tokens.js';
+export type { TokenColor, TokenRadius, Tokens } from './tokens.js';

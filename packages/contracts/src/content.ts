@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IsoDateTime, PageQuery, Uuid } from './common';
+import { IsoDateTime, PageQuery, Uuid } from './common.js';
 import {
   BlogCategorySchema,
   ContentReviewActionSchema,
@@ -8,8 +8,14 @@ import {
   FindingSeveritySchema,
   RiskFlagSchema,
   TeamSchema,
-} from './enums';
-import type { BlogCategory, ContentStatus, ContentType, FindingSeverity, RiskFlag } from './enums';
+} from './enums.js';
+import type {
+  BlogCategory,
+  ContentStatus,
+  ContentType,
+  FindingSeverity,
+  RiskFlag,
+} from './enums.js';
 
 /**
  * Editorial moderation queue and the public content feed.

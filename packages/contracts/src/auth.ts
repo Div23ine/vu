@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { Uuid } from './common';
-import { MfaMethodSchema, UserRoleSchema } from './enums';
-import { PERMISSIONS, type Permission } from './permissions';
-import { CONFIRM_PASSWORD_MESSAGE, NewPassword } from './account';
+import { Uuid } from './common.js';
+import { MfaMethodSchema, UserRoleSchema } from './enums.js';
+import { PERMISSIONS, type Permission } from './permissions.js';
+import { CONFIRM_PASSWORD_MESSAGE, NewPassword } from './account.js';
 
 /** Claims the Supabase Auth Hook mints from `profiles.role` and `profiles.org_id`. */
 export const JwtClaims = z.object({

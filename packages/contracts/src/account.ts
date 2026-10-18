@@ -1,8 +1,8 @@
 import { NOTIFICATION_EVENTS } from '@vunvault/db/enum-values';
 import { z } from 'zod';
-import { IsoDateTime, Uuid } from './common';
-import { MfaMethodSchema, TeamSchema, UserRoleSchema } from './enums';
-import type { NotificationEvent, RecoveryQuestion, Team, UserRole } from './enums';
+import { IsoDateTime, Uuid } from './common.js';
+import { MfaMethodSchema, TeamSchema, UserRoleSchema } from './enums.js';
+import type { NotificationEvent, RecoveryQuestion, Team, UserRole } from './enums.js';
 
 /**
  * Password Manager, MFA self-service, device sessions, Profile Settings and

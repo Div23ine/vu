@@ -5,9 +5,9 @@ import type {
   ProfileSettings,
   SecurityPosture,
   SessionView,
-} from '../src/account';
-import { DEFAULT_CHANNEL_TOGGLES } from '../src/account';
-import { postureScore } from '../src/account';
+} from '../src/account.js';
+import { DEFAULT_CHANNEL_TOGGLES } from '../src/account.js';
+import { postureScore } from '../src/account.js';
 
 /**
  * Password Manager / Profile Settings fixtures for Dr. Evelyn Reed

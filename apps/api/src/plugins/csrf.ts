@@ -1,8 +1,8 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import fp from 'fastify-plugin';
 import type { FastifyPluginAsync } from 'fastify';
-import { HttpError } from '../lib/http-error';
-import { COOKIE_NAMES, SESSION_COOKIES } from './cookies';
+import { HttpError } from '../lib/http-error.js';
+import { COOKIE_NAMES, SESSION_COOKIES } from './cookies.js';
 
 /**
  * Double-submit CSRF, stateless.

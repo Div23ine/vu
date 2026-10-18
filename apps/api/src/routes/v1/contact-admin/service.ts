@@ -4,13 +4,13 @@ import {
   type ContactMessageView,
   type ContactStatus,
 } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
+import { HttpError } from '../../../lib/http-error.js';
 import type {
   ClientListQueryParams,
   ContactAdminRepo,
   ContactListQueryParams,
   ContactMessageRow,
-} from './repo';
+} from './repo.js';
 
 /**
  * Contact-inbox and client-directory operations (Task 40f).

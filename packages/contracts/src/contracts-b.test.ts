@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { auditEntries, auditSummary, chainStatus } from '../fixtures/audit';
+import { auditEntries, auditSummary, chainStatus } from '../fixtures/audit.js';
 import {
   fxQuoteKes,
   invoices,
   openInvoice,
   paymentMethod,
   subscription,
-} from '../fixtures/billing';
-import { moderationItems, moderationSummary } from '../fixtures/content';
-import { staffMembers } from '../fixtures/users';
+} from '../fixtures/billing.js';
+import { moderationItems, moderationSummary } from '../fixtures/content.js';
+import { staffMembers } from '../fixtures/users.js';
 import {
   AUDIT_CATEGORY_LABELS,
   AUDIT_RANGE_LABELS,
@@ -20,7 +20,7 @@ import {
   AuditSummary,
   ChainStatus,
   VerifyChainResult,
-} from './audit';
+} from './audit.js';
 import {
   CheckoutBody,
   CheckoutResponse,
@@ -33,7 +33,7 @@ import {
   Subscription,
   UpdatePaymentMethodBody,
   WebhookAck,
-} from './billing';
+} from './billing.js';
 import {
   CONSENT_ACCEPT_ALL,
   CONSENT_ESSENTIAL_ONLY,
@@ -42,7 +42,7 @@ import {
   ContactBody,
   ContactCreated,
   CONTACT_CATEGORY_LABELS,
-} from './contact';
+} from './contact.js';
 import {
   CONTENT_STATUS_LABELS,
   CONTENT_TYPE_LABELS,
@@ -55,14 +55,14 @@ import {
   PublicContentQuery,
   RISK_FLAG_LABELS,
   SCHEDULE_REQUIRED_MESSAGE,
-} from './content';
+} from './content.js';
 import {
   AUDIT_CATEGORIES,
   AUDIT_SEVERITIES,
   CONTACT_CATEGORIES,
   TEAMS,
 } from '@vunvault/db/enum-values';
-import { ROUTES_B } from './routes-b';
+import { ROUTES_B } from './routes-b.js';
 
 const UUID = 'c0000000-0000-4000-8000-000000000001';
 const HEX64 = 'a'.repeat(64);

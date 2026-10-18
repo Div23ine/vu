@@ -1,16 +1,16 @@
 import fp from 'fastify-plugin';
 import type { FastifyPluginAsync } from 'fastify';
-import { ResendEmailProvider, type EmailProvider } from '../providers/email';
+import { ResendEmailProvider, type EmailProvider } from '../providers/email.js';
 import {
   AfricasTalkingSmsProvider,
   SmsRouter,
   TwilioSmsProvider,
   type SmsProvider,
-} from '../providers/sms';
-import type { SecretProvider } from '../lib/secrets/provider';
-import { R2ObjectStorage, type ObjectStorage } from '../lib/object-storage';
-import { NotificationDispatcher } from '../lib/notify';
-import { SqlNotificationPrefsRepo } from '../routes/v1/account-sessions/repo';
+} from '../providers/sms.js';
+import type { SecretProvider } from '../lib/secrets/provider.js';
+import { R2ObjectStorage, type ObjectStorage } from '../lib/object-storage.js';
+import { NotificationDispatcher } from '../lib/notify.js';
+import { SqlNotificationPrefsRepo } from '../routes/v1/account-sessions/repo.js';
 
 export interface ProvidersPluginOptions {
   /** Test seam: inject providers instead of building them from secrets. */

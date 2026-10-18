@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { computeThreatLevel, runThreatLevel } from './threat-level';
-import type { Logger, MaintenanceRepo, ThreatCounts, ThreatSnapshotInput } from '../ports';
+import { computeThreatLevel, runThreatLevel } from './threat-level.js';
+import type { Logger, MaintenanceRepo, ThreatCounts, ThreatSnapshotInput } from '../ports.js';
 
 function makeLogger(): Logger {
   return {

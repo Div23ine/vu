@@ -8,12 +8,12 @@ import {
   ProfileSettings,
   UpdateProfileSettingsBody,
 } from '@vunvault/contracts';
-import { AUDITED } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import type { Tx } from '../../../plugins/db';
-import { HttpError } from '../../../lib/http-error';
-import { AccountSettingsService } from './service';
-import { SqlAccountSettingsRepo } from './repo';
+import { AUDITED } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import type { Tx } from '../../../plugins/db.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { AccountSettingsService } from './service.js';
+import { SqlAccountSettingsRepo } from './repo.js';
 
 /**
  * Account settings & avatar (Task 28).

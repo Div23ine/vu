@@ -1,12 +1,12 @@
 import { Readable } from 'node:stream';
 import { describe, expect, it } from 'vitest';
-import type { Clock, Logger, PodSpec, RunHooks, RunResult } from '../ports';
-import { NOOP_HOOKS } from '../ports';
-import { PAUSE_UNSUPPORTED_LINE, K8sPodRunner, POD_READY_TIMEOUT_MS } from './k8s-pod-runner';
-import type { DeleteOptions, KubeClient, LogStreamOptions, PodPhase } from './kube';
-import type { JobManifest } from './pod-manifest';
-import type { NetworkPolicyManifest } from './network-policy';
-import { OUTPUT_LIMIT_LINE, consumeLogStream } from './log-stream';
+import type { Clock, Logger, PodSpec, RunHooks, RunResult } from '../ports.js';
+import { NOOP_HOOKS } from '../ports.js';
+import { PAUSE_UNSUPPORTED_LINE, K8sPodRunner, POD_READY_TIMEOUT_MS } from './k8s-pod-runner.js';
+import type { DeleteOptions, KubeClient, LogStreamOptions, PodPhase } from './kube.js';
+import type { JobManifest } from './pod-manifest.js';
+import type { NetworkPolicyManifest } from './network-policy.js';
+import { OUTPUT_LIMIT_LINE, consumeLogStream } from './log-stream.js';
 
 /**
  * Pod-runner and log-stream tests (Task 86) — against a fake `KubeClient`.

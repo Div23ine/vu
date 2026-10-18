@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { AuditCategory, AuditSeverity } from '@vunvault/contracts';
 import { computeHash, computeSignature, entryPayload, ZERO_HASH } from '@vunvault/lib/audit-chain';
 import type { VerifiableAuditEntry } from '@vunvault/lib/audit-chain';
-import { runVerifyChain, VERIFIED_BY, VERIFY_BATCH_SIZE } from './verify-chain';
+import { runVerifyChain, VERIFIED_BY, VERIFY_BATCH_SIZE } from './verify-chain.js';
 import type {
   CheckpointInput,
   LastCheckpoint,
   Logger,
   MaintenanceRepo,
   NotifyEnqueuer,
-} from '../ports';
+} from '../ports.js';
 
 const KEY_V1 = Buffer.alloc(32, 7);
 const hmacKeyFor = (keyId: string): Buffer | undefined => (keyId === 'v1' ? KEY_V1 : undefined);

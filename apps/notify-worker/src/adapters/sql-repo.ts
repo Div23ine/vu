@@ -10,7 +10,7 @@ import {
   type Db,
 } from '@vunvault/db';
 import type { ScanType } from '@vunvault/contracts';
-import type { InboxInput, InvoiceView, NotifyRepo, ReceiptInput, ReportView } from '../ports';
+import type { InboxInput, InvoiceView, NotifyRepo, ReceiptInput, ReportView } from '../ports.js';
 
 /**
  * Postgres adapter for the notify worker (Task 90).

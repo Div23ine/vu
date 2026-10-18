@@ -1,17 +1,17 @@
 import fp from 'fastify-plugin';
 import type { Permission, UserRole } from '@vunvault/contracts';
 import type { FastifyPluginAsync, FastifyRequest, preHandlerHookHandler } from 'fastify';
-import { HttpError } from '../lib/http-error';
-import { tokenIssuer, verifyAccessToken } from '../lib/jwt';
+import { HttpError } from '../lib/http-error.js';
+import { tokenIssuer, verifyAccessToken } from '../lib/jwt.js';
 import {
   SessionRegistry,
   createDbSessionLookup,
   type CacheLike,
   type SessionRegistryOptions,
-} from '../lib/session-registry';
-import { isStaff, STAFF_ROLES } from '../lib/staff';
-import { createSupabaseAdmin, SupabaseError, type SupabaseAdmin } from '../lib/supabase-admin';
-import { COOKIE_NAMES } from './cookies';
+} from '../lib/session-registry.js';
+import { isStaff, STAFF_ROLES } from '../lib/staff.js';
+import { createSupabaseAdmin, SupabaseError, type SupabaseAdmin } from '../lib/supabase-admin.js';
+import { COOKIE_NAMES } from './cookies.js';
 
 /**
  * Request authentication and authorisation.

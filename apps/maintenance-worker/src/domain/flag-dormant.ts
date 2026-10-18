@@ -1,4 +1,4 @@
-import type { Logger, MaintenanceRepo, Summary } from '../ports';
+import type { Logger, MaintenanceRepo, Summary } from '../ports.js';
 
 /**
  * `flag_dormant_accounts` (Task 92) — nightly.

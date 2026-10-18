@@ -8,15 +8,15 @@ import {
   CVE_ID_MESSAGE,
   ROLE_PERMISSIONS,
 } from '@vunvault/contracts';
-import type { Env } from '../../../config/env';
-import errorHandler from '../../../plugins/error-handler';
-import type { AuthUser } from '../../../plugins/auth';
-import { HttpError } from '../../../lib/http-error';
-import type { AuditEntryRow } from '../../../audit/repo';
-import { AUDIT_EVENTS } from '../../../audit/events';
-import { HttpNvdClient, type NvdCache } from './nvd';
-import advisoriesRoutes from './index';
-import { countsTowardsReach, type ClientAsset } from './matching';
+import type { Env } from '../../../config/env.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import type { AuthUser } from '../../../plugins/auth.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { AuditEntryRow } from '../../../audit/repo.js';
+import { AUDIT_EVENTS } from '../../../audit/events.js';
+import { HttpNvdClient, type NvdCache } from './nvd.js';
+import advisoriesRoutes from './index.js';
+import { countsTowardsReach, type ClientAsset } from './matching.js';
 import type {
   AdvisoryPatch,
   AdvisoryRow,
@@ -25,7 +25,7 @@ import type {
   ClientAdvisoryRow,
   NewAdvisory,
   NewBroadcast,
-} from './repo';
+} from './repo.js';
 
 /**
  * The Zero-Day desk.

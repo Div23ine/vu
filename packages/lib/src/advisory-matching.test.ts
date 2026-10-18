@@ -8,7 +8,7 @@ import {
   matchesAsset,
   REACH_WINDOW_MS,
   type ClientAsset,
-} from './advisory-matching';
+} from './advisory-matching.js';
 
 /**
  * Scope → estate matching.

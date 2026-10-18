@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll } from 'vitest';
-import { server } from './src/mocks/server';
+import { server } from './src/mocks/server.js';
 
 /**
  * MSW node-server lifecycle for every web test file.

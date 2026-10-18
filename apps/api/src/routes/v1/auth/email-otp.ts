@@ -1,5 +1,5 @@
 import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
-import type { KvStore } from './challenge';
+import type { KvStore } from './challenge.js';
 
 /**
  * The signup email-OTP store (Task 40d).

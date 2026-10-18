@@ -16,7 +16,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { migrate as runDrizzleMigrations } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
-import { createDb } from './client';
+import { createDb } from './client.js';
 
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DRIZZLE_FOLDER = path.join(PACKAGE_ROOT, 'drizzle');

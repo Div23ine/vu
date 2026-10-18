@@ -5,9 +5,9 @@ import {
   isAfricanNumber,
   SmsRouter,
   TwilioSmsProvider,
-} from './sms';
-import { DEFAULT_FROM, ResendEmailProvider, RESEND_URL } from './email';
-import { isProviderError, ProviderError } from './error';
+} from './sms.js';
+import { DEFAULT_FROM, ResendEmailProvider, RESEND_URL } from './email.js';
+import { isProviderError, ProviderError } from './error.js';
 
 interface RecordedCall {
   url: string;

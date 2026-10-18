@@ -1,9 +1,9 @@
 import type { MfaMethod } from '@vunvault/contracts';
 import type { FastifyRequest } from 'fastify';
-import { HttpError } from '../../../lib/http-error';
-import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin';
+import { HttpError } from '../../../lib/http-error.js';
+import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
 import { createHash, timingSafeEqual } from 'node:crypto';
-import type { EmailOtpStore, MfaChallenge, MfaChallengeStore } from './challenge';
+import type { EmailOtpStore, MfaChallenge, MfaChallengeStore } from './challenge.js';
 
 /**
  * Second-factor verifiers.

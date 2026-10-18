@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { AVATAR_MAX_BYTES, TIMEZONES } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
-import type { ObjectStorage, ObjectMetadata } from '../../../lib/object-storage';
-import { AccountSettingsService } from './service';
-import type { AccountSettingsRepo, SettingsPatch, SettingsRow } from './repo';
+import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage, ObjectMetadata } from '../../../lib/object-storage.js';
+import { AccountSettingsService } from './service.js';
+import type { AccountSettingsRepo, SettingsPatch, SettingsRow } from './repo.js';
 
 const USER_ID = 'd0000000-0000-4000-8000-000000000001';
 const OTHER_ID = 'd0000000-0000-4000-8000-000000000002';

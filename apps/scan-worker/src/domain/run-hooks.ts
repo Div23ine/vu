@@ -1,10 +1,10 @@
 import type { InternalFinding } from '@vunvault/contracts';
-import { classifyLine } from '../output/classify';
-import { FindingCollector, MAX_FINDINGS_PER_CALL } from '../output/findings';
-import { sanitiseLine } from '../output/sanitise';
-import type { ApiClient, Clock, Logger, RunHooks } from '../ports';
-import { LogArchive } from './log-archive';
-import type { OutputChannel } from './output-channel';
+import { classifyLine } from '../output/classify.js';
+import { FindingCollector, MAX_FINDINGS_PER_CALL } from '../output/findings.js';
+import { sanitiseLine } from '../output/sanitise.js';
+import type { ApiClient, Clock, Logger, RunHooks } from '../ports.js';
+import { LogArchive } from './log-archive.js';
+import type { OutputChannel } from './output-channel.js';
 
 /**
  * Run hooks (Task 88) — the wiring between a scan pod and everything that

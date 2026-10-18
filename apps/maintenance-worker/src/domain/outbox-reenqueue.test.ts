@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { runOutboxReenqueue } from './outbox-reenqueue';
-import type { BroadcastProducer, Logger, MaintenanceRepo, StuckBroadcastRow } from '../ports';
+import { runOutboxReenqueue } from './outbox-reenqueue.js';
+import type { BroadcastProducer, Logger, MaintenanceRepo, StuckBroadcastRow } from '../ports.js';
 
 const makeLogger = () => {
   const warnings: string[] = [];

@@ -1,21 +1,10 @@
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import * as schema from './schema';
+import * as schema from './schema/index.js';
 
-/**
- * Connection rules (Supabase Postgres 15 is the only database):
- *
- * - App traffic uses `DATABASE_URL` → the Supabase Supavisor transaction pooler
- *   on port 6543. Transaction pooling means a session is not guaranteed between
- *   statements, so `prepare: false` is MANDATORY.
- * - Migrations use `DIRECT_URL` → direct Postgres on port 5432.
- */
-
-/** A Drizzle database bound to the full VUNVAULT schema. */
 export type Db = PostgresJsDatabase<typeof schema>;
 
 export interface CreateDbOptions {
-  /** Maximum pooled connections. 10 for app traffic, 1 for migrations. */
   max?: number;
 }
 
@@ -29,21 +18,33 @@ export function createDb(
     );
   }
 
-  const client = postgres(url, {
+  const rawClient = postgres(url, {
     prepare: false,
     max: options.max ?? 10,
     ssl: 'require',
+  });
 
-    // Serialize every JS `Date` as timestamptz on the wire. Without this,
-    // postgres-js sends an un-cast Date param as text (OID 25) and then
-    // calls Buffer.byteLength(new Date()) → ERR_INVALID_ARG_TYPE.
-    types: {
-      date: {
-        to: 1184, // bind Dates as timestamptz
-        from: [1082, 1114, 1184], // decode date/timestamp/timestamptz as Date
-      },
+  const client = new Proxy(rawClient, {
+    get(target, prop, receiver) {
+      const orig = Reflect.get(target, prop, receiver);
+      if (typeof orig === 'function') {
+        return function (...args: unknown[]) {
+          if (args.length >= 2 && Array.isArray(args[1])) {
+            args[1] = args[1].map((p: unknown) => {
+              if (p instanceof Date) return p.toISOString();
+              if (Array.isArray(p)) {
+                return p.map((item: unknown) => (item instanceof Date ? item.toISOString() : item));
+              }
+              return p;
+            });
+          }
+          return orig.apply(this, args);
+        };
+      }
+      return orig;
     },
   });
 
-  return drizzle(client, { schema });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return drizzle(client as any, { schema });
 }

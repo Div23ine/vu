@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { assertNever } from './assert';
-import { cn } from './cn';
+import { assertNever } from './assert.js';
+import { cn } from './cn.js';
 
 describe('cn', () => {
   it('joins conditional class values', () => {
