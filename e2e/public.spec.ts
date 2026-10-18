@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { failOnPageErrors } from './helpers';
 
 /**
- * Public surface smoke (Task 107): the marketing site renders, navigates and
+ * Public surface smoke : the marketing site renders, navigates and
  * throws nothing. Copy assertions stay minimal on purpose — the unit suites
  * pin the verbatim strings; E2E proves the whole page (RSC + hydration +
  * stylesheets + middleware) actually comes up in a browser.

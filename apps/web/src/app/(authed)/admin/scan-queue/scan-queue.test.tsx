@@ -15,7 +15,7 @@ import { server } from '../../../../mocks/server';
 import ScanQueuePage from './page';
 
 /**
- * Scan Queue tests (Task 77) — the spec's list: the summary tiles from MSW,
+ * Scan Queue tests — the spec's list: the summary tiles from MSW,
  * URL-driven filters, selection shows the bulk bar and count, the bulk call
  * body shape, the skipped-all toast, the row menu items by state, the
  * permission-hidden actions and the UTC timestamps. Plus the filter reset,

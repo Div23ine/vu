@@ -4,7 +4,7 @@ import { Button, Logo } from '@vunvault/ui';
 import './globals.css';
 
 /**
- * Last-resort error boundary (Task 43): renders when the root layout itself
+ * Last-resort error boundary : renders when the root layout itself
  * throws, so it must carry its own `<html>`/`<body>` — and its own import of
  * `globals.css`, because the layout that normally loads the stylesheet is the
  * thing that failed. Copy mirrors `error.tsx` verbatim.

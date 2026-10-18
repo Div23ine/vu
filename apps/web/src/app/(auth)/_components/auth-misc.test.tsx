@@ -17,7 +17,7 @@ import { AcceptInviteForm } from '../accept-invite/_components/accept-invite-for
 import { NewsletterConfirmCard } from '../newsletter/confirm/_components/newsletter-confirm-card';
 
 /**
- * Auth-adjacent page tests (Task 63) — the forgot form ALWAYS ends on the
+ * Auth-adjacent page tests — the forgot form ALWAYS ends on the
  * `Check your inbox` state (enumeration-safe) except on a network failure;
  * the reset form's invalid-token / mismatch / breached / success states; the
  * accept-invite 404 and activation flows with the fixture role + team; and

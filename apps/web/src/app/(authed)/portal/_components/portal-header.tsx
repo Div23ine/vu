@@ -8,13 +8,13 @@ import { cn } from '@vunvault/lib';
 import { usePentestDialog } from './request-pentest-dialog';
 import '../_styles/portal-chrome.css';
 
-/* Brand block: static operator SVG from `/public`, pixel-identical prototype
+/* Brand block: static operator SVG from `/public`, pixel-identical design
  * markup — `next/image` refuses SVGs without `dangerouslyAllowSVG` (same
- * reasoning as the marketing header, Task 44). */
+ * reasoning as the marketing header, an earlier iteration). */
 /* eslint-disable @next/next/no-img-element */
 
 /**
- * Client-portal header (Task 45).
+ * Client-portal header .
  *
  * Same sticky chrome as the marketing header, but the nav is the portal's four
  * reserved routes and the CTA opens the Request PenTest dialog — from the

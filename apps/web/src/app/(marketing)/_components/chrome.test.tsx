@@ -13,7 +13,7 @@ import { SiteHeader } from './site-header';
 import type { FooterVariant } from './footer-data';
 
 /**
- * Marketing chrome tests (Task 44).
+ * Marketing chrome tests .
  *
  * `next/navigation` is mocked to a settable pathname so the active-route and
  * footer-variant behaviour can be exercised without a router. Sessions come
@@ -39,14 +39,13 @@ beforeEach(() => {
 });
 
 describe('SiteHeader', () => {
-  it('renders the seven primary nav links with the verbatim labels', () => {
+  it('renders the six primary nav links with the verbatim labels', () => {
     renderInProviders(<SiteHeader />);
     const primary = screen.getByRole('navigation', { name: 'Primary' });
     const links = within(primary).getAllByRole('link');
     expect(links.map((link) => link.textContent)).toEqual([
       'About Us',
       'Services',
-      'Academy',
       'Blog',
       'Products',
       'Contact',
@@ -55,7 +54,6 @@ describe('SiteHeader', () => {
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
       '/about',
       '/services',
-      '/academy',
       '/blog',
       '/products',
       '/contact',
@@ -116,7 +114,7 @@ describe('MobileMenu', () => {
       within(drawer)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['About Us', 'Services', 'Academy', 'Blog', 'Products', 'Contact', 'Login']);
+    ).toEqual(['About Us', 'Services', 'Blog', 'Products', 'Contact', 'Login']);
   });
 
   it('toggles aria-expanded with the drawer state, and Escape closes it', async () => {
@@ -169,10 +167,11 @@ describe('SiteFooter', () => {
     expect(footer).toHaveClass('bg-dark', 'text-white', 'border-white/10');
   });
 
-  it('maps prototype labels onto final routes and keeps the rest as buttons', () => {
+  it('maps footer labels onto published routes, anchors and coming-soon paths', () => {
     render(<SiteFooter variant="home" />);
     expect(screen.getByRole('link', { name: 'News' })).toHaveAttribute('href', '/blog');
     expect(screen.getByRole('link', { name: 'About Us' })).toHaveAttribute('href', '/about');
+    expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
     expect(screen.getByRole('link', { name: 'Pricing & Plans' })).toHaveAttribute(
       'href',
       '/services#pricing',
@@ -181,10 +180,45 @@ describe('SiteFooter', () => {
       'href',
       '/contact#contact-form',
     );
-    for (const label of ['Breach Watch', 'Templates', 'Careers', 'Press', 'Support']) {
-      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+    // Published legal and section anchors.
+    expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute('href', '/contact');
+    expect(screen.getByRole('link', { name: 'Small Business' })).toHaveAttribute(
+      'href',
+      '/services#core-services',
+    );
+    // Not built yet: the path still renders, and the unknown-route flow
+    // answers it with the coming-soon banner + waitlist.
+    for (const [label, href] of [
+      ['Careers', '/careers'],
+      ['Templates', '/templates'],
+      ['Breach Watch', '/breach-watch'],
+    ] as const) {
+      expect(screen.getByRole('link', { name: label })).toHaveAttribute('href', href);
     }
-    expect(screen.getByRole('button', { name: 'Contact' })).toBeInTheDocument();
+  });
+
+  it('links the legal column to the published policy pages', () => {
+    render(<SiteFooter variant="company" />);
+    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute(
+      'href',
+      '/privacy',
+    );
+    expect(screen.getByRole('link', { name: 'Terms of Service' })).toHaveAttribute(
+      'href',
+      '/terms',
+    );
+    expect(screen.getByRole('link', { name: 'Cookie Policy' })).toHaveAttribute(
+      'href',
+      '/cookie-policy',
+    );
+    expect(screen.getByRole('link', { name: 'Responsible Disclosure' })).toHaveAttribute(
+      'href',
+      '/responsible-disclosure',
+    );
+    expect(screen.getByRole('link', { name: 'Press Office' })).toHaveAttribute(
+      'href',
+      'mailto:press@vunvault.com',
+    );
   });
 
   it(`dispatches ${OPEN_SCANNER_EVENT} from Free Security Scan`, async () => {

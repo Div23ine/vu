@@ -4,13 +4,13 @@ import { cn } from '@vunvault/lib';
 import '../_styles/pay-dialog.css';
 
 /**
- * Payment channel picker (Task 66b) — real radios inside a native
- * `<fieldset><legend>` group, rendered as the prototype family's radio cards.
- * Copy is verbatim from the planner spec; the mapping to the wire contract
+ * Payment channel picker — real radios inside a native
+ * `<fieldset><legend>` group, rendered as the design family's radio cards.
+ * Copy is verbatim from the spec spec; the mapping to the wire contract
  * lives in the dialog (Card → `stripe`/`card`; M-Pesa → `paystack`/`mpesa`;
  * Bank transfer → `paystack`/`bank_transfer`).
  *
- * The three options are written out statically (like the Task 61 signup radio
+ * The three options are written out statically (like the an earlier iteration signup radio
  * cards): `jsx-a11y/label-has-associated-control` verifies a label's
  * accessible text statically, which dynamic `{expression}` children defeat.
  */

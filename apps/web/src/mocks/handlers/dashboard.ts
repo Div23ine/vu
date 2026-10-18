@@ -12,10 +12,10 @@ import {
 } from '@vunvault/contracts/fixtures/dashboard';
 
 /**
- * Command Center dashboard mock handlers (Task 76).
+ * Command Center dashboard mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock
- * mode. The Task 20d catalogue fixtures ARE the dashboard: every section
+ * mode. The an earlier iteration catalog fixtures ARE the dashboard: every section
  * serves its fixture verbatim so the UI's formatting (USD, counts, stamps,
  * ETA, shares) is exercised against the documented values.
  *
@@ -25,9 +25,9 @@ import {
  * parameters do not change the fixture payload (path matching ignores the
  * query string) — they exist so tests can assert the client SENDS them.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 34):
- *   GET /api/v1/admin/dashboard/{kpis|revenue|transactions|traffic|endpoints|
- *       nodes|pipeline|running-scans|threat-level}[?refresh=1] → 200 | 403
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET /api/v1/admin/dashboard/{kpis|revenue|transactions|traffic|endpoints|
+ *   nodes|pipeline|running-scans|threat-level}[?refresh=1] → 200 | 403
  */
 
 export const dashboardHandlers = [

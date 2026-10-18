@@ -7,7 +7,7 @@ import { formatLocalDisplay, formatUsd } from '@vunvault/lib';
 import '../_styles/pay-dialog.css';
 
 /**
- * Display-currency select + locked FX quote panel (Task 66b).
+ * Display-currency select + locked FX quote panel .
  *
  * The quote is display-only: the charge is ALWAYS the server-derived USD
  * amount (hard rule — the UI never computes or sends an amount). The panel
@@ -16,7 +16,7 @@ import '../_styles/pay-dialog.css';
  * disabled by the dialog. The charge sentence renders for every currency.
  */
 
-/** Verbatim option list from the planner spec. */
+/** Verbatim option list from the spec spec. */
 export const DISPLAY_CURRENCY_OPTIONS = [
   { code: 'USD', label: 'USD — US Dollar' },
   { code: 'KES', label: 'KES — Kenyan Shilling' },
@@ -25,7 +25,7 @@ export const DISPLAY_CURRENCY_OPTIONS = [
   { code: 'ZAR', label: 'ZAR — South African Rand' },
 ] as const satisfies ReadonlyArray<{ code: DisplayCurrency; label: string }>;
 
-/** Default display currency from the client's billing country (planner map). */
+/** Default display currency from the client's billing country (spec map). */
 export function defaultCurrencyForCountry(country: string | null | undefined): DisplayCurrency {
   switch (country) {
     case 'KE':

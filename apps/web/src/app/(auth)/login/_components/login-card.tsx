@@ -18,19 +18,19 @@ import { useMfaDialog } from '../_store/mfa-dialog-store';
 import '../../_styles/auth.css';
 
 /**
- * Login card (Task 59).
+ * Login card .
  *
  * RHF + Zod (never `useState` for values). The form schema carries the
- * planner's verbatim validation messages; the password minimum follows the
- * API contract (8), not the prototype's 6. On success the session cache is
+ * spec's verbatim validation messages; the password minimum follows the
+ * API contract (8), not the design's 6. On success the session cache is
  * seeded (`setQueryData`) and the router replaces to the sanitised `next` or
  * `homeFor(role)`; an `mfaRequired` response hands off to the MFA dialog
- * store (Task 60 renders it). 401/429 toast the planner copy — the 401 text
+ * store (an earlier iteration renders it). 401/429 toast the spec copy — the 401 text
  * never reveals which credential was wrong.
  *
- * The prototype's `role="dialog" aria-modal="true"` is intentionally NOT
+ * The design's `role="dialog" aria-modal="true"` is intentionally NOT
  * reproduced: as a full page the card is `<main aria-labelledby>`, per the
- * planner's note. The eye button toggles type + `aria-pressed` + label.
+ * spec's note. The eye button toggles type + `aria-pressed` + label.
  */
 
 const loginFormSchema = z.object({
@@ -91,7 +91,7 @@ export function LoginCard({ next, error, mfaRequested }: LoginCardProps) {
   }, [error]);
 
   // `?mfa=1` (OAuth return): open the dialog immediately. The API exposes no
-  // method-list endpoint, so the catalogue pins ["totp", "webauthn"] — an
+  // method-list endpoint, so the spec pins ["totp", "webauthn"] — an
   // unavailable method simply fails with `mfa_failed`.
   useEffect(() => {
     if (!mfaRequested) return;
@@ -147,7 +147,7 @@ export function LoginCard({ next, error, mfaRequested }: LoginCardProps) {
         <span className="vv-brand">
           <span className="vv-brand-mark" aria-hidden="true">
             {/* The operator's static brand SVG, same source as the marketing
-                header (Task 44); `next/image` is not used for it there either. */}
+        header ; `next/image` is not used for it there either. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/logo.svg" alt="" />
           </span>

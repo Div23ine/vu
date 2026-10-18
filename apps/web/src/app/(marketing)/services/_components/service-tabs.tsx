@@ -5,17 +5,17 @@ import { cn } from '@vunvault/lib';
 import '../_styles/services.css';
 
 /**
- * Services page section tabs (Task 54) — the sticky row under the hero.
+ * Services page section tabs — the sticky row under the hero.
  *
  * `is-active` follows the scroll position (an IntersectionObserver watches the
  * section ids through a band across the upper viewport), and clicking a tab
  * smooth-scrolls to its section — instant under `prefers-reduced-motion`.
- * Sections belonging to Task 54b's stubs (`pricing`, `academy`,
+ * Sections belonging to an earlier iteration's stubs (`pricing`,
  * `request-assessment`) do not exist in the DOM yet; the observer simply
  * skips missing targets and they light up once 54b lands.
  *
  * The row's pill styling is authored in `services.css` (`.vv-svc-tabs`): the
- * catalogue specifies the behaviour and the `ServiceTab` shape but embeds no
+ * catalog specifies the behaviour and the `ServiceTab` shape but embeds no
  * markup for the row itself.
  */
 
@@ -28,7 +28,6 @@ export const SERVICE_TABS: readonly ServiceTab[] = [
   { id: 'free-tools', label: 'Free Tools' },
   { id: 'core-services', label: 'Core Services' },
   { id: 'pricing', label: 'Pricing' },
-  { id: 'academy', label: 'Academy' },
   { id: 'request-assessment', label: 'Request Assessment' },
 ];
 

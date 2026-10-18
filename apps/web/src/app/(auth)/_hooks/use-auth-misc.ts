@@ -10,7 +10,7 @@ import { queryKeys } from '@vunvault/lib';
 import { apiGet, apiPost } from '../../../lib/api';
 
 /**
- * Auth-adjacent hooks (Task 63) — the four small flows around the session:
+ * Auth-adjacent hooks — the four small flows around the session:
  * forgot password (always-202, enumeration-safe), reset password, the public
  * invitation preview + acceptance, and the newsletter double-opt-in confirm.
  *
@@ -29,7 +29,7 @@ export interface AcceptInvitationResponse {
 export function useForgotPassword() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/auth/forgot-password body { email } → 202 {}
-    //   (always 202 — the route never reveals whether the address exists)
+    //  (always 202 — the route never reveals whether the address exists)
     mutationFn: (body: ForgotPasswordBody) => apiPost<void>('/api/v1/auth/forgot-password', body),
   });
 }
@@ -37,7 +37,7 @@ export function useForgotPassword() {
 export function useResetPassword() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/auth/reset-password body { token; newPassword; confirmPassword }
-    //   → 204 | 400 | 410 { error: "token_invalid" } | 422 { error: "breached_password" }
+    //  → 204 | 400 | 410 { error: "token_invalid" } | 422 { error: "breached_password" }
     mutationFn: (body: ResetPasswordBody) => apiPost<void>('/api/v1/auth/reset-password', body),
   });
 }
@@ -45,8 +45,8 @@ export function useResetPassword() {
 export function useInvitationPreview(token: string | null) {
   return useQuery({
     // TODO(backend-contract): GET /api/v1/invitations/:token
-    //   → 200 { data: InvitationPreview } | 404 not_found (unknown, expired and
-    //   used tokens all answer 404 — the endpoint must not reveal which exist)
+    //  → 200 { data: InvitationPreview } | 404 not_found (unknown, expired and
+    //  used tokens all answer 404 — the endpoint must not reveal which exist)
     queryKey: [...queryKeys.users.invitations(), 'preview', token],
     queryFn: () =>
       apiGet<{ data: InvitationPreview }>(`/api/v1/invitations/${token}`).then(
@@ -59,7 +59,7 @@ export function useInvitationPreview(token: string | null) {
 export function useAcceptInvitation(token: string) {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/invitations/:token/accept body { password; confirmPassword }
-    //   → 201 { data: SessionUser; mfaEnrolmentRequired: true } | 400 | 404 | 422 breached_password
+    //  → 201 { data: SessionUser; mfaEnrolmentRequired: true } | 400 | 404 | 422 breached_password
     mutationFn: (body: AcceptInvitationBody) =>
       apiPost<AcceptInvitationResponse>(`/api/v1/invitations/${token}/accept`, body),
   });

@@ -10,10 +10,10 @@ import { scanJobs, scanQueueSummary } from '@vunvault/contracts/fixtures/scans';
 import { staffMembers } from '@vunvault/contracts/fixtures/users';
 
 /**
- * Admin scan-queue mock handlers (Task 77).
+ * Admin scan-queue mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock
- * mode. The Task 19 catalogue fixtures ARE the queue (ten jobs across every
+ * mode. The an earlier iteration catalog fixtures ARE the queue (ten jobs across every
  * status/gate/payment combination) and the summary; the list endpoint
  * applies the real filter semantics (`q` over job code, host, client name,
  * contact email and scope notes; exact `status`/`gate`/`payment`/`type`;
@@ -27,17 +27,17 @@ import { staffMembers } from '@vunvault/contracts/fixtures/users';
  * real API.
  *
  * The staff roster handler (`GET /api/v1/admin/users`) parks HERE until
- * Task 79's users mocks own it — the reviewer select needs it and no earlier
- * task registered one (the Task 66/68 profile-handler precedent).
+ * an earlier iteration's users mocks own it — the reviewer select needs it and no earlier
+ * task registered one (the an earlier iteration/68 profile-handler precedent).
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 35):
- *   GET  /api/v1/admin/scans/summary → 200 { data: ScanQueueSummary }
- *   GET  /api/v1/admin/scans?q=&status=&gate=&payment=&type=&page=&pageSize=
- *                                    → 200 { data: ScanJob[]; total }
- *   POST /api/v1/admin/scans/bulk    → 200 { data: { updated; skippedIds } }
- *   POST /api/v1/admin/scans/:id/request-payment → 200 { data: ScanJob }
- *   POST /api/v1/admin/scans/:id/cancel          → 200 { data: ScanJob }
- *   GET  /api/v1/admin/users         → 200 { data: StaffMember[]; total }
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET /api/v1/admin/scans/summary → 200 { data: ScanQueueSummary }
+ * GET /api/v1/admin/scans?q=&status=&gate=&payment=&type=&page=&pageSize=
+ *                 → 200 { data: ScanJob[]; total }
+ * POST /api/v1/admin/scans/bulk  → 200 { data: { updated; skippedIds } }
+ * POST /api/v1/admin/scans/:id/request-payment → 200 { data: ScanJob }
+ * POST /api/v1/admin/scans/:id/cancel     → 200 { data: ScanJob }
+ * GET /api/v1/admin/users     → 200 { data: StaffMember[]; total }
  */
 
 let queueJobs: ScanJob[] = scanJobs.map((job) => ({ ...job }));

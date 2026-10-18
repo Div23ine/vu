@@ -15,16 +15,16 @@ import {
 } from '../_hooks/use-billing';
 
 /**
- * Invoice history (Task 66) — the shared `DataTable` (Task 12) styled by
- * `billing.css` to the prototype's table. Status chips: `paid` → `Paid`,
+ * Invoice history — the shared `DataTable` styled by
+ * `billing.css` to the design's table. Status chips: `paid` → `Paid`,
  * `pending` → `Awaiting Payment`, `overdue` → `Overdue`, `void` → `Void`
- * (a `draft` row — not in the prototype — reuses the muted chip, authored).
+ * (a `draft` row — not in the design — reuses the muted chip, authored).
  *
  * `Download PDF` streams `GET /billing/invoices/:id/pdf`; while the API
  * answers `202 generating` it toasts `Preparing your invoice…` (once per
  * sequence) and retries after 3 s, up to five attempts; the blob lands via a
  * hidden `<a download>` whose object URL is revoked immediately.
- * `Pay Now` (pending/overdue only) opens Task 66b's dialog through the
+ * `Pay Now` (pending/overdue only) opens an earlier iteration's dialog through the
  * `usePayDialog()` store; `?invoice=<id>` (the Products purchase hand-off)
  * opens it automatically once the list has loaded.
  */
@@ -84,7 +84,7 @@ export function InvoiceTable({ initialPayInvoiceId }: InvoiceTableProps) {
         },
       });
       if (!ok) {
-        // Authored fallback — the planner pinned no download-failure copy.
+        // Authored fallback — the spec pinned no download-failure copy.
         toast({ kind: 'crit', title: 'Download failed', message: 'Please try again.' });
       }
     } catch {

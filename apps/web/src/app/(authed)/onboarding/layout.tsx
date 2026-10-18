@@ -5,9 +5,9 @@ import { isStaffRole } from '../../../lib/permissions';
 import { requireSession } from '../../../lib/server-session';
 
 /**
- * `(authed)/onboarding` — the client intake wizard (Tasks 64–65).
+ * `(authed)/onboarding` — the client intake wizard (earlier iterations–65).
  *
- * The catalogue pins the chrome: `requireSession()` first, then the MARKETING
+ * The spec pins the chrome: `requireSession()` first, then the MARKETING
  * header/footer (footer variant `home`) — no portal chrome. Staff never see
  * this page: the wizard completes a CLIENT profile, so any staff role is
  * redirected to `/admin` right here (the edge middleware only enforces the

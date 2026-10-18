@@ -18,10 +18,10 @@ import {
 } from '@vunvault/contracts/fixtures/intel';
 
 /**
- * Admin Zero-Day desk mock handlers (Task 81).
+ * Admin Zero-Day desk mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock mode.
- * The Task 20d fixtures ARE the published table (`advisories`), the tiles
+ * The an earlier iteration fixtures ARE the published table (`advisories`), the tiles
  * (`advisorySummary`) and the drafts panel (`drafts`).
  *
  * `drafts` is the LIGHT `DraftListItem` shape — enough for the panel, not
@@ -38,15 +38,15 @@ import {
  * `/summary`, `/drafts` and `/nvd` paths are registered BEFORE any `/:id`
  * route that would otherwise swallow them.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 38):
- *   GET   /api/v1/admin/advisories/summary        → 200 { data: AdvisorySummary }
- *   GET   /api/v1/admin/advisories/drafts         → 200 { data: DraftListItem[] }
- *   GET   /api/v1/admin/advisories/nvd?cveId=     → 200 { data: NvdImportResult } | 400 | 404 | 502
- *   GET   /api/v1/admin/advisories?status=        → 200 { data: Advisory[]; total }
- *   POST  /api/v1/admin/advisories                → 201 { data: Advisory } | 409 cve_exists
- *   PUT   /api/v1/admin/advisories/:id            → 200 { data: Advisory } | 404 | 409 not_editable
- *   PATCH /api/v1/admin/advisories/:id/patch-status → 200 { data: Advisory } | 404
- *   POST  /api/v1/admin/advisories/:id/retract    → 200 { data: Advisory } | 404 | 422
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET  /api/v1/admin/advisories/summary    → 200 { data: AdvisorySummary }
+ * GET  /api/v1/admin/advisories/drafts     → 200 { data: DraftListItem[] }
+ * GET  /api/v1/admin/advisories/nvd?cveId=   → 200 { data: NvdImportResult } | 400 | 404 | 502
+ * GET  /api/v1/admin/advisories?status=    → 200 { data: Advisory[]; total }
+ * POST /api/v1/admin/advisories        → 201 { data: Advisory } | 409 cve_exists
+ * PUT  /api/v1/admin/advisories/:id      → 200 { data: Advisory } | 404 | 409 not_editable
+ * PATCH /api/v1/admin/advisories/:id/patch-status → 200 { data: Advisory } | 404
+ * POST /api/v1/admin/advisories/:id/retract  → 200 { data: Advisory } | 404 | 422
  */
 
 /** The intelligence desk's own authors, keyed by the fixture labels. */
@@ -169,11 +169,11 @@ function toDraftItem(advisory: Advisory): DraftListItem {
 }
 
 /**
- * NVD catalogue. The six published fixtures are importable (so re-importing a
+ * NVD catalog. The six published fixtures are importable (so re-importing a
  * known CVE reproduces the desk's own data), plus two entries that are NOT in
  * the store — importing one of those exercises the create path end to end.
  */
-const NVD_CATALOGUE: Record<string, NvdImportResult> = {
+const NVD_CATALOG: Record<string, NvdImportResult> = {
   'CVE-2026-44120': {
     cveId: 'CVE-2026-44120',
     vendor: 'Apache Software Foundation',
@@ -347,7 +347,7 @@ export const adminAdvisoriesHandlers = [
     if (!CVE_ID_PATTERN.test(cveId)) {
       return HttpResponse.json({ error: 'validation_failed' }, { status: 400 });
     }
-    const result = NVD_CATALOGUE[cveId] ?? nvdFromStore(cveId);
+    const result = NVD_CATALOG[cveId] ?? nvdFromStore(cveId);
     if (result === undefined) {
       return HttpResponse.json({ error: 'not_found' }, { status: 404 });
     }
@@ -428,7 +428,7 @@ export const adminAdvisoriesHandlers = [
     return HttpResponse.json({ data: updated });
   }),
 
-  // The audience a broadcast would reach (Task 81's reach panel; Task 82's
+  // The audience a broadcast would reach (an earlier iteration's reach panel; an earlier iteration's
   // dialog reuses it). Per-advisory, so an unsaved draft cannot be estimated.
   http.post('*/api/v1/admin/advisories/:id/estimate', ({ params }) => {
     const id = String(params.id);
@@ -436,7 +436,7 @@ export const adminAdvisoriesHandlers = [
     return HttpResponse.json({ data: broadcastEstimate });
   }),
 
-  // ——— Task 82: the irreversible dispatch ———
+  // ——— an earlier iteration: the irreversible dispatch ———
   http.post('*/api/v1/admin/advisories/:id/broadcast', async ({ params, request }) =>
     dispatch(String(params.id), 'initial', await request.json()),
   ),

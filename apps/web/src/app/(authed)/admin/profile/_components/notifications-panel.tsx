@@ -15,7 +15,7 @@ import { CHANNEL_FIELDS, NotificationMatrix, type ChannelKey } from './notificat
 import { QuietHours } from './quiet-hours';
 
 /**
- * Notification Preferences panel (Task 83d) — overwrites the Task 83c stub.
+ * Notification Preferences panel — overwrites the an earlier iteration stub.
  *
  * The matrix and the quiet-hours window are LOCAL form state seeded from
  * `GET /account/notifications`, so `Reset to Defaults` and any tick are edits

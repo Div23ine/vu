@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Browser WebAuthn helpers (Task 60).
+ * Browser WebAuthn helpers .
  *
  * The API speaks the JSON (base64url) encoding of the WebAuthn types; the
  * browser speaks ArrayBuffers. These helpers bridge the two for

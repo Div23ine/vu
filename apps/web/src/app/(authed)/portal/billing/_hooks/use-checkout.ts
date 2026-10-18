@@ -10,7 +10,7 @@ import type {
 import { apiGet, apiPost } from '../../../../../lib/api';
 
 /**
- * Checkout hooks (Task 66b) — the locked FX quote, the USD checkout and the
+ * Checkout hooks — the locked FX quote, the USD checkout and the
  * post-payment confirmation poll.
  *
  * `usePaymentAttempt` never trusts the synchronous checkout result for ledger
@@ -30,7 +30,7 @@ export type PaymentAttemptState = 'idle' | 'polling' | 'paid' | 'timed_out';
 export function useFxQuote() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/billing/fx-quotes body { invoiceId; displayCurrency }
-    //   → 201 { data: FxQuote } | 409 already_paid | 422 unsupported_currency | 502 fx_unavailable
+    //  → 201 { data: FxQuote } | 409 already_paid | 422 unsupported_currency | 502 fx_unavailable
     mutationFn: (body: FxQuoteRequest) =>
       apiPost<{ data: FxQuote }>('/api/v1/billing/fx-quotes', body).then(
         (response) => response.data,
@@ -41,8 +41,8 @@ export function useFxQuote() {
 export function useCheckout() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/billing/checkout body CheckoutBody
-    //   → 201|200 { data: { paymentAttemptId; status; usdCents; settlementCurrency: "USD"; clientSecret?; redirectUrl? } }
-    //   | 409 { error: "quote_expired"|"amount_changed"|"already_paid" } | 422 channel_unavailable
+    //  → 201|200 { data: { paymentAttemptId; status; usdCents; settlementCurrency: "USD"; clientSecret?; redirectUrl? } }
+    //  | 409 { error: "quote_expired"|"amount_changed"|"already_paid" } | 422 channel_unavailable
     mutationFn: (body: CheckoutBody) =>
       apiPost<CheckoutResponse>('/api/v1/billing/checkout', body).then((response) => response.data),
   });

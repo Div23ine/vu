@@ -4,12 +4,12 @@ import { queryKeys } from '@vunvault/lib';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../../../../../lib/api';
 
 /**
- * User-management hooks (Task 79) — the staff roster API (Task 30): the
+ * User-management hooks — the staff roster API : the
  * summary tiles, the filtered roster and the five row writes (suspend,
  * reactivate, enforce-MFA, role change, delete). Every write refreshes the
  * roster AND the summary (`queryKeys.users.all()` covers list, summary and
  * invitations). The summary key extends the canonical `users` namespace —
- * packages/lib is out of this task's reach (the Task 67 precedent).
+ * packages/lib is out of this task's reach (the an earlier iteration precedent).
  *
  * No `'use client'` directive (the `use-login.ts` pattern).
  */
@@ -50,7 +50,7 @@ export function useStaffSummary() {
 export function useStaffRoster(filters: RosterFilters) {
   return useQuery({
     // TODO(backend-contract): GET /api/v1/admin/users?q=&role=&status=&mfa=&page=&pageSize=
-    //   → 200 { data: StaffMember[]; total }
+    //  → 200 { data: StaffMember[]; total }
     queryKey: queryKeys.users.list(filters),
     queryFn: () =>
       apiGet<{ data: StaffMember[]; total: number }>(`/api/v1/admin/users?${searchOf(filters)}`),
@@ -81,7 +81,7 @@ function useUserWrite<TBody extends object | void>(
 
 export function useSuspendMember() {
   // TODO(backend-contract): POST /api/v1/admin/users/:id/suspend body { reason? }
-  //   → 200 { data: StaffMember } | 409 self_action | last_super_admin | invalid_state
+  //  → 200 { data: StaffMember } | 409 self_action | last_super_admin | invalid_state
   return useUserWrite<{ reason?: string }>('post', (id) => `/api/v1/admin/users/${id}/suspend`);
 }
 

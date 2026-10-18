@@ -5,11 +5,11 @@ import { PLANS, PLANS_FOOTNOTE } from './pricing-data';
 import '../_styles/academy-pricing.css';
 
 /**
- * Plans & Pricing section (Task 51) — data-driven from `pricing-data.ts` and
- * reused verbatim by the Services page (Task 54b). Server component: nothing
+ * Plans & Pricing section — data-driven from `pricing-data.ts` and
+ * reused verbatim by the Services page . Server component: nothing
  * here is interactive beyond the links.
  *
- * The `#services-plans` span is the prototype's offset anchor (paired with
+ * The `#services-plans` span is the design's offset anchor (paired with
  * `.anchor-offset` in the stylesheet); the section itself carries `id="pricing"`
  * which is what the footer's `Pricing & Plans` link targets.
  *

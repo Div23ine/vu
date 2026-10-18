@@ -1,9 +1,9 @@
 'use client';
 
 /* An uploaded avatar is a remote, user-owned image: `next/image` would need a
-   per-tenant domain allowlist and would re-encode a file the platform has
-   already scanned and stored. SVGs in particular MUST go through <img> so they
-   cannot script in this origin. */
+  per-tenant domain allowlist and would re-encode a file the platform has
+  already scanned and stored. SVGs in particular MUST go through <img> so they
+  cannot script in this origin. */
 /* eslint-disable @next/next/no-img-element */
 import { useRef, useState } from 'react';
 import { ImageIcon, Trash2, UploadCloud, UserRound } from 'lucide-react';
@@ -20,7 +20,7 @@ import {
 } from '../_hooks/use-account-settings';
 
 /**
- * Profile Picture panel (Task 83c) — the three-step avatar upload.
+ * Profile Picture panel — the three-step avatar upload.
  *
  * The client checks FIRST, before any request leaves the browser: the type must
  * be one of the four the contract's `AvatarUploadRequest` accepts and the size

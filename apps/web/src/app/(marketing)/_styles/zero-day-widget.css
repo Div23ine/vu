@@ -1,8 +1,8 @@
 /**
- * Zero-Day widget stylesheet (Task 50).
+ * Zero-Day widget stylesheet .
  *
  * The `.glass-card` rules and the reduced-motion block come from the
- * prototype verbatim (the `#services-plans` / `#contact` scoped rules belong
+ * design verbatim (the `#services-plans` / `#contact` scoped rules belong
  * to later sections but ship in the same reference block — they stay inert
  * until those sections exist). Tokenised values use `var(--token)`
  * (`--ease`, `--ease-out`, `--brand-line`); one-off literals without tokens
@@ -10,9 +10,9 @@
  *
  * AUTHORED, marked below: `.zdet-flash` (the 1.2 s row highlight when a feed
  * entry rotates to the top) and `.zdet-sweep` (the Patch Coverage shimmer).
- * The prototype references both class names but embeds no block for them;
+ * The design references both class names but embeds no block for them;
  * both collapse to nothing under reduced motion — and the rotation itself is
- * JS-driven, so it keeps working with motion disabled (per the catalogue).
+ * JS-driven, so it keeps working with motion disabled (per the spec).
  */
 
 .glass-card {

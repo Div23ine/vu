@@ -1,18 +1,18 @@
 import { countWords, readMinutes } from '@vunvault/contracts';
 
 /**
- * Studio markdown helpers (Task 72).
+ * Studio markdown helpers .
  *
  * The body editor is a plain `<textarea>` over `bodyMd` (a contentEditable
  * surface is NOT allowed — XSS/IME risk), so two conversions matter:
  *
  * - `htmlToMarkdown` — for PASTE events: rich clipboard HTML is reduced to
- *   the small markdown dialect `SafeMarkdown` renders (`##`/`###`, `-` lists,
- *   `>` quotes, `**bold**`, `*italic*`, `` `code` ``, http(s) links). Script
- *   and style contents are dropped, every other tag unwraps to its text, and
- *   non-http(s) hrefs lose their target — nothing executable survives.
+ * the small markdown dialect `SafeMarkdown` renders (`##`/`###`, `-` lists,
+ * `>` quotes, `**bold**`, `*italic*`, `` `code` ``, http(s) links). Script
+ * and style contents are dropped, every other tag unwraps to its text, and
+ * non-http(s) hrefs lose their target — nothing executable survives.
  * - `markdownToBlocks` — the block outline used by the subheading list (and
- *   the round-trip unit test).
+ * the round-trip unit test).
  *
  * `countWords` / `readMinutes` are the contract's own counters, re-exported
  * so the editor imports one module.

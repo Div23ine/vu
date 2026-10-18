@@ -5,12 +5,12 @@ import type { UseFormReturn } from 'react-hook-form';
 import type { OnboardingFormValues } from './onboarding-wizard';
 
 /**
- * Step 1 — Personal & contact (Task 64). Fields register straight into the
+ * Step 1 — Personal & contact . Fields register straight into the
  * ONE wizard form (`step1.*` paths of `OnboardingFormValues`); validation
- * messages come from the contract schema (the planner's verbatim DOB and
+ * messages come from the contract schema (the spec's verbatim DOB and
  * email-match messages live there). Placeholder and helper text are verbatim
  * from the markup; the phone field is optional per the contract even though
- * the prototype marks every label with its asterisk.
+ * the design marks every label with its asterisk.
  */
 
 export interface StepPanelProps {

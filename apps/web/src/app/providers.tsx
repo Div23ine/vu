@@ -8,16 +8,16 @@ import { API_MOCKING_ENABLED, env } from '../env';
 import { ensureCsrf } from '../lib/csrf';
 
 /**
- * The client runtime every route renders through (Task 42).
+ * The client runtime every route renders through .
  *
  * Order of the tree, outermost first:
- *  - `MockGate` (dev mock mode only) — holds rendering until MSW intercepts.
- *  - `QueryClientProvider` — ONE `QueryClient` per browser tab, created in a
- *    state initialiser so re-renders never rebuild the cache (and SSR never
- *    shares one across requests).
- *  - `TooltipProvider` — mounted once, above the app, per the design system.
- *  - `children`, then `<Toaster />` — the toast viewport is app-level chrome,
- *    mounted exactly once at the root.
+ * - `MockGate` (dev mock mode only) — holds rendering until MSW intercepts.
+ * - `QueryClientProvider` — ONE `QueryClient` per browser tab, created in a
+ * state initialiser so re-renders never rebuild the cache (and SSR never
+ * shares one across requests).
+ * - `TooltipProvider` — mounted once, above the app, per the design system.
+ * - `children`, then `<Toaster />` — the toast viewport is app-level chrome,
+ * mounted exactly once at the root.
  *
  * On mount it also performs the CSRF bootstrap (`ensureCsrf`) so the readable
  * `vv_csrf` cookie exists before the first mutation of the page load.

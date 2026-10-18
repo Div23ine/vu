@@ -6,9 +6,9 @@ import { queryKeys } from '@vunvault/lib';
 import { env } from '../../../../../env';
 
 /**
- * The browser half of the live audit tail (Task 93).
+ * The browser half of the live audit tail .
  *
- * The server side shipped in Task 39: `GET /api/v1/admin/audit/stream` sends
+ * The server side shipped in an earlier iteration: `GET /api/v1/admin/audit/stream` sends
  * `retry: 5000`, an initial `chain` frame, a `Last-Event-ID` replay of up to
  * 200 missed entries and then the live `entry` stream with a 20 s heartbeat.
  * This hook owns exactly one `EventSource`, parses every frame with the
@@ -18,16 +18,16 @@ import { env } from '../../../../../env';
  *
  * Three rules shape it.
  *
- *  1. Reconnection is the BROWSER's job. Every frame carries `id: <seq>`, so a
- *     native `EventSource` reconnect replays what was missed server-side. This
- *     hook therefore never builds its own retry loop — it only reports state.
- *  2. Cookies are the credential (`withCredentials: true`). No token ever
- *     travels in a header or a query string (the lib/api.ts rule).
- *  3. `offline` is an honest fallback, not an error: when `EventSource` does
- *     not exist (SSR, jsdom) or the browser gave up (a closed socket after a
- *     fatal response — a revoked session, for instance), the page falls back
- *     to the Task 83b poll. A security console that silently stops is worse
- *     than one that says POLLING.
+ * 1. Reconnection is the BROWSER's job. Every frame carries `id: <seq>`, so a
+ *  native `EventSource` reconnect replays what was missed server-side. This
+ *  hook therefore never builds its own retry loop — it only reports state.
+ * 2. Cookies are the credential (`withCredentials: true`). No token ever
+ *  travels in a header or a query string (the lib/api.ts rule).
+ * 3. `offline` is an honest fallback, not an error: when `EventSource` does
+ *  not exist (SSR, jsdom) or the browser gave up (a closed socket after a
+ *  fatal response — a revoked session, for instance), the page falls back
+ *  to the an earlier iteration poll. A security console that silently stops is worse
+ *  than one that says POLLING.
  *
  * No `'use client'` directive (the `use-audit.ts` pattern).
  */

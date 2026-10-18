@@ -26,7 +26,7 @@ import { SEVERITY_LABELS } from '../_lib/cvss';
 import { ACK_KEYS, AckChecklist, EMPTY_ACK, type BroadcastAckKey } from './ack-checklist';
 
 /**
- * Emergency Broadcast dialog (Task 82) — the irreversible door.
+ * Emergency Broadcast dialog — the irreversible door.
  *
  * The gate is the contract's own rule: the confirm button stays disabled until
  * `EmergencyBroadcastBody` parses, which means all five acknowledgements AND a

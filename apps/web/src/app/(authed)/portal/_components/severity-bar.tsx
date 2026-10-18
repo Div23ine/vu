@@ -3,7 +3,7 @@
 import '../_styles/scans.css';
 
 /**
- * Compact severity bar (Task 69) — the Findings-column widget: a proportional
+ * Compact severity bar — the Findings-column widget: a proportional
  * four-segment bar (critical → low, token colours) plus the non-zero counts.
  * Zero findings render the muted `No findings` line.
  */

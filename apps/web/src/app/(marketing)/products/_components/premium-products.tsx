@@ -13,14 +13,14 @@ import { ProductCard } from './product-card';
 import '../_styles/products.css';
 
 /**
- * Premium products catalogue (Task 55) — API-driven, six licensed tools.
+ * Premium products catalog — API-driven, six licensed tools.
  *
- * Buy Now replaces the prototype's `payment.html?product=…` anchor:
- *  - anonymous (or session still resolving): a link to `/login?next=/products`;
- *  - authenticated client: `POST /api/v1/products/:id/purchase`, then
- *    `/portal/billing?invoice=<invoiceId>` where Task 66's FX quote + USD
- *    checkout pays it;
- *  - staff: the catalogue's warn toast — licences belong to client accounts.
+ * Buy Now replaces the design's `payment.html?product=…` anchor:
+ * - anonymous (or session still resolving): a link to `/login?next=/products`;
+ * - authenticated client: `POST /api/v1/products/:id/purchase`, then
+ * `/portal/billing?invoice=<invoiceId>` where an earlier iteration's FX quote + USD
+ * checkout pays it;
+ * - staff: the spec's warn toast — licences belong to client accounts.
  *
  * Prices are USD only (`formatUsdWhole`); the header chip shows the API's
  * `total`.

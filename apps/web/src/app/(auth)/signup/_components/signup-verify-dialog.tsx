@@ -22,27 +22,27 @@ import { StepTracker, type VerifyStep } from './step-tracker';
 import '../../_styles/signup.css';
 
 /**
- * Signup verification dialog (Task 62) — mounted by `/signup`, driven by the
- * store Task 61's details form fills on the 202.
+ * Signup verification dialog — mounted by `/signup`, driven by the
+ * store an earlier iteration's details form fills on the 202.
  *
  * Three forward-only steps (`Email → 2FA → Done`):
- *  1. the mailbox OTP (`POST /auth/signup/verify-email`); success opens the
- *     aal1 session via HttpOnly cookies and seeds the session cache;
- *  2. mandatory authenticator enrolment (planner decision, as in the
- *     prototype): `POST /account/mfa/totp/enroll` on entry, the QR rendered
- *     through an `<img>` data-URI (NEVER `dangerouslySetInnerHTML`), the
- *     secret grouped in 4s with a Copy button, then `…/totp/verify`;
- *  3. success: the verbatim toast, a 2.5 s redirect bar (instant under
- *     `prefers-reduced-motion`) and `Go now` — both land on `/onboarding`.
+ * 1. the mailbox OTP (`POST /auth/signup/verify-email`); success opens the
+ *  aal1 session via HttpOnly cookies and seeds the session cache;
+ * 2. mandatory authenticator enrolment (spec decision, as in the
+ *  design): `POST /account/mfa/totp/enroll` on entry, the QR rendered
+ *  through an `<img>` data-URI (NEVER `dangerouslySetInnerHTML`), the
+ *  secret grouped in 4s with a Copy button, then `…/totp/verify`;
+ * 3. success: the verbatim toast, a 2.5 s redirect bar (instant under
+ *  `prefers-reduced-motion`) and `Go now` — both land on `/onboarding`.
  *
- * Dialog semantics per the catalogue: `role="dialog"`, `aria-modal`,
+ * Dialog semantics per the spec: `role="dialog"`, `aria-modal`,
  * `aria-labelledby="verifyTitle"`, a Tab focus trap, and Escape closes ONLY on
  * step 1 (the X button follows the same rule; steps 2–3 are mandatory — the
- * prototype's `Back` closes the dialog from either of the first two steps, so
+ * design's `Back` closes the dialog from either of the first two steps, so
  * an abandoned aal1 session simply stays unenrolled until the next sign-in).
  *
- * The prototype's "Test mode" hint panels and its fake in-page OTP/secret
- * generators are REMOVED — out of scope per the catalogue.
+ * The design's "Test mode" hint panels and its fake in-page OTP/secret
+ * generators are REMOVED — out of scope per the spec.
  *
  * 401 suppression: `apiFetch` fires the global session-expiry redirect on any
  * 401, but on this flow a 401 is the *expected* wrong-code signal
@@ -55,7 +55,7 @@ import '../../_styles/signup.css';
 
 const RESEND_SECONDS = 30; // `resendAfterSeconds` — a literal in SignupStartResponse
 const REDIRECT_DELAY_MS = 2500; // the spec's 2.5 s progress bar
-const FOCUS_DELAY_MS = 180; // the prototype's focus delay (Task 60 precedent)
+const FOCUS_DELAY_MS = 180; // the design's focus delay (an earlier iteration precedent)
 
 const OTP_INVALID = 'That code is incorrect. Please try again.';
 const OTP_EXHAUSTED = 'Too many incorrect attempts. Request a new code.';
@@ -72,7 +72,7 @@ const RATE_LIMITED = {
 
 const EMPTY_DIGITS = (): string[] => Array<string>(OTP_LENGTH).fill('');
 
-/** `Jane Wanjiru` → `Jane`; the prototype's placeholder covers the empty case. */
+/** `Jane Wanjiru` → `Jane`; the design's placeholder covers the empty case. */
 export function firstNameOf(fullName: string): string {
   const first = fullName.trim().split(/\s+/)[0];
   return first === undefined || first === '' ? 'friend' : first;

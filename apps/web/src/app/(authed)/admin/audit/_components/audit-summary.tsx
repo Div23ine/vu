@@ -6,15 +6,15 @@ import { AdmKpi } from '../../_components/admin-page-head';
 import { useAuditSummary } from '../_hooks/use-audit';
 
 /**
- * Audit-trail summary tiles (Task 83b) — the six `adm-kpi` tiles that open the
- * console, every value driven by `GET /admin/audit/summary` (the Task 76 rule:
- * no prototype number appears in code). A 403 hides the strip; any other
+ * Audit-trail summary tiles — the six `adm-kpi` tiles that open the
+ * console, every value driven by `GET /admin/audit/summary` (the an earlier iteration rule:
+ * no design number appears in code). A 403 hides the strip; any other
  * failure degrades to `Metrics unavailable` + Retry.
  *
  * Two delta lines carry figures `AuditSummary` does not supply (there is no
  * day-on-day event delta and no hourly scan-completion delta). Those are the
  * reference's own copy, reproduced verbatim and flagged with a
- * `TODO(backend-contract)` — the resolution Tasks 81 and 83 use.
+ * `TODO(backend-contract)` — the resolution earlier iterations use.
  */
 
 const countFormatter = new Intl.NumberFormat('en-US');
@@ -24,7 +24,7 @@ function formatCount(value: number): string {
 }
 
 // TODO(backend-contract): add eventsDeltaPct and scanCompletionsLastHour to
-//   AuditSummary and derive these two lines.
+//  AuditSummary and derive these two lines.
 const EVENTS_DELTA = '▲ 6.4% vs. yesterday';
 const SCAN_DELTA = '▲ 12 in the last hour';
 

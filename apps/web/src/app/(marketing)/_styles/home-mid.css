@@ -1,21 +1,21 @@
 /**
- * Home mid-page stylesheet (Task 49) — insights grid, article cards and the
+ * Home mid-page stylesheet — insights grid, article cards and the
  * organisation-segment cards.
  *
  * The `.vv-news-grid`, `.vv-seg-*` and the reduced-motion block come from the
- * prototype verbatim, with every tokenised value replaced by `var(--token)`
+ * design verbatim, with every tokenised value replaced by `var(--token)`
  * (`--r-lg` for the 18px card radius, `--grad-brand`, `--white`, `--r-full`,
  * `--sh-card`, …). One-off literals without tokens (the tag/arrow chip greys
  * `#f5f7fa` / `#f1f3f7`, the glass card white `rgba(255,255,255,0.76)`, the
  * hover shadow tints) stay inside this file only — never in TSX.
  *
  * AUTHORED, marked below: the `.vv-article-*` card chrome and the
- * `is-news-entering` re-entry animation. The catalogue's card markup names
+ * `is-news-entering` re-entry animation. The spec's card markup names
  * those classes and points at "the CSS blocks above" for their styles, but no
  * `.vv-article-*` block is embedded anywhere in Part 3 — so the rules are
  * implemented here from the markup's structure, in the design system's card
- * language (paper card, brand hover lift, ink hierarchy). If Task 56's blog
- * embeds the prototype's own card CSS, these rules are the ones to reconcile
+ * language (paper card, brand hover lift, ink hierarchy). If an earlier iteration's blog
+ * embeds the design's own card CSS, these rules are the ones to reconcile
  * against.
  */
 
@@ -281,7 +281,7 @@
     min-width: 0;
   }
   /* Authored companion: the rotation itself is disabled in JS; this stops
-   * the re-entry animation for anything still carrying the class. */
+  * the re-entry animation for anything still carrying the class. */
   .is-news-entering {
     animation: none;
   }

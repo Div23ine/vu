@@ -15,7 +15,7 @@ import {
 import { SeverityChip } from './severity-chip';
 
 /**
- * Audit event detail dialog (Task 83b) — the read-only record behind one row.
+ * Audit event detail dialog — the read-only record behind one row.
  *
  * The header carries the category and severity chips, the chain `seq` and the
  * event type; the body carries the timestamp, actor, subject, IP, the full

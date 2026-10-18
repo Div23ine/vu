@@ -14,7 +14,7 @@ import {
 } from './_components/scan-terminal-dialog';
 
 /**
- * The staff scan terminal (Task 96).
+ * The staff scan terminal .
  *
  * The socket is the shared `FakeWebSocket`: the assertions are about the URL a
  * reconnect asks for, the exact bytes that ever leave the browser (every

@@ -2,12 +2,12 @@ import type { Permission, SessionUser } from '@vunvault/contracts';
 import { can } from '../../../../lib/permissions';
 
 /**
- * Command Center navigation data (Task 46).
+ * Command Center navigation data .
  *
  * Label · route · required permission: an entry is HIDDEN when the session
  * lacks its permission (Profile Settings has none — every staff role holds
  * `profile:read`). Drawer labels differ from the desktop labels and are both
- * verbatim from the prototype. The active entry is matched by pathname
+ * verbatim from the design. The active entry is matched by pathname
  * prefix, except `/admin`, which matches exactly.
  */
 
@@ -56,7 +56,7 @@ export const ADMIN_NAV_ITEMS: readonly AdminNavItem[] = [
     permission: 'audit:read',
   },
   {
-    // Task 83e: the public contact triage inbox. `support:handle` is the only
+    // an earlier iteration: the public contact triage inbox. `support:handle` is the only
     // permission that may read a message body, so the entry hides without it.
     label: 'Contact Inbox',
     drawerLabel: 'Contact Inbox',
@@ -71,7 +71,7 @@ export const ADMIN_NAV_ITEMS: readonly AdminNavItem[] = [
   },
 ];
 
-/** The entries this session may see, in prototype order. */
+/** The entries this session may see, in design order. */
 export function visibleAdminNavItems(user: SessionUser): AdminNavItem[] {
   return ADMIN_NAV_ITEMS.filter(
     (item) => item.permission === undefined || can(user, item.permission),

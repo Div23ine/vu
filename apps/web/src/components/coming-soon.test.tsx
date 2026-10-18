@@ -2,7 +2,6 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import MarketingAcademyPage from '../app/(marketing)/academy/page';
 import CookiePolicyPage from '../app/(marketing)/cookie-policy/page';
 import PrivacyPolicyPage from '../app/(marketing)/privacy/page';
 import TermsOfServicePage from '../app/(marketing)/terms/page';
@@ -11,7 +10,7 @@ import PortalScannerPage from '../app/(authed)/portal/scanner/page';
 import { ComingSoon } from './coming-soon';
 
 /**
- * Reserved-route placeholder tests (Task 74) — the spec's list: each route
+ * Reserved-route placeholder tests — the spec's list: each route
  * renders its title and CTA (and the legal stubs render the verbatim body
  * with NO CTA — nothing is invented).
  */
@@ -42,14 +41,13 @@ describe('ComingSoon', () => {
 });
 
 describe('reserved portal routes', () => {
-  it('/portal/academy renders its title and CTA', () => {
+  it('/portal/academy renders its title', () => {
     render(<PortalAcademyPage />);
     expect(screen.getByRole('heading', { name: 'Academy Progress' })).toBeInTheDocument();
     expect(screen.getByText('Academy')).toBeInTheDocument();
     expect(
       screen.getByText('Your learning tracks and certificates will appear here.'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Browse tracks' })).toHaveAttribute('href', '/academy');
   });
 
   it('/portal/scanner renders its title and the public-site anchor CTA', () => {
@@ -68,29 +66,17 @@ describe('reserved portal routes', () => {
   });
 });
 
-describe('reserved marketing routes', () => {
-  it('/academy renders its title and CTA', () => {
-    render(<MarketingAcademyPage />);
-    expect(screen.getByRole('heading', { name: 'VUNVAULT Academy' })).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Structured, hands-on cyber training with free certificates. Course pages are coming soon.',
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to home' })).toHaveAttribute('href', '/');
-  });
-
+describe('published legal routes', () => {
   it.each([
     ['/cookie-policy', CookiePolicyPage, 'Cookie Policy'],
     ['/privacy', PrivacyPolicyPage, 'Privacy Policy'],
     ['/terms', TermsOfServicePage, 'Terms of Service'],
-  ] as const)('%s renders the legal stub with no CTA', (_route, Page, title) => {
+  ] as const)('%s renders the published document, not a stub', (_route, Page, title) => {
     render(<Page />);
-    expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
-    expect(screen.getByText('Legal')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument();
+    expect(screen.getByText(/Last updated/)).toBeInTheDocument();
     expect(
-      screen.getByText('This document is being finalised. Contact info@vunvault.com for a copy.'),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+      screen.queryByText('This document is being finalised. Contact info@vunvault.com for a copy.'),
+    ).toBeNull();
   });
 });

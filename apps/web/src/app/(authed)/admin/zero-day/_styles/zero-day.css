@@ -1,10 +1,10 @@
 /**
- * Zero-Day Advisory Desk stylesheet (Task 81; the broadcast dialog rules are
- * Task 82).
+ * Zero-Day Advisory Desk stylesheet (an earlier iteration; the broadcast dialog rules are
+ * an earlier iteration).
  *
  * ONLY the rules specific to this page — the shared admin classes
  * (`adm-card`, `adm-kpi*`, `adm-table*`, `adm-badge*`, `adm-btn*`, `adm-tag*`,
- * `adm-page-head`, `adm-mini-btn`) live in `admin-shared.css` (Task 75,
+ * `adm-page-head`, `adm-mini-btn`) live in `admin-shared.css` (an earlier iteration,
  * imported through `AdminPageHead`). Token substitutions follow every other
  * feature sheet: `#ffffff` → `--white`, `#f8fafc`-free radii `18px`/`14px`/
  * `12px` → `--r-lg`/`--r-md`/`--r-field`, `9999px` → `--r-full`, `0.2s` →
@@ -978,20 +978,20 @@
 }
 
 /* ————————————————————————————————————————————————————————————————
-   TASK 82 — Emergency Broadcast dialog.
-   Reference CSS from the prototype, token-substituted as above:
-   `#ffffff` → `--white`, `18px`/`12px` radii → `--r-lg`/`--r-field`,
-   `9999px` → `--r-full`, `0.2s` → `--dur`, the mono stack → `--font-mono`,
-   `#070b11` → `--dark-deep`, `#93a2b5` → `--slate-muted`,
-   `#fff1f2`/`#fecdd3` → `--danger-bg`/`--danger-line`, `#ecfdf5` → `--ok-bg`,
-   `var(--ok)` for the valid-phrase border. Literals with NO token stay here
-   only: `#be123c`, `#fb7185`, `#f8fafc` and the rgba() stops the reference
-   family itself carries.
-   AUTHORED (marked inline): `.zd-modal-content` (the DialogContent override —
-   Radix owns the positioning the reference's `.zd-modal` wrapper did), the
-   acknowledgement checklist, the reach-tile modifier and the delivery
-   progress strip.
-   ———————————————————————————————————————————————————————————————— */
+  Emergency Broadcast dialog.
+  Reference CSS from the design, token-substituted as above:
+  `#ffffff` → `--white`, `18px`/`12px` radii → `--r-lg`/`--r-field`,
+  `9999px` → `--r-full`, `0.2s` → `--dur`, the mono stack → `--font-mono`,
+  `#070b11` → `--dark-deep`, `#93a2b5` → `--slate-muted`,
+  `#fff1f2`/`#fecdd3` → `--danger-bg`/`--danger-line`, `#ecfdf5` → `--ok-bg`,
+  `var(--ok)` for the valid-phrase border. Literals with NO token stay here
+  only: `#be123c`, `#fb7185`, `#f8fafc` and the rgba() stops the reference
+  family itself carries.
+  AUTHORED (marked inline): `.zd-modal-content` (the DialogContent override —
+  Radix owns the positioning the reference's `.zd-modal` wrapper did), the
+  acknowledgement checklist, the reach-tile modifier and the delivery
+  progress strip.
+  ———————————————————————————————————————————————————————————————— */
 
 .adm-btn-danger {
   color: var(--white);
@@ -1013,9 +1013,9 @@
 }
 
 /* AUTHORED — the DialogContent override: flush padding, the reference's
-   width/radius/shadow, and the danger-tinted border the prototype's
-   `.zd-modal-window` carries. Radix supplies the fixed positioning, so the
-   reference's `.zd-modal` / `.zd-modal-backdrop` wrappers are not reproduced. */
+  width/radius/shadow, and the danger-tinted border the design's
+  `.zd-modal-window` carries. Radix supplies the fixed positioning, so the
+  reference's `.zd-modal` / `.zd-modal-backdrop` wrappers are not reproduced. */
 .zd-modal-content {
   padding: 0;
   gap: 0;
@@ -1160,7 +1160,7 @@
   word-break: break-word;
 }
 /* AUTHORED — the reach tiles invert the label/value order and enlarge the
-   figure, per the reference's `312 ¦ Client Dashboards` text order. */
+  figure, per the reference's `312 ¦ Client Dashboards` text order. */
 .zd-modal-summary-item--reach {
   display: flex;
   flex-direction: column-reverse;
@@ -1173,8 +1173,8 @@
   color: var(--critical);
 }
 
-/* AUTHORED — the acknowledgement checklist, following the Task 78
-   `.sq-check*` family. */
+/* AUTHORED — the acknowledgement checklist, following the an earlier iteration
+  `.sq-check*` family. */
 .zd-acks {
   display: flex;
   flex-direction: column;
@@ -1293,7 +1293,7 @@
 }
 
 /* AUTHORED — the delivery progress strip (Publish Controls), shown while the
-   broadcast poll has not settled. */
+  broadcast poll has not settled. */
 .zd-progress {
   display: flex;
   align-items: center;
@@ -1315,9 +1315,9 @@
 .zd-progress svg {
   flex: 0 0 auto;
 }
-/* The strip's push-transport dot (Task 94): rendered only while the SSE relay
-   is feeding the counters. Colour-only states — the pulse is the one motion
-   and reduced motion disables it below. */
+/* The strip's push-transport dot : rendered only while the SSE relay
+  is feeding the counters. Colour-only states — the pulse is the one motion
+  and reduced motion disables it below. */
 .zd-live-dot {
   width: 6px;
   height: 6px;

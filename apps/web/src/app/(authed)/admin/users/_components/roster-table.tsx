@@ -9,7 +9,7 @@ import { RowActions } from './row-actions';
 import '../_styles/users.css';
 
 /**
- * Staff roster table (Task 79) — Member (initials avatar, name, email, the
+ * Staff roster table — Member (initials avatar, name, email, the
  * joined/suspended/invited meta line), Role, Scope & Team, the MFA/Access
  * chip (derived from `mfa`, `accountStatus` per the data section), Last
  * Active (`formatRelativeActive`) and the `ACCOUNT_STATUS_LABELS` badge.

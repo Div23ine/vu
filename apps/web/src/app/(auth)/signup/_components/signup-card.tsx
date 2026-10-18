@@ -16,24 +16,24 @@ import { PasswordStrength } from './password-strength';
 import '../../_styles/signup.css';
 
 /**
- * Signup card (Task 61) — the details form of the verified three-step flow.
+ * Signup card — the details form of the verified three-step flow.
  *
  * RHF + Zod (never `useState` for values). The form schema carries the
- * planner's verbatim validation messages; the password rule follows the API
+ * spec's verbatim validation messages; the password rule follows the API
  * policy (12+ chars, upper, lower, digit, symbol — `PASSWORD_RULE_TESTS` from
  * the contracts), and `Other` maps to the 2-letter `XX` the contract's
  * `country: string(2)` requires. On `202` the response's `{ email }` plus the
- * form's `fullName` are parked in the signup store, which opens Task 62's
+ * form's `fullName` are parked in the signup store, which opens an earlier iteration's
  * verification dialog; `409 email_taken` / `422 breached_password` become
- * field errors, `429` the planner's rate-limit toast. A failed client-side
+ * field errors, `429` the spec's rate-limit toast. A failed client-side
  * validation toasts `Check your details` and RHF focuses the first invalid
  * field (`shouldFocusError` default).
  *
- * The prototype's `role="dialog" aria-modal="true"` is intentionally NOT
- * reproduced (Task 59 planner note for this card family): as a full page the
- * card is `<main aria-labelledby>`. The real dialog is Task 62's.
+ * The design's `role="dialog" aria-modal="true"` is intentionally NOT
+ * reproduced (an earlier iteration spec note for this card family): as a full page the
+ * card is `<main aria-labelledby>`. The real dialog is an earlier iteration's.
  *
- * Planner decision: the radio group defaults to `Individual` — the spec pins
+ * Spec decision: the radio group defaults to `Individual` — the spec pins
  * no required-message for `accountType`, so the group always carries a value
  * (the contract enum has no empty member).
  */
@@ -130,7 +130,7 @@ export function SignupCard() {
           password: values.password,
           confirmPassword: values.confirmPassword,
         } satisfies SignupBody);
-        // 202: park the pending account and hand off to Task 62's dialog.
+        // 202: park the pending account and hand off to an earlier iteration's dialog.
         dialog.open({ email: data.email, fullName: values.fullName });
       } catch (submitError) {
         if (isApiError(submitError) && submitError.status === 409) {
@@ -168,7 +168,7 @@ export function SignupCard() {
         <div className="vv-signup-brand">
           <span className="vv-signup-brand-tile">
             {/* The operator's static brand SVG, same source as the login card
-                (Task 59) and the marketing header (Task 44). */}
+         and the marketing header . */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/logo.svg" alt="" />
           </span>

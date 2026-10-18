@@ -10,7 +10,7 @@ import { maskLicenseKey, useDownloadUrl, useEntitlements } from '../_hooks/use-e
 import '../_styles/licences.css';
 
 /**
- * Licences table (Task 73) — the purchased product licences: masked key with
+ * Licences table — the purchased product licences: masked key with
  * `Reveal` + `Copy`, the grant date, the update window with its
  * `Active`/`Expired` chip and the secure download (presigned URL from
  * `POST /entitlements/:id/download-url`, then `window.location.assign` — the

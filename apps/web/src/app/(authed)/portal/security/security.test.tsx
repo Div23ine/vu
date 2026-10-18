@@ -15,7 +15,7 @@ import { RecoveryKeysCard } from './_components/recovery-keys-card';
 import { TwoFactorCard } from './_components/two-factor-card';
 
 /**
- * Password Manager & Security tests (Task 67) — the spec's list: the rule
+ * Password Manager & Security tests — the spec's list: the rule
  * checklist + strength transitions, mismatch and same-as-current errors, the
  * 401/422 mapping, TOTP enrolment (`<img>` QR + verify), the last-factor
  * disable error, WebAuthn registration hitting BOTH endpoints (with a mocked

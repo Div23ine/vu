@@ -12,7 +12,7 @@ import {
 import '../_styles/scan-queue.css';
 
 /**
- * Filter & Search toolbar (Task 77) — the queue's search box and the four
+ * Filter & Search toolbar — the queue's search box and the four
  * contract-enum selects. The filter values live in the URL (the page owns
  * `useSearchParams`), so every view is linkable. Option labels come from the
  * contract maps; the `All …` placeholders are verbatim from the reference.

@@ -4,14 +4,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
- * The simulated reconnaissance engine (Task 48), ported from the prototype's
+ * The simulated reconnaissance engine , ported from the design's
  * scanner script to a typed hook. No DOM access, no `innerHTML`, no network
  * request is ever made and nothing is stored — React state drives the log and
- * the dialog renders it. Reused by the Services page's inline CLI (Task 54).
+ * the dialog renders it. Reused by the Services page's inline CLI .
  *
  * Cadence: one line every 260 ms; under `prefers-reduced-motion` the whole
  * log is appended instantly. Timestamps are `[HH:MM:SS]` UTC, exactly like
- * the prototype's `toISOString().substr(11, 8)`.
+ * the design's `toISOString().substr(11, 8)`.
  */
 
 export type ScanLineKind = 'sys' | 'muted' | 'info' | 'ok' | 'warn' | 'crit';
@@ -34,7 +34,7 @@ export interface UseScanSimulation {
   error: string | null;
 }
 
-/** Validation regex, exactly as the prototype's. */
+/** Validation regex, exactly as the design's. */
 export const TARGET_PATTERN = /^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$|^(?:\d{1,3}\.){3}\d{1,3}$/;
 
 export const INVALID_TARGET_LINE =
@@ -47,7 +47,7 @@ interface ScanStep {
   msg: string | ((target: string) => string);
 }
 
-/** The 19-step script, verbatim from the prototype. */
+/** The 19-step script, verbatim from the design. */
 const SCAN_STEPS: readonly ScanStep[] = [
   { kind: 'sys', msg: 'vunvault-scanner-cli v2.4.0 — initialising reconnaissance engine' },
   { kind: 'muted', msg: (target) => `> target: ${target}` },

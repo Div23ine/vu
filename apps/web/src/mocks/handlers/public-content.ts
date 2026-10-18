@@ -7,11 +7,11 @@ import {
 import { publicContent } from '@vunvault/contracts/fixtures/store';
 
 /**
- * Public content mock handlers (Task 49, extended by Task 56).
+ * Public content mock handlers (an earlier iteration, extended by an earlier iteration).
  *
  * Serves the fixture posts through the real query contract:
- *   GET /api/v1/content?q=&category=&sort=&page=&pageSize= → 200 { data, total }
- *   GET /api/v1/content/:slug → 200 { data: PublicContentDetail } | 404
+ * GET /api/v1/content?q=&category=&sort=&page=&pageSize= → 200 { data, total }
+ * GET /api/v1/content/:slug → 200 { data: PublicContentDetail } | 404
  *
  * `q` mirrors the API repo's semantics (case-insensitive substring over
  * title, excerpt and tags); `sort=newest` orders by `publishedAt` descending;
@@ -59,7 +59,7 @@ function synthesiseBody(item: PublicContentItemType): string {
     '### Field notes',
     '',
     `- Mock body for "${item.title}" — the fixtures carry no article text.`,
-    '- The real `body_md` is served by the API and stored sanitised (Task 36).',
+    '- The real `body_md` is served by the API and stored sanitised .',
     '- Rendered through `SafeMarkdown`: no raw HTML, no images, safe links only.',
     '',
     '> Advisories are published after vendor coordination completes.',

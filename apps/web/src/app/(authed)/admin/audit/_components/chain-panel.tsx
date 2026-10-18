@@ -6,7 +6,7 @@ import { cn, formatUtcClock } from '@vunvault/lib';
 import { Skeleton } from '@vunvault/ui';
 
 /**
- * Cryptographic Chain panel (Task 83b) — the integrity side of the console.
+ * Cryptographic Chain panel — the integrity side of the console.
  *
  * Every figure comes from `GET /admin/audit/chain`: the state tag, the total
  * entry count (which is also the chain height — the chain is append-only, so

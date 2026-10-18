@@ -4,14 +4,14 @@ import { ScansTable } from './_components/scans-table';
 import './_styles/scans.css';
 
 /**
- * `/portal` (Task 69) — the client's released scan reports: hero, the three
+ * `/portal` — the client's released scan reports: hero, the three
  * summary cards, the Request-PenTest hint card and the release-locked table.
- * The portal layout (Task 45) owns the chrome and the session guard.
+ * The portal layout owns the chrome and the session guard.
  */
 
 export const metadata: Metadata = {
   title: 'Your Security Reports',
-  // Authed portal page — never indexable (the Task 63 auth-page family rule).
+  // Authed portal page — never indexable (the an earlier iteration auth-page family rule).
   robots: { index: false },
 };
 

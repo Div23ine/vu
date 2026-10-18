@@ -35,24 +35,24 @@ import { StepProfile } from './step-profile';
 import { Stepper } from './stepper';
 
 /**
- * Onboarding wizard (Task 64; Task 65 wires step 3 and the submit) — ONE
+ * Onboarding wizard (an earlier iteration; an earlier iteration wires step 3 and the submit) — ONE
  * `useForm` for the whole three-step flow (`mode: "onTouched"`); each step
  * validates ONLY its own field paths with `trigger([...])` before `Next`
  * advances. RHF holds the values; the store holds the step.
  *
  * The form schema mirrors `OnboardingSubmitBody` from the contracts:
- *  - step 1 uses the contract's own messages verbatim (`MIN_AGE_MESSAGE`,
- *    `EMAIL_MATCH_MESSAGE`, the E.164 hint); the phone field additionally
- *    accepts `''` because an untouched optional input registers an empty
- *    string, which the raw regex would reject;
- *  - step 2 carries the planner's required copy (`Select what best describes
- *    you.` / `Select an account entity.`) over the enum fields;
- *  - step 3 (Task 65) keeps the contract's answer rule (min 3, default
- *    message) and adds the planner's declaration copy (`You must accept this
- *    declaration to continue.`); the question's required message reuses the
- *    select's own placeholder — the planner pinned no separate copy.
+ * - step 1 uses the contract's own messages verbatim (`MIN_AGE_MESSAGE`,
+ * `EMAIL_MATCH_MESSAGE`, the E.164 hint); the phone field additionally
+ * accepts `''` because an untouched optional input registers an empty
+ * string, which the raw regex would reject;
+ * - step 2 carries the spec's required copy (`Select what best describes
+ * you.` / `Select an account entity.`) over the enum fields;
+ * - step 3 keeps the contract's answer rule (min 3, default
+ * message) and adds the spec's declaration copy (`You must accept this
+ * declaration to continue.`); the question's required message reuses the
+ * select's own placeholder — the spec pinned no separate copy.
  *
- * Submit (Task 65): `POST /api/v1/onboarding` with the whole body — `201`
+ * Submit : `POST /api/v1/onboarding` with the whole body — `201`
  * clears the recovery answer (privacy: sent once, never kept), toasts
  * `Profile complete`, invalidates `queryKeys.profile()` + `queryKeys.session()`
  * and shows the reference success view while the redirect bar runs (2.2 s,
@@ -145,7 +145,7 @@ const STEP1_FIELDS = [
 ] as const;
 const STEP2_FIELDS = ['step2.career', 'step2.entity'] as const;
 
-/** `Jane Wanjiru Kamau` → `Jane`; the prototype's placeholder covers the rest. */
+/** `Jane Wanjiru Kamau` → `Jane`; the design's placeholder covers the rest. */
 function firstNameFrom(fullName: string): string {
   const first = fullName.trim().split(/\s+/)[0];
   return first === undefined || first === '' ? 'friend' : first;
@@ -180,7 +180,7 @@ export function OnboardingWizard() {
 
   // TODO(backend-contract): GET /api/v1/onboarding → 200 { data: { completed; completedAt } }
   const status = useQuery({
-    // Authored key (the lib's factory has no onboarding entry and Task 64 may
+    // Authored key (the lib's factory has no onboarding entry and an earlier iteration may
     // not modify it): scoped under its own root so it stays invalidatable.
     queryKey: ['onboarding', 'status'],
     queryFn: () =>

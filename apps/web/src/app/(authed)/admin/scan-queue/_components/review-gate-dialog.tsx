@@ -22,7 +22,7 @@ import { GateBadge } from './gate-badge';
 import '../_styles/scan-queue.css';
 
 /**
- * Review-gate dialog (Task 78) — the release lock's ONLY door: the five
+ * Review-gate dialog — the release lock's ONLY door: the five
  * contract checks, the three decision cards, the required reviewer note
  * (min 10 characters), the payment-lock panel and the live status line, on
  * `POST /admin/scans/:id/gate-decision`. A `409 payment_outstanding` shows
@@ -175,7 +175,7 @@ export function ReviewGateDialog({ job, open, onOpenChange }: ReviewGateDialogPr
           <div>
             <div className="sq-modal-section-title">Findings Summary</div>
             {/* TODO(backend-contract): no admin findings-count endpoint exists
-                yet — the tiles stay em-dashed rather than inventing zeros. */}
+        yet — the tiles stay em-dashed rather than inventing zeros. */}
             <div className="sq-findings">
               <div className="sq-finding sq-finding--crit">
                 <span className="sq-finding-count">—</span>

@@ -14,7 +14,7 @@ import { ZdSummary } from './_components/zd-summary';
 import './_styles/zero-day.css';
 
 /**
- * `/admin/zero-day` (Task 81) — the Zero-Day Advisory Desk: the summary tiles,
+ * `/admin/zero-day` — the Zero-Day Advisory Desk: the summary tiles,
  * the advisory editor (identifiers, severity + exploitation flags, headline,
  * affected scope, summary/remediation/references), the Publish Controls panel,
  * the open drafts, the live client-view preview and the recently published
@@ -73,7 +73,7 @@ export default function AdminZeroDayPage() {
               <span>Import From NVD</span>
             </button>
             {/* No broadcast-history endpoint exists yet; the button is the
-                prototype's seam (the Task 79 `um-export-roster` precedent). */}
+        design's seam (the an earlier iteration `um-export-roster` precedent). */}
             <button type="button" className="adm-btn adm-btn-ghost" id="zd-view-history">
               <History size={15} aria-hidden="true" />
               <span>Broadcast History</span>

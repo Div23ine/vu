@@ -5,16 +5,16 @@ import { PLANS, type Plan } from '../../_components/pricing-data';
 import '../_styles/services.css';
 
 /**
- * Services pricing (Task 54b) — replaces the Task 54 stub.
+ * Services pricing — replaces the an earlier iteration stub.
  *
- * CATALOGUE CONFLICT, resolved per its Behaviour + Tests sections (documented
- * in the run report): the embedded prototype markup shows a four-tier table
+ * CATALOG CONFLICT, resolved per its Behaviour + Tests sections (documented
+ * in the run report): the embedded design markup shows a four-tier table
  * ($249 / $299 / $1,499 / Custom) whose copy cross-references prices that
  * contradict the shared constants ("Everything in Starter ($249), plus …"),
  * while the Behaviour mandates "prices come from the shared constants of
- * Task 51 (`pricing-data.ts`, `formatUsdWhole`)" and the Tests pin "three
+ * an earlier iteration (`pricing-data.ts`, `formatUsdWhole`)" and the Tests pin "three
  * plans show $299, $899, $2,499". One canonical price set wins: this section
- * renders Task 51's three PLANS in the services styling (the reference
+ * renders an earlier iteration's three PLANS in the services styling (the reference
  * `.vv-plan*`/`.vv-price-grid` CSS ships in this task for exactly that), with
  * the services header, the shared footnote and CTAs carrying the
  * penetration-testing category query.

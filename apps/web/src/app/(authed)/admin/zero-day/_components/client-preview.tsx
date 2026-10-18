@@ -5,20 +5,20 @@ import { SCOPE_CATEGORY_LABELS } from '@vunvault/contracts';
 import { cn, formatLongDate } from '@vunvault/lib';
 
 /**
- * Client-dashboard preview (Task 81) — a live rendering of how the advisory
+ * Client-dashboard preview — a live rendering of how the advisory
  * in the editor will appear to clients, so an analyst never broadcasts copy
  * they have not read as a client would.
  *
- * The projection mirrors Task 70's `ClientAdvisory` card exactly: the same
+ * The projection mirrors an earlier iteration's `ClientAdvisory` card exactly: the same
  * uppercase severity labels, the same `label · category` scope format and the
  * same fixed `Source: VUNVAULT Intelligence` line (`ClientAdvisory.source` is
  * a `z.literal`, so it is product copy, not data). Empty fields fall back to
- * the prototype's own placeholders — `CVE-XXXX-XXXXX`, `No severity`,
+ * the design's own placeholders — `CVE-XXXX-XXXXX`, `No severity`,
  * `Advisory title will appear here`, `No scope entries`, `Not dated` — and the
  * title keeps its `is-placeholder` styling until something is typed.
  */
 
-/** Task 70's card labels — uppercase, unlike the desk's own title-case pills. */
+/** an earlier iteration's card labels — uppercase, unlike the desk's own title-case pills. */
 const CLIENT_SEVERITY_LABELS: Record<FindingSeverity, string> = {
   critical: 'CRITICAL',
   high: 'HIGH',

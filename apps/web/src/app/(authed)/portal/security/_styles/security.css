@@ -1,15 +1,15 @@
 /**
- * Password Manager & Security stylesheet (Task 67) — `/portal/security`.
- * Reproduced from the prototype's CSS with every existing token as
+ * Password Manager & Security stylesheet — `/portal/security`.
+ * Reproduced from the design's CSS with every existing token as
  * `var(--token)` (`--white`, `--ink*`, `--line*`, `--brand*`, `--critical`,
  * `--danger-*`, `--ok*`, `--r-*`, `--dur`, `--ease`, `--font-mono`).
  *
- * The strength meter itself is Task 61's shared `PasswordStrength`
+ * The strength meter itself is an earlier iteration's shared `PasswordStrength`
  * (`vv-strength*`, styled by signup.css which that component imports); the
  * rule checklist, 2FA panels, recovery-keys panel and the print sheet are
- * AUTHORED here (marked inline) on the same design language. The planner
- * truncated the dialog tail — the regenerate dialog rides the Task 11
- * `Dialog` primitive (like Task 66b) wearing `vpm-modal-*` classes.
+ * AUTHORED here (marked inline) on the same design language. The spec
+ * truncated the dialog tail — the regenerate dialog rides the an earlier iteration
+ * `Dialog` primitive (like an earlier iteration) wearing `vpm-modal-*` classes.
  *
  * Colours with no token stay literals in THIS file only (`#04121f`,
  * `#be123c`, the rgba() glow stops the reference itself carries).
@@ -652,7 +652,7 @@
   margin-top: 14px;
 }
 
-/* ——— Regenerate dialog (reference, over the Task 11 Dialog primitive) ——— */
+/* ——— Regenerate dialog (reference, over the an earlier iteration Dialog primitive) ——— */
 .vpm-modal-card {
   padding: 30px 32px 32px;
   border-radius: var(--r-2xl);

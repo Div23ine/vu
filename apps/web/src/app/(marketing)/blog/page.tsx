@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from 'react';
 import { CveTicker } from '../_components/cve-ticker';
-import { ScannerCta } from '../_components/scanner/scanner-cta';
 import { BlogHero } from './_components/blog-hero';
 import { FeaturedReport } from './_components/featured-report';
 import { NewsList } from './_components/news-list';
@@ -11,17 +10,17 @@ import { DEFAULT_BLOG_FILTERS, useBlogList, type BlogFilters } from './_hooks/us
 import type { CategoryPillValue } from './_components/category-pills';
 
 /**
- * `/blog` (Task 56) — the public news list.
+ * `/blog` — the public news list.
  *
  * Client component: it owns the filter state (`q`, `category`, `sort`) the
- * hero, pills and list share. Section order per the catalogue: the Task 47
+ * hero, pills and list share. Section order per the spec: the an earlier iteration
  * CVE ticker above the hero, then featured report → grid → newsletter, with
- * the Task 48 scanner CTA at the bottom. The list query runs through the
+ * The list query runs through the
  * same hook (and therefore the same cache key) in this page — for the
  * counter — and in `NewsList`; TanStack Query dedupes it into one request.
  *
  * The marketing layout supplies header/footer (the `company` footer variant
- * is pathname-derived for `/blog` — Task 44).
+ * is pathname-derived for `/blog` — an earlier iteration).
  */
 
 export default function BlogPage() {
@@ -62,7 +61,6 @@ export default function BlogPage() {
       <FeaturedReport />
       <NewsList filters={filters} page={page} onClearFilters={handleClearFilters} />
       <NewsletterForm />
-      <ScannerCta />
     </>
   );
 }

@@ -1,7 +1,7 @@
 /**
- * The staff scan terminal (Task 96).
+ * The staff scan terminal .
  *
- * The visual language is the marketing Free-Scanner prototype's window —
+ * The visual language is the marketing Free-Scanner design's window —
  * dark glass, monospace log, the pulsing status chip — re-prefixed `vv-term-`
  * so the public demo's `vv-scan-*` classes cannot clash with it. Values that
  * have a design token use `var(--token)`; the one-off dark stops (the window
@@ -258,7 +258,7 @@
 }
 
 /* Line colours by the controller's kind classes — tokenised where a token
-   exists, literal where the dark theme needs a brighter stop. */
+  exists, literal where the dark theme needs a brighter stop. */
 .vv-term-sys {
   color: var(--brand-soft);
 }

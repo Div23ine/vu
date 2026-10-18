@@ -1,5 +1,5 @@
 /**
- * Cookie-consent stylesheet (Task 58), reproduced from the prototype's CSS
+ * Cookie-consent stylesheet , reproduced from the design's CSS
  * with every tokenised value as `var(--token)` (`--white`, `--dur`, `--ease`,
  * `--brand*`, `--r-md`, `--r-xl`, `--r-2xl`, `--r-full`) — the reference's
  * defensive `var(--x, fallback)` double-writes collapse to the plain token,

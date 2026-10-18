@@ -3,7 +3,7 @@ import { CheckoutBody, UpdatePaymentMethodBody, type DisplayCurrency } from '@vu
 import { invoices, paymentMethod, subscription } from '@vunvault/contracts/fixtures/billing';
 
 /**
- * Billing mock handlers (Task 66).
+ * Billing mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock mode.
  * Every identity and amount comes from the contract fixtures (Acme Fintech
@@ -12,16 +12,16 @@ import { invoices, paymentMethod, subscription } from '@vunvault/contracts/fixtu
  * renderer (the real PDFs come from the API's pdf worker).
  *
  * The invoice table's caption reads `GET /api/v1/profile` — that handler
- * lives in `profile.ts` (Task 68; it was parked here by Task 66 before the
+ * lives in `profile.ts` (an earlier iteration; it was parked here by an earlier iteration before the
  * profile page existed).
  *
- * API contract mirrored here (implemented for real in `apps/api`, Tasks 30/32):
- *   GET /api/v1/billing/subscription      → 200 { data: Subscription }
- *   GET /api/v1/billing/payment-method    → 200 { data: PaymentMethodView }
- *   PUT /api/v1/billing/payment-method    → 200 { data: PaymentMethodView } | 422
- *   GET /api/v1/billing/invoices          → 200 { data: Invoice[]; total }
- *   GET /api/v1/billing/invoices/:id/pdf  → 200 application/pdf | 202 | 404
- *   GET /api/v1/billing/invoices.csv      → 200 text/csv
+ * API contract mirrored here (implemented for real in `apps/api`, earlier iterations/32):
+ * GET /api/v1/billing/subscription   → 200 { data: Subscription }
+ * GET /api/v1/billing/payment-method  → 200 { data: PaymentMethodView }
+ * PUT /api/v1/billing/payment-method  → 200 { data: PaymentMethodView } | 422
+ * GET /api/v1/billing/invoices     → 200 { data: Invoice[]; total }
+ * GET /api/v1/billing/invoices/:id/pdf → 200 application/pdf | 202 | 404
+ * GET /api/v1/billing/invoices.csv   → 200 text/csv
  */
 
 const PDF_BYTES = Uint8Array.from(
@@ -95,10 +95,10 @@ export const billingHandlers = [
     });
   }),
 
-  // (Task 66 parked a GET /api/v1/profile handler here for the invoice-table
-  // caption; Task 68 — the profile page — owns it now: see profile.ts.)
+  // (an earlier iteration parked a GET /api/v1/profile handler here for the invoice-table
+  // caption; the profile page — owns it now: see profile.ts.)
 
-  // --- Task 66b: the locked FX quote and the USD checkout -------------------
+  // --- an earlier iteration: the locked FX quote and the USD checkout -------------------
   http.post('*/api/v1/billing/fx-quotes', async ({ request }) => {
     const body = (await request.json().catch(() => null)) as {
       invoiceId?: string;

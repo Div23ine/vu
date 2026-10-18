@@ -3,14 +3,14 @@ import type { StudioItem, StudioStatus } from '@vunvault/contracts';
 import { apiGet } from '../../../../../lib/api';
 
 /**
- * Content Studio hooks (Task 71) — the badge gate and the author's
- * submissions on the Task 36 API. The badge is SERVER-SIDE
+ * Content Studio hooks — the badge gate and the author's
+ * submissions on the an earlier iteration API. The badge is SERVER-SIDE
  * (`profiles.verified_blogger_at`, granted by an administrator after a
  * Contact-page verification request); nothing here reads browser storage
  * and the UI never grants badges.
  *
  * `queryKeys` (packages/lib) has no studio entries and this task must not
- * touch packages/lib, so the keys live here — the Task 67
+ * touch packages/lib, so the keys live here — the an earlier iteration
  * `SECURITY_STATUS_KEY` precedent.
  *
  * No `'use client'` directive (the `use-login.ts` pattern): only client

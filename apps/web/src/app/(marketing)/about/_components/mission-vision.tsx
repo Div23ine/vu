@@ -6,7 +6,7 @@ import { useReveal } from './about-hero';
 import '../_styles/about.css';
 
 /**
- * Mission & Vision (Task 53) — the two-card statement section. The vision
+ * Mission & Vision — the two-card statement section. The vision
  * card is the dark variant; copy is verbatim, both cards scroll-reveal.
  */
 export function MissionVision() {

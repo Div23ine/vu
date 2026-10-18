@@ -6,7 +6,7 @@ import { Badge, type BadgeTone } from '@vunvault/ui';
 import '../_styles/scans.css';
 
 /**
- * Findings list (Task 69) — the released report's findings, sorted
+ * Findings list — the released report's findings, sorted
  * critical → low (`SEVERITY_PRIORITY`), each a collapsible `<details>`:
  * title + severity `Badge` + CVSS/CWE when present, description, the
  * `Remediation` text and the redacted evidence in a monospace block.
@@ -15,7 +15,7 @@ import '../_styles/scans.css';
  * `<img onerror=…>` string stays inert markup, never DOM. The contract's
  * `ScanFinding` view does not carry the evidence column yet; the wire field
  * is read when present and the section stays hidden otherwise.
- * TODO(backend-contract): add `evidenceRedacted` to `ScanFinding` (Task 19
+ * TODO(backend-contract): add `evidenceRedacted` to `ScanFinding` (an earlier iteration
  * contract) so the API serializer stops stripping the column.
  */
 

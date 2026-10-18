@@ -14,14 +14,20 @@ import ProductsPage from './page';
 import { PremiumProducts } from './_components/premium-products';
 
 /**
- * Products page A tests (Task 55).
+ * Products page A tests .
  *
- * The catalogue is served by the MSW store handler from the contract
+ * The spec is served by the MSW store handler from the contract
  * fixtures, so the card assertions derive from `products` — no duplicated
  * data. Buy Now is exercised in all three session states: anonymous (login
  * link), client (purchase mutation → billing hand-off) and staff (warn
  * toast, no purchase).
  */
+
+// The open-tooling section is an async server component (it fetches the
+// catalog); the assembly test stubs it with its sync shell.
+vi.mock('./_components/free-resources', () => ({
+  FreeResources: () => <section id="free-resources" />,
+}));
 
 const routerPush = vi.hoisted(() => vi.fn());
 vi.mock('next/navigation', () => ({
@@ -50,7 +56,7 @@ beforeEach(() => {
   useToastStore.setState({ toasts: [] });
 });
 
-describe('PremiumProducts catalogue', () => {
+describe('PremiumProducts catalog', () => {
   it('renders the six fixture cards with names, badges, prices and units', async () => {
     renderWithProviders(<PremiumProducts />);
     await waitFor(() => expect(document.querySelectorAll('article.vv-prod-card')).toHaveLength(6));
@@ -178,28 +184,48 @@ describe('Buy Now', () => {
 });
 
 describe('ProductsPage assembly', () => {
-  it('renders hero and catalogue with the three 55b stubs in place', async () => {
-    renderWithProviders(<ProductsPage />);
-    expect(screen.getByText('Tools · Automation · Documentation')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Security Tooling Built For Operators' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Explore Catalog' })).toHaveAttribute(
-      'href',
-      '#catalog',
+  it('renders hero, catalog and the live open-tooling grid', async () => {
+    const realFetch = globalThis.fetch;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : String(input);
+        if (url.includes('/api/v1/public/tools')) {
+          return { ok: true, json: async () => ({ data: [] }) };
+        }
+        return realFetch(input, init);
+      }),
     );
-    expect(screen.getByRole('link', { name: 'Free Tools' })).toHaveAttribute('href', '#free-tools');
-    for (const [label, value] of [
-      ['Tools Shipped', '24'],
-      ['Free Resources', '12'],
-      ['Active Operators', '3,180'],
-      ['Mean Patch Time', '1.2s'],
-    ] as const) {
-      // 'Free Resources' also names the 55b section kicker — the hero stat
-      // strip is asserted by presence, not uniqueness.
-      expect(screen.getAllByText(label).length).toBeGreaterThan(0);
-      expect(screen.getByText(value)).toBeInTheDocument();
+    try {
+      renderWithProviders(await ProductsPage());
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Security Tooling Built For Operators' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Explore Catalog' })).toHaveAttribute(
+        'href',
+        '#catalog',
+      );
+      expect(screen.getByRole('link', { name: 'Free Tools' })).toHaveAttribute(
+        'href',
+        '#free-tools',
+      );
+      for (const [label, value] of [
+        ['Tools Shipped', '24'],
+        ['Free Resources', '12'],
+        ['Active Operators', '3,180'],
+        ['Mean Patch Time', '1.2s'],
+      ] as const) {
+        expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+        expect(screen.getByText(value)).toBeInTheDocument();
+      }
+      await waitFor(() =>
+        expect(document.querySelectorAll('article.vv-prod-card')).toHaveLength(6),
+      );
+      expect(document.querySelector('#free-resources')).not.toBeNull();
+      // The removed live console and custom-tooling band are gone.
+      expect(screen.queryByText('Live Console')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
     }
-    await waitFor(() => expect(document.querySelectorAll('article.vv-prod-card')).toHaveLength(6));
   });
 });

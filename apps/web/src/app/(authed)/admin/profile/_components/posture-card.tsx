@@ -6,7 +6,7 @@ import { cn } from '@vunvault/lib';
 import { Skeleton } from '@vunvault/ui';
 
 /**
- * Security posture card (Task 83d) — the score meter and the checklist behind
+ * Security posture card — the score meter and the checklist behind
  * it, straight from `GET /account/security`.
  *
  * Nothing here is computed: the contract already carries `score`, the

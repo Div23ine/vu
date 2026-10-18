@@ -1,7 +1,7 @@
 import type { UsdCents } from '@vunvault/lib';
 
 /**
- * Plans & Pricing constants (Task 51).
+ * Plans & Pricing constants .
  *
  * USD only — these amounts equal the seeded `plans` rows in the database and
  * are DISPLAY-ONLY here: the marketing sections never charge. A future

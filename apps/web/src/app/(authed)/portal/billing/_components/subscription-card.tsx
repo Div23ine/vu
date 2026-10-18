@@ -8,16 +8,16 @@ import { Skeleton, toast } from '@vunvault/ui';
 import { isNotFound, useSubscription } from '../_hooks/use-billing';
 
 /**
- * Current-subscription card (Task 66) — the dark plan panel. Values come from
+ * Current-subscription card — the dark plan panel. Values come from
  * `GET /billing/subscription`: `Renews On` as `DD Mon YYYY` (`formatLongDate`),
  * `Billing Cycle` as `Monthly`/`Annual`, `Amount` via `formatUsdWhole`
  * (`$2,499`). A 404 is a normal state: `No active subscription` + `Browse
  * plans` → `/services#pricing`.
  *
- * `Upgrade Plan` has no endpoint (planner: toast only) — TODO(backend-contract).
+ * `Upgrade Plan` has no endpoint (spec: toast only) — TODO(backend-contract).
  */
 
-/** Authored labels for the non-active statuses (the prototype pins `Active`). */
+/** Authored labels for the non-active statuses (the design pins `Active`). */
 const STATUS_LABELS: Record<SubscriptionStatus, string> = {
   active: 'Active',
   past_due: 'Past due',
@@ -56,7 +56,7 @@ export function SubscriptionCard() {
   }
 
   const requestUpgrade = () => {
-    // TODO(backend-contract): no upgrade endpoint exists — the planner pins a
+    // TODO(backend-contract): no upgrade endpoint exists — the spec pins a
     // toast and an explicit "do not call the API".
     toast({
       kind: 'ok',

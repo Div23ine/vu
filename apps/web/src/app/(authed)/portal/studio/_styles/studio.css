@@ -1,18 +1,18 @@
 /**
- * Content Studio stylesheet (Task 71).
+ * Content Studio stylesheet .
  *
  * The access-denied card HAS reference markup: its `vbg-*` blocks are
- * reproduced here verbatim in structure, with every `--vg-*` prototype
+ * reproduced here verbatim in structure, with every `--vg-*` design
  * variable translated to this repo's token (`--brand*`, `--ink*`, `--line*`,
  * `--r-*`, `--dur`, `--ease`, `--white`). Colours with NO token (`#f8fafc`
  * list-item background, the rgba() stops the reference itself carries) stay
  * literal in this file only, per the feature-stylesheet exception. The
- * prototype's `--quiet` button variant and `.vbg-demo-note` are dropped with
+ * design's `--quiet` button variant and `.vbg-demo-note` are dropped with
  * the demo-grant control they belonged to.
  *
  * AUTHORED (marked inline): the `vcs-*` header/chip/status/table rules —
  * the table wrap is copied from the portal's feature-table family (the
- * `.vps-table-wrap` rules of Task 69, themselves copied from billing) —
+ * `.vps-table-wrap` rules of an earlier iteration, themselves copied from billing) —
  * plus the focus-visible rings and the reduced-motion block.
  */
 
@@ -252,7 +252,7 @@
   white-space: nowrap;
 }
 
-/* ——— Status chips (authored on the .vbb-status chip language, Task 70 family) ——— */
+/* ——— Status chips (authored on the .vbb-status chip language, an earlier iteration family) ——— */
 .vcs-status {
   display: inline-flex;
   align-items: center;

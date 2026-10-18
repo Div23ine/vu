@@ -8,7 +8,7 @@ import { formatCount, isForbidden, useDashboardSection } from './use-dashboard';
 import './dashboard.css';
 
 /**
- * Revenue & Paid Scans (Task 76) — the billing-ledger rollup card: the
+ * Revenue & Paid Scans — the billing-ledger rollup card: the
  * four-figure dl, the package-tier share bars and the trailing-90-days
  * note. All money is USD; the figures come from `GET …/revenue`.
  */

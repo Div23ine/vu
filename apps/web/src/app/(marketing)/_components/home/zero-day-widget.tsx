@@ -18,23 +18,23 @@ import { useUtcClock, utcStamp } from './use-utc-clock';
 import '../../_styles/zero-day-widget.css';
 
 /**
- * Zero-Day Exploit Tracking dashboard widget (Task 50) — the live-looking
+ * Zero-Day Exploit Tracking dashboard widget — the live-looking
  * dark panel on the marketing home page. A TEASER: every value is a fixture
  * constant (`zero-day-data.ts`), nothing is fetched, nothing is stored.
  *
- * Behaviour, ported from the prototype's script to hooks:
- *  - the header clock ticks every second as `HH:MM:SS UTC` (and renders
- *    `--:--:-- UTC` on the server and the first client paint — no hydration
- *    mismatch);
- *  - every 8 s the LAST feed row moves to the top, flashes for 1.2 s
- *    (`zdet-flash`), the countdown restarts at `8s` and the refresh stamp
- *    becomes `Updated HH:MM:SS UTC`;
- *  - under `prefers-reduced-motion` the rotation still happens — the CSS
- *    block in `zero-day-widget.css` removes only the flash;
- *  - every timer is cleaned up on unmount.
+ * Behaviour, ported from the design's script to hooks:
+ * - the header clock ticks every second as `HH:MM:SS UTC` (and renders
+ * `--:--:-- UTC` on the server and the first client paint — no hydration
+ * mismatch);
+ * - every 8 s the LAST feed row moves to the top, flashes for 1.2 s
+ * (`zdet-flash`), the countdown restarts at `8s` and the refresh stamp
+ * becomes `Updated HH:MM:SS UTC`;
+ * - under `prefers-reduced-motion` the rotation still happens — the CSS
+ * block in `zero-day-widget.css` removes only the flash;
+ * - every timer is cleaned up on unmount.
  *
  * The mini tabs and quick actions are presentational (no handlers), exactly
- * as the catalogue specifies.
+ * as the spec specifies.
  */
 
 const ROTATION_SECONDS = 8;

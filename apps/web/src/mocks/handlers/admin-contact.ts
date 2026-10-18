@@ -7,10 +7,10 @@ import { ContactTriageBody } from '@vunvault/contracts';
 import { clientDirectory, contactMessages } from '@vunvault/contracts/fixtures/contact';
 
 /**
- * Admin contact-inbox and client-directory mock handlers (Task 83e).
+ * Admin contact-inbox and client-directory mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock mode.
- * The Task 40f fixtures ARE the queue and the directory; the list endpoints
+ * The an earlier iteration fixtures ARE the queue and the directory; the list endpoints
  * apply the real filter semantics (`q` over name, email, organisation and
  * subject; exact `status` / `category`; `verifiedBlogger=true|false`; `page` /
  * `pageSize` slicing) so the URL-driven filters are exercised end to end.
@@ -20,12 +20,12 @@ import { clientDirectory, contactMessages } from '@vunvault/contracts/fixtures/c
  * that is where the API puts them — a badge is a property of a user, not of a
  * directory row — so the directory entry flips only when the id matches.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 40f):
- *   GET    /api/v1/admin/contact?…                 → 200 { data: ContactMessageView[]; total }
- *   PATCH  /api/v1/admin/contact/:id               → 200 { data: ContactMessageView } | 422
- *   GET    /api/v1/admin/clients?…                 → 200 { data: ClientDirectoryItem[]; total }
- *   POST   /api/v1/admin/users/:id/blogger-badge   → 204 | 404
- *   DELETE /api/v1/admin/users/:id/blogger-badge   → 204 | 404
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET  /api/v1/admin/contact?…         → 200 { data: ContactMessageView[]; total }
+ * PATCH /api/v1/admin/contact/:id        → 200 { data: ContactMessageView } | 422
+ * GET  /api/v1/admin/clients?…         → 200 { data: ClientDirectoryItem[]; total }
+ * POST  /api/v1/admin/users/:id/blogger-badge  → 204 | 404
+ * DELETE /api/v1/admin/users/:id/blogger-badge  → 204 | 404
  */
 
 let messages: ContactMessageView[] = contactMessages.map((message) => ({ ...message }));

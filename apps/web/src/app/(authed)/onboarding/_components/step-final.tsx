@@ -13,16 +13,16 @@ import '../_styles/onboarding.css';
 import type { StepPanelProps } from './step-personal';
 
 /**
- * Step 3 — Verification & finalisation (Task 65; overwrites the Task 64 stub).
+ * Step 3 — Verification & finalisation (an earlier iteration; overwrites the an earlier iteration stub).
  *
  * The captured-details review (labels reused verbatim from this form's own
- * fields — the planner gave the section heading but no row copy), the
+ * fields — the spec gave the section heading but no row copy), the
  * recovery-question select (the five `RECOVERY_QUESTION_LABELS`, placeholder
  * `Choose a recovery question…`), the answer input (`type="text"` with
- * `autocomplete="off"`, per the prototype — NOT masked) and the three
+ * `autocomplete="off"`, per the design — NOT masked) and the three
  * required declaration checkboxes with the verbatim label text.
  *
- * Link decisions (no routes were pinned by the planner; the Task 61 legal
+ * Link decisions (no routes were pinned by the spec; the an earlier iteration legal
  * block is the precedent — `/terms` and `/privacy` rendered as plain `<a>`
  * even though the pages do not exist yet): Terms of Service → `/terms`,
  * Privacy Policy → `/privacy`, Acceptable Use Policy → `/terms` until a

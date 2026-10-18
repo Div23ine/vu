@@ -10,7 +10,7 @@ import { STREAM_STATUS_LABELS, type AuditStreamStatus } from '../_hooks/use-audi
 import { SeverityChip } from './severity-chip';
 
 /**
- * Audit trail console (Task 83b) — the terminal-styled tail of the chain.
+ * Audit trail console — the terminal-styled tail of the chain.
  *
  * The chrome is the reference's (`vunvault-audit-trail@…— tail -f`, the Live
  * and Chain Intact pills, the node/encryption/head-hash/last-sync meta strip);
@@ -24,7 +24,7 @@ import { SeverityChip } from './severity-chip';
  * because the chain is append-only and the API exposes no such route.
  *
  * New rows are highlighted for two seconds after an arrival — a poll in the
- * offline fallback, an SSE push since Task 93. The highlight is a background
+ * offline fallback, an SSE push since an earlier iteration. The highlight is a background
  * transition only, and `audit.css` disables it under `prefers-reduced-motion`,
  * so the row never moves. The `Live` pill and the pause control report the
  * real stream state (`use-audit-stream`), never a decoration.
@@ -50,7 +50,7 @@ export interface AuditTableProps {
   chain: ChainStatus | null;
   /** Set when a verification found mismatches — the persistent banner. */
   mismatchSeq: number | null;
-  /** The real SSE state (Task 93) — the pill is not a decoration. */
+  /** The real SSE state — the pill is not a decoration. */
   streamStatus: AuditStreamStatus;
   /** Entries held back while paused — the resume button's `<n> new` count. */
   pausedCount: number;

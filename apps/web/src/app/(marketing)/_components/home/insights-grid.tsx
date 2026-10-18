@@ -10,7 +10,7 @@ import { ArticleCard } from '../article-card';
 import '../../_styles/home-mid.css';
 
 /**
- * Latest Insights & Intelligence (Task 49) — the rotating 3-up news grid.
+ * Latest Insights & Intelligence — the rotating 3-up news grid.
  *
  * Data: `usePublicContent({ pageSize: 6, sort: "newest" })`. While more than
  * three posts exist the visible window advances one position every 4000 ms

@@ -1,39 +1,39 @@
 /**
- * Signup stylesheet (Task 61) — the light signup card, its form controls, the
+ * Signup stylesheet — the light signup card, its form controls, the
  * account-type radio cards, the password strength meter and the shared dialog
- * buttons. Reproduced from the prototype's CSS with every existing token as
+ * buttons. Reproduced from the design's CSS with every existing token as
  * `var(--token)` (`--white`, `--ink*`, `--line*`, `--brand*`, `--critical`,
  * `--ok`, `--r-md`, `--r-lg`, `--r-xl`, `--r-2xl`, `--r-full`, `--r-tile`,
  * `--ease`, `--grad-brand`, `--grad-tile`).
  *
- * The prototype's class names (`.card`, `.field`, `.input`, `.err`,
+ * The design's class names (`.card`, `.field`, `.input`, `.err`,
  * `.radio-card`, `.btn-primary`, `.legal` …) are page-generic, so every rule
  * here is reproduced under the `vv-signup-` prefix (the strength meter keeps
- * the neutral `vv-strength` prefix because Task 63 reuses it on the dark auth
- * card). The prototype's `role="dialog"` card is a route here (Task 59 planner
+ * the neutral `vv-strength` prefix because an earlier iteration reuses it on the dark auth
+ * card). The design's `role="dialog"` card is a route here (an earlier iteration spec
  * note): it renders as `<main>` centred in the `.vv-auth-overlay` the (auth)
- * layout provides — the animated background layer of the prototype page is
+ * layout provides — the animated background layer of the design page is
  * that layout's `AuthBackground`, so its CSS is NOT reproduced here.
  *
  * AUTHORED additions, marked inline:
- *  - Colours with no exact token stay literals in THIS file only, per the
- *    feature-stylesheet exception (`#fdfefe`, `#d4d4d4`, `#fbfdff`, `#cfcfcf`,
- *    the rgba() shadow/glow stops the reference itself carries, and the
- *    `%233B99FC` stroke inside the select chevron data-URI — `var()` cannot be
- *    used inside `url()`).
- *  - `.vv-strength*` — the prototype's strength-meter rules were truncated by
- *    the planner; these use tokens only (severity ramp `--critical` → `--high`
- *    → `--medium` → `--ok`, track `--line`).
- *  - `.vv-signup-eye` — the show/hide toggle the reference markup implies
- *    (`[data-toggle-pw]` in the prototype JS) but whose CSS was truncated;
- *    light-theme sibling of auth.css's `.vv-eye`.
- *  - `:focus-visible` rings where the reference had none, `margin: auto` +
- *    `z-index` so the card centres in `.vv-auth-overlay` like the login card,
- *    the `fieldset` reset, and `@keyframes vvSignupCardIn` / `vvSignupShake`
- *    (renamed from the prototype's `cardIn` / `shake` — auth.css already owns
- *    different `vvCardIn` / `vvShake`).
+ * - Colours with no exact token stay literals in THIS file only, per the
+ * feature-stylesheet exception (`#fdfefe`, `#d4d4d4`, `#fbfdff`, `#cfcfcf`,
+ * the rgba() shadow/glow stops the reference itself carries, and the
+ * `%233B99FC` stroke inside the select chevron data-URI — `var()` cannot be
+ * used inside `url()`).
+ * - `.vv-strength*` — the design's strength-meter rules were truncated by
+ * the spec; these use tokens only (severity ramp `--critical` → `--high`
+ * → `--medium` → `--ok`, track `--line`).
+ * - `.vv-signup-eye` — the show/hide toggle the reference markup implies
+ * (`[data-toggle-pw]` in the design JS) but whose CSS was truncated;
+ * light-theme sibling of auth.css's `.vv-eye`.
+ * - `:focus-visible` rings where the reference had none, `margin: auto` +
+ * `z-index` so the card centres in `.vv-auth-overlay` like the login card,
+ * the `fieldset` reset, and `@keyframes vvSignupCardIn` / `vvSignupShake`
+ * (renamed from the design's `cardIn` / `shake` — auth.css already owns
+ * different `vvCardIn` / `vvShake`).
  *
- * Task 62 appends the verification-dialog rules to this file (its
+ * an earlier iteration appends the verification-dialog rules to this file (its
  * deliverables say so).
  */
 
@@ -114,9 +114,9 @@
 }
 
 /* ——— Social buttons (reference) ———
- * The buttons themselves are Task 59's shared `OAuthButtons`
+ * The buttons themselves are an earlier iteration's shared `OAuthButtons`
  * (`.vv-social-grid` / `.vv-social-btn`, dark glass in auth.css); these
- * scoped overrides reproduce the signup prototype's light variant. */
+ * scoped overrides reproduce the signup design's light variant. */
 .vv-signup-card .vv-social-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -201,7 +201,7 @@
   min-width: 0;
 }
 /* authored: the account-type group is a real fieldset/legend (radio-group
-   semantics); reset the UA chrome so it matches the reference .field */
+  semantics); reset the UA chrome so it matches the reference .field */
 fieldset.vv-signup-field {
   margin: 0;
   padding: 0;
@@ -250,7 +250,7 @@ select.vv-signup-input {
   -webkit-appearance: none;
   padding-right: 38px;
   /* The chevron stroke is the brand colour; `var()` cannot be used inside a
-     data-URI, so the literal stays (feature-stylesheet exception). */
+   data-URI, so the literal stays (feature-stylesheet exception). */
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%233B99FC' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 13px center;
@@ -285,8 +285,8 @@ select.vv-signup-input:invalid {
 }
 
 /* ——— Show/hide password toggle (authored; the reference CSS for the
-   prototype's `[data-toggle-pw]` button was truncated — light-theme sibling
-   of auth.css's `.vv-eye`) ——— */
+  design's `[data-toggle-pw]` button was truncated — light-theme sibling
+  of auth.css's `.vv-eye`) ——— */
 .vv-signup-eye {
   position: absolute;
   right: 8px;
@@ -521,7 +521,7 @@ select.vv-signup-input:invalid {
   height: 16px;
 }
 /* Pending state (authored): the shared `.vv-spinner` (auth.css) swaps in for
-   the arrow while the mutation is in flight. */
+  the arrow while the mutation is in flight. */
 .vv-signup-submit.is-loading > svg:not(.vv-spinner) {
   visibility: hidden;
 }
@@ -613,7 +613,7 @@ select.vv-signup-input:invalid {
 }
 
 /* ——— Reduced motion (authored for this file's animations; the reference
-   block only covered the prototype background, which the (auth) layout owns) ——— */
+  block only covered the design background, which the (auth) layout owns) ——— */
 @media (prefers-reduced-motion: reduce) {
   .vv-signup-card,
   .vv-signup-input.is-invalid {
@@ -645,20 +645,20 @@ select.vv-signup-input:invalid {
 }
 
 /* ————————————————————————————————————————————————————————————————
-   Task 62 append — the verification dialog (`.verify*`, `.steps`, `.step*`,
-   `.otp-*` light overrides, `.btn-ghost`, `.resend-*`) reproduced from the
-   prototype CSS under the `vv-verify-` prefix, tokens substituted
-   (`--white`, `--ink*`, `--line`, `--brand*`, `--ok*`, `--critical`,
-   `--r-sm/md/lg/2xl/full`, `--ease`, `--font-mono`). The prototype's
-   `.test-hint*` rules are deliberately NOT reproduced — the Test-mode panels
-   are removed per the catalogue.
-   AUTHORED additions, marked inline: the light-theme overrides for Task 60's
-   `.vv-otp-digit` boxes (auth.css styles them for the dark card), the QR /
-   secret panel / enrolment-spinner / redirect-bar rules (truncated by the
-   planner), `vvVerifyStepIn` / `vvVerifyFill` / `vvVerifySpin` keyframes
-   (renamed from the prototype's `stepIn` / fill / `spin`), the `--ok` done
-   icon variant, `:focus-visible` rings, and the reduced-motion block.
-   ———————————————————————————————————————————————————————————————— */
+  an earlier iteration append — the verification dialog (`.verify*`, `.steps`, `.step*`,
+  `.otp-*` light overrides, `.btn-ghost`, `.resend-*`) reproduced from the
+  design CSS under the `vv-verify-` prefix, tokens substituted
+  (`--white`, `--ink*`, `--line`, `--brand*`, `--ok*`, `--critical`,
+  `--r-sm/md/lg/2xl/full`, `--ease`, `--font-mono`). The design's
+  `.test-hint*` rules are deliberately NOT reproduced — the Test-mode panels
+  are removed per the spec.
+  AUTHORED additions, marked inline: the light-theme overrides for an earlier iteration's
+  `.vv-otp-digit` boxes (auth.css styles them for the dark card), the QR /
+  secret panel / enrolment-spinner / redirect-bar rules (truncated by the
+  spec), `vvVerifyStepIn` / `vvVerifyFill` / `vvVerifySpin` keyframes
+  (renamed from the design's `stepIn` / fill / `spin`), the `--ok` done
+  icon variant, `:focus-visible` rings, and the reduced-motion block.
+  ———————————————————————————————————————————————————————————————— */
 
 /* ——— Overlay + card (reference) ——— */
 .vv-verify {
@@ -864,9 +864,9 @@ select.vv-signup-input:invalid {
   margin-top: 10px;
 }
 
-/* ——— OTP boxes: light-theme overrides for Task 60's `.vv-otp-*`
-   (auth.css styles them for the dark MFA card; the reference `.otp-row` /
-   `.otp-input` rules reproduced scoped to this dialog) ——— */
+/* ——— OTP boxes: light-theme overrides for an earlier iteration's `.vv-otp-*`
+  (auth.css styles them for the dark MFA card; the reference `.otp-row` /
+  `.otp-input` rules reproduced scoped to this dialog) ——— */
 .vv-verify-card .vv-otp-inputs {
   gap: 9px;
   width: 100%;
@@ -997,8 +997,8 @@ select.vv-signup-input:invalid {
   border-radius: 4px;
 }
 
-/* ——— Step 2: QR + secret panel (authored — the prototype's rules were
-   truncated; tokens only) ——— */
+/* ——— Step 2: QR + secret panel (authored — the design's rules were
+  truncated; tokens only) ——— */
 .vv-verify-enroll-pending {
   display: flex;
   flex-direction: column;
@@ -1106,7 +1106,7 @@ select.vv-signup-input:invalid {
 }
 
 /* ——— Step 3: redirect bar (authored, mirrors the reference bar pattern;
-   2.5s matches REDIRECT_DELAY_MS) ——— */
+  2.5s matches REDIRECT_DELAY_MS) ——— */
 .vv-verify-redirect-bar {
   height: 3px;
   width: min(320px, 100%);
@@ -1192,7 +1192,7 @@ select.vv-signup-input:invalid {
 }
 
 /* The view classes set `display` — the `hidden` attribute must still win
-   (same guard auth.css carries for the MFA card). */
+  (same guard auth.css carries for the MFA card). */
 .vv-verify-card [hidden] {
   display: none !important;
 }

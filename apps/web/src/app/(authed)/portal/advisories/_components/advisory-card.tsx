@@ -19,7 +19,7 @@ import { sortAdvisories, useAcknowledgeAdvisory, useAdvisories } from '../_hooks
 import '../_styles/advisories.css';
 
 /**
- * Advisory card + feed (Task 70) — one `ClientAdvisory` per card: severity
+ * Advisory card + feed — one `ClientAdvisory` per card: severity
  * `Badge`, monospace CVE id, title, the fixed `VUNVAULT Intelligence` source
  * line, the publication stamp, scope chips, `Summary` and `Recommended
  * remediation` paragraphs, external reference links, the patch-status chip

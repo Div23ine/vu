@@ -3,10 +3,10 @@ import { ArrowRight } from 'lucide-react';
 import '../../_styles/home-mid.css';
 
 /**
- * Organisation segments (Task 49) — "Tailored Defense Strategies".
+ * Organisation segments — "Tailored Defense Strategies".
  *
- * The prototype's cards were anchors without a real destination; the
- * catalogue routes the first three to `/services#pricing` and the SOC card to
+ * The design's cards were anchors without a real destination; the
+ * catalog routes the first three to `/services#pricing` and the SOC card to
  * `/services`. Copy, tags and arrows are verbatim. Server component.
  */
 

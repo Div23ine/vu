@@ -4,7 +4,7 @@ import { apiGet, apiPost } from '../../../../../lib/api';
 import { ADMIN_ADVISORIES_KEY } from './use-advisories-admin';
 
 /**
- * Emergency broadcast hooks (Task 82).
+ * Emergency broadcast hooks .
  *
  * Two writes share one mutation because they differ only in the URL segment and
  * the `kind` the API records: `POST …/:id/broadcast` for a first dispatch and
@@ -16,7 +16,7 @@ import { ADMIN_ADVISORIES_KEY } from './use-advisories-admin';
  * on its own once the newest record settles (`sent` / `failed`) — the push
  * version arrives in Layer L12, so polling is the transport for now.
  *
- * The audience estimate lives in `use-advisories-admin.ts`: Task 81's Publish
+ * The audience estimate lives in `use-advisories-admin.ts`: an earlier iteration's Publish
  * Controls panel renders the same numbers, and one query key must not be
  * fetched twice for one dialog.
  *
@@ -42,8 +42,8 @@ export function useBroadcastDispatch() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): POST /api/v1/admin/advisories/:id/broadcast | /rebroadcast
-    //   body { ack; confirmPhrase } → 202 { data: BroadcastRecord }
-    //   | 400 validation_failed | 403 | 409 broadcast_in_progress | 422 advisory_incomplete
+    //  body { ack; confirmPhrase } → 202 { data: BroadcastRecord }
+    //  | 400 validation_failed | 403 | 409 broadcast_in_progress | 422 advisory_incomplete
     mutationFn: ({ id, mode, body }: BroadcastInput) =>
       apiPost<{ data: BroadcastRecord }>(
         `/api/v1/admin/advisories/${id}/${mode === 'rebroadcast' ? 'rebroadcast' : 'broadcast'}`,
@@ -62,7 +62,7 @@ export function useBroadcastDispatch() {
  * `enabled` keeps the poll off until a broadcast has actually been dispatched —
  * opening the desk must not start a 3 s timer for every advisory ever written.
  *
- * Since Task 94 the poll is the FALLBACK: while the SSE relay is up
+ * Since an earlier iteration the poll is the FALLBACK: while the SSE relay is up
  * (`isStreamLive`), progress frames patch this same cache key and a timer
  * would only race them. The settle-to-stop rule stays for the fallback path.
  */
@@ -73,7 +73,7 @@ export function useBroadcastProgress(
 ) {
   return useQuery({
     // TODO(backend-contract): GET /api/v1/admin/advisories/:id/broadcasts
-    //   → 200 { data: BroadcastRecord[] }
+    //  → 200 { data: BroadcastRecord[] }
     queryKey: broadcastProgressKey(advisoryId),
     enabled: enabled && advisoryId !== null,
     retry: false,

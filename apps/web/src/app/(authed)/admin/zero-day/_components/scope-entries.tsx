@@ -8,17 +8,17 @@ import { cn } from '@vunvault/lib';
 import { toast } from '@vunvault/ui';
 
 /**
- * Affected-scope editor (Task 81) — the chip list the broadcast engine matches
+ * Affected-scope editor — the chip list the broadcast engine matches
  * against client asset inventories.
  *
  * Type + Enter (or `Add`) appends an entry carrying the currently selected
- * category; duplicates are refused with the prototype's own toast, and the
+ * category; duplicates are refused with the design's own toast, and the
  * contract's 50-entry cap is enforced here so the API never has to. Every
  * remove button is labelled with its entry (`Remove scope entry: <entry>`)
  * because seven near-identical X buttons are otherwise indistinguishable to a
  * screen reader.
  *
- * `Quick add:` is the prototype's shortcut row — one button per
+ * `Quick add:` is the design's shortcut row — one button per
  * `SCOPE_CATEGORY_LABELS` value that appends that category immediately, going
  * through the same duplicate and cap rules as a typed entry.
  */

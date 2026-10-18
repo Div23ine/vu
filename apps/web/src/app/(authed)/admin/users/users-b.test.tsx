@@ -19,7 +19,7 @@ import { ProvisionDialog } from './_components/provision-dialog';
 import { RoleMatrix } from './_components/role-matrix';
 
 /**
- * Invitations + matrix tests (Task 79b) — the spec's list: the panel lists
+ * Invitations + matrix tests — the spec's list: the panel lists
  * the pending invitations and calls the right endpoints (resend / revoke /
  * the resend-limit 409), and the matrix DERIVES from the contracts — every
  * cell is asserted against `ROLE_PERMISSIONS`, so a permission change moves
@@ -106,7 +106,7 @@ describe('InvitationsPanel', () => {
     );
   });
 
-  it('the resend limit 409 toasts the planner line', async () => {
+  it('the resend limit 409 toasts the spec line', async () => {
     const user = userEvent.setup();
     server.use(
       http.post('*/api/v1/admin/users/invitations/:id/resend', () =>

@@ -30,7 +30,7 @@ import { PostureCard } from './posture-card';
 import { SessionsList } from './sessions-list';
 
 /**
- * Security & Credentials panel (Task 83d) — overwrites the Task 83c stub.
+ * Security & Credentials panel — overwrites the an earlier iteration stub.
  *
  * Composition, not duplication: the posture card and the session list are this
  * task's own (the client Password Manager has neither), while the password
@@ -132,7 +132,7 @@ export function SecurityPanel() {
         </div>
 
         {/* The imported card owns the password rules, the strength meter and its
-            own success toast; wrapping it in a test-id keeps the reuse assertable. */}
+      own success toast; wrapping it in a test-id keeps the reuse assertable. */}
         <div data-testid="ps-imported-change-password">
           <ChangePasswordCard />
         </div>

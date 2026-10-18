@@ -17,7 +17,7 @@ import { server } from '../../../../mocks/server';
 import AdvisoriesPage from './page';
 
 /**
- * Portal advisories tests (Task 70) — the spec's list: the cards render the
+ * Portal advisories tests — the spec's list: the cards render the
  * MSW fields, acknowledge is optimistic and idempotent, the unacknowledged
  * critical is pinned first, the references are safe external links and the
  * empty state. Plus the spec'd failure path: roll back with the `crit`

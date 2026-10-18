@@ -17,13 +17,13 @@ import { EDITORIAL_CHECKS, EDITORIAL_CHECK_KEYS } from './_components/editorial-
 import AdminContentPage from './page';
 
 /**
- * Content Moderation tests (Task 83) — the spec's list: the summary tiles, the
+ * Content Moderation tests — the spec's list: the summary tiles, the
  * filters, the dialog gating, each decision payload, the legal-review 403
  * message, the own-submission 409 message and the bulk approve skipping
  * authored / flagged items.
  *
  * The five editorial-check literals are asserted against `EDITORIAL_CHECKS` so
- * the static markup cannot drift from the catalogue the dialog counts.
+ * the static markup cannot drift from the spec the dialog counts.
  */
 
 const routerMock = vi.hoisted(() => ({ replace: vi.fn(), push: vi.fn() }));
@@ -185,7 +185,7 @@ describe('/admin/content — queue table', () => {
 });
 
 describe('/admin/content — filters', () => {
-  // The mocked `useSearchParams` is not reactive (the Task 79 note), so each
+  // The mocked `useSearchParams` is not reactive (the an earlier iteration note), so each
   // filter is proved two ways: the control writes the right URL, and a
   // pre-seeded URL renders the narrowed queue.
 

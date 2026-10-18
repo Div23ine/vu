@@ -8,7 +8,7 @@ import { formatCount, isForbidden, useDashboardSection } from './use-dashboard';
 import './dashboard.css';
 
 /**
- * Job Progress & Status (Task 76) — the pipeline barometer: the four dl
+ * Job Progress & Status — the pipeline barometer: the four dl
  * figures and the distribution rows whose percentages are computed from
  * `distribution` (nothing hard-coded). The unreviewed-escalation note is
  * verbatim.

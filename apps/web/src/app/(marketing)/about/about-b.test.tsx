@@ -8,9 +8,9 @@ import { AboutTeam } from './_components/team';
 import { AboutTelemetry } from './_components/telemetry';
 
 /**
- * About page B tests (Task 53b) — the team roster and the telemetry panel.
+ * About page B tests — the team roster and the telemetry panel.
  * The panel runs on fake timers with a pinned clock, so the tick, countdown,
- * rotation, flash and teardown are deterministic (same contract as Task 50).
+ * rotation, flash and teardown are deterministic (same contract as an earlier iteration).
  */
 
 function feed(): HTMLElement {
@@ -81,7 +81,7 @@ describe('AboutTeam', () => {
     }
   });
 
-  it('renders no /team/* anchors — the prototype routes do not exist', () => {
+  it('renders no /team/* anchors — the design routes do not exist', () => {
     render(<AboutTeam />);
     expect(document.querySelectorAll('a[href^="/team"]')).toHaveLength(0);
     const first = TEAM_MEMBERS[0];

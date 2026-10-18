@@ -1,8 +1,8 @@
 /**
- * Admin shared stylesheet (Task 75).
+ * Admin shared stylesheet .
  *
  * The COMPLETE reference CSS for every class the admin pages use that is not
- * part of the Task 46 chrome (`admin-chrome.css` owns `adm-shell` and the
+ * part of the an earlier iteration chrome (`admin-chrome.css` owns `adm-shell` and the
  * header/nav/footer). Converted to `var(--token)` wherever a token exists —
  * including the value-equal substitutions (`#ffffff` → `--white`, `#070b11`
  * → `--dark-deep`, `#05070a` → `--dark-abyss`, `#f6f8fb` → `--table-head`,

@@ -9,7 +9,7 @@ import { formatCount, isForbidden, useDashboardSectionRaw } from './use-dashboar
 import './dashboard.css';
 
 /**
- * Sensor-node panels (Task 76) — one component, two placements: the LOAD
+ * Sensor-node panels — one component, two placements: the LOAD
  * card in the traffic section (saturation bars; > 85 % arms the warn tone —
  * the autoscaling trigger) and the CONNECTIVITY card in the threat section
  * (heartbeat latency + clock drift). Both read the single `nodes` query;

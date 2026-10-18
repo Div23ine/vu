@@ -2,7 +2,7 @@ import type { FindingSeverity } from '@vunvault/contracts';
 import { CVSS_BANDS, SEVERITY_CVSS_HINTS } from '@vunvault/contracts';
 
 /**
- * CVSS helpers for the Zero-Day desk (Task 81).
+ * CVSS helpers for the Zero-Day desk .
  *
  * The bands themselves live in `@vunvault/contracts` (`CVSS_BANDS`) because the
  * database enforces the same rule as a CHECK constraint — nothing here may
@@ -11,7 +11,7 @@ import { CVSS_BANDS, SEVERITY_CVSS_HINTS } from '@vunvault/contracts';
  * parser for the free-text score input (`maxlength=4`, `inputmode=decimal`).
  *
  * Severity order is fixed (worst first) so `severityFromCvss` returns the most
- * severe band a score falls in, and so the picker renders the prototype's order.
+ * severe band a score falls in, and so the picker renders the design's order.
  */
 
 /** Worst first — the picker's display order and the projection's scan order. */

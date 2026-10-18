@@ -1,7 +1,7 @@
 import '../_styles/advisories.css';
 
 /**
- * Advisories hero (Task 70) — the verbatim eyebrow/title/sub. Presentational;
+ * Advisories hero — the verbatim eyebrow/title/sub. Presentational;
  * no directive, rendered by the server page above the client feed.
  */
 export function AdvisoriesHero() {

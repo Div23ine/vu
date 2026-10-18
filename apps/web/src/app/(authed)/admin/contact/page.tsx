@@ -24,8 +24,8 @@ import {
 import './_styles/contact.css';
 
 /**
- * `/admin/contact` (Task 83e) — the triage inbox for the public contact form
- * (Task 40f) and the client directory the Verified-Blogger badge is granted
+ * `/admin/contact` — the triage inbox for the public contact form
+ * and the client directory the Verified-Blogger badge is granted
  * from.
  *
  * Two tabs behind one route. `Clients & Badges` requires `users:read` and is
@@ -38,7 +38,7 @@ import './_styles/contact.css';
  * the directory search with the sender's email. The applicant is matched by
  * email because the directory has no contact-message foreign key.
  *
- * Filters are URL-driven (the Task 77/79/83 precedent) so a triage view is
+ * Filters are URL-driven (the an earlier iteration/79/83 precedent) so a triage view is
  * linkable; the directory search is local state, because it is set by the
  * hand-off rather than typed into a shareable view.
  *

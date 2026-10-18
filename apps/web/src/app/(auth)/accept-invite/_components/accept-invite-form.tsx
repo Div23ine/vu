@@ -15,7 +15,7 @@ import { useAcceptInvitation, useInvitationPreview } from '../../_hooks/use-auth
 import { PasswordStrength } from '../../signup/_components/password-strength';
 
 /**
- * Accept-invite form (Task 63) — the staff invitation landing. The public
+ * Accept-invite form — the staff invitation landing. The public
  * preview (`GET /invitations/:token`) drives the states: loading → Skeleton,
  * 404 (unknown / expired / already used — the API answers 404 for all three)
  * → `Invitation not valid`, found → the password form.
@@ -26,7 +26,7 @@ import { PasswordStrength } from '../../signup/_components/password-strength';
  * (seeded into the query cache like every other login path) and lands on the
  * `Account activated` state whose `Set up MFA` button points at
  * `/admin/profile#security` — the enrolment surface Part 4 ships (until then
- * the Task 43 guard bounces unenrolled staff back to the login, which is the
+ * the an earlier iteration guard bounces unenrolled staff back to the login, which is the
  * documented interim behaviour).
  *
  * Any preview failure other than a still-running query shows the invalid

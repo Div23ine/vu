@@ -3,12 +3,12 @@
 import { create } from 'zustand';
 
 /**
- * Onboarding wizard store (Task 64) — in-memory only.
+ * Onboarding wizard store — in-memory only.
  *
  * RHF holds the field VALUES (one form for the whole wizard, per the spec);
  * this store holds the piece of state that is not a field: the current
  * `step`. Keeping it outside the form lets the stepper, the action bar and
- * the panels (and Task 65's submit flow, which jumps back to step 1 on
+ * the panels (and an earlier iteration's submit flow, which jumps back to step 1 on
  * `422 email_mismatch`) share one source of truth. No browser storage, ever.
  */
 

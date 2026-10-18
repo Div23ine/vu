@@ -2,7 +2,11 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+<<<<<<< HEAD
 import { ContactBody, ConsentBody } from '@vunvault/contracts';
+=======
+import { ContactBody, ConsentBody, OpenToolSchema, WaitlistBodySchema } from '@vunvault/contracts';
+>>>>>>> 4e5dbed (refactor: updated)
 import { AUDITED, audited } from '../../../audit/audited.js';
 import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 import type { Tx } from '../../../plugins/db.js';
@@ -207,10 +211,63 @@ const publicRoutes: FastifyPluginAsync<PublicRoutesOptions> = async (fastify, op
           userAgent: request.headers['user-agent'] ?? null,
         });
 
+        // The cookie carries the POLICY VERSION, not a flag: when the terms or
+        // privacy policy change and the version bumps, stored older decisions
+        // stop matching and the banner asks again. Readable (not HttpOnly)
+        // because the consent store checks it before first paint.
+        reply.setCookie('vv_consent', body.policyVersion, {
+          httpOnly: false,
+          secure: app.env.NODE_ENV !== 'development',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 31536000,
+          domain: app.env.COOKIE_DOMAIN === '' ? undefined : app.env.COOKIE_DOMAIN,
+        });
+
         return reply.status(204).send(null);
       },
     ),
   );
+
+  // ------------------------------------------------------------ open tools
+  /** Public read of the open-tooling catalogue; `fileUrl` may be null while a
+   *  tool's artifact is unpublished — the web UI then offers its waitlist. */
+  app.get('/tools', {
+    schema: {
+      response: {
+        200: z.object({
+          data: z.array(
+            z.object({
+              id: OpenToolSchema.shape.id,
+              name: OpenToolSchema.shape.name,
+              summary: OpenToolSchema.shape.summary,
+              tags: OpenToolSchema.shape.tags,
+              sizeLabel: OpenToolSchema.shape.sizeLabel,
+              fileUrl: OpenToolSchema.shape.fileUrl,
+              icon: OpenToolSchema.shape.icon,
+            }),
+          ),
+        }),
+      },
+    },
+    handler: async (_request, reply) => {
+      const tools = await repoFor().listOpenTools();
+      return reply.status(200).send({ data: tools });
+    },
+  });
+
+  // --------------------------------------------------------------- waitlist
+  /** Anonymous signup for a tool launch or a coming-soon page. Idempotent:
+   *  a duplicate address+topic is swallowed, exactly like the newsletter. */
+  app.post('/waitlist', {
+    config: { rateLimitPolicy: 'public_form' },
+    schema: { body: WaitlistBodySchema, response: { 202: z.object({}) } },
+    handler: async (request, reply) => {
+      const body = WaitlistBodySchema.parse(request.body);
+      await repoFor().joinWaitlist(body.email, body.topic ?? '');
+      return reply.status(202).send({});
+    },
+  });
 };
 
 export default fp(publicRoutes, { name: 'public-routes' });

@@ -11,15 +11,15 @@ import { toast } from '@vunvault/ui';
 import { useClientProfile, useUpdateClientProfile } from '../_hooks/use-client-profile';
 
 /**
- * Profile form (Task 68) — one RHF form over the two prototype cards
+ * Profile form — one RHF form over the two design cards
  * (Personal Details + Company Details), saved through
  * `PATCH /api/v1/profile` with the contract's `UpdateProfileBody`. The
- * prototype's localStorage persistence is replaced by the API; the work
+ * design's localStorage persistence is replaced by the API; the work
  * email is server-owned and renders read-only (`aria-readonly`), never in
  * the PATCH body.
  *
- * Validation: the prototype's combined `Please complete name, role and
- * email` is split into the planner's per-field messages (`Please enter your
+ * Validation: the design's combined `Please complete name, role and
+ * email` is split into the spec's per-field messages (`Please enter your
  * full name.` / `Please enter your job title.`); the remaining messages are
  * the contract defaults. `400 validation_failed` maps the Zod `details`
  * paths onto fields.
@@ -27,7 +27,7 @@ import { useClientProfile, useUpdateClientProfile } from '../_hooks/use-client-p
  * Dirty-state guard: both Save buttons stay disabled until the form is
  * dirty, and a `beforeunload` warning protects a dirty form (removed on
  * save/unmount). After a save the company card's footer flips to
- * `Last saved just now` (the prototype's `· stored locally on this device`
+ * `Last saved just now` (the design's `· stored locally on this device`
  * tail is dropped — it is no longer true).
  */
 
@@ -44,7 +44,7 @@ type ProfileFormValues = z.input<typeof profileFormSchema>;
 
 const INDUSTRY_ORDER = Object.keys(INDUSTRY_LABELS) as Industry[];
 
-/** `18 Aug 2026, 09:14 UTC` — the prototype's footer stamp (authored format). */
+/** `18 Aug 2026, 09:14 UTC` — the design's footer stamp (authored format). */
 function formatUpdatedStamp(iso: string): string {
   const date = new Date(iso);
   const months = [

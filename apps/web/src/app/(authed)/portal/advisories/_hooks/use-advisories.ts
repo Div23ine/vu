@@ -3,13 +3,13 @@ import type { ClientAdvisory } from '@vunvault/contracts';
 import { apiGet, apiPost } from '../../../../../lib/api';
 
 /**
- * Portal advisories hooks (Task 70) — the client zero-day feed built in
- * Task 38. The API serves only published advisories matched to the caller's
+ * Portal advisories hooks — the client zero-day feed built in
+ * an earlier iteration. The API serves only published advisories matched to the caller's
  * organisation (a retracted advisory is omitted — it never reaches the UI),
  * and acknowledge is idempotent per organisation.
  *
  * `queryKeys` (packages/lib) has no advisories entry yet and this task must
- * not touch packages/lib, so the key lives here — the Task 67
+ * not touch packages/lib, so the key lives here — the an earlier iteration
  * `SECURITY_STATUS_KEY` precedent.
  *
  * No `'use client'` directive (the `use-login.ts` pattern): only client

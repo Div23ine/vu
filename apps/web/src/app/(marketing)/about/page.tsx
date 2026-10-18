@@ -7,11 +7,11 @@ import { AboutTeam } from './_components/team';
 import { AboutTelemetry } from './_components/telemetry';
 
 /**
- * `/about` (Task 53) — hero → mission → pillars → team → telemetry →
+ * `/about` — hero → mission → pillars → team → telemetry →
  * get started. `<AboutTeam />` and `<AboutTelemetry />` are null stubs until
- * Task 53b overwrites them; the route already renders them in their final
+ * an earlier iteration overwrites them; the route already renders them in their final
  * positions. The marketing layout supplies header/footer (footer variant
- * `company` is derived from the pathname — Task 44).
+ * `company` is derived from the pathname — an earlier iteration).
  */
 
 export const metadata: Metadata = {

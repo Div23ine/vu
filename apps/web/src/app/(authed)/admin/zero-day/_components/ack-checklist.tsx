@@ -5,7 +5,7 @@ import type { BroadcastAck } from '@vunvault/contracts';
 import { BROADCAST_ACK_LABELS } from '@vunvault/contracts';
 
 /**
- * Pre-Broadcast Acknowledgement (Task 82) — the five gates that unlock an
+ * Pre-Broadcast Acknowledgement — the five gates that unlock an
  * emergency broadcast, titles and descriptions verbatim from the contract's
  * `BROADCAST_ACK_LABELS`.
  *

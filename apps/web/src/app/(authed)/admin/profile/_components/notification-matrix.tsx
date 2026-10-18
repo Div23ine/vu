@@ -10,7 +10,7 @@ import {
 } from '@vunvault/contracts';
 
 /**
- * Notification channel matrix (Task 83d) — the 11 contract events grouped into
+ * Notification channel matrix — the 11 contract events grouped into
  * the contract's own four groups, crossed with the four channels.
  *
  * Titles, descriptions and group names come straight from

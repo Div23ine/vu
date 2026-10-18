@@ -2,9 +2,9 @@ import Link from 'next/link';
 import '../_styles/billing.css';
 
 /**
- * Billing hero (Task 66) — the verbatim eyebrow/title/sub from the prototype.
+ * Billing hero — the verbatim eyebrow/title/sub from the design.
  * Purely presentational; no directive, so the server page renders it directly.
- * Task 73 adds the `My licences` link button to `/portal/licences`.
+ * an earlier iteration adds the `My licences` link button to `/portal/licences`.
  */
 export function BillingHero() {
   return (

@@ -6,9 +6,9 @@ import { CategoryPills, type CategoryPillValue } from './category-pills';
 import '../_styles/blog.css';
 
 /**
- * Blog hero (Task 56) — eyebrow, title, the debounced search and the result
+ * Blog hero — eyebrow, title, the debounced search and the result
  * counter. The search input keeps a local value and propagates it 250 ms
- * after the last keystroke (the catalogue's debounce), so typing never
+ * after the last keystroke (the spec's debounce), so typing never
  * request-storms the API.
  */
 

@@ -1,7 +1,7 @@
 'use client';
 
 /* The avatar is a remote, user-owned image; see `avatar-uploader.tsx` for why
-   it is a plain <img> (and why an SVG must never be inlined here). */
+  it is a plain <img> (and why an SVG must never be inlined here). */
 /* eslint-disable @next/next/no-img-element */
 import { Calendar, Clock, ShieldCheck, UserCheck, Users } from 'lucide-react';
 import type { ProfileSettings } from '@vunvault/contracts';
@@ -10,7 +10,7 @@ import { formatMonthYear, formatRelativeActive } from '@vunvault/lib';
 import { initialsOf } from '../_hooks/use-account-settings';
 
 /**
- * Identity header (Task 83c) — the administrator's own card.
+ * Identity header — the administrator's own card.
  *
  * Every value is read from `ProfileSettings`: the name is `firstName` +
  * `lastName`, the role line is `ROLE_LABELS[role]`, member-since is
@@ -18,7 +18,7 @@ import { initialsOf } from '../_hooks/use-account-settings';
  * string, last sign-in is `formatRelativeActive(lastSignInAt)` and the session
  * count is `activeSessions`.
  *
- * DEVIATION (documented): the prototype's meta line reads
+ * DEVIATION (documented): the design's meta line reads
  * `Super Administrator · Incident Commander`. `ProfileSettings` has no
  * incident-commander flag and the plan's decision #8 says the label is not
  * shown, so the middle slot carries the member-since date instead — the header

@@ -6,7 +6,7 @@ import { homeFor } from '../../lib/permissions';
 import { useSession } from '../../lib/session';
 
 /**
- * 403 (Task 43). The escape link points at the visitor's own landing route —
+ * 403 . The escape link points at the visitor's own landing route —
  * `homeFor(role)` — because "back" is exactly where they just came from and
  * was denied. A client component: the role comes from the session query.
  * While the session is still unknown (or absent), the client portal is the

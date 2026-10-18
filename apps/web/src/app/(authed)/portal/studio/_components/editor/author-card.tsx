@@ -6,9 +6,9 @@ import { useSession } from '../../../../../../lib/session';
 import '../../_styles/editor.css';
 
 /**
- * Author card (Task 72) — from the session: initials avatar, display name,
+ * Author card — from the session: initials avatar, display name,
  * the `Verified Blogger` chip with its verbatim tooltip, the verbatim byline
- * promise and the profile deep-link. The prototype's fixed demo bio has no
+ * promise and the profile deep-link. The design's fixed demo bio has no
  * field in `SessionUser` and is deliberately not rendered.
  */
 

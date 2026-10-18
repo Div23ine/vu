@@ -3,15 +3,14 @@ import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { PLANS } from '../_components/pricing-data';
-import { AcademyStrip } from './_components/academy-strip';
 import { RequestBand } from './_components/request-band';
 import { ServicesPricing } from './_components/services-pricing';
 
 /**
- * Services page B tests (Task 54b).
+ * Services page B tests .
  *
- * Per the catalogue's Behaviour + Tests (see the component header for the
- * resolved markup conflict): the section renders the three shared Task 51
+ * Per the spec's Behaviour + Tests (see the component header for the
+ * resolved markup conflict): the section renders the three shared an earlier iteration
  * plans — `$299`, `$899`, `$2,499` — and every CTA carries the
  * penetration-testing category query.
  */
@@ -75,24 +74,6 @@ describe('ServicesPricing', () => {
     for (const cta of Array.from(ctas)) {
       expect(cta.getAttribute('href')).toBe(CONTACT_HREF);
     }
-  });
-});
-
-describe('AcademyStrip', () => {
-  it('renders the banner verbatim and links to the academy', () => {
-    render(<AcademyStrip />);
-    expect(screen.getByText('VUNVAULT Academy')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Upskill your in-house engineering team' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Hands-on modules on secure coding practice, real-world attack vectors/),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Explore Training Tracks/ })).toHaveAttribute(
-      'href',
-      '/academy',
-    );
-    expect(document.getElementById('academy')).not.toBeNull();
   });
 });
 

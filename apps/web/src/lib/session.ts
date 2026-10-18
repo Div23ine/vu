@@ -40,9 +40,9 @@ export interface UseSession {
 
 /**
  * Roles that reach the admin Command Center. Exactly the six staff roles —
- * everyone who is not a `client`. (Task 43 promotes this set into
+ * everyone who is not a `client`. (an earlier iteration promotes this set into
  * `src/lib/permissions.ts` for the middleware; the session hook keeps its own
- * copy because Task 42 must not create Task 43's files.)
+ * copy because an earlier iteration must not create an earlier iteration's files.)
  */
 const STAFF_ROLES: ReadonlySet<UserRole> = new Set<UserRole>([
   'super_admin',

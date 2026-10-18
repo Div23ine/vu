@@ -10,18 +10,18 @@ import {
 } from '../_lib/scan-stream-reducer';
 
 /**
- * The scan terminal's WebSocket client (Task 96), talking to the Task 95 relay.
+ * The scan terminal's WebSocket client , talking to the an earlier iteration relay.
  *
  * Three rules, all inherited from the relay's contract:
  *
- *  1. Cookies authenticate the handshake — the URL carries the job id and (on
- *     reconnect) `after=<lastSeq>`, and NEVER a token.
- *  2. Every inbound frame is parsed with `ScanStreamFrame` before the reducer
- *     sees it; an invalid frame is ignored, not thrown on.
- *  3. The outbound direction is `sendControl` and nothing else: the hook
- *     exposes no generic send, so no caller can put an un-whitelisted frame on
- *     the wire even by accident. The JSON is built from a value that has
- *     already passed `ScanClientMessage`.
+ * 1. Cookies authenticate the handshake — the URL carries the job id and (on
+ *  reconnect) `after=<lastSeq>`, and NEVER a token.
+ * 2. Every inbound frame is parsed with `ScanStreamFrame` before the reducer
+ *  sees it; an invalid frame is ignored, not thrown on.
+ * 3. The outbound direction is `sendControl` and nothing else: the hook
+ *  exposes no generic send, so no caller can put an un-whitelisted frame on
+ *  the wire even by accident. The JSON is built from a value that has
+ *  already passed `ScanClientMessage`.
  *
  * Reconnection is the client's job here (unlike the audit SSE, where the
  * browser's `EventSource` owns it): a raw `WebSocket` does not retry, so the

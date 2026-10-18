@@ -1,9 +1,9 @@
 /**
- * Contact Inbox stylesheet (Task 83e).
+ * Contact Inbox stylesheet .
  *
- * This page is PLANNER-AUTHORED — there is no prototype CSS block for it — so
+ * This page is AUTHORED — there is no design CSS block for it — so
  * every rule here is authored, following the shared admin classes from
- * `admin-shared.css` (Task 75, imported via `AdminPageHead`) and the `cm-*` /
+ * `admin-shared.css` (an earlier iteration, imported via `AdminPageHead`) and the `cm-*` /
  * `ps-*` families the neighbouring admin pages establish.
  *
  * Token substitutions as everywhere else: `#ffffff` → `--white`,

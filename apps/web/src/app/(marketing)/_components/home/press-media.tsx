@@ -3,12 +3,12 @@ import { FileText, Mail, Quote } from 'lucide-react';
 import '../../_styles/home-end.css';
 
 /**
- * Press & Media section (Task 52). Server component, static copy — verbatim
- * from the prototype, including the featured commentary blockquote.
+ * Press & Media section . Server component, static copy — verbatim
+ * from the design, including the featured commentary blockquote.
  *
- * `Contact Press Office` is the prototype's mailto; `Request a Report` routes
+ * `Contact Press Office` is the design's mailto; `Request a Report` routes
  * to the contact form with the penetration-testing category preselected
- * (Task 57 reads the query).
+ * (an earlier iteration reads the query).
  */
 export function PressMedia() {
   return (

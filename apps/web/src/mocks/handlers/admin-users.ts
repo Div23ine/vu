@@ -4,27 +4,27 @@ import { TEAM_LABELS } from '@vunvault/contracts';
 import { staffMembers, staffSummary } from '@vunvault/contracts/fixtures/users';
 
 /**
- * Admin user-management mock handlers (Task 79).
+ * Admin user-management mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock
- * mode. The Task 19 catalogue fixtures ARE the roster (ten staff members
+ * mode. The an earlier iteration catalog fixtures ARE the roster (ten staff members
  * across every status/MFA combination) and the summary; the list endpoint
  * applies the real filter semantics (`q` over name, email, scope and team
  * label; exact `role`/`status`; `mfa=enrolled|not_enrolled`; `page` /
  * `pageSize` slicing) so the URL-driven toolbar is exercised end to end.
  *
  * Registration order matters: `index.ts` spreads these handlers BEFORE the
- * Task 77 `admin-scans.ts` set, so this file's `GET /api/v1/admin/users`
+ * an earlier iteration `admin-scans.ts` set, so this file's `GET /api/v1/admin/users`
  * supersedes the roster handler that parked there for the reviewer select
  * (same fixture data, real filtering). The writes mutate a module-level
  * copy; tests reset it through `resetAdminUsers()`.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 30):
- *   GET   /api/v1/admin/users?…          → 200 { data: StaffMember[]; total }
- *   GET   /api/v1/admin/users/summary    → 200 { data: StaffSummary }
- *   POST  /api/v1/admin/users/:id/suspend | /reactivate | /enforce-mfa → 200 { data }
- *   PATCH /api/v1/admin/users/:id/role   → 200 { data }
- *   DELETE /api/v1/admin/users/:id       → 204
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET  /api/v1/admin/users?…     → 200 { data: StaffMember[]; total }
+ * GET  /api/v1/admin/users/summary  → 200 { data: StaffSummary }
+ * POST /api/v1/admin/users/:id/suspend | /reactivate | /enforce-mfa → 200 { data }
+ * PATCH /api/v1/admin/users/:id/role  → 200 { data }
+ * DELETE /api/v1/admin/users/:id    → 204
  */
 
 let members: StaffMember[] = staffMembers.map((member) => ({ ...member }));

@@ -1,23 +1,23 @@
 /**
- * Client-portal chrome stylesheet (Task 45) — hamburger, mobile drawer, the
+ * Client-portal chrome stylesheet — hamburger, mobile drawer, the
  * Request PenTest CTA, the portal footer and the `vbb-*` dialog form chrome,
- * reproduced from the prototype's CSS. Every value with a design token uses
+ * reproduced from the design's CSS. Every value with a design token uses
  * `var(--token)`; one-off literals (the CTA's dark ink `#04121f`, the drawer's
  * link colour, its border tints) have no token and are allowed inside this
  * file only — never in TSX.
  *
  * Two authored additions, both marked below:
- *  - `.vbb-hint` / `.vbb-error`: the prototype styles these in a sheet the
- *    catalogue did not embed; minimal token-based styles are provided.
- *  - the shared drawer-item rules also target `<button>`: the drawer's
- *    "+ Request PenTest" item is a real button in the app (the prototype used
- *    an `href="#modal"` anchor with `role="button"`), and it must look
- *    identical to its siblings.
+ * - `.vbb-hint` / `.vbb-error`: the design styles these in a sheet the
+ * catalog did not embed; minimal token-based styles are provided.
+ * - the shared drawer-item rules also target `<button>`: the drawer's
+ * "+ Request PenTest" item is a real button in the app (the design used
+ * an `href="#modal"` anchor with `role="button"`), and it must look
+ * identical to its siblings.
  *
  * The select chevron data-URI keeps its literal brand hex: `var()` cannot be
  * interpolated inside a `url("data:…")` string. Everything else is tokenised.
  *
- * Reduced motion: the prototype's own block is reproduced at the bottom, and
+ * Reduced motion: the design's own block is reproduced at the bottom, and
  * the global fallback in `@vunvault/ui`'s `motion.css` collapses every other
  * transition; all states here are class-driven, so nothing breaks without
  * motion.
@@ -435,7 +435,7 @@
   }
 }
 
-/* Prototype reduced-motion block, verbatim (covers later portal tasks too). */
+/* Design reduced-motion block, verbatim (covers later portal tasks too). */
 @media (prefers-reduced-motion: reduce) {
   .vbb-modal,
   .vbb-modal-card,

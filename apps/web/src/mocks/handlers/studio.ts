@@ -13,7 +13,7 @@ import {
 import { clientProfile } from '@vunvault/contracts/fixtures/profile';
 
 /**
- * Content Studio mock handlers (Tasks 71 + 72).
+ * Content Studio mock handlers (earlier iterations + 72).
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock
  * mode. The standing state is the fixture client (Jane Wanjiru) WITH the
@@ -21,27 +21,27 @@ import { clientProfile } from '@vunvault/contracts/fixtures/profile';
  * through `server.use` — the badge is a server-side grant, so no mock here
  * may flip it from browser state.
  *
- * The submissions list has no contract fixture (Task 20d's fixture set
+ * The submissions list has no contract fixture (an earlier iteration's fixture set
  * predates the client studio view), so the mock synthesises a deterministic
  * seed covering every content status — schema-checked with `StudioItem.parse`
  * so mock and contract cannot drift. Two entries carry reviewer notes
  * (changes_requested + rejected) and the first draft has a `null` title (the
  * table's `Untitled article` fallback).
  *
- * Task 72 adds the draft lifecycle on a mutable copy of the seed: create /
+ * an earlier iteration adds the draft lifecycle on a mutable copy of the seed: create /
  * update (409 `not_editable` once submitted), delete, submit with the real
  * readiness gate (422 `not_ready` carrying the six booleans in `details[0]`,
  * exactly the API's envelope) and the presigned image-upload URL. Tests reset
  * the mutable state through `resetStudioDrafts()`.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 36):
- *   GET    /api/v1/studio/status                → 200 { data: StudioStatus }
- *   GET    /api/v1/studio/submissions           → 200 { data: StudioItem[]; total } | 403 badge_required
- *   POST   /api/v1/studio/drafts                → 201 { data: StudioItem }
- *   PUT    /api/v1/studio/drafts/:id            → 200 { data: StudioItem } | 409 not_editable
- *   DELETE /api/v1/studio/drafts/:id            → 204
- *   POST   /api/v1/studio/drafts/:id/submit     → 200 { data: StudioItem } | 422 not_ready
- *   POST   /api/v1/studio/images/upload-url     → 200 { data: { uploadUrl; objectKey; publicUrl; expiresAt } }
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET  /api/v1/studio/status        → 200 { data: StudioStatus }
+ * GET  /api/v1/studio/submissions      → 200 { data: StudioItem[]; total } | 403 badge_required
+ * POST  /api/v1/studio/drafts        → 201 { data: StudioItem }
+ * PUT  /api/v1/studio/drafts/:id      → 200 { data: StudioItem } | 409 not_editable
+ * DELETE /api/v1/studio/drafts/:id      → 204
+ * POST  /api/v1/studio/drafts/:id/submit   → 200 { data: StudioItem } | 422 not_ready
+ * POST  /api/v1/studio/images/upload-url   → 200 { data: { uploadUrl; objectKey; publicUrl; expiresAt } }
  */
 
 export const studioStatus: StudioStatus = {

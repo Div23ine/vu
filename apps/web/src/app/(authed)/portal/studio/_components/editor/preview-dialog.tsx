@@ -2,16 +2,16 @@
 
 import { Eye, Send } from 'lucide-react';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@vunvault/ui';
-// Task 56's closed markdown renderer — imported from the marketing blog per
-// the Task 72 spec ("import from the marketing blog components"); it is a
+// an earlier iteration's closed markdown renderer — imported from the marketing blog per
+// the an earlier iteration spec ("import from the marketing blog components"); it is a
 // named export there, so no copy into src/components is needed.
 import { SafeMarkdown } from '../../../../../(marketing)/blog/_components/safe-markdown';
 import '../../_styles/editor.css';
 
 /**
- * Preview dialog (Task 72) — the reader preview rendered from the current
+ * Preview dialog — the reader preview rendered from the current
  * draft with `SafeMarkdown` (never `dangerouslySetInnerHTML`). The
- * prototype's `Publish Post` footer button becomes `Submit for Review`,
+ * design's `Publish Post` footer button becomes `Submit for Review`,
  * gated on the required readiness items. Radix (through the shared `Dialog`)
  * supplies `role="dialog"`, `aria-modal`, the focus trap and Escape-to-close.
  */

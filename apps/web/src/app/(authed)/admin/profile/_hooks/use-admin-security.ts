@@ -8,17 +8,17 @@ import type {
 import { apiDelete, apiGet, apiPost, apiPut } from '../../../../../lib/api';
 
 /**
- * Admin account-security hooks (Task 83d) — the parts of the administrator's
+ * Admin account-security hooks — the parts of the administrator's
  * own account that the client Password Manager does NOT already cover: the
  * device-session list with its per-row revoke, the sign-out-everyone-else
  * action, the deactivation request and the notification channel matrix.
  *
  * Password, TOTP, hardware keys and recovery codes are deliberately absent:
- * Task 67's portal hooks already own them and this task IMPORTS those
+ * an earlier iteration's portal hooks already own them and this task IMPORTS those
  * components rather than re-implementing them, so a second copy of the same
  * mutation would be a second source of truth.
  *
- * Keys are local (the Task 67 `SECURITY_STATUS_KEY` precedent) because
+ * Keys are local (the an earlier iteration `SECURITY_STATUS_KEY` precedent) because
  * packages/lib has no session or notification namespace and this task must not
  * add one.
  *
@@ -65,7 +65,7 @@ export function useRevokeOtherSessions() {
 export function useRequestDeactivation() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/deactivation-request
-    //   body { reason } → 202 | 409 already_requested | 422 validation_failed
+    //  body { reason } → 202 | 409 already_requested | 422 validation_failed
     mutationFn: (body: DeactivationRequestBody) =>
       apiPost<void>('/api/v1/account/deactivation-request', body),
   });
@@ -86,7 +86,7 @@ export function useUpdateNotificationPrefs() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): PUT /api/v1/account/notifications
-    //   body NotificationPrefs → 200 { data: NotificationPrefs } | 422 validation_failed
+    //  body NotificationPrefs → 200 { data: NotificationPrefs } | 422 validation_failed
     mutationFn: (body: NotificationPrefs) =>
       apiPut<{ data: NotificationPrefs }>('/api/v1/account/notifications', body),
     onSuccess: () => {

@@ -5,7 +5,7 @@ import { cn } from '@vunvault/lib';
 import type { WizardStep } from '../_store/onboarding-store';
 
 /**
- * Wizard stepper (Task 64) — `<ol aria-label="Onboarding progress">` with the
+ * Wizard stepper — `<ol aria-label="Onboarding progress">` with the
  * panel labels from the markup. State per the spec: `is-active` (brand, with
  * `aria-current="step"`) and `is-done` (green); clicking a PREVIOUS step goes
  * back, future steps are not clickable (plain, non-interactive spans — no

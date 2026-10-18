@@ -3,12 +3,12 @@
 import { ListChecks } from 'lucide-react';
 
 /**
- * Mandatory Editorial Checklist (Task 83) — the five checks a reviewer must
+ * Mandatory Editorial Checklist — the five checks a reviewer must
  * clear before an approval, titles and descriptions verbatim from the
  * reference markup.
  *
- * `@vunvault/contracts` has no editorial-check map (unlike Task 78's
- * `REVIEW_CHECK_LABELS`), so the catalogue lives here and the check state is a
+ * `@vunvault/contracts` has no editorial-check map (unlike an earlier iteration's
+ * `REVIEW_CHECK_LABELS`), so the spec lives here and the check state is a
  * UI-only gate: `ModerationActionBody` carries `{ action, note?, scheduledFor? }`
  * and no checklist payload, which matches the spec — "Approve requires all five
  * checks (UI rule; the API enforces separation of duties)".

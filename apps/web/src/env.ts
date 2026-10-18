@@ -64,7 +64,7 @@ export const PublicEnvSchema = z.object({
   /** Host the CDN serves uploaded and generated images from. */
   NEXT_PUBLIC_R2_HOST: optionalString,
   /**
-   * Stripe publishable key (Task 66). Publishable by design — it tokenises
+   * Stripe publishable key. Publishable by design — it tokenises
    * card fields in the browser; raw card data never reaches VUNVAULT. Absent
    * means stored-card updates are unavailable (the dialog says so).
    */

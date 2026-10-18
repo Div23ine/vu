@@ -9,7 +9,7 @@ import { RiskFlags } from './risk-flags';
 import { RowActions } from './row-actions';
 
 /**
- * Pending Publication Queue table (Task 83).
+ * Pending Publication Queue table .
  *
  * Seven columns exactly as the reference: the content cell (thumbnail, title,
  * summary, slug path), the type chip from `CONTENT_TYPE_LABELS`, the author

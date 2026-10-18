@@ -1,7 +1,7 @@
 /**
- * Portal licences stylesheet (Task 73).
+ * Portal licences stylesheet .
  *
- * Planner-authored page; per the spec the needed billing table/chip rules
+ * Authored page; per the spec the needed billing table/chip rules
  * are COPIED here under the `vbl-` prefix — features never import each
  * other's stylesheets. Token substitutions as in every feature sheet
  * (`--white`, `--ink*`, `--line*`, `--brand*`, `--ok*`, `--danger*`,

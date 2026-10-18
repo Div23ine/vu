@@ -38,13 +38,13 @@ import {
 import './_styles/content.css';
 
 /**
- * `/admin/content` (Task 83) — Pre-Publication Review Queue: the summary tiles,
+ * `/admin/content` — Pre-Publication Review Queue: the summary tiles,
  * the URL-driven filter toolbar, the queue table with its risk flags and
  * status-driven row actions, the editorial review dialog, and the aside's
  * workflow / distribution / guidelines / activity panels.
  *
  * Client page inside a Suspense boundary: it reads `useSearchParams` (the
- * Task 77/79 precedent), so every filtered view is linkable and the browser
+ * an earlier iteration/79 precedent), so every filtered view is linkable and the browser
  * Back button works.
  *
  * Permission: `content:moderate` gates every write. Without it the queue is
@@ -349,7 +349,7 @@ function ContentView() {
                     <span>Approve All Flag-Free</span>
                   </button>
                   {/* No escalate / remind-all endpoints exist yet; both are the
-                      prototype's seams (the Task 79 `um-export-roster` precedent). */}
+           design's seams (the an earlier iteration `um-export-roster` precedent). */}
                   <button type="button" className="adm-btn adm-btn-dark" id="cm-bulk-escalate">
                     <TriangleAlert size={15} aria-hidden="true" />
                     <span>Escalate Flagged Items</span>
@@ -438,7 +438,7 @@ function ContentView() {
             </div>
             <div className="adm-card-body">
               {/* TODO(backend-contract): no moderation-activity endpoint exists —
-                  the feed stays empty rather than inventing decisions. */}
+         the feed stays empty rather than inventing decisions. */}
               <p className="cm-activity-empty">No editorial decisions recorded yet.</p>
             </div>
           </section>

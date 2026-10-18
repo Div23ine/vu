@@ -1,7 +1,7 @@
 /**
- * Services page stylesheet (Task 54) — hero, sticky section tabs, the inline
+ * Services page stylesheet — hero, sticky section tabs, the inline
  * OSINT CLI terminal and the core-services grid, reproduced from the
- * prototype's CSS. Every tokenised value uses `var(--token)` (`--white`,
+ * design's CSS. Every tokenised value uses `var(--token)` (`--white`,
  * `--paper`, `--r-sm`, `--r-md`, `--r-field`, `--r-full`, `--dark-2`,
  * `--dark-deep`, `--slate-text`, `--slate-muted`, `--font-mono`, `--line*`,
  * `--ink*`, `--brand*`, `--critical`, `--ease`); one-off literals without
@@ -10,12 +10,12 @@
  * file only — never in TSX.
  *
  * AUTHORED additions, marked inline:
- *  - `.vv-svc-tabs*` — the catalogue specifies the sticky tab row's behaviour
- *    and data shape but embeds no markup/CSS for it; it follows the pill idiom
- *    of the marketing nav.
- *  - `.vv-chip` and `.vv-line*` — reproduced from Task 48's scanner sheet so
- *    this page is self-contained (the CLI reuses the engine, and both class
- *    families come with it).
+ * - `.vv-svc-tabs*` — the spec specifies the sticky tab row's behaviour
+ * and data shape but embeds no markup/CSS for it; it follows the pill idiom
+ * of the marketing nav.
+ * - `.vv-chip` and `.vv-line*` — reproduced from an earlier iteration's scanner sheet so
+ * this page is self-contained (the CLI reuses the engine, and both class
+ * families come with it).
  *
  * Reduced motion: the authored block below stops the CLI status pulse and the
  * shake; the global fallback in `@vunvault/ui`'s `motion.css` collapses every
@@ -512,8 +512,8 @@
   }
 }
 
-/* ——— Suggestion chips + log rows (authored copies of Task 48's rules so
-   this page is self-contained) ——— */
+/* ——— Suggestion chips + log rows (authored copies of an earlier iteration's rules so
+  this page is self-contained) ——— */
 .vv-chip {
   padding: 6px 12px;
   font-family: var(--font-mono);
@@ -674,16 +674,16 @@
 }
 
 /* ==========================================================================
-   Task 54b — detailed pricing grid, academy banner, request band (appended
-   per the deliverable). Reference reproduction with token substitutions
-   (`--r-lg`, `--white`, `--dark-abyss`, `--font-mono`, `--slate-muted`,
-   `--grad-brand`, `--line*`, `--ink*`, `--brand*`, `--ease`); one-off
-   literals without tokens (`#9aa8ba`, `#c3ccd8`, `#7d8b9e`, `#04121f`,
-   `#060a10`) stay in CSS only. Blocks identical to Task 54's sheet
-   (`.btn-get-started`, `.vv-kicker`, `.vv-section-title`, `.vv-section-lede`)
-   are NOT duplicated. `.glass-card` is reproduced so this page is
-   self-contained (its other definitions live in the home/about sheets).
-   ========================================================================== */
+  detailed pricing grid, academy banner, request band (appended
+  per the deliverable). Reference reproduction with token substitutions
+  (`--r-lg`, `--white`, `--dark-abyss`, `--font-mono`, `--slate-muted`,
+  `--grad-brand`, `--line*`, `--ink*`, `--brand*`, `--ease`); one-off
+  literals without tokens (`#9aa8ba`, `#c3ccd8`, `#7d8b9e`, `#04121f`,
+  `#060a10`) stay in CSS only. Blocks identical to an earlier iteration's sheet
+  (`.btn-get-started`, `.vv-kicker`, `.vv-section-title`, `.vv-section-lede`)
+  are NOT duplicated. `.glass-card` is reproduced so this page is
+  self-contained (its other definitions live in the home/about sheets).
+  ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .vv-article-card,

@@ -7,10 +7,10 @@ import { useStaffSummary } from '../_hooks/use-users';
 import '../_styles/users.css';
 
 /**
- * Team & access summary tiles (Task 79) — the six KPI tiles, all
+ * Team & access summary tiles — the six KPI tiles, all
  * fixture/API-driven from `GET /admin/users/summary` with the markup's
  * delta lines (the derived pair per the data section: onboarded-this-month
- * and accounts-without-MFA). 403 hides; failures degrade (Task 76 pattern).
+ * and accounts-without-MFA). 403 hides; failures degrade (an earlier iteration pattern).
  */
 
 export function UsersSummary() {

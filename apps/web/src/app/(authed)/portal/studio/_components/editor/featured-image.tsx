@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- the preview shows ARBITRARY
-   author-supplied hosts (the presigned CDN and pasted URLs); next/image
-   cannot optimize unknown remote origins. */
+  author-supplied hosts (the presigned CDN and pasted URLs); next/image
+  cannot optimize unknown remote origins. */
 'use client';
 
 import { useRef, useState } from 'react';
@@ -9,7 +9,7 @@ import { cn } from '@vunvault/lib';
 import '../../_styles/editor.css';
 
 /**
- * Featured image card (Task 72) — drag-drop zone + file input (JPG/PNG/WebP/
+ * Featured image card — drag-drop zone + file input (JPG/PNG/WebP/
  * GIF, ≤ 5 MB — the hook validates and toasts), the hosted-URL field, the
  * preview with its remove button, and the alt-text field. Uploads go through
  * `POST /studio/images/upload-url` → `PUT` to the presigned URL; data URLs

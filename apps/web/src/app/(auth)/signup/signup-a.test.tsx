@@ -14,11 +14,11 @@ import { SignupCard, SIGNUP_COUNTRIES } from './_components/signup-card';
 import { useSignupStore } from './_store/signup-store';
 
 /**
- * Signup page A tests (Task 61) — validation copy, the country list, the
+ * Signup page A tests — validation copy, the country list, the
  * account-type radios, the strength-meter label transitions, and the submit
  * outcomes (202 → dialog store, 409/422 → field errors, 429 → toast).
  *
- * The mock layer has no standing `POST /auth/signup` handler (Task 61's
+ * The mock layer has no standing `POST /auth/signup` handler (an earlier iteration's
  * deliverables do not touch it), so every submit test registers one with
  * `server.use(...)` — exactly the per-test variation `vitest.setup.ts`
  * prescribes.
@@ -125,12 +125,12 @@ describe('SignupCard — copy and layout', () => {
       '/privacy',
     );
     expect(screen.getByText('256-bit encrypted · 2FA protected')).toBeInTheDocument();
-    // Full page, not a dialog (Task 59 planner note for this card family).
+    // Full page, not a dialog (an earlier iteration spec note for this card family).
     expect(document.getElementById('vvSignupCard')?.tagName).toBe('MAIN');
     expect(document.getElementById('vvSignupCard')).not.toHaveAttribute('role');
   });
 
-  it('renders the placeholders from the prototype', () => {
+  it('renders the placeholders from the design', () => {
     renderCard();
     expect(screen.getByLabelText('Full name')).toHaveAttribute('placeholder', 'Jane Wanjiru');
     expect(screen.getByLabelText('Phone number')).toHaveAttribute(
@@ -204,7 +204,7 @@ describe('SignupCard — account type radios', () => {
     const company = within(group).getByRole('radio', { name: /Company/ });
     expect(within(group).getByText('Personal account')).toBeInTheDocument();
     expect(within(group).getByText('Team / organisation')).toBeInTheDocument();
-    // Planner decision: the group defaults to Individual (no required copy).
+    // Spec decision: the group defaults to Individual (no required copy).
     expect(individual).toBeChecked();
     await user.click(company);
     expect(company).toBeChecked();

@@ -53,7 +53,7 @@ import {
 } from './broadcast-dialog';
 
 /**
- * Advisory Editor + Publish Controls (Task 81).
+ * Advisory Editor + Publish Controls .
  *
  * `useAdvisoryEditor` owns the one piece of state the whole desk shares — the
  * RHF form, the id of the advisory being edited (null = create), the saved
@@ -205,7 +205,7 @@ export interface AdvisoryEditorController {
   loadDraftById(id: string): void;
   /** Records that a human — not the CVSS projection — chose the severity. */
   markSeverityManual(): void;
-  /** The advisory the Task 82 dialog is confirming, or null when closed. */
+  /** The advisory the an earlier iteration dialog is confirming, or null when closed. */
   broadcastTarget: BroadcastTarget | null;
   /** Runs the pre-checks, then opens the dialog in `initial` mode. */
   requestBroadcast(): void;
@@ -408,7 +408,7 @@ export function useAdvisoryEditor(): AdvisoryEditorController {
   const [progressId, setProgressId] = useState<string | null>(null);
 
   /**
-   * The pre-checks that run BEFORE the dialog opens (Task 82): the advisory
+   * The pre-checks that run BEFORE the dialog opens : the advisory
    * must already be saved — the endpoint is per-advisory — and must carry the
    * four things a broadcast cannot go out without. The missing items are
    * listed in the spec's own order and joined into the verbatim sentence.
@@ -945,7 +945,7 @@ export function PublishControls({
       </div>
 
       {/* One dialog serves both doors: the Emergency Broadcast button above and
-          the published table's Re-broadcast (which sets `mode` accordingly). */}
+     the published table's Re-broadcast (which sets `mode` accordingly). */}
       {canBroadcast ? (
         <BroadcastDialog
           target={controller.broadcastTarget}

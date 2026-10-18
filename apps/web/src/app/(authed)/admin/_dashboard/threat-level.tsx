@@ -9,11 +9,11 @@ import { formatCount, isForbidden, useDashboardSection } from './use-dashboard';
 import './dashboard.css';
 
 /**
- * Zero-Day Threat Level (Task 76) — the dark composite-index card (meter,
+ * Zero-Day Threat Level — the dark composite-index card (meter,
  * legend, the escalation line at `level >= THREAT_ESCALATION_LEVEL`, the
  * four dl figures) plus the Threats-Blocked 7-day bar figure. Scale steps
  * light up to the current level; the label comes from the API/contract,
- * never from the prototype's stale copy.
+ * never from the design's stale copy.
  */
 
 const SCALE_LEVELS = [1, 2, 3, 4, 5] as const;

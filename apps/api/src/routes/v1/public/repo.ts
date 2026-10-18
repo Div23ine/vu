@@ -38,9 +38,21 @@ export interface BadgeTargetRow {
   verifiedBloggerAt: string | null;
 }
 
+export interface OpenToolRow {
+  id: string;
+  name: string;
+  summary: string;
+  tags: string[];
+  sizeLabel: string | null;
+  fileUrl: string | null;
+  icon: string;
+}
+
 export interface PublicRepo {
   insertContactMessage(input: NewContactMessage): Promise<string>;
   insertConsentRecord(input: NewConsentRecord): Promise<string>;
+  listOpenTools(): Promise<OpenToolRow[]>;
+  joinWaitlist(email: string, topic: string): Promise<void>;
 
   findBadgeTarget(userId: string): Promise<BadgeTargetRow | null>;
   grantBadge(userId: string, grantedBy: string, at: Date): Promise<void>;
@@ -135,6 +147,42 @@ export class SqlPublicRepo implements PublicRepo {
           set verified_blogger_at = null, verified_blogger_by = null, updated_at = now()
         where id = $1::uuid`,
       [userId],
+    );
+  }
+
+  async listOpenTools(): Promise<OpenToolRow[]> {
+    const rows = await this.executor.unsafe<
+      Array<{
+        id: string;
+        name: string;
+        summary: string;
+        tags: string[];
+        size_label: string | null;
+        file_url: string | null;
+        icon: string;
+      }>
+    >(
+      `select id, name, summary, tags, size_label, file_url, icon
+         from open_tools
+        order by sort_order, id`,
+    );
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      summary: row.summary,
+      tags: row.tags,
+      sizeLabel: row.size_label,
+      fileUrl: row.file_url,
+      icon: row.icon,
+    }));
+  }
+
+  async joinWaitlist(email: string, topic: string): Promise<void> {
+    await this.executor.unsafe<[]>(
+      `insert into waitlist_entries (email, topic)
+       values ($1::citext, $2)
+       on conflict (email, topic) do nothing`,
+      [email, topic],
     );
   }
 }

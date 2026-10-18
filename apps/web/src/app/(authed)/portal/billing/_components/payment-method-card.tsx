@@ -8,10 +8,10 @@ import { isNotFound, usePaymentMethod } from '../_hooks/use-billing';
 import { EditPaymentDialog } from './edit-payment-dialog';
 
 /**
- * Payment-method card (Task 66) — the tokenised-card visual plus the Edit
+ * Payment-method card — the tokenised-card visual plus the Edit
  * dialog. Only ever displays what the API stores (brand, last4, expiry,
  * holder): the model cannot carry a PAN. The masked number renders
- * `•••• •••• •••• <last4>` — the prototype's first digit group is not
+ * `•••• •••• •••• <last4>` — the design's first digit group is not
  * derivable from last4 (spec note). A 404 is the `No payment method on file`
  * state whose button opens the same dialog.
  */

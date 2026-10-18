@@ -20,20 +20,20 @@ import { PasswordStrength } from '../../../../(auth)/signup/_components/password
 import { useChangePassword } from '../_hooks/use-security';
 
 /**
- * Change-password card (Task 67) — RHF + Zod on the planner's field errors
+ * Change-password card — RHF + Zod on the spec's field errors
  * (`Enter your current password`, `New password does not meet the
  * requirements`, `Passwords do not match`, `New password must differ from
  * current`), the live `PASSWORD_RULES` checklist (`is-met` + a visually hidden
- * met/not-met word), Task 61's shared `PasswordStrength` meter and the
- * prototype's per-score hint strings. Staff accounts enforce the 14-character
+ * met/not-met word), an earlier iteration's shared `PasswordStrength` meter and the
+ * design's per-score hint strings. Staff accounts enforce the 14-character
  * minimum client-side and show the helper line.
  *
- * The card subtitle stays EXACTLY as the markup has it (planner note): it
+ * The card subtitle stays EXACTLY as the markup has it (spec note): it
  * says VUNVAULT stores only a salted hash — Supabase Auth stores a salted
  * one-way hash.
  */
 
-/** Verbatim per-score hints from the prototype script. */
+/** Verbatim per-score hints from the design script. */
 const STRENGTH_HINTS = [
   'Use 12+ characters with mixed cases, numbers and symbols.',
   'Too easy to guess — add length and variety.',

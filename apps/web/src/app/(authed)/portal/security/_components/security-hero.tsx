@@ -1,7 +1,7 @@
 import '../_styles/security.css';
 
 /**
- * Security hero (Task 67) — the verbatim eyebrow/title/sub. Presentational;
+ * Security hero — the verbatim eyebrow/title/sub. Presentational;
  * no directive, rendered by the server page above the client cards.
  */
 export function SecurityHero() {

@@ -5,13 +5,13 @@ import { SiteHeader } from './_components/site-header';
 
 /**
  * `(marketing)` — the public site: `/`, `/about`, `/services`, `/products`,
- * `/blog`, `/blog/[slug]`, `/contact`, `/academy`.
+ * `/blog`, `/blog/[slug]`, `/contact`.
  * Site chrome: the sticky auth-aware header and the footer whose variant is
  * derived from the route (or passed explicitly). The column is a flex stack
- * so the footer sits at the bottom of a short page without tricks. Task 48
+ * so the footer sits at the bottom of a short page without tricks. an earlier iteration
  * mounts the single Free Scanner dialog instance here; every opener (CTA
  * band, footer link, `data-vv-open-scanner` elements, the
- * `vunvault:open-scanner` event) flips its store. Task 58 adds the
+ * `vunvault:open-scanner` event) flips its store. an earlier iteration adds the
  * cookie-consent banner: it appears on mount (while the consent decision is
  * unknown). The first-load preloader gate was removed — the site now renders
  * content immediately with no intro sequence.

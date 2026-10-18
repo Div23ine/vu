@@ -23,7 +23,7 @@ import {
 import { useModerationAction } from '../_hooks/use-moderation';
 
 /**
- * Queue row actions (Task 83).
+ * Queue row actions .
  *
  * The action set follows the item's status exactly as the reference pairs them:
  * pending → `Review` + `Approve`, in review → `Continue Review` + `Approve`,
@@ -40,7 +40,7 @@ import { useModerationAction } from '../_hooks/use-moderation';
  *
  * DEVIATION (documented): `Reopen` and `Archive` appear in the reference for
  * rejected items, but `CONTENT_REVIEW_ACTIONS` has no such member — all six
- * actions are already spoken for. Per the plan's decision #5 ("some prototype
+ * actions are already spoken for. Per the plan's decision #5 ("some design
  * actions have no API and are rendered disabled with a tooltip") they render
  * disabled rather than inventing an endpoint.
  */

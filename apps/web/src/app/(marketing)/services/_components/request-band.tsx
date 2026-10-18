@@ -1,9 +1,9 @@
 import '../_styles/services.css';
 
 /**
- * Request-assessment band (Task 54b) — replaces the Task 54 stub. The glass
+ * Request-assessment band — replaces the an earlier iteration stub. The glass
  * card closing the page: mailto with the pre-filled subject exactly as the
- * prototype encodes it, the WhatsApp deep link, and the trust line. Server
+ * design encodes it, the WhatsApp deep link, and the trust line. Server
  * component; both anchors are external schemes (mailto/wa.me), so they stay
  * plain `<a>` elements.
  */

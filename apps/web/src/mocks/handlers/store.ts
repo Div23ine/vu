@@ -9,21 +9,21 @@ import { products } from '@vunvault/contracts/fixtures/store';
 import { formatInvoiceNumber } from '@vunvault/lib';
 
 /**
- * Store mock handlers (Tasks 55 + 73).
+ * Store mock handlers (earlier iterations + 73).
  *
- *   GET  /api/v1/products             → 200 { data: ProductView[]; total }
- *   POST /api/v1/products/:id/purchase → 201 PurchaseResponse | 404
- *   GET  /api/v1/entitlements         → 200 { data: EntitlementView[] }
- *   POST /api/v1/entitlements/:id/download-url
- *                                     → 200 { data: { url; expiresAt } } | 404 | 409 not_available
+ * GET /api/v1/products       → 200 { data: ProductView[]; total }
+ * POST /api/v1/products/:id/purchase → 201 PurchaseResponse | 404
+ * GET /api/v1/entitlements     → 200 { data: EntitlementView[] }
+ * POST /api/v1/entitlements/:id/download-url
+ *                  → 200 { data: { url; expiresAt } } | 404 | 409 not_available
  *
- * The catalogue fixture IS the seeded product table (six licences, USD
+ * The spec fixture IS the seeded product table (six licences, USD
  * cents, `settlementCurrency: "USD"`); every list response is validated
  * against the contract schema so fixture drift fails loudly. Purchases issue
  * a deterministic invoice (`VV-INV-<year>-<000n>` via the shared formatter) —
- * payment itself is Task 66's checkout, never this handler.
+ * payment itself is an earlier iteration's checkout, never this handler.
  *
- * Task 73 adds the client's entitlements: a deterministic three-row seed
+ * an earlier iteration adds the client's entitlements: a deterministic three-row seed
  * (schema-checked with `EntitlementView.parse`) covering the active window,
  * an EXPIRED window and a licence whose product archive is not published
  * (`downloadable: false` → the 409 `not_available` path). Download URLs are

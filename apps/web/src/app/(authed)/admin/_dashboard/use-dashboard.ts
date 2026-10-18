@@ -3,10 +3,10 @@ import { formatDayMonth, isApiError } from '@vunvault/lib';
 import { apiGet } from '../../../../lib/api';
 
 /**
- * Command Center data hooks (Task 76) — one query per dashboard section so a
+ * Command Center data hooks — one query per dashboard section so a
  * failure degrades ONLY that card. `queryKeys` (packages/lib) has no
  * dashboard entry and this task must not touch packages/lib, so the key
- * namespace lives here (the Task 67 precedent).
+ * namespace lives here (the an earlier iteration precedent).
  *
  * Refresh Metrics flips `refreshRequested` and invalidates the namespace:
  * every refetch then carries `?refresh=1`, which bypasses the API's 15 s

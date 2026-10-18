@@ -18,7 +18,7 @@ import { toast } from '@vunvault/ui';
 import { useUpdateProfileSettings } from '../_hooks/use-account-settings';
 
 /**
- * Personal Details panel (Task 83c) — RHF + Zod over the contract's
+ * Personal Details panel — RHF + Zod over the contract's
  * `UpdateProfileSettingsBody`.
  *
  * `Work Email` is rendered read-only and is deliberately NOT in the payload:

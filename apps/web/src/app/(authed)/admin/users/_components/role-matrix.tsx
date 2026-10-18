@@ -4,14 +4,14 @@ import { ROLE_DESCRIPTIONS, ROLE_PERMISSIONS } from '@vunvault/contracts';
 import '../_styles/users.css';
 
 /**
- * Role permission matrix (Task 79b — replaces the Task 79 stub).
+ * Role permission matrix (replaces the an earlier iteration stub).
  *
  * GENERATED from the contract: every cell is
  * `ROLE_PERMISSIONS[role].includes(permission)` — nothing is hard-coded.
  * Column order and short headings are the markup's; the row labels map each
  * capability to its contract permission (the mapping is this file's only
  * judgement call — the contract ships machine keys, the reference shows
- * human labels). The build has no save endpoint for grants (Task 80 owns
+ * human labels). The build has no save endpoint for grants (an earlier iteration owns
  * permission editing), so the cells render read-only; `aria-label`s follow
  * the reference's `<Role> can/cannot <capability>` pattern and the Super
  * Administrator column is the immutable one per the note.

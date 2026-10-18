@@ -22,3 +22,5 @@ export * from './scans.js';
 export * from './store.js';
 export * from './studio.js';
 export * from './users.js';
+export * from './tools.js';
+

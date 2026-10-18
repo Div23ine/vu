@@ -6,20 +6,20 @@ import { AdmKpi } from '../../_components/admin-page-head';
 import { useModerationSummary } from '../_hooks/use-moderation';
 
 /**
- * Content-moderation summary tiles (Task 83) — the six `adm-kpi` tiles that
+ * Content-moderation summary tiles — the six `adm-kpi` tiles that
  * open the queue. Every VALUE is driven by `GET /admin/content/summary` (the
- * Task 76 rule: no prototype number appears in code). A 403 hides the strip;
+ * an earlier iteration rule: no design number appears in code). A 403 hides the strip;
  * any other failure degrades to `Metrics unavailable` + Retry.
  *
  * Three delta lines carry figures the contract does not supply
  * (`ModerationSummary` has no rejection-reason split, no week-on-week review
  * speed and no period-on-period publishing delta). Those lines are the
  * reference's own copy, reproduced verbatim and flagged with a
- * `TODO(backend-contract)` — the same resolution Task 81's first tile uses.
+ * `TODO(backend-contract)` — the same resolution an earlier iteration's first tile uses.
  */
 
 // TODO(backend-contract): add rejectionReasons, reviewSpeedDeltaPct and
-//   publishingDeltaPct to ModerationSummary and derive these three lines.
+//  publishingDeltaPct to ModerationSummary and derive these three lines.
 const REJECTED_DELTA = '2 legal · 1 unsupported claim';
 const REVIEW_TIME_DELTA = '▼ 18% faster this week';
 const PUBLISHED_DELTA = '▲ 12% vs. previous period';

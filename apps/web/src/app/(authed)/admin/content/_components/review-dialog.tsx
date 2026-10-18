@@ -18,9 +18,9 @@ import {
 import { NOTE_MIN, NOTE_TOO_SHORT, reportError, toastFor } from './row-actions';
 
 /**
- * Editorial review dialog (Task 83) — the queue's only door onto a decision.
+ * Editorial review dialog — the queue's only door onto a decision.
  *
- * Structure mirrors Task 78's review gate, because the rule is the same shape:
+ * Structure mirrors an earlier iteration's review gate, because the rule is the same shape:
  * five mandatory checks, a decision, a reviewer note, and a live status line
  * that walks the four verbatim states. `Approve` additionally requires all five
  * checks (the spec's UI rule — the API enforces separation of duties on its own
@@ -209,7 +209,7 @@ export function ReviewDialog({ item, preset, open, onOpenChange }: ReviewDialogP
               </p>
               <div className="cm-preview-tags" id="cm-modal-preview-tags">
                 {/* `ModerationItem` carries no tag list, so the reference's own
-                    placeholder chip is what renders. */}
+          placeholder chip is what renders. */}
                 <span className="cm-preview-tag">no tags</span>
               </div>
             </div>

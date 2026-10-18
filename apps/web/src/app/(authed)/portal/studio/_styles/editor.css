@@ -1,8 +1,8 @@
 /**
- * Content Studio editor stylesheet (Task 72).
+ * Content Studio editor stylesheet .
  *
  * The editor and preview-dialog reference blocks are reproduced here with
- * every `--vg-*` prototype variable translated to this repo's tokens
+ * every `--vg-*` design variable translated to this repo's tokens
  * (`--brand*`, `--ink*`, `--line*`, `--critical`, `--high`, `--ok`, `--dark`,
  * `--r-*`, `--dur`, `--ease`, `--font-mono`, `--slate-muted`, `--white`).
  * Colours with NO token (`#f8fafc`, `#fbfcfd`, `#f1f2f4`, `#d4d7dd`,
@@ -10,11 +10,11 @@
  * the reference itself carries) stay literal in this file only, per the
  * feature-stylesheet exception. `.vbg-btn*` is defined here exactly as the
  * modal's reference block repeats it — the editor page loads this sheet, not
- * Task 71's `studio.css`.
+ * an earlier iteration's `studio.css`.
  *
  * AUTHORED (marked inline): the toolbar, stats row, outline, tag chips,
  * suggestions, author card, the `is-failed` checklist state, focus-visible
- * rings and the reduced-motion block; the modal body/foot rules the planner
+ * rings and the reduced-motion block; the modal body/foot rules the spec
  * truncated ("remaining rules follow the same patterns").
  */
 
@@ -953,8 +953,8 @@
 }
 
 /* ——— Preview dialog internals (reference head + authored body/foot;
-   the Radix `Dialog` primitive owns the backdrop, positioning, focus trap
-   and Escape) ——— */
+  the Radix `Dialog` primitive owns the backdrop, positioning, focus trap
+  and Escape) ——— */
 .vbe-preview {
   padding: 0;
   overflow: hidden;

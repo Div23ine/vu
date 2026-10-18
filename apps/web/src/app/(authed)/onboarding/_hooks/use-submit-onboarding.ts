@@ -4,7 +4,7 @@ import { apiPost } from '../../../../lib/api';
 import type { OnboardingFormValues } from '../_components/onboarding-wizard';
 
 /**
- * Onboarding submission (Task 65) — posts the whole wizard as one
+ * Onboarding submission — posts the whole wizard as one
  * `OnboardingSubmitBody` and maps the form's tolerant input types onto the
  * contract (the empty-string sentinels the controlled inputs use become the
  * contract's `undefined` / literal-`true` members; the resolver has already
@@ -18,8 +18,8 @@ import type { OnboardingFormValues } from '../_components/onboarding-wizard';
 export function useSubmitOnboarding() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/onboarding body { step1; step2; step3 }
-    //   → 201 { data: { completed: true; completedAt: string } } | 400 validation_failed
-    //   | 409 { error: "already_completed" } | 422 { error: "email_mismatch" }
+    //  → 201 { data: { completed: true; completedAt: string } } | 400 validation_failed
+    //  | 409 { error: "already_completed" } | 422 { error: "email_mismatch" }
     mutationFn: (body: OnboardingSubmitBody) =>
       apiPost<{ data: { completed: true; completedAt: string } }>('/api/v1/onboarding', body).then(
         (response) => response.data,

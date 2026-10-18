@@ -1,7 +1,7 @@
 import type { ScanLineKind, ScanStreamFrame, ScanStreamStatus } from '@vunvault/contracts';
 
 /**
- * The scan terminal's protocol reducer (Task 96) — pure, so the whole wire
+ * The scan terminal's protocol reducer — pure, so the whole wire
  * behaviour is testable without a socket.
  *
  * Two invariants carry the security story of the feature. Lines are deduped by

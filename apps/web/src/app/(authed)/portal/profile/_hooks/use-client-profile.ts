@@ -4,7 +4,7 @@ import { queryKeys } from '@vunvault/lib';
 import { apiGet, apiPatch } from '../../../../../lib/api';
 
 /**
- * Client-profile hooks (Task 68). The GET shares its query key with Task 66's
+ * Client-profile hooks . The GET shares its query key with an earlier iteration's
  * billing caption read (`queryKeys.profile()`), so the two pages read one
  * cache entry; the PATCH invalidates the profile AND the session (the header
  * greeting mirrors the display name).
@@ -25,7 +25,7 @@ export function useUpdateClientProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend-contract): PATCH /api/v1/profile body UpdateProfileBody
-    //   → 200 { data: ClientProfile } | 400 validation_failed
+    //  → 200 { data: ClientProfile } | 400 validation_failed
     mutationFn: (body: UpdateProfileBody) =>
       apiPatch<{ data: ClientProfile }>('/api/v1/profile', body).then((response) => response.data),
     onSuccess: () => {

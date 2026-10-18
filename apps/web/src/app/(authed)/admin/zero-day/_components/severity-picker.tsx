@@ -7,7 +7,7 @@ import { cn } from '@vunvault/lib';
 import { SEVERITY_LABELS, SEVERITY_ORDER, cvssBandHint } from '../_lib/cvss';
 
 /**
- * Severity picker (Task 81) — the four radio cards under the `Severity Level`
+ * Severity picker — the four radio cards under the `Severity Level`
  * legend, each labelled with its CVSS band from the contract's
  * `SEVERITY_CVSS_HINTS` so the picker and the database CHECK can never drift.
  *

@@ -6,7 +6,7 @@ import { EmptyState, Skeleton } from '@vunvault/ui';
 import { useAdvisorySummary, useDraftList } from '../_hooks/use-advisories-admin';
 
 /**
- * Open Drafts panel (Task 81) — the intelligence team's work in progress.
+ * Open Drafts panel — the intelligence team's work in progress.
  * Rows come from `GET /admin/advisories/drafts` and carry exactly what the
  * contract's `DraftListItem` supplies: the CVE, the title, the author and the
  * API-computed `note` chip (`Unsaved changes` / `Awaiting reviewer` /

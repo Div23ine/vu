@@ -22,17 +22,17 @@ import { TerminalView } from './terminal-view';
 import '../_styles/terminal.css';
 
 /**
- * The staff live scan terminal (Task 96).
+ * The staff live scan terminal .
  *
  * Staff-only by construction: the relay behind it refuses a `client`-role
- * session before the socket even upgrades (Task 95), so this dialog is only
+ * session before the socket even upgrades , so this dialog is only
  * ever reachable from the admin Scan Queue. What it shows is the controller's
  * already-sanitised output — no target credentials, no raw tool output, no pod
  * names — and the only thing an operator can put back on the wire is one of
  * four whitelisted verbs.
  *
  * `Pause` and `Resume` render disabled with a tooltip rather than being
- * hidden: the controller cannot pause a pod (Task 86), and a control that
+ * hidden: the controller cannot pause a pod , and a control that
  * silently does not exist invites the question of whether the terminal is
  * broken.
  */
@@ -225,8 +225,8 @@ export function ScanTerminalDialog({ job, open, onOpenChange }: ScanTerminalDial
             <span className="vv-term-actions-spacer" />
 
             {/* A disabled button swallows pointer events and cannot be
-                focused, so the explanation rides on the native `title` —
-                the audit page's WORM-snapshot precedent. */}
+        focused, so the explanation rides on the native `title` —
+        the audit page's WORM-snapshot precedent. */}
             <button
               type="button"
               className="vv-term-btn"

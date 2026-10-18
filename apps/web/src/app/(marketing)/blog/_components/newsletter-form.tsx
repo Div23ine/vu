@@ -10,13 +10,13 @@ import { useNewsletterSubscribe } from '../_hooks/use-blog';
 import '../_styles/blog.css';
 
 /**
- * Newsletter signup (Task 56) — RHF + Zod over `NewsletterSubscribeBody`.
+ * Newsletter signup — RHF + Zod over `NewsletterSubscribeBody`.
  *
- * A `202` answers with the planner-authored toast (`Check your inbox` /
+ * A `202` answers with the authored toast (`Check your inbox` /
  * `We sent a confirmation link to your email address.`) and clears the field;
  * the endpoint — and therefore this form — never reveals whether the address
  * already existed. The double opt-in completes on `/newsletter/confirm`
- * (Task 63). Failures colour the fine print `is-err` with the API's own
+ * . Failures colour the fine print `is-err` with the API's own
  * message.
  */
 

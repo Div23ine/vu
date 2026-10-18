@@ -12,7 +12,7 @@ import { server } from '../../../../mocks/server';
 import StudioPage from './page';
 
 /**
- * Content Studio A tests (Task 71) — the spec's list: the unverified user
+ * Content Studio A tests — the spec's list: the unverified user
  * sees the denied copy and NO demo button, the verified user sees the table,
  * the reviewer note shows for `changes_requested` (and `rejected`), and New
  * article navigates to the editor. Plus the verbatim empty state.
@@ -82,7 +82,7 @@ describe('/portal/studio — badge gate', () => {
     );
     expect(screen.getByRole('link', { name: 'Back to Home' })).toHaveAttribute('href', '/');
 
-    // The prototype's demo-grant control and its localStorage note are GONE.
+    // The design's demo-grant control and its localStorage note are GONE.
     expect(screen.queryByText('Enable demo verification')).not.toBeInTheDocument();
     expect(screen.queryByText(/localStorage/)).not.toBeInTheDocument();
     expect(screen.queryByText(/isVerifiedBlogger/)).not.toBeInTheDocument();
@@ -147,7 +147,7 @@ describe('/portal/studio — submissions', () => {
   it('links New article to the editor and gates Edit vs View by status', async () => {
     renderStudio();
 
-    // New article navigates to the (Task 72) editor.
+    // New article navigates to the editor.
     expect(await screen.findByRole('link', { name: 'New article' })).toHaveAttribute(
       'href',
       '/portal/studio/edit/new',

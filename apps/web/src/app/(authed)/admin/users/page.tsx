@@ -17,11 +17,11 @@ import { useStaffRoster, useStaffSummary, type RosterFilters } from './_hooks/us
 import './_styles/users.css';
 
 /**
- * `/admin/users` (Task 79) — User & Access Management: the summary tiles,
+ * `/admin/users` — User & Access Management: the summary tiles,
  * the URL-driven roster (search + role/status/MFA filters) and the
- * `users:manage` row actions. The aside renders the Task 79b slots
+ * `users:manage` row actions. The aside renders the an earlier iteration slots
  * (invitations + role matrix — null stubs for now); `Provision New Member`
- * is the Task 80 dialog seam.
+ * is the an earlier iteration dialog seam.
  *
  * Client page inside a Suspense boundary: it reads `useSearchParams` (the
  * contact-page precedent).

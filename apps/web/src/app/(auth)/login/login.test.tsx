@@ -15,7 +15,7 @@ import { safeNextPath } from './_hooks/use-login';
 import { useMfaDialogStore } from './_store/mfa-dialog-store';
 
 /**
- * Login page tests (Task 59) — validation copy, the success/MFA/401/429
+ * Login page tests — validation copy, the success/MFA/401/429
  * flows, the open-redirect guard, the OAuth start URL, the eye toggle and the
  * `?error=` toast mapping. Logins run through the real api client against the
  * MSW auth handler (fixture people only: the client profile and Reed, the
@@ -80,7 +80,7 @@ describe('LoginCard — copy and layout', () => {
     expect(
       screen.getByText('Secured with 256-bit TLS · Zero-knowledge credential handling'),
     ).toBeInTheDocument();
-    // Full page, not a dialog (planner note).
+    // Full page, not a dialog (spec note).
     expect(document.getElementById('vvLoginCard')?.tagName).toBe('MAIN');
     expect(document.getElementById('vvLoginCard')).not.toHaveAttribute('role');
   });

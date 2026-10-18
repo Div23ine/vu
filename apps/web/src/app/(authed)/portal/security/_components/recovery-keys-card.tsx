@@ -14,7 +14,7 @@ import {
 import { RegenerateDialog } from './regenerate-dialog';
 
 /**
- * Recovery-keys card (Task 67) — the ten single-use codes, shown EXACTLY
+ * Recovery-keys card — the ten single-use codes, shown EXACTLY
  * once. The plaintext codes live only in this component's state: Hide Codes
  * or unmount destroys them, and neither the API nor any storage can bring
  * them back (the server holds SHA-256 digests only). After a reload the card

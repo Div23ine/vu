@@ -4,8 +4,8 @@ import { create } from 'zustand';
 import type { MfaMethod } from '@vunvault/contracts';
 
 /**
- * MFA dialog store — the hand-off point between the login card (Task 59) and
- * the verification dialog (Task 60, which owns and extends this file).
+ * MFA dialog store — the hand-off point between the login card and
+ * the verification dialog (an earlier iteration, which owns and extends this file).
  *
  * `recovery` is a UI-level method: the API enum (`MFA_METHODS`) only carries
  * the three challenge types the login response can offer, while recovery
@@ -42,7 +42,7 @@ export const useMfaDialogStore = create<MfaDialogState>((set) => ({
 }));
 
 /**
- * The call shape the catalogue specifies for Task 59:
+ * The call shape the spec specifies for an earlier iteration:
  * `useMfaDialog().open({ email, methods, next })`.
  */
 export function useMfaDialog() {

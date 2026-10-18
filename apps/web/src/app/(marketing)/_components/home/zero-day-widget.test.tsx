@@ -6,7 +6,7 @@ import { ZERO_DAY_FEED, ZERO_DAY_FOOTNOTE } from './zero-day-data';
 import { ZeroDayWidget } from './zero-day-widget';
 
 /**
- * Zero-Day widget tests (Task 50) — everything runs on fake timers with a
+ * Zero-Day widget tests — everything runs on fake timers with a
  * pinned UTC clock, so the tick, the countdown, the rotation, the flash and
  * the teardown are all deterministic.
  */

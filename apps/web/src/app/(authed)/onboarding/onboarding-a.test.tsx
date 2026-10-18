@@ -14,7 +14,7 @@ import { OnboardingWizard } from './_components/onboarding-wizard';
 import { useOnboardingStore } from './_store/onboarding-store';
 
 /**
- * Onboarding wizard A tests (Task 64) — the verbatim hero + panel copy, the
+ * Onboarding wizard A tests — the verbatim hero + panel copy, the
  * session prefill, the under-16 DOB block, the email-match message, step 2's
  * blocked Continue until a career AND entity are chosen, the stepper state
  * after Back/Next (and the non-clickable future steps), and the completed

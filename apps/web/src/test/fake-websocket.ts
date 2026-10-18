@@ -1,5 +1,5 @@
 /**
- * A hand-driven `WebSocket` stand-in for tests (Task 96).
+ * A hand-driven `WebSocket` stand-in for tests .
  *
  * Stub it with `vi.stubGlobal('WebSocket', FakeWebSocket)`. Every instance
  * records what it was constructed with and everything written to it, and the

@@ -5,11 +5,11 @@ import { env } from '../../../env';
 import '../_styles/auth.css';
 
 /**
- * OAuth buttons (Task 59) — shared by login (this task) and signup (Task 61).
+ * OAuth buttons — shared by login (this task) and signup .
  *
  * Clicking navigates the whole window to the API's provider-start endpoint
  * (a 302 to the provider — never a fetch), carrying the open-redirect-safe
- * `next` path through to the callback. The prototype's
+ * `next` path through to the callback. The design's
  * `OAuth handshake would start here in production.` toast is replaced by the
  * real handshake.
  */

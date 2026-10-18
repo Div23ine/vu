@@ -18,7 +18,7 @@ import { RowActions } from './row-actions';
 import '../_styles/scan-queue.css';
 
 /**
- * Queue table (Task 77) — the shared `DataTable` with row selection, the
+ * Queue table — the shared `DataTable` with row selection, the
  * reference's columns (select, Job/Requested, Target Host, Client Request
  * Info, Type, Payment, Priority, Status/Progress, Review Gate, Actions) and
  * the release-lock footnote. Timestamps are `formatQueueStamp` (UTC); ETAs

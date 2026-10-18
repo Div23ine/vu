@@ -22,7 +22,7 @@ import { server } from '../../../../mocks/server';
 import StudioEditorPage from './edit/[id]/page';
 
 /**
- * Content Studio B tests (Task 72) — the spec's list: autosave fires ONCE
+ * Content Studio B tests — the spec's list: autosave fires ONCE
  * after the 1.5 s debounce and only for titles ≥ 4 chars; the slug follows
  * the title until locked; the tag limit + duplicate messages; image type/
  * size rejections; the upload flow order (url → PUT → state); readiness
@@ -69,7 +69,7 @@ const DRAFT_TEMPLATE = seedById('570d1000-0000-4000-8000-000000000001');
 
 let queryClient: QueryClient;
 
-// `use(params)` suspends, so the mount must flush inside `act` (Task 69).
+// `use(params)` suspends, so the mount must flush inside `act` .
 async function renderEditor(id: string): Promise<RenderResult> {
   queryClient = createQueryClient();
   let view: RenderResult | undefined;

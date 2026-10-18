@@ -25,10 +25,10 @@ import {
 import './_styles/scan-queue.css';
 
 /**
- * `/admin/scan-queue` (Task 77) — the Vulnerability Assessment & Job Queue:
+ * `/admin/scan-queue` — the Vulnerability Assessment & Job Queue:
  * summary tiles, the URL-driven filter toolbar (every view is linkable), the
  * sortable selectable `DataTable`, the bulk bar (which can NEVER release —
- * that is the Task 78 gate decision) and the mandatory-review policy card.
+ * that is the an earlier iteration gate decision) and the mandatory-review policy card.
  *
  * Client page inside a Suspense boundary: it reads `useSearchParams` (the
  * contact-page precedent). The list polls every 15 s while visible.

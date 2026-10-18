@@ -1,8 +1,8 @@
 /**
- * System Audit Logs stylesheet (Task 83b).
+ * System Audit Logs stylesheet .
  *
  * ONLY the rules specific to this page — the shared admin classes live in
- * `admin-shared.css` (Task 75, imported via `AdminPageHead`). Token
+ * `admin-shared.css` (an earlier iteration, imported via `AdminPageHead`). Token
  * substitutions follow every other feature sheet: `#ffffff` → `--white`,
  * `18px`/`12px` radii → `--r-lg`/`--r-field`, `9999px` → `--r-full`, `0.2s` →
  * `--dur`, the mono stack → `--font-mono`, `#070b11` → `--dark-deep`,
@@ -46,7 +46,7 @@
 /* ——— Toolbar ——— */
 .al-toolbar {
   /* `.al-col` already gaps 20px, so the reference's 18px margin is zeroed
-     (the `um-toolbar` precedent). */
+   (the `um-toolbar` precedent). */
   margin-bottom: 0;
   padding: 20px 22px;
   border-radius: var(--r-lg);
@@ -287,7 +287,7 @@
   background: currentColor;
 }
 /* The pulse belongs to the connected state only — a pill that blinks while
-   the socket is down would be lying (Task 93). */
+  the socket is down would be lying . */
 .al-chrome-pill--live.is-live .al-live-dot {
   animation: alPulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -426,8 +426,8 @@
 }
 
 /* AUTHORED — the trail table. The reference truncates at `.al-row`, and the
-   spec's Data section names seven tabular columns, so the console body carries
-   a real table styled for the dark shell (the `adm-card--dark` treatment). */
+  spec's Data section names seven tabular columns, so the console body carries
+  a real table styled for the dark shell (the `adm-card--dark` treatment). */
 .al-table-wrap {
   overflow-x: auto;
   padding: 0 6px;
@@ -590,7 +590,7 @@
 }
 
 /* AUTHORED — the severity chip: ok green, info blue, warning amber,
-   critical red, exactly as the spec names them. */
+  critical red, exactly as the spec names them. */
 .al-sev {
   display: inline-flex;
   align-items: center;
@@ -885,11 +885,11 @@
 }
 
 /* ————————————————————————————————————————————————————————————————
-   Event detail dialog. Reference CSS, token-substituted as above.
-   AUTHORED: `.al-modal-content` (the DialogContent override — Radix owns the
-   positioning the reference's `.al-modal` wrapper did), the header chip row,
-   the hash list with its copy buttons and the chain-link line.
-   ———————————————————————————————————————————————————————————————— */
+  Event detail dialog. Reference CSS, token-substituted as above.
+  AUTHORED: `.al-modal-content` (the DialogContent override — Radix owns the
+  positioning the reference's `.al-modal` wrapper did), the header chip row,
+  the hash list with its copy buttons and the chain-link line.
+  ———————————————————————————————————————————————————————————————— */
 .al-modal-content {
   padding: 0;
   gap: 0;

@@ -10,11 +10,11 @@ import { useStudioSubmissions } from '../_hooks/use-studio';
 import '../_styles/studio.css';
 
 /**
- * My-submissions table (Task 71) — the author's posts on the shared
+ * My-submissions table — the author's posts on the shared
  * `DataTable`: title (with the reviewer note underneath for
  * `changes_requested` / `rejected`), category, the status chip, the updated
  * date and the action (`Edit` for the still-editable statuses, `View`
- * otherwise — both open the Task 72 editor, read-only for `View`).
+ * otherwise — both open the an earlier iteration editor, read-only for `View`).
  */
 
 /** Status chip → semantic family (authored mapping on the chip language). */

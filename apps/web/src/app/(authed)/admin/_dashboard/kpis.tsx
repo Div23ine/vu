@@ -8,8 +8,8 @@ import { formatCount, isForbidden, useDashboardSection } from './use-dashboard';
 import './dashboard.css';
 
 /**
- * KPI strip (Task 76) — the six tiles that open the Command Center, every
- * value API-driven (no prototype number appears in code). A 403 hides the
+ * KPI strip — the six tiles that open the Command Center, every
+ * value API-driven (no design number appears in code). A 403 hides the
  * strip; any other failure degrades to `Metrics unavailable` + Retry.
  */
 

@@ -14,7 +14,7 @@ import { AdminFooter } from './admin-footer';
 import { AdminHeader } from './admin-header';
 
 /**
- * Command Center chrome tests (Task 46).
+ * Command Center chrome tests .
  *
  * Identities are the fixture roster: `mockStaffSession` is Dr. Evelyn Reed
  * (super_admin) and the auditor case maps Grace Wanjiru
@@ -86,7 +86,7 @@ describe('permission-filtered navigation', () => {
     renderChrome();
     const nav = desktopNav();
 
-    // Eight, as the test name has always said: Task 83e added the Contact Inbox
+    // Eight, as the test name has always said: an earlier iteration added the Contact Inbox
     // (`support:handle`), which a super_admin holds.
     await waitFor(() => expect(within(nav).getAllByRole('link')).toHaveLength(8));
     expect(

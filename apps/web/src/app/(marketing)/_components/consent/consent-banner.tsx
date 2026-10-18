@@ -11,7 +11,7 @@ import { CONSENT_POLICY_VERSION, ConsentProvider, useConsentStore } from './cons
 import '../../_styles/consent.css';
 
 /**
- * Cookie consent banner (Task 58) — mounted from the marketing layout.
+ * Cookie consent banner — mounted from the marketing layout.
  *
  * Mount rules: the dialog appears as soon as the layout mounts, unless the
  * decision is already known (the API-set `vv_consent` cookie or an in-memory

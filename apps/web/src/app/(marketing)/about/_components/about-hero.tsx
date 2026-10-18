@@ -7,21 +7,21 @@ import { cn } from '@vunvault/lib';
 import '../_styles/about.css';
 
 /**
- * About hero (Task 53) — headline, dual CTAs and the four-stat strip.
+ * About hero — headline, dual CTAs and the four-stat strip.
  *
  * This file also hosts the page's tiny scroll-reveal hook: the deliverables
  * list no separate hook file, and the hero's stat strip is the first
  * `vv-reveal` consumer.
  *
- * `useReveal()` semantics (per the catalogue):
- *  - the server markup carries NO hidden state — without JS the content is
- *    visible immediately;
- *  - on the client (before first paint) elements arm into `.vv-reveal` and an
- *    IntersectionObserver adds `.is-in` when they scroll into view;
- *  - under `prefers-reduced-motion` (or without IntersectionObserver, e.g.
- *    jsdom) nothing arms: the content is simply visible. (The stylesheet's
- *    reduced-motion block independently forces `.vv-reveal` visible, so both
- *    layers agree.)
+ * `useReveal()` semantics (per the spec):
+ * - the server markup carries NO hidden state — without JS the content is
+ * visible immediately;
+ * - on the client (before first paint) elements arm into `.vv-reveal` and an
+ * IntersectionObserver adds `.is-in` when they scroll into view;
+ * - under `prefers-reduced-motion` (or without IntersectionObserver, e.g.
+ * jsdom) nothing arms: the content is simply visible. (The stylesheet's
+ * reduced-motion block independently forces `.vv-reveal` visible, so both
+ * layers agree.)
  */
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;

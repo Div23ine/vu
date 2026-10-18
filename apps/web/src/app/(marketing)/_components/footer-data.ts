@@ -1,22 +1,27 @@
 /**
- * Footer link sets (Task 44), extracted from the prototype pages verbatim.
+ * Footer link sets , extracted from the design pages verbatim.
  *
- * Label → destination rules given by the catalogue (they OVERRIDE the
- * prototype's own hrefs/buttons, several of which pointed at `*.html` pages or
+ * Label → destination rules given by the spec (they OVERRIDE the
+ * design's own hrefs/buttons, several of which pointed at `*.html` pages or
  * did nothing):
- *   Services → /services · About Us → /about · Contact → /contact ·
- *   Blog → /blog · News → /blog · Pricing & Plans → /services#pricing ·
- *   Request a Report → /contact#contact-form ·
- *   Free Security Scan → opens the scanner dialog (action, Task 48).
- * Every other label has no destination and renders as `<button type="button">`
- * exactly as in the prototype — no navigation, nothing invented.
+ * Services → /services · About Us → /about · Contact → /contact ·
+ * Blog → /blog · News → /blog · Pricing & Plans → /services#pricing ·
+ * Request a Report → /contact#contact-form ·
+ * Free Security Scan → opens the scanner dialog (action) ·
+ * the legal labels → their published pages (/privacy, /terms,
+ * /cookie-policy, /responsible-disclosure) · anchors for the About and
+ * Products sections · portal routes for Checkout / My Account / Zero-Day.
+ * Labels whose pages do not exist yet (/careers, /templates, /breach-watch)
+ * carry their natural path anyway: the unknown-route flow redirects home
+ * with the coming-soon banner and its waitlist, which is the honest answer.
+ * Anything still unmapped renders as `<button type="button">` as designed.
  */
 
 export interface FooterLink {
   label: string;
   /** Internal route; absent for placeholder buttons. */
   href?: string;
-  /** `'scanner'` dispatches the `vunvault:open-scanner` window event (Task 48). */
+  /** `'scanner'` dispatches the `vunvault:open-scanner` window event . */
   action?: 'scanner';
 }
 
@@ -35,6 +40,40 @@ const DESTINATIONS: Readonly<Record<string, string>> = {
   News: '/blog',
   'Pricing & Plans': '/services#pricing',
   'Request a Report': '/contact#contact-form',
+  // Legal — published pages.
+  'Privacy Policy': '/privacy',
+  'Terms of Service': '/terms',
+  'Cookie Policy': '/cookie-policy',
+  'Responsible Disclosure': '/responsible-disclosure',
+  'Press Office': 'mailto:press@vunvault.com',
+  // Anchors into existing sections.
+  Press: '/#press-media',
+  Support: '/contact',
+  'Core Team': '/about#contributors',
+  'Mission & Vision': '/about#mission',
+  'Live Telemetry': '/about#telemetry',
+  'Free Tools': '/products#free-tools',
+  'Free OSINT Tools': '/products#free-tools',
+  'Free Resources': '/products#free-tools',
+  'Premium Catalog': '/products#catalog',
+  'Live Console': '/products',
+  Products: '/products',
+  'Small Business': '/services#core-services',
+  'SACCO & Fintech': '/services#core-services',
+  Enterprise: '/services#core-services',
+  'Security Training': '/services#core-services',
+  'Starter Audit': '/services#pricing',
+  'Advanced VA': '/services#pricing',
+  'Full-Scope Pen Test': '/services#pricing',
+  'Enterprise Retainer': '/services#pricing',
+  // Authenticated product surfaces.
+  Checkout: '/portal/billing',
+  'My Account': '/portal',
+  'Zero-Day Portal': '/portal/advisories',
+  // Not built yet — the coming-soon redirect answers these honestly.
+  Careers: '/careers',
+  Templates: '/templates',
+  'Breach Watch': '/breach-watch',
 };
 
 const SCANNER_LABEL = 'Free Security Scan';
@@ -78,14 +117,14 @@ const COMPANY_COLUMNS: readonly FooterColumn[] = [
 ];
 
 /**
- * services.html — kept verbatim, currently UNSHIPPED: the catalogue defines
+ * services.html — kept verbatim, currently UNSHIPPED: the spec defines
  * four variants and both the About and Services pages request `company`
- * (Tasks 53/54), so the about.html set above is the canonical one and this
+ * , so the about.html set above is the canonical one and this
  * set has no variant to bind to. Exported so the extraction stays complete
  * and a later task can bind it without re-deriving the data.
  */
 export const SERVICES_PAGE_COLUMNS: readonly FooterColumn[] = [
-  column('Resources', ['Blog', 'Zero-Day Portal', 'Free OSINT Tools', 'Academy']),
+  column('Resources', ['Blog', 'Zero-Day Portal', 'Free OSINT Tools']),
   column('Company', ['About Us', 'Contact', 'Services', 'Press']),
   column('Solutions', [
     'Starter Audit',
@@ -123,7 +162,6 @@ export const VARIANT_COLUMNS: Readonly<Record<FooterVariant, readonly FooterColu
 export const FOOTER_BOTTOM_LINKS: readonly { label: string; href: string }[] = [
   { label: 'Top', href: '/' },
   { label: 'Services', href: '/services' },
-  { label: 'Academy', href: '/academy' },
 ];
 
 export const FOOTER_COPYRIGHT = '© 2026 VUNVAULT. All rights reserved.';

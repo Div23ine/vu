@@ -14,7 +14,7 @@ import { ProfileForm } from './_components/profile-form';
 import { ProfileHero } from './_components/profile-hero';
 
 /**
- * Client profile tests (Task 68) — the spec's list: the header shows
+ * Client profile tests — the spec's list: the header shows
  * `VV-CL-48210` and the MSW-served stats, the work email is read-only, the
  * PATCH body matches `UpdateProfileBody`, the success toast + `Last saved
  * just now` footer, the dirty guard disables Save, and a `400
@@ -55,7 +55,7 @@ describe('Profile — identity header', () => {
     expect(screen.getByText('Open Findings')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText('Next Assessment')).toBeInTheDocument();
-    expect(screen.getByText('14 days')).toBeInTheDocument(); // behaviour spec beats the prototype's `14d`
+    expect(screen.getByText('14 days')).toBeInTheDocument(); // behaviour spec beats the design's `14d`
 
     // The four shortcut tiles.
     expect(screen.getByRole('link', { name: /Academy Progress/ })).toHaveAttribute(

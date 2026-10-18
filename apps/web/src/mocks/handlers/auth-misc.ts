@@ -9,10 +9,9 @@ import {
 import { invitations } from '@vunvault/contracts/fixtures/users';
 
 /**
- * Auth-adjacent mock handlers (Task 63): forgot/reset password, the public
+ * Auth-adjacent mock handlers : forgot/reset password, the public
  * invitation preview + acceptance, and the newsletter double-opt-in confirm.
- * (The newsletter SUBSCRIBE route already lives in `newsletter.ts`, Task 56 —
- * only `POST /newsletter/confirm` is added here.)
+ * (The newsletter SUBSCRIBE route already lives in `newsletter.ts`, * only `POST /newsletter/confirm` is added here.)
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock mode.
  * Identities come from the contract fixtures — the first pending invitation
@@ -25,13 +24,13 @@ import { invitations } from '@vunvault/contracts/fixtures/users';
  * `ResetPasswordBody` requires `token.min(32)` — a shorter sentinel could
  * never reach the reset route through the form.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Tasks 31 /
+ * API contract mirrored here (implemented for real in `apps/api`, earlier iterations /
  * 40c / 40d):
- *   POST /api/v1/auth/forgot-password        → 202 {} (always)
- *   POST /api/v1/auth/reset-password         → 204 | 410 { error: "token_invalid" }
- *   GET  /api/v1/invitations/:token          → 200 { data: InvitationPreview } | 404
- *   POST /api/v1/invitations/:token/accept   → 201 { data: SessionUser; mfaEnrolmentRequired: true } | 404
- *   POST /api/v1/newsletter/confirm          → 204 | 404 { error: "not_found" }
+ * POST /api/v1/auth/forgot-password    → 202 {} (always)
+ * POST /api/v1/auth/reset-password     → 204 | 410 { error: "token_invalid" }
+ * GET /api/v1/invitations/:token     → 200 { data: InvitationPreview } | 404
+ * POST /api/v1/invitations/:token/accept  → 201 { data: SessionUser; mfaEnrolmentRequired: true } | 404
+ * POST /api/v1/newsletter/confirm     → 204 | 404 { error: "not_found" }
  */
 
 export const MOCK_INVALID_TOKEN = 'invalid0'.repeat(6);

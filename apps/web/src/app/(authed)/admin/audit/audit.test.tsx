@@ -16,7 +16,7 @@ import { server } from '../../../../mocks/server';
 import AdminAuditPage from './page';
 
 /**
- * System Audit Logs tests (Task 83b) — the spec's list: the summary tiles, the
+ * System Audit Logs tests — the spec's list: the summary tiles, the
  * filters in the URL, the row detail dialog opening from its labelled button,
  * verify success and the mismatch banner, the export download carrying the
  * filter query, the absence of ANY edit/delete control, and the clipboard
@@ -165,7 +165,7 @@ describe('/admin/audit — console and trail', () => {
     await screen.findByText(NEWEST.eventType);
 
     // jsdom has no `EventSource`, so the stream reports the honest fallback
-    // and the Task 83b poll keeps the tail moving (Task 93).
+    // and the an earlier iteration poll keeps the tail moving .
     expect(screen.getByText('POLLING')).toBeInTheDocument();
     expect(screen.getByText('Chain Intact')).toBeInTheDocument();
     expect(screen.getByText(chainStatus.node)).toBeInTheDocument();
@@ -622,7 +622,7 @@ type VerifyShape = {
 };
 
 /**
- * Live tail over SSE (Task 93).
+ * Live tail over SSE .
  *
  * jsdom ships no `EventSource`, so these tests stub the global with a
  * hand-driven fake: the page's hook must pick it up through the SAME code

@@ -1,7 +1,7 @@
 import '../_styles/auth.css';
 
 /**
- * Animated auth background (Task 59) — three drifting orbs, the perspective
+ * Animated auth background — three drifting orbs, the perspective
  * grid and the scanline sweep, all purely decorative (`aria-hidden`). The
  * `prefers-reduced-motion` block in `auth.css` stops every animation.
  */

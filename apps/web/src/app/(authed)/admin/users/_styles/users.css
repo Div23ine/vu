@@ -1,8 +1,8 @@
 /**
- * User & Access Management stylesheet (Task 79).
+ * User & Access Management stylesheet .
  *
  * ONLY the rules specific to this page — the shared admin classes live in
- * `admin-shared.css` (Task 75, imported via `AdminPageHead`). The toolbar /
+ * `admin-shared.css` (an earlier iteration, imported via `AdminPageHead`). The toolbar /
  * input / button families follow the scan-queue reference patterns under the
  * `um-` prefix; token substitutions as in every feature sheet. Literals
  * without tokens (`#f8fafc`, `#fbfcfd` and the rgba() stops the reference
@@ -365,11 +365,11 @@
 }
 
 /* ————————————————————————————————————————————————————————————————
-   Task 79b — invitations panel + role matrix. Reference blocks with the
-   token conversions; AUTHORED (marked inline): the invite action row, the
-   all-invitations link, the matrix table and its check cells, the empty
-   line and the reduced-motion additions.
-   ———————————————————————————————————————————————————————————————— */
+  invitations panel + role matrix. Reference blocks with the
+  token conversions; AUTHORED (marked inline): the invite action row, the
+  all-invitations link, the matrix table and its check cells, the empty
+  line and the reduced-motion additions.
+  ———————————————————————————————————————————————————————————————— */
 
 .um-invites {
   display: flex;
@@ -543,13 +543,13 @@
 }
 
 /* ————————————————————————————————————————————————————————————————
-   Task 80 — provision + permission dialogs. Reference `um-modal-*` blocks
-   with the token conversions (--white, --dark-deep, --slate-muted,
-   --font-mono, --r-lg); the Radix `Dialog` owns backdrop/position/trap, so
-   the shell classes collapse into `.um-modal-content`. AUTHORED (marked
-   inline): the form grid, field helper/error lines, the checklist items,
-   the permission diff columns and the reduced-motion additions.
-   ———————————————————————————————————————————————————————————————— */
+  provision + permission dialogs. Reference `um-modal-*` blocks
+  with the token conversions (--white, --dark-deep, --slate-muted,
+  --font-mono, --r-lg); the Radix `Dialog` owns backdrop/position/trap, so
+  the shell classes collapse into `.um-modal-content`. AUTHORED (marked
+  inline): the form grid, field helper/error lines, the checklist items,
+  the permission diff columns and the reduced-motion additions.
+  ———————————————————————————————————————————————————————————————— */
 
 .um-modal-content {
   padding: 0;

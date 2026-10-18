@@ -13,25 +13,25 @@ import {
 } from './footer-data';
 
 /* Same reasoning as the header's brand block: the operator's static SVG,
- * pixel-identical prototype markup, `next/image` refuses SVGs by default. */
+ * pixel-identical design markup, `next/image` refuses SVGs by default. */
 /* eslint-disable @next/next/no-img-element */
 
 /**
- * Marketing footer (Task 44).
+ * Marketing footer .
  *
- * `variant` picks one of the four prototype link sets; when the layout renders
+ * `variant` picks one of the four design link sets; when the layout renders
  * `<SiteFooter />` bare, the variant is derived from the current route
  * (`variantForPathname`). The `contact` variant is the dark one
  * (`bg-dark text-white`, `border-t border-white/10`); the quick-links bottom
  * row and the copyright line exist on every variant.
  *
  * `Free Security Scan` does not navigate: it dispatches the
- * `vunvault:open-scanner` window event that Task 48's scanner store listens
+ * `vunvault:open-scanner` window event that an earlier iteration's scanner store listens
  * for. Labels without a destination stay `<button type="button">`, exactly as
- * in the prototype.
+ * in the design.
  */
 
-/** The window event that opens the Free Scanner dialog (Task 48 owns the listener). */
+/** The window event that opens the Free Scanner dialog (an earlier iteration owns the listener). */
 export const OPEN_SCANNER_EVENT = 'vunvault:open-scanner';
 
 export interface SiteFooterProps {

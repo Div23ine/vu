@@ -8,7 +8,7 @@ import { Toolbar } from './toolbar';
 import '../../_styles/editor.css';
 
 /**
- * Main-body editor (Task 72) — a plain `<textarea>` over `bodyMd` with the
+ * Main-body editor — a plain `<textarea>` over `bodyMd` with the
  * markdown toolbar, the live Words / Characters / Read-time stats and the
  * `Target met` indicator at `STUDIO_LIMITS.minWords`. Pasting rich HTML runs
  * it through `htmlToMarkdown` first, so only the markdown dialect is ever

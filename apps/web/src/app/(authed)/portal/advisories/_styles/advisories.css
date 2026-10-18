@@ -1,7 +1,7 @@
 /**
- * Portal advisories stylesheet (Task 70).
+ * Portal advisories stylesheet .
  *
- * This page has NO prototype (planner-authored): it reuses the shared card
+ * This page has NO design (authored): it reuses the shared card
  * and chip visual language (the `Card` primitive provides the surface). Per
  * the spec, the needed `vbb-*` chip rules are COPIED here under the `vad-`
  * prefix — features never import each other's stylesheets. Token
@@ -108,7 +108,7 @@
 }
 
 /* ——— Patch-status chips (copied from .vbb-status family; semantic
-   ok/warn/danger mappings) ——— */
+  ok/warn/danger mappings) ——— */
 .vad-status {
   display: inline-flex;
   align-items: center;

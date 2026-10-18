@@ -4,7 +4,7 @@ import { cn } from '@vunvault/lib';
 import '../_styles/scan-queue.css';
 
 /**
- * Review-gate badge (Task 77) — the chip text comes from
+ * Review-gate badge — the chip text comes from
  * `REVIEW_GATE_LABELS`, with the release-lock line under it: a released job
  * reads `Client access granted`, every locked state reads `Client release
  * blocked` (both verbatim from the reference rows).

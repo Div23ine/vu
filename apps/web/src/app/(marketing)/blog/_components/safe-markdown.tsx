@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from 'react';
 
 /**
- * SafeMarkdown (Task 56) — the tiny, closed markdown renderer for article
+ * SafeMarkdown — the tiny, closed markdown renderer for article
  * bodies.
  *
  * Supported blocks: `##` / `###` headings, paragraphs, `-` bullet lists and
@@ -14,7 +14,7 @@ import { Fragment, type ReactNode } from 'react';
  * renders inert — React escapes it — and non-http(s) link targets
  * (`javascript:`, `data:`) drop their href and render as text. There is no
  * `dangerouslySetInnerHTML` anywhere in this file, and images are not
- * rendered at all. The API stores `body_md` sanitised (Task 36); this is the
+ * rendered at all. The API stores `body_md` sanitised ; this is the
  * second, structural layer.
  */
 

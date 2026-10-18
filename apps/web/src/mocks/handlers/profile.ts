@@ -3,20 +3,20 @@ import { UpdateProfileBody } from '@vunvault/contracts';
 import { clientProfile } from '@vunvault/contracts/fixtures/profile';
 
 /**
- * Client-profile mock handlers (Task 68).
+ * Client-profile mock handlers .
  *
  * Used ONLY by tests (through `mocks/server.ts`) and the opt-in dev mock
  * mode; the fixture client (Jane Wanjiru, Acme Fintech Ltd) is the single
  * identity. The PATCH echoes the submitted fields back inside the fixture
  * profile so the UI's optimistic refresh shows the edit.
  *
- * NOTE: Task 66 parked a `GET /api/v1/profile` handler in `billing.ts` (the
- * invoice-table caption needed it before this task existed); Task 68 is the
+ * NOTE: an earlier iteration parked a `GET /api/v1/profile` handler in `billing.ts` (the
+ * invoice-table caption needed it before this task existed); an earlier iteration is the
  * owner — the handler moved here and billing.ts no longer registers it.
  *
- * API contract mirrored here (implemented for real in `apps/api`, Task 30):
- *   GET   /api/v1/profile → 200 { data: ClientProfile } | 403 no_org
- *   PATCH /api/v1/profile body UpdateProfileBody → 200 { data: ClientProfile } | 400 validation_failed
+ * API contract mirrored here (implemented for real in `apps/api`, an earlier iteration):
+ * GET  /api/v1/profile → 200 { data: ClientProfile } | 403 no_org
+ * PATCH /api/v1/profile body UpdateProfileBody → 200 { data: ClientProfile } | 400 validation_failed
  */
 
 export const profileHandlers = [

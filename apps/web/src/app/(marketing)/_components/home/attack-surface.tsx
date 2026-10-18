@@ -1,7 +1,7 @@
 /**
- * Attack Surface Mapping section (Task 49) — the three-step numbered list
+ * Attack Surface Mapping section — the three-step numbered list
  * under the hero. Server component, static copy (verbatim from the
- * prototype).
+ * design).
  */
 
 const STEPS = [

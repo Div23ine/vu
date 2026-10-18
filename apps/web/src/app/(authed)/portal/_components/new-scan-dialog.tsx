@@ -12,7 +12,7 @@ import { useAuthorisationUrl, useCreateScan } from '../_hooks/use-scans';
 import '../_styles/scans.css';
 
 /**
- * New scan request dialog (Task 69) — the three-step upload choreography the
+ * New scan request dialog — the three-step upload choreography the
  * spec pins: `POST /scans/authorisation-url` → `PUT` the PDF to the presigned
  * URL → `POST /scans` with the returned `authorisationDocKey`. The signed
  * authorisation is REQUIRED — without it the platform cannot lawfully touch
@@ -20,7 +20,7 @@ import '../_styles/scans.css';
  *
  * A successful request toasts the queue confirmation; the new job does NOT
  * appear in the table until the review gate releases it (the toast says so).
- * `422 authorisation_missing` / `422 target_not_allowed` map to the planner's
+ * `422 authorisation_missing` / `422 target_not_allowed` map to the spec's
  * verbatim inline messages.
  */
 

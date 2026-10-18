@@ -20,7 +20,7 @@ import { refreshDashboard } from './_dashboard/use-dashboard';
 import './_dashboard/dashboard.css';
 
 /**
- * `/admin` (Task 76) — the Administrative Command Center: the KPI strip,
+ * `/admin` — the Administrative Command Center: the KPI strip,
  * revenue + transactions, traffic + endpoints + node load, pipeline +
  * running scans, and the threat level with node connectivity — each on its
  * own dashboard query so one failure degrades one card. Refresh Metrics
@@ -28,7 +28,7 @@ import './_dashboard/dashboard.css';
  * the 30 s visible-tab auto-refresh lives in the queries.
  *
  * Client page: every figure is cookie-authenticated API data. The head
- * actions link to the nav's own routes (Task 46): Scan Queue and Audit Logs.
+ * actions link to the nav's own routes : Scan Queue and Audit Logs.
  */
 
 export default function AdminDashboardPage() {
