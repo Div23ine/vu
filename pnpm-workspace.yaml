@@ -5,13 +5,13 @@ packages:
 catalog:
   typescript: ~5.5.4
   zod: ^3.25.76
-  react: ^19.3.0
-  react-dom: ^19.3.0
+  react: ^19.3.1
+  react-dom: ^19.3.1
   next: ^15.5.27
   tailwindcss: ^4.3.3
   vitest: ^3.2.7
   eslint: ^9.39.5
-  fastify: ^5.12.5
+  fastify: ^5.12.7
   # Pinned, not `latest`: a floating spec re-resolves to whatever is newest on
   # every fresh install, and both packages are 0.x, where a minor bump is a
   # breaking change. ^0.45.4 admits 0.45.x patches only. These are the versions

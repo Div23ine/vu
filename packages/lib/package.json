@@ -36,9 +36,9 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.600.0",
-    "@aws-sdk/s3-request-presigner": "^3.600.0",
-    "@tanstack/react-query": "^5.0.0",
+    "@aws-sdk/client-s3": "^3.1152.0",
+    "@aws-sdk/s3-request-presigner": "^3.1152.0",
+    "@tanstack/react-query": "^5.104.3",
     "@vunvault/contracts": "workspace:*",
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.0.0"
