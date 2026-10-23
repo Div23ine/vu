@@ -1,4 +1,4 @@
-import { HttpError } from '../../../lib/http-error.js';
+import { HttpError } from '../../../lib/http-error';
 
 /**
  * Cloudflare Turnstile verification for the public contact form.

@@ -1,9 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { HttpError } from '../lib/http-error.js';
-import type { Tx } from '../plugins/db.js';
-import type { AuditEventType } from './events.js';
-import { asExecutor } from './repo.js';
-import { toView, type AuditAppendInput, type AuditEntryView } from './service.js';
+import { HttpError } from '../lib/http-error';
+import type { Tx } from '../plugins/db';
+import type { AuditEventType } from './events';
+import { asExecutor } from './repo';
+import { toView, type AuditAppendInput, type AuditEntryView } from './service';
 
 /**
  * The `audited()` route wrapper.

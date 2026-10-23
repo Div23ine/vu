@@ -8,14 +8,14 @@ import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { StudioDraftBody, StudioImageUploadRequest, StudioItem } from '@vunvault/contracts';
-import { audited, AUDITED } from '../../../audit/audited.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import type { Tx } from '../../../plugins/db.js';
-import { HttpError } from '../../../lib/http-error.js';
-import type { ObjectStorage } from '../../../lib/object-storage.js';
-import { SqlContentRepo, type ContentRepo } from '../content/repo.js';
-import type { AuditInstruction } from '../content/service.js';
-import { StudioService } from './service.js';
+import { audited, AUDITED } from '../../../audit/audited';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import type { Tx } from '../../../plugins/db';
+import { HttpError } from '../../../lib/http-error';
+import type { ObjectStorage } from '../../../lib/object-storage';
+import { SqlContentRepo, type ContentRepo } from '../content/repo';
+import type { AuditInstruction } from '../content/service';
+import { StudioService } from './service';
 
 /**
  * The Content Studio (Task 36).

@@ -1,4 +1,4 @@
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
 import type { Industry, PentestTargetType } from '@vunvault/contracts';
 
 /**

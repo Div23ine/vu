@@ -1,6 +1,6 @@
 import fp from 'fastify-plugin';
 import type { FastifyPluginAsync } from 'fastify';
-import { createSecretProvider, type SecretProvider } from '../lib/secrets/provider.js';
+import { createSecretProvider, type SecretProvider } from '../lib/secrets/provider';
 
 export interface SecretsPluginOptions {
   /** Test seam: inject a provider instead of deriving one from `app.env`. */

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IsoDateTime, PageQuery, Uuid } from './common.js';
+import { IsoDateTime, PageQuery, Uuid } from './common';
 import {
   AdvisoryPatchStatusSchema,
   AdvisoryStatusSchema,
@@ -7,8 +7,8 @@ import {
   BroadcastStatusSchema,
   FindingSeveritySchema,
   ScopeCategorySchema,
-} from './enums.js';
-import type { FindingSeverity, ScopeCategory } from './enums.js';
+} from './enums';
+import type { FindingSeverity, ScopeCategory } from './enums';
 
 /**
  * Zero-Day Intel desk: advisory authoring, NVD import, the emergency broadcast

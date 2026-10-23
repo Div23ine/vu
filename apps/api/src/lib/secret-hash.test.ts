@@ -10,7 +10,7 @@ import {
   normaliseAnswer,
   parseSecretHash,
   verifySecret,
-} from './secret-hash.js';
+} from './secret-hash';
 
 /** A small N keeps the test suite fast; the defaults are asserted separately. */
 const FAST = { N: 1024, r: 8, p: 1 };

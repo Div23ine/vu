@@ -4,13 +4,13 @@ import { QUEUE_NAMES } from '@vunvault/contracts';
 import { createDb, type Db } from '@vunvault/db';
 import { parseKeyRing } from '@vunvault/lib/audit-chain';
 import { R2ObjectStorage } from '@vunvault/lib/storage';
-import { BullBroadcastProducer } from './adapters/broadcast-producer.js';
-import { BullNotifyEnqueuer } from './adapters/notify-queue.js';
-import { SqlMaintenanceRepo } from './adapters/sql-repo.js';
-import { LOG_REDACT_PATHS, loadEnv } from './config/env.js';
-import { startConsumer, type HandlerDeps } from './queue/consumer.js';
-import { registerSchedulers } from './queue/scheduler.js';
-import type { Clock, Logger } from './ports.js';
+import { BullBroadcastProducer } from './adapters/broadcast-producer';
+import { BullNotifyEnqueuer } from './adapters/notify-queue';
+import { SqlMaintenanceRepo } from './adapters/sql-repo';
+import { LOG_REDACT_PATHS, loadEnv } from './config/env';
+import { startConsumer, type HandlerDeps } from './queue/consumer';
+import { registerSchedulers } from './queue/scheduler';
+import type { Clock, Logger } from './ports';
 
 /**
  * Maintenance-worker bootstrap (Task 91; Task 92 extends the handler table).

@@ -8,19 +8,19 @@ import type {
   PaymentAttemptStatus,
   PaymentChannel,
 } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error.js';
-import { isProviderError } from '../../../providers/error.js';
-import type { PaymentProviders } from '../../../billing/providers/index.js';
-import type { FxRateSource } from '../../../billing/fx-rates.js';
-import { FX_CACHE_TTL_SECONDS } from '../../../billing/fx-rates.js';
-import { isDisplayCurrency, usdCentsToLocalMinor } from '../../../billing/money.js';
+import { HttpError } from '../../../lib/http-error';
+import { isProviderError } from '../../../providers/error';
+import type { PaymentProviders } from '../../../billing/providers/index';
+import type { FxRateSource } from '../../../billing/fx-rates';
+import { FX_CACHE_TTL_SECONDS } from '../../../billing/fx-rates';
+import { isDisplayCurrency, usdCentsToLocalMinor } from '../../../billing/money';
 import {
   isUniqueViolation,
   type CheckoutInvoiceRow,
   type CheckoutRepo,
   type FxQuoteRow,
   type PaymentAttemptRow,
-} from './repo.js';
+} from './repo';
 
 /**
  * FX QUOTE FLOW — the three steps, and why they are in this order.

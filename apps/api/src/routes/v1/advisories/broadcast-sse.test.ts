@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BroadcastRecord } from '@vunvault/contracts';
 import { BroadcastProgressEvent, BroadcastStreamEvent } from '@vunvault/contracts';
-import { collectingWriter, type SseWriter } from '../audit/sse.js';
+import { collectingWriter, type SseWriter } from '../audit/sse';
 import {
   BroadcastSseSession,
   broadcastHeartbeatFrame,
   progressFrame,
   snapshotFrame,
   type BroadcastSseDeps,
-} from './broadcast-sse.js';
+} from './broadcast-sse';
 
 /**
  * The broadcast progress relay (Task 94).

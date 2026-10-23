@@ -8,7 +8,7 @@ import {
   RECOVERY_ALPHABET,
   RECOVERY_BATCH_SIZE,
   RECOVERY_CODE_PATTERN,
-} from './recovery-codes.js';
+} from './recovery-codes';
 
 describe('recovery code generation', () => {
   it('produces ten unique codes in the display format', () => {

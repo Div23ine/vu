@@ -3,22 +3,22 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Permission, UserRole } from '@vunvault/contracts';
 import { CONSENT_REQUIRED_MESSAGE, ROLE_PERMISSIONS } from '@vunvault/contracts';
-import type { Env } from '../../../config/env.js';
-import errorHandler from '../../../plugins/error-handler.js';
-import cookiesPlugin from '../../../plugins/cookies.js';
-import type { AuthUser } from '../../../plugins/auth.js';
-import { HttpError } from '../../../lib/http-error.js';
-import type { AuditEntryRow } from '../../../audit/repo.js';
+import type { Env } from '../../../config/env';
+import errorHandler from '../../../plugins/error-handler';
+import cookiesPlugin from '../../../plugins/cookies';
+import type { AuthUser } from '../../../plugins/auth';
+import { HttpError } from '../../../lib/http-error';
+import type { AuditEntryRow } from '../../../audit/repo';
 import type { ContactCategories as ConsentCategories } from '@vunvault/contracts';
-import publicRoutes from './index.js';
-import adminBadgesRoutes from '../admin-badges/index.js';
-import { ALWAYS_HUMAN, captchaFailed, HttpTurnstileVerifier } from './turnstile.js';
+import publicRoutes from './index';
+import adminBadgesRoutes from '../admin-badges/index';
+import { ALWAYS_HUMAN, captchaFailed, HttpTurnstileVerifier } from './turnstile';
 import {
   hashIp,
   VERIFICATION_CATEGORY,
   VERIFICATION_SUBJECT_PREFIX,
   type ContactOutcome,
-} from './service.js';
+} from './service';
 import {
   ANONYMOUS_COOKIE,
   dailySalt,
@@ -26,7 +26,7 @@ import {
   type OpenToolRow,
   type NewContactMessage,
   type PublicRepo,
-} from './repo.js';
+} from './repo';
 
 /**
  * Public intake and the blogger badge.

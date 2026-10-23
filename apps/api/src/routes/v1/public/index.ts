@@ -2,28 +2,24 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-<<<<<<< HEAD
-import { ContactBody, ConsentBody } from '@vunvault/contracts';
-=======
 import { ContactBody, ConsentBody, OpenToolSchema, WaitlistBodySchema } from '@vunvault/contracts';
->>>>>>> 4e5dbed (refactor: updated)
-import { AUDITED, audited } from '../../../audit/audited.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import type { Tx } from '../../../plugins/db.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { HttpTurnstileVerifier, turnstileEnforced, type TurnstileVerifier } from './turnstile.js';
+import { AUDITED, audited } from '../../../audit/audited';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import type { Tx } from '../../../plugins/db';
+import { HttpError } from '../../../lib/http-error';
+import { HttpTurnstileVerifier, turnstileEnforced, type TurnstileVerifier } from './turnstile';
 import {
   ANONYMOUS_COOKIE,
   ANONYMOUS_COOKIE_MAX_AGE_SECONDS,
   SqlPublicRepo,
   type PublicRepo,
-} from './repo.js';
+} from './repo';
 import {
   ContactService,
   ConsentService,
   type AuditInstruction,
   type ContactOutcome,
-} from './service.js';
+} from './service';
 
 /**
  * Public intake (Task 40).

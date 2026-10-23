@@ -1,4 +1,4 @@
-import { asExecutor } from '../audit/repo.js';
+import { asExecutor } from '../audit/repo';
 
 /**
  * Per-year invoice counters.

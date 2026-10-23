@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { UpdatePaymentMethodBody } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error.js';
-import { ProviderError } from '../../../providers/error.js';
-import type { StripeClient } from '../../../billing/providers/stripe.js';
-import type { PaystackClient } from '../../../billing/providers/paystack.js';
-import type { BillingRepo, InvoiceRow, PaymentMethodRow } from './repo.js';
-import { BillingService, usd } from './service.js';
+import { HttpError } from '../../../lib/http-error';
+import { ProviderError } from '../../../providers/error';
+import type { StripeClient } from '../../../billing/providers/stripe';
+import type { PaystackClient } from '../../../billing/providers/paystack';
+import type { BillingRepo, InvoiceRow, PaymentMethodRow } from './repo';
+import { BillingService, usd } from './service';
 
 const ORG_A = 'd1000000-0000-4000-8000-0000000000a1';
 const ORG_B = 'd1000000-0000-4000-8000-0000000000b1';

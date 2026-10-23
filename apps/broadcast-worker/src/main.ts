@@ -3,14 +3,14 @@ import pino from 'pino';
 import { Queue } from 'bullmq';
 import { QUEUE_NAMES } from '@vunvault/contracts';
 import { createDb, type Db } from '@vunvault/db';
-import { RedisProgressBus } from './adapters/redis-bus.js';
-import { BullNotifyEnqueuer } from './adapters/notify-queue.js';
-import { buildProviders } from './adapters/providers.js';
-import { SqlBroadcastRepo } from './adapters/sql-repo.js';
-import { LOG_REDACT_PATHS, loadEnv } from './config/env.js';
-import { BroadcastDeliveryService } from './domain/delivery.js';
-import { startConsumer } from './queue/consumer.js';
-import type { Clock, Logger } from './ports.js';
+import { RedisProgressBus } from './adapters/redis-bus';
+import { BullNotifyEnqueuer } from './adapters/notify-queue';
+import { buildProviders } from './adapters/providers';
+import { SqlBroadcastRepo } from './adapters/sql-repo';
+import { LOG_REDACT_PATHS, loadEnv } from './config/env';
+import { BroadcastDeliveryService } from './domain/delivery';
+import { startConsumer } from './queue/consumer';
+import type { Clock, Logger } from './ports';
 
 /**
  * Broadcast-worker bootstrap (Task 89).

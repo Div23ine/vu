@@ -9,7 +9,7 @@ import type {
   ThreatLevel,
   TrafficSummary,
   TransactionsResponse,
-} from '../src/dashboard.js';
+} from '../src/dashboard';
 
 /**
  * Command Center fixtures, all as at 2026-09-24T12:00:00Z.

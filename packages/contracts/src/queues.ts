@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { NotificationEventSchema, ScanTypeSchema } from './enums.js';
+import { NotificationEventSchema, ScanTypeSchema } from './enums';
 
 /**
  * Queue names and job payloads, shared by the API (producer) and the three

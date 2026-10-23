@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LOG_MAX_BYTES, LogArchive, uploadLog } from './log-archive.js';
+import { LOG_MAX_BYTES, LogArchive, uploadLog } from './log-archive';
 
 /**
  * Log-archive tests (Task 88).

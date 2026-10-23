@@ -1,4 +1,4 @@
-import type { Logger, MaintenanceRepo, ObjectWriter, Summary } from '../ports.js';
+import type { Logger, MaintenanceRepo, ObjectWriter, Summary } from '../ports';
 
 /**
  * `audit_snapshot` (Task 92) — the daily off-database record of the chain's

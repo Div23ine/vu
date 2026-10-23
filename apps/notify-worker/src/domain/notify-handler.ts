@@ -2,8 +2,8 @@ import { UnrecoverableError } from 'bullmq';
 import type { NotifyJobPayload } from '@vunvault/contracts';
 import { isProviderError } from '@vunvault/lib/providers';
 import type { EmailMessage, SmsMessage } from '@vunvault/lib/providers';
-import { renderEmail } from './templates.js';
-import type { Logger, NotifyRepo, ReceiptInput } from '../ports.js';
+import { renderEmail } from './templates';
+import type { Logger, NotifyRepo, ReceiptInput } from '../ports';
 
 /**
  * Notify-queue handling (Task 90).

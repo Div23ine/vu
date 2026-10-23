@@ -1,4 +1,4 @@
-import type { Logger, MaintenanceRepo, Summary } from '../ports.js';
+import type { Logger, MaintenanceRepo, Summary } from '../ports';
 
 /**
  * `stale_signups` (Task 92) — nightly.

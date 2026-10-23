@@ -1,4 +1,4 @@
-import type { AdvisoryDeliveryView } from '../ports.js';
+import type { AdvisoryDeliveryView } from '../ports';
 
 /**
  * Broadcast copy (Task 89) — planner-authored; no prototype exists for these

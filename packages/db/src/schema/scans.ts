@@ -12,7 +12,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { createdAtCol, idCol, timestamps, tz } from './_columns.js';
+import { createdAtCol, idCol, timestamps, tz } from './_columns';
 import {
   findingSeverityEnum,
   findingStatusEnum,
@@ -27,8 +27,8 @@ import {
   scanStatusEnum,
   scanTypeEnum,
   userRoleEnum,
-} from './_enums.js';
-import { organizations, profiles } from './identity.js';
+} from './_enums';
+import { organizations, profiles } from './identity';
 
 /**
  * Scan queue, the Mandatory Admin Review Gate, and pen-test intake.

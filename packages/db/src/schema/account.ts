@@ -14,7 +14,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { createdAtCol, idCol, timestamps, tz } from './_columns.js';
+import { createdAtCol, idCol, timestamps, tz } from './_columns';
 import {
   careerRoleEnum,
   entityTypeEnum,
@@ -22,8 +22,8 @@ import {
   notificationChannelEnum,
   notificationEventEnum,
   recoveryQuestionEnum,
-} from './_enums.js';
-import { profiles } from './identity.js';
+} from './_enums';
+import { profiles } from './identity';
 
 /**
  * Account security, device sessions, notification preferences and client

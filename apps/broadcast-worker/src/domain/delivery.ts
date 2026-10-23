@@ -1,7 +1,7 @@
 import { matchClients } from '@vunvault/lib/advisory-matching';
 import type { BroadcastKind, BroadcastProgressEvent, BroadcastStatus } from '@vunvault/contracts';
 import { broadcastProgressChannel } from '@vunvault/contracts';
-import { emailFor, inAppNotification, smsFor } from './templates.js';
+import { emailFor, inAppNotification, smsFor } from './templates';
 import type {
   BroadcastRepo,
   Clock,
@@ -12,7 +12,7 @@ import type {
   OrgContact,
   ProgressBus,
   SmsSender,
-} from '../ports.js';
+} from '../ports';
 
 /**
  * Broadcast delivery (Task 89).

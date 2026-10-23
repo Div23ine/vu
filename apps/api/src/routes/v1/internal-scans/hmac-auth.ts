@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { HttpError } from '../../../lib/http-error.js';
+import { HttpError } from '../../../lib/http-error';
 
 /**
  * HMAC authentication for the internal scan-controller callbacks (Task 40g).

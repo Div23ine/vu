@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { computeRollup, rollupWindow, runMetricsRollup } from './metrics-rollup.js';
-import type { EndpointWindowRow, Logger, MaintenanceRepo, PlatformMetricsInput } from '../ports.js';
+import { computeRollup, rollupWindow, runMetricsRollup } from './metrics-rollup';
+import type { EndpointWindowRow, Logger, MaintenanceRepo, PlatformMetricsInput } from '../ports';
 
 function makeLogger(): Logger {
   return {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyRequest } from 'fastify';
-import { HttpError } from '../../../lib/http-error.js';
+import { HttpError } from '../../../lib/http-error';
 import {
   INTERNAL_RATE_MAX_PER_MINUTE,
   ipInCidr,
@@ -11,7 +11,7 @@ import {
   type InternalAuthDeps,
   type InternalAuthFailure,
   type NonceStore,
-} from './hmac-auth.js';
+} from './hmac-auth';
 
 /**
  * The internal HMAC guard, unit-tested (Task 40g): the canonical payload,

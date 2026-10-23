@@ -7,7 +7,7 @@ import {
   retryFrame,
   SSE_HEADERS,
   type SseWriter,
-} from '../audit/sse.js';
+} from '../audit/sse';
 
 /**
  * Broadcast delivery progress relay (Task 94).

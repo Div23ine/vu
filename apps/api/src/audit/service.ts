@@ -15,9 +15,9 @@ import {
   parseKeyRing,
   sealWith,
   type AuditKeyRing,
-} from './crypto.js';
-import { eventDefinition, isHigherSevLevel, isMoreSevere, type AuditEventType } from './events.js';
-import { AuditRepo, VERIFY_BATCH_SIZE, type AuditEntryRow, type SqlExecutor } from './repo.js';
+} from './crypto';
+import { eventDefinition, isHigherSevLevel, isMoreSevere, type AuditEventType } from './events';
+import { AuditRepo, VERIFY_BATCH_SIZE, type AuditEntryRow, type SqlExecutor } from './repo';
 
 /**
  * The audit chain service.

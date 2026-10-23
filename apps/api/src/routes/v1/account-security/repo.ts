@@ -1,5 +1,5 @@
 import type { MfaMethod, UserRole } from '@vunvault/contracts';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
 
 /**
  * Account-security data access: recovery codes, WebAuthn credentials, the profile

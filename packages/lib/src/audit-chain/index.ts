@@ -3,6 +3,6 @@
  * worker (which VERIFIES — Task 92). One implementation of the chain rules,
  * two callers; see `verify.ts` for why that matters.
  */
-export * from './canonical.js';
-export * from './crypto.js';
-export * from './verify.js';
+export * from './canonical';
+export * from './crypto';
+export * from './verify';

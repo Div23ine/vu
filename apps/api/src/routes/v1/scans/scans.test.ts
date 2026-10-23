@@ -5,14 +5,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Permission, UserRole } from '@vunvault/contracts';
 import { GATE_RELEASE_MESSAGE, ROLE_PERMISSIONS } from '@vunvault/contracts';
 import { REVIEW_CHECK_KEYS, type ReviewCheckKey } from '@vunvault/db/enum-values';
-import type { Env } from '../../../config/env.js';
-import errorHandler from '../../../plugins/error-handler.js';
-import type { AuthUser } from '../../../plugins/auth.js';
-import { HttpError } from '../../../lib/http-error.js';
-import type { ObjectStorage } from '../../../lib/object-storage.js';
-import type { AuditEntryRow } from '../../../audit/repo.js';
-import type { InvoiceIssuer } from '../../../billing/invoice-issuer.js';
-import scansRoutes from './index.js';
+import type { Env } from '../../../config/env';
+import errorHandler from '../../../plugins/error-handler';
+import type { AuthUser } from '../../../plugins/auth';
+import { HttpError } from '../../../lib/http-error';
+import type { ObjectStorage } from '../../../lib/object-storage';
+import type { AuditEntryRow } from '../../../audit/repo';
+import type { InvoiceIssuer } from '../../../billing/invoice-issuer';
+import scansRoutes from './index';
 import type {
   FindingRow,
   JobPatch,
@@ -23,8 +23,8 @@ import type {
   ScansRepo,
   ScanListFilters,
   SummaryCounts,
-} from './repo.js';
-import { abortChannelFor, parseTarget, queueJobIdFor } from './service.js';
+} from './repo';
+import { abortChannelFor, parseTarget, queueJobIdFor } from './service';
 
 /**
  * The client portal's release lock, the admin queue and the review gate.

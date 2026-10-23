@@ -1,6 +1,6 @@
 import type { AuditCategory, AuditSeverity } from '@vunvault/contracts';
-import { canonicalJson } from './canonical.js';
-import { computeHash, computeSignature, digestsEqual, ZERO_HASH } from './crypto.js';
+import { canonicalJson } from './canonical';
+import { computeHash, computeSignature, digestsEqual, ZERO_HASH } from './crypto';
 
 /**
  * Pure chain verification (moved out of the API's audit service in Task 92).

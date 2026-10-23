@@ -1,5 +1,5 @@
-import type { AuditEntryView } from '../../../audit/service.js';
-import { CRLF, csvDocument, csvRow, escapeCsvCell } from '../../../billing/csv.js';
+import type { AuditEntryView } from '../../../audit/service';
+import { CRLF, csvDocument, csvRow, escapeCsvCell } from '../../../billing/csv';
 
 /**
  * The audit CSV export.

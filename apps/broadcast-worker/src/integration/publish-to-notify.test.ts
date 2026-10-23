@@ -4,7 +4,7 @@ import {
   BroadcastProgressEvent as ProgressSchema,
   NotifyJobPayload as NotifySchema,
 } from '@vunvault/contracts';
-import { BroadcastDeliveryService } from '../domain/delivery.js';
+import { BroadcastDeliveryService } from '../domain/delivery';
 import type {
   AdvisoryDeliveryView,
   BroadcastRepo,
@@ -17,21 +17,18 @@ import type {
   OrgContact,
   ProgressBus,
   SmsSender,
-} from '../ports.js';
+} from '../ports';
 // The consumer side of the wire — the REAL notify-worker handler, imported
 // across the app boundary. Each module's dependencies resolve from its own
 // workspace, so this import proves the seam compiles AND runs, not just that
 // two suites of fakes agree with themselves.
-import {
-  NotifyHandler,
-  INBOX_TITLE_MAX,
-} from '../../../notify-worker/src/domain/notify-handler.js';
+import { NotifyHandler, INBOX_TITLE_MAX } from '../../../notify-worker/src/domain/notify-handler';
 import type { EmailMessage, SmsMessage } from '@vunvault/lib/providers';
-import type { InboxInput, NotifyRepo, ReceiptInput } from '../../../notify-worker/src/ports.js';
+import type { InboxInput, NotifyRepo, ReceiptInput } from '../../../notify-worker/src/ports';
 import type {
   EmailSender as NotifyEmailSender,
   SmsSender as NotifySmsSender,
-} from '../../../notify-worker/src/domain/notify-handler.js';
+} from '../../../notify-worker/src/domain/notify-handler';
 
 /**
  * Integration suite A (Task 105): publish → broadcast → notify, end to end,

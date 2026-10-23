@@ -1,6 +1,6 @@
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import type { ReactElement } from 'react';
-import type { PdfRenderer } from '../ports.js';
+import type { PdfRenderer } from '../ports';
 
 /**
  * `@react-pdf/renderer` behind the `PdfRenderer` port.

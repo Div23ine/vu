@@ -13,11 +13,11 @@ import {
   TransactionsResponse,
   TrafficSummary,
 } from '@vunvault/contracts';
-import type { SqlExecutor } from '../../../audit/repo.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { SqlDashboardRepo, type DashboardRepo } from './repo.js';
-import { DashboardService } from './service.js';
-import { readThrough, type DashboardCache } from './cache.js';
+import type { SqlExecutor } from '../../../audit/repo';
+import { HttpError } from '../../../lib/http-error';
+import { SqlDashboardRepo, type DashboardRepo } from './repo';
+import { DashboardService } from './service';
+import { readThrough, type DashboardCache } from './cache';
 
 /**
  * The Command Center (Task 37).

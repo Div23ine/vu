@@ -1,4 +1,4 @@
-import { redact } from './redact.js';
+import { redact } from './redact';
 
 /**
  * Line sanitiser (Task 85).

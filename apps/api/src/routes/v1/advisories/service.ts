@@ -14,14 +14,14 @@ import type {
   RetractBody,
 } from '@vunvault/contracts';
 import { BROADCAST_CONFIRM_PHRASE } from '@vunvault/contracts';
-import type { AuditEventType } from '../../../audit/events.js';
-import type { AuditService } from '../../../audit/service.js';
-import type { SqlExecutor } from '../../../audit/repo.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { assertBroadcastable } from './validation.js';
-import { estimateAudience, matchClients, type ClientAsset } from './matching.js';
-import type { NvdClient } from './nvd.js';
-import type { AdvisoryRow, AdvisoriesRepo, BroadcastRow } from './repo.js';
+import type { AuditEventType } from '../../../audit/events';
+import type { AuditService } from '../../../audit/service';
+import type { SqlExecutor } from '../../../audit/repo';
+import { HttpError } from '../../../lib/http-error';
+import { assertBroadcastable } from './validation';
+import { estimateAudience, matchClients, type ClientAsset } from './matching';
+import type { NvdClient } from './nvd';
+import type { AdvisoryRow, AdvisoriesRepo, BroadcastRow } from './repo';
 
 /**
  * The Zero-Day Intel desk (Task 38).

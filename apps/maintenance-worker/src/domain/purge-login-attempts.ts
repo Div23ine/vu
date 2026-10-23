@@ -1,4 +1,4 @@
-import type { Logger, MaintenanceRepo, Summary } from '../ports.js';
+import type { Logger, MaintenanceRepo, Summary } from '../ports';
 
 /**
  * `purge_login_attempts` (Task 92) — privacy retention, run nightly.

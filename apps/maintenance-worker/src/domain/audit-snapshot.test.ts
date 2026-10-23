@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { runAuditSnapshot, SNAPSHOT_CONTENT_TYPE, snapshotKey } from './audit-snapshot.js';
-import type { AuditHead, LastCheckpoint, Logger, MaintenanceRepo, ObjectWriter } from '../ports.js';
+import { runAuditSnapshot, SNAPSHOT_CONTENT_TYPE, snapshotKey } from './audit-snapshot';
+import type { AuditHead, LastCheckpoint, Logger, MaintenanceRepo, ObjectWriter } from '../ports';
 
 const makeLogger = (): Logger => ({
   info: () => undefined,

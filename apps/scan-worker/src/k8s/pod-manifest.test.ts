@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import type { PodSpec } from '../ports.js';
+import type { PodSpec } from '../ports';
 import {
   ACTIVE_DEADLINE_SECONDS,
   ALLOWED_ENV_KEYS,
@@ -12,7 +12,7 @@ import {
   buildJobManifest,
   forbiddenVolumes,
   jobResourceName,
-} from './pod-manifest.js';
+} from './pod-manifest';
 
 /**
  * Job-manifest tests (Task 86).

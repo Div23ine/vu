@@ -7,7 +7,7 @@ import {
   isAllowedPath,
   isWebhookPath,
   sizeVerdict,
-} from './policy.js';
+} from './policy';
 
 describe('edge policy — the allow-list', () => {
   it('admits the four public shapes and nothing else', () => {

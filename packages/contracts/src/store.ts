@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IsoDateTime, Uuid, UsdCents } from './common.js';
+import { IsoDateTime, Uuid, UsdCents } from './common';
 
 /**
  * The public store: premium products, licence entitlements and the newsletter.

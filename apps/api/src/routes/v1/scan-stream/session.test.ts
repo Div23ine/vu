@@ -6,8 +6,8 @@ import {
   type RelaySocket,
   type ScanStreamSessionDeps,
   type ScanStreamTarget,
-} from './session.js';
-import { controlChannel, liveChannel, replayBufferKey } from './channels.js';
+} from './session';
+import { controlChannel, liveChannel, replayBufferKey } from './channels';
 
 /**
  * The scan terminal relay's state machine (Task 95).

@@ -3,14 +3,14 @@ import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { AcceptInvitationBody, InvitationPreview, SessionUser } from '@vunvault/contracts';
-import { AUDITED } from '../../../audit/audited.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import type { Tx } from '../../../plugins/db.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { setSessionCookies } from '../../../lib/session-cookies.js';
-import { deviceLabel } from '../auth/device.js';
-import { SqlUsersRepo } from './repo.js';
-import { UsersService } from './service.js';
+import { AUDITED } from '../../../audit/audited';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import type { Tx } from '../../../plugins/db';
+import { HttpError } from '../../../lib/http-error';
+import { setSessionCookies } from '../../../lib/session-cookies';
+import { deviceLabel } from '../auth/device';
+import { SqlUsersRepo } from './repo';
+import { UsersService } from './service';
 
 /**
  * Public invitation acceptance (Task 31).

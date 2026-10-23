@@ -1,4 +1,4 @@
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
 
 /**
  * Content data access: the moderation queue, the Studio and the public feed.

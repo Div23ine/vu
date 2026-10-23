@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { AccountStatus, MfaMethod, UserRole } from '@vunvault/contracts';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
 
 /**
  * Auth data access.

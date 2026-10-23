@@ -12,9 +12,9 @@ import {
   text,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { bytea, createdAtCol, idCol, tz } from './_columns.js';
-import { auditCategoryEnum, auditSeverityEnum } from './_enums.js';
-import { profiles } from './identity.js';
+import { bytea, createdAtCol, idCol, tz } from './_columns';
+import { auditCategoryEnum, auditSeverityEnum } from './_enums';
+import { profiles } from './identity';
 
 /**
  * The append-only, hash-chained audit log.

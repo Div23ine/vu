@@ -1,5 +1,5 @@
-import type { RouteDoc } from './routes-a.js';
-import type { Permission } from './permissions.js';
+import type { RouteDoc } from './routes-a';
+import type { Permission } from './permissions';
 
 /**
  * Route documentation for the marketing backend addendum (Task 40c): the public

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { runNodeHealth } from './node-health.js';
-import type { Logger, MaintenanceRepo } from '../ports.js';
+import { runNodeHealth } from './node-health';
+import type { Logger, MaintenanceRepo } from '../ports';
 
 function makeLogger(): Logger {
   return {

@@ -3,14 +3,14 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Permission, ScanStreamMessage, UserRole } from '@vunvault/contracts';
 import type { WebSocket } from 'ws';
-import type { Env } from '../../../config/env.js';
-import errorHandler from '../../../plugins/error-handler.js';
-import type { AuthUser } from '../../../plugins/auth.js';
-import { HttpError } from '../../../lib/http-error.js';
-import type { AuditEntryRow } from '../../../audit/repo.js';
-import type { ScansRepo, ScanJobRow } from '../scans/repo.js';
-import scanStreamRoutes from './index.js';
-import { controlChannel } from './channels.js';
+import type { Env } from '../../../config/env';
+import errorHandler from '../../../plugins/error-handler';
+import type { AuthUser } from '../../../plugins/auth';
+import { HttpError } from '../../../lib/http-error';
+import type { AuditEntryRow } from '../../../audit/repo';
+import type { ScansRepo, ScanJobRow } from '../scans/repo';
+import scanStreamRoutes from './index';
+import { controlChannel } from './channels';
 
 /**
  * The scan stream relay's HTTP face (Task 95).

@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ProviderError } from '../../providers/error.js';
+import { ProviderError } from '../../providers/error';
 
 /**
  * Stripe REST client.

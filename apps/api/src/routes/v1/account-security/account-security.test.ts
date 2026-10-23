@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type { MfaMethod } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error.js';
-import { isStaff } from '../../../lib/staff.js';
-import { memoryKvStore } from '../auth/challenge.js';
-import { computePosture, postureItemDone, PASSWORD_MAX_AGE_DAYS } from './posture.js';
-import { validatePassword, requiredLength } from './password-policy.js';
-import { hashRecoveryCode } from './recovery-codes.js';
-import { AccountSecurityService, WEBAUTHN_AUTHENTICATION_PREFIX } from './service.js';
+import { HttpError } from '../../../lib/http-error';
+import { isStaff } from '../../../lib/staff';
+import { memoryKvStore } from '../auth/challenge';
+import { computePosture, postureItemDone, PASSWORD_MAX_AGE_DAYS } from './posture';
+import { validatePassword, requiredLength } from './password-policy';
+import { hashRecoveryCode } from './recovery-codes';
+import { AccountSecurityService, WEBAUTHN_AUTHENTICATION_PREFIX } from './service';
 import type {
   AccountSecurityRepo,
   RecoveryBatchRow,
   SecurityProfileRow,
   WebauthnKeyRow,
-} from './repo.js';
-import type { WebauthnService, RegisteredCredential } from './webauthn.js';
-import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
+} from './repo';
+import type { WebauthnService, RegisteredCredential } from './webauthn';
+import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin';
 
 const USER_ID = 'c0000000-0000-4000-8000-000000000001';
 const NOW = new Date('2026-09-24T12:00:00.000Z');

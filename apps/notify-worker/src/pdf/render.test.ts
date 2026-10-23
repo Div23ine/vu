@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { renderToBuffer } from '@react-pdf/renderer';
-import { ReactPdfRenderer } from '../adapters/renderer.js';
-import { InvoiceDocument } from './invoice.js';
-import { ReportDocument, severityCounts, sortFindings } from './report.js';
-import type { InvoiceView, ReportView } from '../ports.js';
+import { ReactPdfRenderer } from '../adapters/renderer';
+import { InvoiceDocument } from './invoice';
+import { ReportDocument, severityCounts, sortFindings } from './report';
+import type { InvoiceView, ReportView } from '../ports';
 
 /**
  * The real renderer runs here — a broken layout must fail CI, not the first

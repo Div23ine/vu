@@ -1,5 +1,5 @@
 import { integer, pgTable, text, uniqueIndex } from 'drizzle-orm/pg-core';
-import { citext, idCol, timestamps } from './_columns.js';
+import { citext, idCol, timestamps } from './_columns';
 
 /**
  * Open tooling + waitlist.

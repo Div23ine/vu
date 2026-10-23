@@ -1,3 +1,3 @@
-export { createDb, type CreateDbOptions, type Db } from './client.js';
-export * from './enum-values.js';
-export * from './schema/index.js';
+export { createDb, type CreateDbOptions, type Db } from './client';
+export * from './enum-values';
+export * from './schema/index';

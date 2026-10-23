@@ -1,12 +1,12 @@
 import { createHash, createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import type { Clock, Logger } from '../ports.js';
+import type { Clock, Logger } from '../ports';
 import {
   ApiRequestError,
   MAX_RETRY_ATTEMPTS,
   SignedApiClient,
   signRequest,
-} from './signed-api-client.js';
+} from './signed-api-client';
 
 /**
  * Signed-client tests (Task 84).

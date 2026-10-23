@@ -5,9 +5,9 @@ import type {
   PentestTargetType,
 } from '@vunvault/contracts';
 import type { NotifyJobPayload } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error.js';
-import { hashSecret } from '../../../lib/secret-hash.js';
-import type { ClientProfileRepo, OnboardingRepo, PentestRequestRepo } from './repo.js';
+import { HttpError } from '../../../lib/http-error';
+import { hashSecret } from '../../../lib/secret-hash';
+import type { ClientProfileRepo, OnboardingRepo, PentestRequestRepo } from './repo';
 
 /**
  * Client intake: the profile read model, the three-step onboarding submission and

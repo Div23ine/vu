@@ -1,7 +1,7 @@
 import { Worker, type Job } from 'bullmq';
 import { QUEUE_NAMES, ScanJobPayload } from '@vunvault/contracts';
-import type { Logger } from '../ports.js';
-import type { JobRunner } from '../domain/job-runner.js';
+import type { Logger } from '../ports';
+import type { JobRunner } from '../domain/job-runner';
 
 /**
  * BullMQ consumer (Task 84) — the `scan` queue.

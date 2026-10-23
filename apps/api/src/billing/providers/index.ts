@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
-import type { SecretProvider } from '../../lib/secrets/provider.js';
-import { StripeClient } from './stripe.js';
-import { PaystackClient } from './paystack.js';
+import type { SecretProvider } from '../../lib/secrets/provider';
+import { StripeClient } from './stripe';
+import { PaystackClient } from './paystack';
 
 /**
  * Payment providers.

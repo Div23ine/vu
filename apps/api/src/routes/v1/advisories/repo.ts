@@ -1,6 +1,6 @@
 import type { AdvisoryScopeEntry } from '@vunvault/contracts';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import type { ClientAsset } from './matching.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import type { ClientAsset } from './matching';
 
 /**
  * Advisory storage (Task 38).

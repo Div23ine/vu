@@ -1,4 +1,4 @@
-import type { FxQuote, Invoice, PaymentMethodView, Subscription } from '../src/billing.js';
+import type { FxQuote, Invoice, PaymentMethodView, Subscription } from '../src/billing';
 
 /**
  * Billing fixtures for Acme Fintech Ltd (the client in `fixtures/profile.ts`).

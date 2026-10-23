@@ -13,12 +13,12 @@ import {
   TEAM_LABELS,
   UserActionBody,
 } from '@vunvault/contracts';
-import { AUDITED } from '../../../audit/audited.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import type { Tx } from '../../../plugins/db.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { SqlUsersRepo } from './repo.js';
-import { UsersService, type ActorContext } from './service.js';
+import { AUDITED } from '../../../audit/audited';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import type { Tx } from '../../../plugins/db';
+import { HttpError } from '../../../lib/http-error';
+import { SqlUsersRepo } from './repo';
+import { UsersService, type ActorContext } from './service';
 
 /**
  * User & Access Management (Task 31).

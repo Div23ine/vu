@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
-import type { AuditEventType } from '../../../audit/events.js';
-import { HttpError } from '../../../lib/http-error.js';
-import type { NewsletterRepo } from '../store/repo.js';
+import type { AuditEventType } from '../../../audit/events';
+import { HttpError } from '../../../lib/http-error';
+import type { NewsletterRepo } from '../store/repo';
 
 /**
  * Double opt-in newsletter.

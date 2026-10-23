@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_TEMPLATE_LENGTH, routeTemplate } from './route-template.js';
+import { MAX_TEMPLATE_LENGTH, routeTemplate } from './route-template';
 
 describe('routeTemplate', () => {
   it('collapses uuids, long hex, numbers and tokens', () => {

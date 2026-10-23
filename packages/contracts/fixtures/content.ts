@@ -1,4 +1,4 @@
-import type { ModerationItem, ModerationSummary } from '../src/content.js';
+import type { ModerationItem, ModerationSummary } from '../src/content';
 
 /**
  * Content moderation fixtures.

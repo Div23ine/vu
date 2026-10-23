@@ -8,7 +8,7 @@ import {
   type NotificationPreferenceReader,
   type NotifyRecipient,
   type QuietHours,
-} from './notify.js';
+} from './notify';
 
 const USER_ID = 'e0000000-0000-4000-8000-000000000001';
 /** 2026-09-24T22:30:00Z is 01:30 the next day in Africa/Nairobi (UTC+3). */

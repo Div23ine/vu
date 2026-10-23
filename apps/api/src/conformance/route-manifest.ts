@@ -53,6 +53,11 @@ export const PUBLIC_ROUTES: readonly string[] = [
   'POST /api/v1/consent',
   // Published content only.
   'GET /api/v1/content',
+  // Open tooling catalogue: published rows, read-only.
+  'GET /api/v1/tools',
+  // Anonymous waitlist signup; rate-limited by the public_form policy and
+  // idempotent per address+topic, like the newsletter.
+  'POST /api/v1/waitlist',
   'GET /api/v1/content/:slug',
   // The catalogue is public; buying it is not.
   'GET /api/v1/products',
@@ -108,6 +113,9 @@ export const AUDIT_EXEMPT: readonly string[] = [
   'POST /api/v1/nodes/heartbeat',
   // Issues a presigned URL. Nothing is stored until the upload lands.
   'POST /api/v1/scans/authorisation-url',
+  // Anonymous waitlist signup: identical 202 for new and duplicate pairs, so
+  // an audit entry would only be an enumeration oracle for who signed up.
+  'POST /api/v1/waitlist',
   'POST /api/v1/studio/images/upload-url',
   'POST /api/v1/account-settings/avatar/upload-url',
   // Reads with a POST verb: an estimate and a reconciliation change nothing.

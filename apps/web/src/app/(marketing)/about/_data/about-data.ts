@@ -64,7 +64,7 @@ export const TEAM_MEMBERS: readonly TeamMember[] = [
     bio: 'Daniel keeps VUNVAULT’s engagements on schedule and in scope, coordinating between clients, analysts and the compliance workload. He pairs that project coordination with hands-on security work: tracking findings through to remediation, maintaining engagement documentation, and making sure every deliverable is reviewed, approved and delivered on time.',
   },
   {
-    name: 'Divine',
+    name: 'Thugu Maina',
     role: 'Marketing Strategist and Social Media Manager',
     photo: '/images/contributors/contributor-06.jpg',
     bio: 'Divine shapes how VUNVAULT communicates its work to the world. He plans and runs the company’s marketing strategy and social media presence, translating deep technical research into clear stories for executives, developers and the wider security community. He also grows the reach of the VUNVAULT Academy and keeps the community channels active and well informed.',

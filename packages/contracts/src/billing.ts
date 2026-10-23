@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IsoDateTime, PageQuery, Uuid, UsdCents } from './common.js';
+import { IsoDateTime, PageQuery, Uuid, UsdCents } from './common';
 import {
   BillingCycleSchema,
   DisplayCurrencySchema,
@@ -7,7 +7,7 @@ import {
   PaymentChannelSchema,
   PaymentProviderSchema,
   SubscriptionStatusSchema,
-} from './enums.js';
+} from './enums';
 
 /**
  * Money rules.

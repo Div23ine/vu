@@ -1,4 +1,4 @@
-import type { BroadcastProducer, Logger, MaintenanceRepo, Summary } from '../ports.js';
+import type { BroadcastProducer, Logger, MaintenanceRepo, Summary } from '../ports';
 
 /**
  * `outbox_reenqueue` (Task 92) — every 2 minutes.

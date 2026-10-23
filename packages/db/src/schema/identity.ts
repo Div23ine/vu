@@ -14,7 +14,7 @@ import {
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { authUsers } from 'drizzle-orm/supabase';
-import { bytea, citext, createdAtCol, idCol, timestamps, tz } from './_columns.js';
+import { bytea, citext, createdAtCol, idCol, timestamps, tz } from './_columns';
 import {
   accessTierEnum,
   accountStatusEnum,
@@ -24,7 +24,7 @@ import {
   mfaMethodEnum,
   teamEnum,
   userRoleEnum,
-} from './_enums.js';
+} from './_enums';
 
 /**
  * Identity, organisations, staff invitations, WebAuthn credentials and consent.

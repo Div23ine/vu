@@ -8,7 +8,7 @@ import {
   parseInvoiceNumber,
   parseJobCode,
   parsePentestRef,
-} from './ids.js';
+} from './ids';
 
 describe('job codes', () => {
   it('pads to at least four digits', () => {

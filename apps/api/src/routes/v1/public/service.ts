@@ -1,14 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { ContactBody, ContactCategories as ConsentCategories } from '@vunvault/contracts';
-import type { AuditEventType } from '../../../audit/events.js';
-import { HttpError } from '../../../lib/http-error.js';
-import {
-  dailySalt,
-  type NewConsentRecord,
-  type NewContactMessage,
-  type PublicRepo,
-} from './repo.js';
-import type { TurnstileVerifier } from './turnstile.js';
+import type { AuditEventType } from '../../../audit/events';
+import { HttpError } from '../../../lib/http-error';
+import { dailySalt, type NewConsentRecord, type NewContactMessage, type PublicRepo } from './repo';
+import type { TurnstileVerifier } from './turnstile';
 
 /**
  * Public intake: the contact form and the consent banner.

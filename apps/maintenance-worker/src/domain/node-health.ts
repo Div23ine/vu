@@ -1,4 +1,4 @@
-import type { Logger, MaintenanceRepo, Summary } from '../ports.js';
+import type { Logger, MaintenanceRepo, Summary } from '../ports';
 
 /**
  * `node_health` (Task 91) — the sensor-fleet heartbeat sweep.

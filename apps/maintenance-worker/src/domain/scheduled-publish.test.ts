@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { runScheduledPublish } from './scheduled-publish.js';
-import type { Logger, MaintenanceRepo, NotifyEnqueuer, PublishedContentRow } from '../ports.js';
+import { runScheduledPublish } from './scheduled-publish';
+import type { Logger, MaintenanceRepo, NotifyEnqueuer, PublishedContentRow } from '../ports';
 
 function makeLogger(): Logger & { warnings: string[] } {
   const warnings: string[] = [];

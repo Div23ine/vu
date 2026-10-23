@@ -11,21 +11,21 @@ import {
   type UserRole,
 } from '@vunvault/contracts';
 import type { Invitation, ProvisionInviteBody } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error.js';
-import type { BreachCheck } from '../../../lib/breach.js';
-import type { EmailProvider } from '../../../providers/email.js';
-import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
-import type { NotificationDispatcher } from '../../../lib/notify.js';
-import { validatePassword } from '../account-security/password-policy.js';
-import { deviceLabel } from '../auth/device.js';
+import { HttpError } from '../../../lib/http-error';
+import type { BreachCheck } from '../../../lib/breach';
+import type { EmailProvider } from '../../../providers/email';
+import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin';
+import type { NotificationDispatcher } from '../../../lib/notify';
+import { validatePassword } from '../account-security/password-policy';
+import { deviceLabel } from '../auth/device';
 import {
   INVITATION_TTL_MS,
   generateInvitationToken,
   hashInvitationToken,
   invitationExpiry,
   isExpired,
-} from './tokens.js';
-import type { InvitationRow, StaffRow, UsersRepo } from './repo.js';
+} from './tokens';
+import type { InvitationRow, StaffRow, UsersRepo } from './repo';
 
 /**
  * User & Access Management.

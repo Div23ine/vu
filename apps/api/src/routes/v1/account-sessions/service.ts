@@ -6,12 +6,12 @@ import {
   type NotificationPrefs,
   type SessionView,
 } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error.js';
-import { isStaff } from '../../../lib/staff.js';
-import type { NotificationDispatcher } from '../../../lib/notify.js';
-import { parseTimeOfDay } from '../../../lib/notify.js';
-import type { SupabaseAdmin } from '../../../lib/supabase-admin.js';
-import type { AccountSessionsRepo, NotificationPrefsRepo } from './repo.js';
+import { HttpError } from '../../../lib/http-error';
+import { isStaff } from '../../../lib/staff';
+import type { NotificationDispatcher } from '../../../lib/notify';
+import { parseTimeOfDay } from '../../../lib/notify';
+import type { SupabaseAdmin } from '../../../lib/supabase-admin';
+import type { AccountSessionsRepo, NotificationPrefsRepo } from './repo';
 
 /**
  * Notification preferences, device sessions and the deactivation request.

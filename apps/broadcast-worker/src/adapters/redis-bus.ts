@@ -1,6 +1,6 @@
 import type { BroadcastProgressEvent } from '@vunvault/contracts';
 import { broadcastProgressChannel } from '@vunvault/contracts';
-import type { Logger, ProgressBus } from '../ports.js';
+import type { Logger, ProgressBus } from '../ports';
 
 /**
  * Redis Pub/Sub progress bus (Task 89).

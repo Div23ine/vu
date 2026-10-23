@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { auditCheckpoints, auditEntries, AUDIT_EVENT_TYPES } from './audit.js';
-import { broadcastJobs, contactMessages, contentItems, contentReviews } from './content.js';
+import { auditCheckpoints, auditEntries, AUDIT_EVENT_TYPES } from './audit';
+import { broadcastJobs, contactMessages, contentItems, contentReviews } from './content';
 
 const sqlDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'sql');
 const chainSql = readFileSync(join(sqlDir, '0018_audit_chain.sql'), 'utf8');

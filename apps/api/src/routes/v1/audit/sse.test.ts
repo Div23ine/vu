@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChainStatus } from '@vunvault/contracts';
-import type { AuditEntryView } from '../../../audit/service.js';
+import type { AuditEntryView } from '../../../audit/service';
 import {
   collectingWriter,
   HEARTBEAT_INTERVAL_MS,
@@ -19,7 +19,7 @@ import {
   retryFrame,
   sseFrame,
   type SseWriter,
-} from './sse.js';
+} from './sse';
 
 /**
  * The live audit tail.

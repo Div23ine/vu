@@ -4,18 +4,18 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Permission, UserRole } from '@vunvault/contracts';
 import { MPESA_PROVIDER_MESSAGE } from '@vunvault/contracts';
-import type { Env } from '../../../config/env.js';
-import { resolveFxConfig } from '../../../config/env.js';
-import errorHandler from '../../../plugins/error-handler.js';
-import type { AuthUser } from '../../../plugins/auth.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { StripeClient } from '../../../billing/providers/stripe.js';
-import { PaystackClient } from '../../../billing/providers/paystack.js';
-import type { PaymentProviders } from '../../../billing/providers/index.js';
-import { HttpFxRateSource, type FxCache, type FxRateSource } from '../../../billing/fx-rates.js';
-import type { AuditEntryRow } from '../../../audit/repo.js';
-import { CheckoutService, FxService } from './service.js';
-import checkoutRoutes from './index.js';
+import type { Env } from '../../../config/env';
+import { resolveFxConfig } from '../../../config/env';
+import errorHandler from '../../../plugins/error-handler';
+import type { AuthUser } from '../../../plugins/auth';
+import { HttpError } from '../../../lib/http-error';
+import { StripeClient } from '../../../billing/providers/stripe';
+import { PaystackClient } from '../../../billing/providers/paystack';
+import type { PaymentProviders } from '../../../billing/providers/index';
+import { HttpFxRateSource, type FxCache, type FxRateSource } from '../../../billing/fx-rates';
+import type { AuditEntryRow } from '../../../audit/repo';
+import { CheckoutService, FxService } from './service';
+import checkoutRoutes from './index';
 import type {
   CheckoutInvoiceRow,
   CheckoutOrganizationRow,
@@ -24,7 +24,7 @@ import type {
   NewFxQuote,
   NewPaymentAttempt,
   PaymentAttemptRow,
-} from './repo.js';
+} from './repo';
 
 /**
  * FX quotes and USD checkout.

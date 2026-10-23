@@ -9,7 +9,7 @@ import {
   SEVERITY_CVSS_MISMATCH_MESSAGE,
   severityMatchesCvss,
 } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error.js';
+import { HttpError } from '../../../lib/http-error';
 
 /**
  * Broadcast preconditions, as pure functions.

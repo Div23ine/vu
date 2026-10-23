@@ -2,9 +2,9 @@ import { generateKeyPairSync, sign as signEd25519 } from 'node:crypto';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Env } from '../../../config/env.js';
-import errorHandler from '../../../plugins/error-handler.js';
-import nodesRoutes from './index.js';
+import type { Env } from '../../../config/env';
+import errorHandler from '../../../plugins/error-handler';
+import nodesRoutes from './index';
 import {
   canonicalHeartbeatString,
   deriveStatus,
@@ -17,7 +17,7 @@ import {
   type HeartbeatWrite,
   type NodesRepo,
   type SensorNodeRow,
-} from './service.js';
+} from './service';
 
 /**
  * Sensor-node heartbeats.

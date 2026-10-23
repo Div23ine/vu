@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isKnownTemplate, renderEmail, TEMPLATE_NAMES } from './templates.js';
+import { isKnownTemplate, renderEmail, TEMPLATE_NAMES } from './templates';
 
 describe('template registry', () => {
   it('covers every dispatcher event template', () => {

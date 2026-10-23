@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { Uuid } from './common.js';
-import { MfaMethodSchema, UserRoleSchema } from './enums.js';
-import { PERMISSIONS, type Permission } from './permissions.js';
-import { CONFIRM_PASSWORD_MESSAGE, NewPassword } from './account.js';
+import { Uuid } from './common';
+import { MfaMethodSchema, UserRoleSchema } from './enums';
+import { PERMISSIONS, type Permission } from './permissions';
+import { CONFIRM_PASSWORD_MESSAGE, NewPassword } from './account';
 
 /** Claims the Supabase Auth Hook mints from `profiles.role` and `profiles.org_id`. */
 export const JwtClaims = z.object({
@@ -25,12 +25,24 @@ export const SessionUser = z.object({
 });
 export type SessionUser = z.infer<typeof SessionUser>;
 
+/**
+ * Passwordless login, step 1: the email address only. Whether the address
+ * exists is never revealed — the route answers 202 either way.
+ */
 export const LoginBody = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
-  remember: z.boolean().optional(),
 });
 export type LoginBody = z.infer<typeof LoginBody>;
+
+export const LoginConfirmBody = z.object({ token: z.string().min(8).max(200) });
+export type LoginConfirmBody = z.infer<typeof LoginConfirmBody>;
+
+export const LoginVerifyBody = z.object({
+  handle: z.string().min(8).max(200),
+  code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
+  remember: z.boolean().optional(),
+});
+export type LoginVerifyBody = z.infer<typeof LoginVerifyBody>;
 
 /**
  * A successful password check may still require a second factor: `user` is null
@@ -63,40 +75,34 @@ export type MfaVerifyBody = z.infer<typeof MfaVerifyBody>;
  * and symbol — and `POST /auth/signup` answers `SignupStartResponse`, never a
  * session: the mailbox OTP is what activates the account.
  */
-export const SignupBody = z
-  .object({
-    fullName: z.string().min(2),
-    email: z.string().email(),
-    phone: z.string().optional(),
-    country: z.string().length(2),
-    accountType: z.enum(['individual', 'company']),
-    password: NewPassword,
-    confirmPassword: z.string(),
-    description: z.string().max(500).optional(),
-  })
-  .refine((value) => value.password === value.confirmPassword, {
-    path: ['confirmPassword'],
-    message: 'Passwords do not match',
-  });
+/**
+ * Passwordless signup, step 1: email + display name. No password exists in
+ * this flow; possession of the mailbox plus a six-digit code is the auth.
+ */
+export const SignupBody = z.object({
+  fullName: z.string().min(2),
+  email: z.string().email(),
+});
 export type SignupBody = z.infer<typeof SignupBody>;
 
+export const SignupConfirmBody = z.object({ token: z.string().min(8).max(200) });
+export type SignupConfirmBody = z.infer<typeof SignupConfirmBody>;
+
 export const SignupStartResponse = z.object({
-  data: z.object({
-    email: z.string().email(),
-    verificationRequired: z.literal(true),
-    /** The resend button's cooldown, in seconds. */
-    resendAfterSeconds: z.literal(30),
-    /** The OTP's lifetime, in seconds: ten minutes. */
-    expiresInSeconds: z.literal(600),
-  }),
+  data: z.object({ email: z.string().email() }),
 });
 export type SignupStartResponse = z.infer<typeof SignupStartResponse>;
 
 export const SignupVerifyBody = z.object({
-  email: z.string().email(),
+  handle: z.string().min(8).max(200),
   code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
 });
 export type SignupVerifyBody = z.infer<typeof SignupVerifyBody>;
+
+export const AuthFlowHandle = z.object({
+  data: z.object({ handle: z.string(), method: z.enum(['email', 'totp']) }),
+});
+export type AuthFlowHandle = z.infer<typeof AuthFlowHandle>;
 
 export const SignupResendBody = z.object({
   email: z.string().email(),

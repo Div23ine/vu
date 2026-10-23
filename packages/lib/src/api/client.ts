@@ -1,4 +1,4 @@
-import { ApiError, type ErrorEnvelope } from './errors.js';
+import { ApiError, type ErrorEnvelope } from './errors';
 
 /**
  * Typed fetch client for the VUNVAULT API.

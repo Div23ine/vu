@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { isApiError } from './errors.js';
+import { isApiError } from './errors';
 
 /**
  * QueryClient factory with VUNVAULT defaults.

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { UnrecoverableError } from 'bullmq';
-import { invoiceKey, PdfHandler, PDF_CONTENT_TYPE, reportKey } from './pdf-handler.js';
+import { invoiceKey, PdfHandler, PDF_CONTENT_TYPE, reportKey } from './pdf-handler';
 import type {
   Clock,
   InvoiceView,
@@ -9,7 +9,7 @@ import type {
   ObjectWriter,
   PdfRenderer,
   ReportView,
-} from '../ports.js';
+} from '../ports';
 
 const INVOICE_ID = '11111111-1111-4111-8111-111111111111';
 const SCAN_JOB_ID = '22222222-2222-4222-8222-222222222222';

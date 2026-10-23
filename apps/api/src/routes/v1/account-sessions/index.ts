@@ -8,16 +8,16 @@ import {
   RevokeOthersResponse,
   SessionsResponse,
 } from '@vunvault/contracts';
-import { AUDITED } from '../../../audit/audited.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import type { Tx } from '../../../plugins/db.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { SqlAccountSessionsRepo, SqlNotificationPrefsRepo } from './repo.js';
+import { AUDITED } from '../../../audit/audited';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import type { Tx } from '../../../plugins/db';
+import { HttpError } from '../../../lib/http-error';
+import { SqlAccountSessionsRepo, SqlNotificationPrefsRepo } from './repo';
 import {
   AccountSessionsService,
   DeactivationService,
   NotificationPreferencesService,
-} from './service.js';
+} from './service';
 
 /**
  * Notification preferences, device sessions and the deactivation request (Task 29).

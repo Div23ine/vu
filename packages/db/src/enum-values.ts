@@ -187,7 +187,7 @@ export const PAYMENT_ATTEMPT_STATUSES = [
 export type PaymentAttemptStatus = (typeof PAYMENT_ATTEMPT_STATUSES)[number];
 
 /** Postgres enum `display_currency`. */
-export const DISPLAY_CURRENCIES = ['USD', 'KES', 'NGN', 'GHS', 'ZAR'] as const;
+export const DISPLAY_CURRENCIES = ['USD', 'KES', 'NGN', 'GHS', 'ZAR', 'GBP', 'EUR'] as const;
 export type DisplayCurrency = (typeof DISPLAY_CURRENCIES)[number];
 
 /** Postgres enum `ledger_direction`. */

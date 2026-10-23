@@ -2,7 +2,7 @@ import fp from 'fastify-plugin';
 import { Queue, type DefaultJobOptions } from 'bullmq';
 import { QUEUE_NAMES, type QueueName } from '@vunvault/contracts';
 import type { FastifyPluginAsync } from 'fastify';
-import { redisOptionsFromUrl } from '../plugins/redis.js';
+import { redisOptionsFromUrl } from '../plugins/redis';
 
 /** Three attempts with exponential backoff, then a week of failure history. */
 export const DEFAULT_JOB_OPTIONS: DefaultJobOptions = {

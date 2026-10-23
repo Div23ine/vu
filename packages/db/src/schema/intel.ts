@@ -15,7 +15,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
-import { createdAtCol, idCol, timestamps, tz } from './_columns.js';
+import { createdAtCol, idCol, timestamps, tz } from './_columns';
 import {
   advisoryPatchStatusEnum,
   advisoryStatusEnum,
@@ -24,9 +24,9 @@ import {
   findingSeverityEnum,
   nodeStatusEnum,
   scopeCategoryEnum,
-} from './_enums.js';
-import { organizations, profiles } from './identity.js';
-import { contentItems } from './content.js';
+} from './_enums';
+import { organizations, profiles } from './identity';
+import { contentItems } from './content';
 
 /**
  * Zero-Day Intel desk, sensor fleet and Command Center dashboard data.

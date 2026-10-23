@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { runPurgeLoginAttempts } from './purge-login-attempts.js';
-import { runExpireInvitations } from './expire-invitations.js';
-import { runFlagDormantAccounts } from './flag-dormant.js';
-import { runStaleSignups } from './stale-signups.js';
-import type { Logger, MaintenanceRepo } from '../ports.js';
+import { runPurgeLoginAttempts } from './purge-login-attempts';
+import { runExpireInvitations } from './expire-invitations';
+import { runFlagDormantAccounts } from './flag-dormant';
+import { runStaleSignups } from './stale-signups';
+import type { Logger, MaintenanceRepo } from '../ports';
 
 const makeLogger = (): Logger => ({
   info: () => undefined,

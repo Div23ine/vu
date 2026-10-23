@@ -14,37 +14,37 @@ import {
   SignupVerifyBody,
 } from '@vunvault/contracts';
 import { z } from 'zod';
-import { actorLabelFor, AUDITED, audited, auditFailure } from '../../../audit/audited.js';
-import type { SqlExecutor } from '../../../audit/repo.js';
-import { asExecutor } from '../../../audit/repo.js';
-import type { Tx } from '../../../plugins/db.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { HibpBreachCheck, type BreachCheck } from '../../../lib/breach.js';
+import { actorLabelFor, AUDITED, audited, auditFailure } from '../../../audit/audited';
+import type { SqlExecutor } from '../../../audit/repo';
+import { asExecutor } from '../../../audit/repo';
+import type { Tx } from '../../../plugins/db';
+import { HttpError } from '../../../lib/http-error';
+import { HibpBreachCheck, type BreachCheck } from '../../../lib/breach';
 import {
   clearSessionCookies,
   readSessionCookies,
   setSessionCookies,
-} from '../../../lib/session-cookies.js';
+} from '../../../lib/session-cookies';
 // CHANGED: value import of SupabaseError, plus the type-only SupabaseAdmin.
-import { SupabaseError, type SupabaseAdmin } from '../../../lib/supabase-admin.js';
-import { COOKIE_NAMES } from '../../../plugins/cookies.js';
+import { SupabaseError, type SupabaseAdmin } from '../../../lib/supabase-admin';
+import { COOKIE_NAMES } from '../../../plugins/cookies';
 import {
   deriveChallengeKey,
   EmailOtpStore,
   memoryKvStore,
   MfaChallengeStore,
   type KvStore,
-} from './challenge.js';
-import { SignupOtpStore } from './email-otp.js';
-import { PasswordResetStore } from './password-reset.js';
-import oauthRoutes from './oauth.js';
-import type { OnboardingRepo } from './oauth-service.js';
-import { createMfaVerifierRegistry, type MfaVerifierRegistry } from './mfa-registry.js';
-import { AccountSecurityService } from '../account-security/service.js';
-import { SqlAccountSecurityRepo } from '../account-security/repo.js';
-import { SimpleWebauthnService } from '../account-security/webauthn.js';
-import { SqlAuthRepo, type AuthRepo } from './repo.js';
-import { AuthService, type RequestMeta } from './service.js';
+} from './challenge';
+import { SignupOtpStore } from './email-otp';
+import { PasswordResetStore } from './password-reset';
+import oauthRoutes from './oauth';
+import type { OnboardingRepo } from './oauth-service';
+import { createMfaVerifierRegistry, type MfaVerifierRegistry } from './mfa-registry';
+import { AccountSecurityService } from '../account-security/service';
+import { SqlAccountSecurityRepo } from '../account-security/repo';
+import { SimpleWebauthnService } from '../account-security/webauthn';
+import { SqlAuthRepo, type AuthRepo } from './repo';
+import { AuthService, type RequestMeta } from './service';
 
 /**
  * Session lifecycle routes.

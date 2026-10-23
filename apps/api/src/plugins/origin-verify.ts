@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import fp from 'fastify-plugin';
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
-import type { SecretProvider } from '../lib/secrets/provider.js';
+import type { SecretProvider } from '../lib/secrets/provider';
 
 /**
  * Origin verification — the API half of the edge origin lock (Task 99).

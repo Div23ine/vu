@@ -19,6 +19,10 @@ on:
   schedule:
     - cron: '22 14 * * 4'
 
+# Least privilege at the top level; the analyze job widens only what CodeQL needs.
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
@@ -28,6 +32,7 @@ jobs:
     #   - https://gh.io/using-larger-runners (GitHub.com only)
     # Consider using larger runners or machines with greater resources for possible analysis time improvements.
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    timeout-minutes: 90
     permissions:
       # required for all workflows
       security-events: write
@@ -58,12 +63,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
-
-    # Add any setup steps before running the `github/codeql-action/init` action.
-    # This includes steps like installing compilers or runtimes (`actions/setup-node`
-    # or others). This is typically only required for manual builds.
-    # - name: Setup runtime (example)
-    #   uses: actions/setup-example@v1
+      with:
+        persist-credentials: false
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL

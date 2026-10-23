@@ -1,5 +1,5 @@
 import type { InternalFinding } from '@vunvault/contracts';
-import type { ProtocolFinding } from './protocol.js';
+import type { ProtocolFinding } from './protocol';
 
 /**
  * Finding collector (Task 85).

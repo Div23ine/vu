@@ -1,4 +1,4 @@
-import type { SlotSemaphore } from '../ports.js';
+import type { SlotSemaphore } from '../ports';
 
 /**
  * Worker-slot semaphore (Task 84) — a Redis counter that caps how many pods this

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MAINTENANCE_TASKS } from '@vunvault/contracts';
-import { registerSchedulers, SCHEDULES, schedulerId, type SchedulerQueue } from './scheduler.js';
-import type { Logger } from '../ports.js';
+import { registerSchedulers, SCHEDULES, schedulerId, type SchedulerQueue } from './scheduler';
+import type { Logger } from '../ports';
 
 function makeLogger(): Logger {
   return {

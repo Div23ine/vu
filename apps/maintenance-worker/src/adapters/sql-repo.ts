@@ -26,7 +26,7 @@ import type {
   StuckBroadcastRow,
   ThreatCounts,
   ThreatSnapshotInput,
-} from '../ports.js';
+} from '../ports';
 
 /**
  * Postgres adapter for the maintenance worker (Task 91; Task 92 extends it).

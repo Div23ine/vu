@@ -6,7 +6,7 @@ import {
   ScanStreamError,
   ScanStreamFrame,
   ScanStreamMessage,
-} from './scan-stream.js';
+} from './scan-stream';
 
 /**
  * Scan stream contract tests (Task 88 union + the Task 95 relay frames).

@@ -1,7 +1,7 @@
 import { jwtVerify } from 'jose';
 import { JwtClaims } from '@vunvault/contracts';
 import { z } from 'zod';
-import { HttpError } from './http-error.js';
+import { HttpError } from './http-error';
 
 /**
  * Access-token verification.

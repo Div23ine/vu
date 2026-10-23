@@ -1,7 +1,7 @@
 import { is } from 'drizzle-orm';
 import { getTableConfig, getViewConfig, PgTable, type AnyPgTable } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
-import * as schema from './index.js';
+import * as schema from './index';
 import {
   fxQuotes,
   invoiceBalances,
@@ -15,7 +15,7 @@ import {
   plans,
   providerWebhookEvents,
   subscriptions,
-} from './billing.js';
+} from './billing';
 
 /** Every table declared anywhere in the schema, keyed by its SQL name. */
 function allTables(): Array<[string, AnyPgTable]> {
@@ -91,11 +91,14 @@ describe('billing tables', () => {
     }
   });
 
-  it('keeps local currency confined to fx_quotes', () => {
+  it('keeps local currency confined to fx_quotes and locked order snapshots', () => {
+    // guest_orders stores the conversion the buyer was SHOWN at purchase
+    // time; settlement itself is always USD cents.
+    const allowed = new Set(['fx_quotes', 'guest_orders']);
     for (const [tableName, table] of allTables()) {
       for (const column of getTableConfig(table).columns) {
         if (column.name !== 'display_currency' && column.name !== 'local_minor') continue;
-        expect(tableName).toBe('fx_quotes');
+        expect(allowed.has(tableName)).toBe(true);
       }
     }
     expect(getTableConfig(fxQuotes).indexes.map((idx) => idx.config.name)).toEqual([

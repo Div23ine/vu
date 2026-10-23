@@ -5,20 +5,20 @@ import type { Permission, UserRole } from '@vunvault/contracts';
 import { ROLE_PERMISSIONS } from '@vunvault/contracts';
 import { clientDirectory, contactMessages } from '@vunvault/contracts/fixtures/contact';
 import { staffMembers } from '@vunvault/contracts/fixtures/users';
-import type { Env } from '../../../config/env.js';
-import errorHandler from '../../../plugins/error-handler.js';
-import cookiesPlugin from '../../../plugins/cookies.js';
-import type { AuthUser } from '../../../plugins/auth.js';
-import { HttpError } from '../../../lib/http-error.js';
-import type { AuditEntryRow } from '../../../audit/repo.js';
-import contactAdminRoutes from './index.js';
+import type { Env } from '../../../config/env';
+import errorHandler from '../../../plugins/error-handler';
+import cookiesPlugin from '../../../plugins/cookies';
+import type { AuthUser } from '../../../plugins/auth';
+import { HttpError } from '../../../lib/http-error';
+import type { AuditEntryRow } from '../../../audit/repo';
+import contactAdminRoutes from './index';
 import type {
   ClientListQueryParams,
   ClientRow,
   ContactAdminRepo,
   ContactListQueryParams,
   ContactMessageRow,
-} from './repo.js';
+} from './repo';
 
 /**
  * Admin contact inbox + client directory (Task 40f).

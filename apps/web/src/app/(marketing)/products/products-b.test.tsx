@@ -13,7 +13,7 @@ function renderWithProviders(element: React.ReactElement) {
 
 /**
  * Open tooling tests — the grid is database-driven: the server component
- * fetches `GET /api/v1/public/tools`, so the suite stubs `fetch` and asserts
+ * fetches `GET /api/v1/tools`, so the suite stubs `fetch` and asserts
  * both branches of the artifact rule (download when `fileUrl` exists,
  * waitlist when it does not).
  */
@@ -53,10 +53,7 @@ afterEach(() => {
 describe('FreeResources (open tooling from the API)', () => {
   it('loads the spec from the API', async () => {
     const tools = await loadOpenTools();
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/v1/public/tools'),
-      expect.anything(),
-    );
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/tools'), expect.anything());
     expect(tools).toHaveLength(2);
   });
 

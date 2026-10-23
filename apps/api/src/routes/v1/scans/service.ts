@@ -12,11 +12,11 @@ import type {
 import { ROLE_PERMISSIONS } from '@vunvault/contracts';
 import type { PdfJobPayload, ScanJobPayload } from '@vunvault/contracts';
 import type { ReviewCheckKey, ReviewGateState, ScanStatus } from '@vunvault/db/enum-values';
-import type { SqlExecutor } from '../../../audit/repo.js';
-import type { AuditEventType } from '../../../audit/events.js';
-import { HttpError } from '../../../lib/http-error.js';
-import type { ObjectStorage } from '../../../lib/object-storage.js';
-import type { InvoiceIssuer } from '../../../billing/invoice-issuer.js';
+import type { SqlExecutor } from '../../../audit/repo';
+import type { AuditEventType } from '../../../audit/events';
+import { HttpError } from '../../../lib/http-error';
+import type { ObjectStorage } from '../../../lib/object-storage';
+import type { InvoiceIssuer } from '../../../billing/invoice-issuer';
 import {
   allChecksPassed,
   canDecide,
@@ -27,9 +27,9 @@ import {
   noteIsLongEnough,
   decide,
   type GateOutcome,
-} from './gate.js';
-import { assertAuthorisationPresent, issueAuthorisationUpload } from './authorisation.js';
-import type { ScanJobRow, ScansRepo } from './repo.js';
+} from './gate';
+import { assertAuthorisationPresent, issueAuthorisationUpload } from './authorisation';
+import type { ScanJobRow, ScansRepo } from './repo';
 
 /**
  * Scans: client intake, the admin queue, and the Mandatory Admin Review Gate.

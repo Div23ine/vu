@@ -76,13 +76,9 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
 
-  // ADDED: Resolve .js imports to .ts/.tsx files (required for ESM monorepos)
-  webpack: (config) => {
-    config.resolve.extensionAlias = {
-      '.js': ['.ts', '.tsx', '.js', '.jsx'],
-    };
-    return config;
-  },
+  // Note: The webpack extensionAlias block has been removed.
+  // Turbopack handles TS compilation natively now that the .js extensions
+  // have been removed from the monorepo source files.
 
   async headers() {
     return [

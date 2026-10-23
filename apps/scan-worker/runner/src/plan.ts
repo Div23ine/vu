@@ -1,4 +1,4 @@
-import type { RunnerEnv, ScanType } from './env.js';
+import type { RunnerEnv, ScanType } from './env';
 
 /**
  * Scan plans (Task 87).

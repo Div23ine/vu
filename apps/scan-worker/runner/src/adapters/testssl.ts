@@ -1,5 +1,5 @@
-import { severityFromLabel } from '../severity.js';
-import type { Severity } from '../emit.js';
+import { severityFromLabel } from '../severity';
+import type { Severity } from '../emit';
 
 /**
  * testssl.sh adapter (Task 87).

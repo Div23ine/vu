@@ -6,7 +6,7 @@ import {
   profiles,
   staffInvitations,
   webauthnCredentials,
-} from './identity.js';
+} from './identity';
 
 /** Column names of a table, in declaration order. */
 function columnNames(table: Parameters<typeof getTableConfig>[0]): string[] {

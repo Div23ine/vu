@@ -1,4 +1,4 @@
-import type { Invitation, StaffMember, StaffSummary } from '../src/users.js';
+import type { Invitation, StaffMember, StaffSummary } from '../src/users';
 
 /**
  * Staff roster fixtures.

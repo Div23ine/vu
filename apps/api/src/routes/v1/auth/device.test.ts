@@ -9,7 +9,7 @@ import {
   SEPARATOR,
   UNKNOWN_BROWSER,
   UNKNOWN_DEVICE,
-} from './device.js';
+} from './device';
 
 const UA = {
   macSafari:

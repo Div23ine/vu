@@ -18,15 +18,15 @@ import {
   PatchStatusBody,
   RetractBody,
 } from '@vunvault/contracts';
-import { AUDITED, audited } from '../../../audit/audited.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import type { Tx } from '../../../plugins/db.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { MAX_STREAMS_PER_USER, SSE_HEADERS, StreamRegistry, type SseWriter } from '../audit/sse.js';
-import { HttpNvdClient, type NvdCache, type NvdClient } from './nvd.js';
-import { SqlAdvisoriesRepo, type AdvisoriesRepo } from './repo.js';
-import { AdvisoriesService, type AdvisoryActor, type AuditInstruction } from './service.js';
-import { BroadcastSseSession } from './broadcast-sse.js';
+import { AUDITED, audited } from '../../../audit/audited';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import type { Tx } from '../../../plugins/db';
+import { HttpError } from '../../../lib/http-error';
+import { MAX_STREAMS_PER_USER, SSE_HEADERS, StreamRegistry, type SseWriter } from '../audit/sse';
+import { HttpNvdClient, type NvdCache, type NvdClient } from './nvd';
+import { SqlAdvisoriesRepo, type AdvisoriesRepo } from './repo';
+import { AdvisoriesService, type AdvisoryActor, type AuditInstruction } from './service';
+import { BroadcastSseSession } from './broadcast-sse';
 
 /**
  * Zero-day advisories (Task 38).

@@ -42,7 +42,7 @@ import {
   type AuditCategory,
   type ReviewGateState,
   type UserRole,
-} from './enum-values.js';
+} from './enum-values';
 
 /**
  * The tuples are the contract between the database and every wire schema, so the
@@ -313,7 +313,9 @@ describe('enum tuples', () => {
   });
 
   it('pins the billing enums around USD-only settlement', () => {
-    expect(DISPLAY_CURRENCIES).toEqual(['USD', 'KES', 'NGN', 'GHS', 'ZAR']);
+    // Settlement stays USD-only; these are DISPLAY currencies (GBP/EUR added
+    // for the public pricing toggle).
+    expect(DISPLAY_CURRENCIES).toEqual(['USD', 'KES', 'NGN', 'GHS', 'ZAR', 'GBP', 'EUR']);
     expect(PAYMENT_STATUSES).toEqual(['paid', 'pending', 'overdue']);
     expect(INVOICE_STATUSES).toEqual(['draft', 'pending', 'paid', 'overdue', 'void']);
     expect(SUBSCRIPTION_STATUSES).toEqual(['active', 'past_due', 'canceled', 'incomplete']);

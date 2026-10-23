@@ -10,10 +10,10 @@ import {
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
   getApiConfig,
-} from './client.js';
-import { createQueryClient } from './query-client.js';
-import { queryKeys } from './query-keys.js';
-import { ApiError, isApiError } from './errors.js';
+} from './client';
+import { createQueryClient } from './query-client';
+import { queryKeys } from './query-keys';
+import { ApiError, isApiError } from './errors';
 
 interface FakeResponseOptions {
   status?: number;

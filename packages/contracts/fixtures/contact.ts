@@ -1,5 +1,5 @@
-import type { ClientDirectoryItem, ContactMessageView } from '../src/contact.js';
-import { staffMembers } from './users.js';
+import type { ClientDirectoryItem, ContactMessageView } from '../src/contact';
+import { staffMembers } from './users';
 
 /**
  * Admin contact-inbox and client-directory fixtures (Task 40f).

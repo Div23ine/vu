@@ -1,7 +1,7 @@
-import { HttpError } from '../lib/http-error.js';
-import { LedgerService, type InvoiceRevenueKind } from './ledger.js';
-import { nextInvoiceNumber } from './invoice-number.js';
-import { asExecutor } from '../audit/repo.js';
+import { HttpError } from '../lib/http-error';
+import { LedgerService, type InvoiceRevenueKind } from './ledger';
+import { nextInvoiceNumber } from './invoice-number';
+import { asExecutor } from '../audit/repo';
 
 /**
  * Invoice issuance.

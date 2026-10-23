@@ -8,8 +8,8 @@ import {
   INBOX_TITLE_MAX,
   NotifyHandler,
   truncateInbox,
-} from './notify-handler.js';
-import type { InboxInput, Logger, NotifyRepo, ReceiptInput } from '../ports.js';
+} from './notify-handler';
+import type { InboxInput, Logger, NotifyRepo, ReceiptInput } from '../ports';
 
 const USER_ID = 'aaaaaaaa-0000-4000-8000-0000000000a1';
 

@@ -50,7 +50,7 @@ import {
   SUBSCRIPTION_STATUSES,
   TEAMS,
   USER_ROLES,
-} from '../enum-values.js';
+} from '../enum-values';
 
 /**
  * Postgres enums, built from the single source of truth in `../enum-values`.

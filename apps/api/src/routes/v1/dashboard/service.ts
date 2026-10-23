@@ -12,7 +12,7 @@ import type {
   Weekday,
 } from '@vunvault/contracts';
 import { THREAT_LEVEL_LABELS, WEEKDAYS } from '@vunvault/contracts';
-import type { DateBounds, DashboardRepo, HourlyPoint, TransactionRow } from './repo.js';
+import type { DateBounds, DashboardRepo, HourlyPoint, TransactionRow } from './repo';
 
 /**
  * The Command Center's numbers.

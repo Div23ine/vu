@@ -2,14 +2,14 @@ import fp from 'fastify-plugin';
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import type { CookieSerializeOptions } from '../../../plugins/cookies.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import type { Tx } from '../../../plugins/db.js';
-import { setSessionCookies } from '../../../lib/session-cookies.js';
-import type { SupabaseAdmin } from '../../../lib/supabase-admin.js';
-import { COOKIE_NAMES } from '../../../plugins/cookies.js';
-import { deriveChallengeKey, memoryKvStore, MfaChallengeStore, type KvStore } from './challenge.js';
-import { SqlAuthRepo, type AuthRepo } from './repo.js';
+import type { CookieSerializeOptions } from '../../../plugins/cookies';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import type { Tx } from '../../../plugins/db';
+import { setSessionCookies } from '../../../lib/session-cookies';
+import type { SupabaseAdmin } from '../../../lib/supabase-admin';
+import { COOKIE_NAMES } from '../../../plugins/cookies';
+import { deriveChallengeKey, memoryKvStore, MfaChallengeStore, type KvStore } from './challenge';
+import { SqlAuthRepo, type AuthRepo } from './repo';
 import {
   OAuthStateStore,
   OAUTH_COOKIE_NAME,
@@ -18,7 +18,7 @@ import {
   SqlOnboardingRepo,
   OAuthService,
   type OnboardingRepo,
-} from './oauth-service.js';
+} from './oauth-service';
 
 /**
  * OAuth sign-in routes (Task 40e): `start` redirects the browser to Supabase's

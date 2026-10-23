@@ -5,8 +5,8 @@ import {
   type AuditSpec,
   type AuditedHandler,
   type AuditedRouteHandler,
-} from '../audit/audited.js';
-import { createAuditService, type AuditService } from '../audit/service.js';
+} from '../audit/audited';
+import { createAuditService, type AuditService } from '../audit/service';
 
 /**
  * Decorates `app.audit` (the chain service) and `app.audited` (the route wrapper).

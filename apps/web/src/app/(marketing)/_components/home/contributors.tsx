@@ -26,7 +26,7 @@ export const CONTRIBUTORS: readonly Contributor[] = [
     photo: '/images/contributors/contributor-01.jpg',
   },
   {
-    name: 'Natasha',
+    name: 'Bukenoya Natasha',
     role: 'Cybersecurity Analyst',
     photo: '/images/contributors/contributor-02.jpg',
   },
@@ -46,7 +46,7 @@ export const CONTRIBUTORS: readonly Contributor[] = [
     photo: '/images/contributors/contributor-05.jpg',
   },
   {
-    name: 'Divine',
+    name: 'Thuku Maina',
     role: 'Marketing Strategist and Social Media Manager',
     photo: '/images/contributors/contributor-06.jpg',
   },

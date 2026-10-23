@@ -7,7 +7,7 @@ import {
   toRateString,
   usdCentsToLocalMinor,
   USD_RATE,
-} from './money.js';
+} from './money';
 
 /**
  * The catalogue pins two values; both are asserted first, verbatim.

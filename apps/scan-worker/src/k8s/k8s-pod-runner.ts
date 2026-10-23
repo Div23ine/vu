@@ -1,8 +1,8 @@
-import type { Clock, Logger, PodRunner, PodSpec, RunHooks, RunResult } from '../ports.js';
-import { consumeLogStream, type TerminalLine } from './log-stream.js';
-import { buildJobManifest, jobResourceName, type ManifestEnv } from './pod-manifest.js';
-import { buildNetworkPolicy, networkPolicyName } from './network-policy.js';
-import { RUNNER_CONTAINER, isNotFound, type KubeClient, type PodPhase } from './kube.js';
+import type { Clock, Logger, PodRunner, PodSpec, RunHooks, RunResult } from '../ports';
+import { consumeLogStream, type TerminalLine } from './log-stream';
+import { buildJobManifest, jobResourceName, type ManifestEnv } from './pod-manifest';
+import { buildNetworkPolicy, networkPolicyName } from './network-policy';
+import { RUNNER_CONTAINER, isNotFound, type KubeClient, type PodPhase } from './kube';
 
 /**
  * Kubernetes pod runner (Task 86) — one locked-down Job per scan.

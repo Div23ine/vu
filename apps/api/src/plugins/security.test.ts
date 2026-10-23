@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { buildApp, type App } from '../app.js';
-import type { Env } from '../config/env.js';
+import { buildApp, type App } from '../app';
+import type { Env } from '../config/env';
 import {
   COOKIE_MAX_AGE,
   COOKIE_NAMES,
@@ -9,7 +9,7 @@ import {
   SESSION_COOKIES,
   cookieOptions,
   createCookieOptionsResolver,
-} from './cookies.js';
+} from './cookies';
 import {
   GLOBAL_RATE_LIMIT,
   LOGIN_IP_POLICY,
@@ -18,9 +18,9 @@ import {
   loginKey,
   memoryCounterStore,
   resolveClientIp,
-} from './rate-limit.js';
-import { SENTRY_REDACTED_BODY_FIELDS, SENTRY_REDACTED_HEADERS, scrubEvent } from './sentry.js';
-import { carriesSessionCookie, CSRF_HEADER, generateCsrfToken, tokensMatch } from './csrf.js';
+} from './rate-limit';
+import { SENTRY_REDACTED_BODY_FIELDS, SENTRY_REDACTED_HEADERS, scrubEvent } from './sentry';
+import { carriesSessionCookie, CSRF_HEADER, generateCsrfToken, tokensMatch } from './csrf';
 
 const WEB_ORIGIN = 'https://www.vunvault.test';
 

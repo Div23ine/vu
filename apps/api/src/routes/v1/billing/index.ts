@@ -9,13 +9,13 @@ import {
   Subscription,
   UpdatePaymentMethodBody,
 } from '@vunvault/contracts';
-import { AUDITED } from '../../../audit/audited.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import type { Tx } from '../../../plugins/db.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { csvDocument } from '../../../billing/csv.js';
-import { SqlBillingRepo } from './repo.js';
-import { BillingService } from './service.js';
+import { AUDITED } from '../../../audit/audited';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import type { Tx } from '../../../plugins/db';
+import { HttpError } from '../../../lib/http-error';
+import { csvDocument } from '../../../billing/csv';
+import { SqlBillingRepo } from './repo';
+import { BillingService } from './service';
 
 /**
  * Client billing routes (Task 32).

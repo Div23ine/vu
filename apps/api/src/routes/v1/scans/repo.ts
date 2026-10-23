@@ -1,6 +1,6 @@
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
 import type { ReviewCheckKey } from '@vunvault/db/enum-values';
-import { clientVisibleWhere, SCAN_JOBS_ALIAS } from './visibility.js';
+import { clientVisibleWhere, SCAN_JOBS_ALIAS } from './visibility';
 
 /**
  * Scan queue data access (Task 35).

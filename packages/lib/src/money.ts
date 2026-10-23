@@ -8,7 +8,8 @@
  */
 
 /** Currencies the portal may *display*. Only USD is ever charged. */
-export type DisplayCurrency = 'USD' | 'KES' | 'NGN' | 'GHS' | 'ZAR';
+export type { DisplayCurrency } from '@vunvault/contracts';
+import type { DisplayCurrency } from '@vunvault/contracts';
 
 /** Integer USD cents. */
 export type UsdCents = number;
@@ -26,6 +27,8 @@ const MINOR_UNIT_EXPONENT: Record<DisplayCurrency, number> = {
   KES: 2,
   NGN: 2,
   GHS: 2,
+  GBP: 2,
+  EUR: 2,
   ZAR: 2,
 };
 

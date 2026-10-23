@@ -8,7 +8,7 @@ import {
   timingSafeEqual,
 } from 'node:crypto';
 import type { MfaMethod } from '@vunvault/contracts';
-import type { SupabaseSession } from '../../../lib/supabase-admin.js';
+import type { SupabaseSession } from '../../../lib/supabase-admin';
 
 /**
  * The MFA challenge store.

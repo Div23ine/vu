@@ -13,12 +13,12 @@ import {
   STUDIO_LIMITS,
 } from '@vunvault/contracts';
 import type { ContentStatus } from '@vunvault/db/enum-values';
-import type { AuditEventType } from '../../../audit/events.js';
-import { HttpError } from '../../../lib/http-error.js';
-import type { ObjectStorage } from '../../../lib/object-storage.js';
-import { canTransition, isEditable } from '../content/state-machine.js';
-import type { ContentItemRow, ContentRepo } from '../content/repo.js';
-import { normaliseTags, sanitiseMarkdown } from './markdown.js';
+import type { AuditEventType } from '../../../audit/events';
+import { HttpError } from '../../../lib/http-error';
+import type { ObjectStorage } from '../../../lib/object-storage';
+import { canTransition, isEditable } from '../content/state-machine';
+import type { ContentItemRow, ContentRepo } from '../content/repo';
+import { normaliseTags, sanitiseMarkdown } from './markdown';
 import {
   blogSlugPath,
   draftSlugSeed,
@@ -26,7 +26,7 @@ import {
   nextSlugCandidate,
   SLUG_MAX_ATTEMPTS,
   slugify,
-} from './slug.js';
+} from './slug';
 
 /**
  * The Content Studio: self-service authoring for verified journalists and

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { classifyLine } from './classify.js';
-import { FindingCollector, MAX_FINDINGS_PER_JOB } from './findings.js';
-import { LineBuffer, MAX_TAIL_BYTES } from './line-buffer.js';
-import type { ProtocolFinding } from './protocol.js';
+import { classifyLine } from './classify';
+import { FindingCollector, MAX_FINDINGS_PER_JOB } from './findings';
+import { LineBuffer, MAX_TAIL_BYTES } from './line-buffer';
+import type { ProtocolFinding } from './protocol';
 import {
   MAX_LINE_BYTES,
   TRUNCATION_SUFFIX,
@@ -10,7 +10,7 @@ import {
   collapseCarriageReturns,
   sanitiseLine,
   stripAnsi,
-} from './sanitise.js';
+} from './sanitise';
 
 /**
  * Output-pipeline tests (Task 85).

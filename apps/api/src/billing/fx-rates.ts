@@ -1,6 +1,6 @@
 import type { DisplayCurrency } from '@vunvault/contracts';
-import { HttpError } from '../lib/http-error.js';
-import { isLocalCurrency, toRateString, USD_RATE } from './money.js';
+import { HttpError } from '../lib/http-error';
+import { isLocalCurrency, toRateString, USD_RATE } from './money';
 
 /**
  * Exchange-rate source for DISPLAY-ONLY quotes.

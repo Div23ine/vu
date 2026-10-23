@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Industry, PentestTargetType } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error.js';
-import { verifySecret } from '../../../lib/secret-hash.js';
+import { HttpError } from '../../../lib/http-error';
+import { verifySecret } from '../../../lib/secret-hash';
 import type {
   ClientProfileRepo,
   CompleteOnboardingInput,
   InsertPentestRequestInput,
   OnboardingRepo,
   PentestRequestRepo,
-} from './repo.js';
+} from './repo';
 import {
   ClientProfileService,
   DEFAULT_TERMS_VERSION,
@@ -18,7 +18,7 @@ import {
   isDisallowedTarget,
   normaliseDomain,
   parseTarget,
-} from './service.js';
+} from './service';
 
 const USER_ID = 'a1000000-0000-4000-8000-000000000001';
 const ORG_ID = 'a1000000-0000-4000-8000-0000000000aa';

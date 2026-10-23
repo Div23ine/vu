@@ -9,7 +9,7 @@ import {
   isExpired,
   isInvitationToken,
   tokensMatch,
-} from './tokens.js';
+} from './tokens';
 
 describe('generateInvitationToken', () => {
   it('produces 32 random bytes of base64url', () => {

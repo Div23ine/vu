@@ -4,7 +4,7 @@ import type {
   MaintenanceRepo,
   PlatformMetricsInput,
   Summary,
-} from '../ports.js';
+} from '../ports';
 
 /**
  * `metrics_rollup` (Task 91) — the honest hourly rollup behind the Command

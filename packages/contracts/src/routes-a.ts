@@ -59,36 +59,35 @@ export const ROUTES_A = [
     successStatus: 202,
     errors: [
       { status: 400, code: 'validation_failed' },
-      { status: 409, code: 'email_taken' },
-      { status: 422, code: 'breached_password' },
       { status: 429, code: 'rate_limited' },
     ],
     notes:
-      'Public. Creates a `pending_verification` identity and emails a six-digit OTP; sets no cookies. A re-signup while pending replaces the unverified record.',
+      'Public, passwordless step 1. Always 202; emails a confirmation link for unseen addresses and stores the pending signup in Redis only — no Supabase auth user exists until the code leg completes.',
   },
   {
     method: 'POST',
-    path: '/api/v1/auth/signup/verify-email',
+    path: '/api/v1/auth/signup/confirm',
+    request: 'SignupConfirmBody',
+    response: 'AuthFlowHandle',
+    successStatus: 200,
+    errors: [
+      { status: 401, code: 'invalid_token' },
+      { status: 429, code: 'rate_limited' },
+    ],
+    notes: 'Public, passwordless step 2: consumes the emailed link and emails the six-digit code.',
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/auth/signup/verify',
     request: 'SignupVerifyBody',
     response: 'SessionUser',
     successStatus: 200,
     errors: [
-      { status: 401, code: 'otp_invalid' },
-      { status: 401, code: 'otp_exhausted' },
-      { status: 410, code: 'otp_expired' },
+      { status: 401, code: 'mfa_failed' },
       { status: 429, code: 'rate_limited' },
     ],
     notes:
-      'Public. Activates the profile, opens the aal1 session and sets the session cookies with mfaEnrolled false; the web app then runs the Task 27 TOTP enrolment.',
-  },
-  {
-    method: 'POST',
-    path: '/api/v1/auth/signup/resend',
-    request: 'SignupResendBody',
-    response: 'EmptyObject',
-    successStatus: 202,
-    notes:
-      'Public. Always 202; re-issues the OTP at most once per 30 seconds for a pending profile.',
+      'Public, passwordless step 3: creates the Supabase auth user and profile NOW, opens the session and sets the cookies. Abandoned signups never reach auth.users.',
   },
   {
     method: 'POST',
@@ -131,21 +130,39 @@ export const ROUTES_A = [
     method: 'POST',
     path: '/api/v1/auth/login',
     request: 'LoginBody',
-    response: 'LoginResponse',
-    successStatus: 200,
-    errors: [
-      { status: 401, code: 'invalid_credentials' },
-      { status: 429, code: 'rate_limited' },
-    ],
+    response: 'EmptyObject',
+    successStatus: 202,
+    errors: [{ status: 429, code: 'rate_limited' }],
+    notes:
+      'Public, passwordless step 1: identical 202 for known and unknown addresses; known active accounts get a confirmation link.',
   },
   {
     method: 'POST',
-    path: '/api/v1/auth/mfa/verify',
-    request: 'MfaVerifyBody',
+    path: '/api/v1/auth/login/confirm',
+    request: 'LoginConfirmBody',
+    response: 'AuthFlowHandle',
+    successStatus: 200,
+    errors: [
+      { status: 401, code: 'invalid_token' },
+      { status: 429, code: 'rate_limited' },
+    ],
+    notes:
+      'Public, passwordless step 2: consumes the link; answers whether the code arrives by email or the enrolled TOTP authenticator.',
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/auth/login/verify',
+    request: 'LoginVerifyBody',
     response: 'SessionUser',
     successStatus: 200,
-    errors: [{ status: 401, code: 'mfa_failed' }],
+    errors: [
+      { status: 401, code: 'mfa_failed' },
+      { status: 429, code: 'rate_limited' },
+    ],
+    notes:
+      'Public, passwordless step 3: the six-digit code opens the session (aal2 when a TOTP factor verified).',
   },
+
   {
     method: 'POST',
     path: '/api/v1/auth/logout',

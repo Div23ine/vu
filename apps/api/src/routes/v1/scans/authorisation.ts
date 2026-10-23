@@ -1,5 +1,5 @@
-import { HttpError } from '../../../lib/http-error.js';
-import type { ObjectStorage } from '../../../lib/object-storage.js';
+import { HttpError } from '../../../lib/http-error';
+import type { ObjectStorage } from '../../../lib/object-storage';
 
 /**
  * Signed authorisation to test.

@@ -1,33 +1,30 @@
 import { describe, expect, it } from 'vitest';
-import { clientProfile } from '../fixtures/profile.js';
+import { clientProfile } from '../fixtures/profile';
 import {
   gateChecklistDefaults,
   gateChecklistPassed,
   scanJobs,
   scanQueueSummary,
-} from '../fixtures/scans.js';
-import { invitations, staffMembers, staffSummary } from '../fixtures/users.js';
+} from '../fixtures/scans';
+import { invitations, staffMembers, staffSummary } from '../fixtures/users';
 import {
   ForgotPasswordBody,
-  JwtClaims,
   LoginBody,
-  LoginResponse,
-  MfaVerifyBody,
+  LoginConfirmBody,
+  LoginVerifyBody,
   ResetPasswordBody,
-  SessionUser,
   SignupBody,
-  SignupResendBody,
   SignupStartResponse,
   SignupVerifyBody,
-} from './auth.js';
-import { ErrorEnvelope, IsoDateTime, PageQuery, paginated, Uuid, UsdCents } from './common.js';
+} from './auth';
+import { ErrorEnvelope, IsoDateTime, PageQuery, paginated, Uuid, UsdCents } from './common';
 import {
   AuditCategorySchema,
   DisplayCurrencySchema,
   ReviewGateStateSchema,
   ScanStatusSchema,
   UserRoleSchema,
-} from './enums.js';
+} from './enums';
 import {
   COUNTRIES,
   GATE_DECISION_LABELS,
@@ -37,9 +34,9 @@ import {
   ROLE_LABELS,
   ROLE_PERMISSIONS,
   TEAM_LABELS,
-} from './permissions.js';
-import { ClientProfile, UpdateProfileBody } from './profile.js';
-import { ROUTES_A } from './routes-a.js';
+} from './permissions';
+import { ClientProfile, UpdateProfileBody } from './profile';
+import { ROUTES_A } from './routes-a';
 import {
   BulkScanActionBody,
   CreatePentestRequestBody,
@@ -51,7 +48,7 @@ import {
   ScanJob,
   ScanListQuery,
   ScanQueueSummary,
-} from './scans.js';
+} from './scans';
 import {
   ChangeRoleBody,
   Invitation,
@@ -62,7 +59,7 @@ import {
   STAFF_ROLES,
   STAFF_TEAMS,
   UserActionBody,
-} from './users.js';
+} from './users';
 
 const UUID = 'c0000000-0000-4000-8000-000000000001';
 
@@ -175,145 +172,84 @@ describe('permissions', () => {
 });
 
 describe('auth schemas', () => {
-  it('parses a session user and its JWT claims', () => {
-    const session = {
-      id: UUID,
-      email: 'e.reed@vunvault.com',
-      fullName: 'Dr. Evelyn Reed',
-      role: 'super_admin',
-      orgId: null,
-      permissions: [...PERMISSIONS],
-      mfaEnrolled: true,
-    };
-    expect(SessionUser.parse(session)).toEqual(session);
-    expect(
-      JwtClaims.parse({ sub: UUID, role: 'admin', org_id: null, permissions: ['users:read'] }),
-    ).toMatchObject({ role: 'admin' });
-    expect(SessionUser.safeParse({ ...session, role: 'root' }).success).toBe(false);
-    expect(JwtClaims.safeParse({ sub: 'not-a-uuid', role: 'admin' }).success).toBe(false);
-  });
-
-  it('parses a login body and its MFA-pending response', () => {
-    expect(
-      LoginBody.parse({
-        email: 'a.njoroge@vunvault.com',
-        password: 'correct-horse',
-        remember: true,
-      }),
-    ).toMatchObject({ remember: true });
-    expect(
-      LoginBody.safeParse({ email: 'a.njoroge@vunvault.com', password: 'short' }).success,
-    ).toBe(false);
-
-    const pending = LoginResponse.parse({
-      data: { user: null, mfaRequired: true, mfaMethods: ['totp'] },
+  it('parses the passwordless login bodies', () => {
+    expect(LoginBody.parse({ email: 'a.njoroge@vunvault.com' })).toEqual({
+      email: 'a.njoroge@vunvault.com',
     });
-    expect(pending.data.mfaRequired).toBe(true);
-    expect(LoginResponse.safeParse({ data: { user: null } }).success).toBe(false);
-  });
-
-  it('discriminates the three MFA methods', () => {
-    expect(MfaVerifyBody.parse({ method: 'totp', code: '481920' })).toEqual({
-      method: 'totp',
+    expect(LoginBody.safeParse({}).success).toBe(false);
+    expect(LoginConfirmBody.parse({ token: 'tok-1234567890' })).toMatchObject({
+      token: 'tok-1234567890',
+    });
+    expect(LoginConfirmBody.safeParse({ token: 'short' }).success).toBe(false);
+    expect(LoginVerifyBody.parse({ handle: 'handle-abcdef12', code: '481920' })).toEqual({
+      handle: 'handle-abcdef12',
       code: '481920',
     });
-    expect(MfaVerifyBody.parse({ method: 'email_otp', code: '007123' }).method).toBe('email_otp');
-    expect(MfaVerifyBody.parse({ method: 'webauthn', assertion: { raw: true } }).method).toBe(
-      'webauthn',
+    expect(LoginVerifyBody.safeParse({ handle: 'handle-abcdef12', code: '48192' }).success).toBe(
+      false,
     );
-    expect(MfaVerifyBody.safeParse({ method: 'totp', code: '12345' }).success).toBe(false);
-    expect(MfaVerifyBody.safeParse({ method: 'sms', code: '481920' }).success).toBe(false);
   });
 
-  it('requires matching passwords on signup', () => {
-    const valid = {
-      fullName: 'Jane Wanjiru',
-      email: 'jane.wanjiru@acmefintech.co.ke',
-      country: 'KE',
-      accountType: 'company',
-      password: 'Str0ng-Passphrase!',
-      confirmPassword: 'Str0ng-Passphrase!',
-    };
-    expect(SignupBody.parse(valid)).toMatchObject({ accountType: 'company' });
-
-    const mismatch = SignupBody.safeParse({ ...valid, confirmPassword: 'Different-1!' });
-    expect(mismatch.success).toBe(false);
-    if (!mismatch.success) {
-      expect(mismatch.error.issues[0]?.path).toEqual(['confirmPassword']);
-      expect(mismatch.error.issues[0]?.message).toBe('Passwords do not match');
-    }
-    expect(SignupBody.safeParse({ ...valid, password: 'short' }).success).toBe(false);
-  });
-
-  it('enforces the Task 26 complexity rules on the signup password', () => {
-    const base = {
-      fullName: 'Jane Wanjiru',
-      email: 'jane.wanjiru@acmefintech.co.ke',
-      country: 'KE',
-      accountType: 'individual',
-    };
-    // Long enough but missing upper / digit / symbol is still rejected.
-    expect(
-      SignupBody.safeParse({
-        ...base,
-        password: 'a-long-enough-passphrase',
-        confirmPassword: 'a-long-enough-passphrase',
-      }).success,
-    ).toBe(false);
-    expect(
-      SignupBody.safeParse({
-        ...base,
-        password: 'str0ng-passphrase!',
-        confirmPassword: 'str0ng-passphrase!',
-      }).success,
-    ).toBe(false);
-    expect(
-      SignupBody.safeParse({
-        ...base,
-        password: 'Str0ng-Passphrase!',
-        confirmPassword: 'Str0ng-Passphrase!',
-      }).success,
-    ).toBe(true);
-  });
-
-  it('describes the verified signup start (Task 40d)', () => {
-    const start = SignupStartResponse.parse({
-      data: {
-        email: 'jane.wanjiru@acmefintech.co.ke',
-        verificationRequired: true,
-        resendAfterSeconds: 30,
-        expiresInSeconds: 600,
-      },
+  it('parses the passwordless login bodies', () => {
+    expect(LoginBody.parse({ email: 'a.njoroge@vunvault.com' })).toEqual({
+      email: 'a.njoroge@vunvault.com',
     });
-    expect(start.data.verificationRequired).toBe(true);
-    // The literals are the contract: the UI's countdown reads them, not its own.
-    expect(
-      SignupStartResponse.safeParse({
-        data: {
-          email: 'jane.wanjiru@acmefintech.co.ke',
-          verificationRequired: false,
-          resendAfterSeconds: 30,
-          expiresInSeconds: 600,
-        },
-      }).success,
-    ).toBe(false);
+    expect(LoginBody.safeParse({}).success).toBe(false);
+    expect(LoginConfirmBody.parse({ token: 'tok-1234567890' })).toMatchObject({
+      token: 'tok-1234567890',
+    });
+    expect(LoginVerifyBody.parse({ handle: 'handle-abcdef12', code: '481920' })).toEqual({
+      handle: 'handle-abcdef12',
+      code: '481920',
+    });
+  });
+
+  it('signup takes only a name and an email — no password exists', () => {
+    expect(SignupBody.parse({ email: 'new@example.test', fullName: 'New Person' })).toEqual({
+      email: 'new@example.test',
+      fullName: 'New Person',
+    });
+    expect(SignupBody.safeParse({ email: 'new@example.test' }).success).toBe(false);
+  });
+
+  it('keeps the six-digit shape on every code leg', () => {
+    expect(SignupVerifyBody.parse({ handle: 'handle-abcdef12', code: '000000' })).toMatchObject({
+      code: '000000',
+    });
+    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: '12345' }).success).toBe(
+      false,
+    );
+    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: 'abcdef' }).success).toBe(
+      false,
+    );
+  });
+
+  it('describes the silent signup start response', () => {
+    expect(SignupStartResponse.parse({ data: { email: 'new@example.test' } })).toEqual({
+      data: { email: 'new@example.test' },
+    });
+  });
+
+  it('describes the silent signup start', () => {
+    const start = SignupStartResponse.parse({ data: { email: 'jane.wanjiru@acmefintech.co.ke' } });
+    expect(start.data.email).toBe('jane.wanjiru@acmefintech.co.ke');
+    // The response carries no hint of whether the address was free.
+    expect(Object.keys(start.data)).toEqual(['email']);
   });
 
   it('accepts only a six-digit verification code', () => {
-    expect(
-      SignupVerifyBody.parse({ email: 'jane.wanjiru@acmefintech.co.ke', code: '007123' }),
-    ).toMatchObject({ code: '007123' });
-    expect(SignupVerifyBody.safeParse({ email: 'jane@example.test', code: '12345' }).success).toBe(
+    expect(SignupVerifyBody.parse({ handle: 'handle-abcdef12', code: '007123' })).toMatchObject({
+      code: '007123',
+    });
+    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: '12345' }).success).toBe(
       false,
     );
-    expect(
-      SignupVerifyBody.safeParse({ email: 'jane@example.test', code: '1234567' }).success,
-    ).toBe(false);
-    expect(SignupVerifyBody.safeParse({ email: 'jane@example.test', code: 'abcdef' }).success).toBe(
+    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: '1234567' }).success).toBe(
       false,
     );
-    expect(SignupResendBody.parse({ email: 'jane@example.test' }).email).toBe('jane@example.test');
-    expect(SignupResendBody.safeParse({ email: 'not-an-email' }).success).toBe(false);
+    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: 'abcdef' }).success).toBe(
+      false,
+    );
   });
 
   it('validates the forgot / reset password pair', () => {
@@ -608,7 +544,6 @@ describe('ROUTES_A', () => {
     for (const expected of [
       'POST /api/v1/auth/signup',
       'POST /api/v1/auth/login',
-      'POST /api/v1/auth/mfa/verify',
       'POST /api/v1/auth/logout',
       'GET /api/v1/auth/session',
       'GET /api/v1/profile',
@@ -654,15 +589,11 @@ describe('ROUTES_A', () => {
     const signup = ROUTES_A.find((route) => route.path === '/api/v1/auth/signup');
     expect(signup?.errors?.map((error) => error.code)).toEqual([
       'validation_failed',
-      'email_taken',
-      'breached_password',
       'rate_limited',
     ]);
     // Task 40d: the verified flow's four new public routes are documented too.
     const paths = ROUTES_A.map((route) => `${route.method} ${route.path}`);
     for (const expected of [
-      'POST /api/v1/auth/signup/verify-email',
-      'POST /api/v1/auth/signup/resend',
       'POST /api/v1/auth/forgot-password',
       'POST /api/v1/auth/reset-password',
     ]) {

@@ -1,13 +1,13 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { HttpError } from '../lib/http-error.js';
-import { ProviderError } from '../providers/error.js';
-import { LEDGER_RECIPES, LedgerService, assertBalanced, assertPositiveAmounts } from './ledger.js';
-import { InvoiceIssuer, revenueKindFor } from './invoice-issuer.js';
-import { formatInvoiceNumber, nextInvoiceNumber } from './invoice-number.js';
-import { escapeCsvCell, csvDocument, csvRow, INVOICE_CSV_HEADER } from './csv.js';
-import { PaystackClient } from './providers/paystack.js';
-import { StripeClient } from './providers/stripe.js';
+import { HttpError } from '../lib/http-error';
+import { ProviderError } from '../providers/error';
+import { LEDGER_RECIPES, LedgerService, assertBalanced, assertPositiveAmounts } from './ledger';
+import { InvoiceIssuer, revenueKindFor } from './invoice-issuer';
+import { formatInvoiceNumber, nextInvoiceNumber } from './invoice-number';
+import { escapeCsvCell, csvDocument, csvRow, INVOICE_CSV_HEADER } from './csv';
+import { PaystackClient } from './providers/paystack';
+import { StripeClient } from './providers/stripe';
 
 const ORG_ID = 'c1000000-0000-4000-8000-000000000001';
 const NOW = new Date('2026-09-24T12:00:00.000Z');

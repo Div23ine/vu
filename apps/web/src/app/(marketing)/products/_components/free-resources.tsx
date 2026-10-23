@@ -35,7 +35,7 @@ const FOOTNOTE =
 
 export async function loadOpenTools() {
   try {
-    const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/v1/public/tools`, {
+    const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/v1/tools`, {
       next: { revalidate: 60 },
     });
     if (!response.ok) return [];

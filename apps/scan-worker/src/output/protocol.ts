@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { redact } from './redact.js';
+import { redact } from './redact';
 
 /**
  * Pod → controller event protocol (Task 85).

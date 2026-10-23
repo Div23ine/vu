@@ -1,4 +1,4 @@
-import type { ProductView, PublicContentItem } from '../src/index.js';
+import type { ProductView, PublicContentItem } from '../src/index';
 
 /**
  * Fixtures for the store and the public content feed (Task 40b).

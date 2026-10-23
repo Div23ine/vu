@@ -16,7 +16,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { createdAtCol, idCol, timestamps, tz, usdCents } from './_columns.js';
+import { citext, createdAtCol, idCol, timestamps, tz, usdCents } from './_columns';
 import {
   billingCycleEnum,
   displayCurrencyEnum,
@@ -28,13 +28,13 @@ import {
   paymentChannelEnum,
   paymentProviderEnum,
   subscriptionStatusEnum,
-} from './_enums.js';
-import { organizations, profiles } from './identity.js';
-import { scanJobs } from './scans.js';
+} from './_enums';
+import { organizations, profiles } from './identity';
+import { scanJobs } from './scans';
 // Circular by design: `store.ts` points entitlements at an invoice, and an invoice
 // line points at a product. Both references are inside lambdas, so neither module
 // dereferences the other while it is being evaluated.
-import { products } from './store.js';
+import { products } from './store';
 
 /**
  * Money rules — non-negotiable:
@@ -331,3 +331,31 @@ export const invoiceBalances = pgView('invoice_balances', {
   paidUsdCents: bigint('paid_usd_cents', { mode: 'number' }).notNull(),
   outstandingUsdCents: bigint('outstanding_usd_cents', { mode: 'number' }).notNull(),
 }).existing();
+
+/**
+ * Guest (no-account) orders created from the public /pricing checkout.
+ * `reference` is the Paystack transaction reference handed over at
+ * initialise — one source of truth, unique, idempotent fulfilment.
+ * Settlement is always USD; the display conversion is a locked snapshot.
+ */
+export const guestOrders = pgTable(
+  'guest_orders',
+  {
+    id: idCol(),
+    reference: text('reference').notNull().unique(),
+    planCode: text('plan_code').notNull(),
+    email: citext('email').notNull(),
+    status: text('status').notNull().default('pending'),
+    usdCents: integer('usd_cents').notNull(),
+    displayCurrency: displayCurrencyEnum('display_currency').notNull().default('USD'),
+    rateLocalPerUsd: text('rate_local_per_usd'),
+    displayMinor: bigint('display_minor', { mode: 'number' }),
+    paidAt: tz('paid_at'),
+    failureReason: text('failure_reason'),
+    ...timestamps,
+  },
+  (table) => [
+    index('guest_orders_email_idx').on(table.email),
+    index('guest_orders_status_idx').on(table.status),
+  ],
+).enableRLS();

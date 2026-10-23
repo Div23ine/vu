@@ -2,11 +2,11 @@ import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { audited } from '../../../audit/audited.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
-import { HttpError } from '../../../lib/http-error.js';
-import { SqlPublicRepo, type PublicRepo } from '../public/repo.js';
-import { BadgeService, type AuditInstruction } from '../public/service.js';
+import { audited } from '../../../audit/audited';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import { HttpError } from '../../../lib/http-error';
+import { SqlPublicRepo, type PublicRepo } from '../public/repo';
+import { BadgeService, type AuditInstruction } from '../public/service';
 
 /**
  * The verified-blogger badge (Task 40).

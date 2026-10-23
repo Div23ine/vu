@@ -7,13 +7,13 @@ import {
   SmsRouter,
   TwilioSmsProvider,
 } from '@vunvault/lib/providers';
-import { ReactPdfRenderer } from './adapters/renderer.js';
-import { SqlNotifyRepo } from './adapters/sql-repo.js';
-import { LOG_REDACT_PATHS, loadEnv } from './config/env.js';
-import { NotifyHandler } from './domain/notify-handler.js';
-import { PdfHandler } from './domain/pdf-handler.js';
-import { startConsumers, type RunningConsumers } from './queue/consumer.js';
-import type { Clock, Logger } from './ports.js';
+import { ReactPdfRenderer } from './adapters/renderer';
+import { SqlNotifyRepo } from './adapters/sql-repo';
+import { LOG_REDACT_PATHS, loadEnv } from './config/env';
+import { NotifyHandler } from './domain/notify-handler';
+import { PdfHandler } from './domain/pdf-handler';
+import { startConsumers, type RunningConsumers } from './queue/consumer';
+import type { Clock, Logger } from './ports';
 
 /**
  * Notify-worker bootstrap (Task 90).

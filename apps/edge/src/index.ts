@@ -1,6 +1,6 @@
-import { isAllowedMethod, isAllowedPath, sizeVerdict } from './policy.js';
-import { routeTemplate } from './route-template.js';
-import { writeMetric, type AnalyticsSink } from './metrics.js';
+import { isAllowedMethod, isAllowedPath, sizeVerdict } from './policy';
+import { routeTemplate } from './route-template';
+import { writeMetric, type AnalyticsSink } from './metrics';
 
 /**
  * vv-edge (Task 99) — the API reverse proxy on api.<zone>.

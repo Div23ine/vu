@@ -1,6 +1,6 @@
 import type { AuditCategory, AuditSeverity } from '@vunvault/contracts';
-import type { AuditEntryView } from '../../../audit/service.js';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import type { AuditEntryView } from '../../../audit/service';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo';
 
 /**
  * Audit READ queries (Task 39).

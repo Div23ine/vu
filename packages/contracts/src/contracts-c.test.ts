@@ -5,7 +5,7 @@ import {
   profileSettings,
   securityPosture,
   sessions,
-} from '../fixtures/account.js';
+} from '../fixtures/account';
 import {
   dashboardKpis,
   endpointStats,
@@ -17,8 +17,8 @@ import {
   threatLevel,
   trafficSummary,
   transactions,
-} from '../fixtures/dashboard.js';
-import { advisories, advisorySummary, broadcastEstimate, drafts } from '../fixtures/intel.js';
+} from '../fixtures/dashboard';
+import { advisories, advisorySummary, broadcastEstimate, drafts } from '../fixtures/intel';
 import {
   AvatarConfirmBody,
   AvatarUploadRequest,
@@ -50,7 +50,7 @@ import {
   WebauthnRegisterVerifyBody,
   postureScore,
   SECURITY_POSTURE_ITEMS,
-} from './account.js';
+} from './account';
 import {
   DashboardKpis,
   EndpointStat,
@@ -67,7 +67,7 @@ import {
   TrafficSummary,
   TransactionsResponse,
   WEEKDAYS,
-} from './dashboard.js';
+} from './dashboard';
 import {
   ADVISORY_STATUS_LABELS,
   ADVISORY_TITLE_MESSAGE,
@@ -93,7 +93,7 @@ import {
   SCOPE_CATEGORY_LABELS,
   SEVERITY_CVSS_HINTS,
   severityMatchesCvss,
-} from './intel.js';
+} from './intel';
 import {
   CAREER_DESCRIPTIONS,
   CAREER_LABELS,
@@ -107,9 +107,9 @@ import {
   OnboardingStep3,
   OnboardingStatus,
   OnboardingSubmitBody,
-} from './onboarding.js';
-import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions.js';
-import { ROUTES_C, type RouteDocC } from './routes-c.js';
+} from './onboarding';
+import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions';
+import { ROUTES_C, type RouteDocC } from './routes-c';
 import {
   BLOG_CATEGORY_LABELS,
   countWords,
@@ -125,7 +125,7 @@ import {
   StudioStatus,
   StudioSubmitReadiness,
   STUDIO_TAG_SUGGESTIONS,
-} from './studio.js';
+} from './studio';
 
 const UUID = 'c0000000-0000-4000-8000-000000000001';
 const ALL_ACKS = {
@@ -907,7 +907,6 @@ describe('ROUTES_C', () => {
       'DELETE /api/v1/account/mfa/webauthn/:id',
       'POST /api/v1/account/recovery-codes',
       'POST /api/v1/account/recovery-codes/regenerate',
-      'POST /api/v1/auth/mfa/recovery',
       'GET /api/v1/account/sessions',
       'DELETE /api/v1/account/sessions/:id',
       'POST /api/v1/account/sessions/revoke-others',
@@ -932,7 +931,7 @@ describe('ROUTES_C', () => {
       expect(paths, expected).toContain(expected);
     }
     // 56 since Task 94 documented the broadcast progress SSE relay.
-    expect(ROUTES_C).toHaveLength(56);
+    expect(ROUTES_C).toHaveLength(55);
   });
 
   it('gates broadcasting on intel:broadcast and never offers a delete', () => {
@@ -968,8 +967,6 @@ describe('ROUTES_C', () => {
       'advisory_incomplete',
       'broadcast_in_progress',
     ]);
-    const recovery = findRoute('/api/v1/auth/mfa/recovery');
-    expect(recovery?.notes).toContain('drops TOTP');
     const password = findRoute('/api/v1/account/password');
     expect(password?.errors?.map((error) => error.code)).toContain('breached_password');
   });

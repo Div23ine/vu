@@ -1,23 +1,19 @@
 import Redis from 'ioredis';
 import pino from 'pino';
-import { IoRedisBus } from './adapters/redis-bus.js';
-import { SignedApiClient } from './adapters/signed-api-client.js';
-import { loadEnv } from './config/env.js';
-import { JobRunner } from './domain/job-runner.js';
-import { LogArchive } from './domain/log-archive.js';
-import {
-  createOutputChannel,
-  type OutputChannel,
-  type OutputRedis,
-} from './domain/output-channel.js';
-import { FindingCollector } from './output/findings.js';
-import { makeRunHooks } from './domain/run-hooks.js';
-import { createSlotSemaphore, type SlotRedis } from './domain/slots.js';
-import { K8sPodRunner } from './k8s/k8s-pod-runner.js';
-import { createKubeClient } from './k8s/kube.js';
-import { SCAN_NAMESPACE } from './k8s/pod-manifest.js';
-import { startConsumer } from './queue/consumer.js';
-import type { Clock, Logger, PodRunner, PodSpec, RunHooks, RunResult } from './ports.js';
+import { IoRedisBus } from './adapters/redis-bus';
+import { SignedApiClient } from './adapters/signed-api-client';
+import { loadEnv } from './config/env';
+import { JobRunner } from './domain/job-runner';
+import { LogArchive } from './domain/log-archive';
+import { createOutputChannel, type OutputChannel, type OutputRedis } from './domain/output-channel';
+import { FindingCollector } from './output/findings';
+import { makeRunHooks } from './domain/run-hooks';
+import { createSlotSemaphore, type SlotRedis } from './domain/slots';
+import { K8sPodRunner } from './k8s/k8s-pod-runner';
+import { createKubeClient } from './k8s/kube';
+import { SCAN_NAMESPACE } from './k8s/pod-manifest';
+import { startConsumer } from './queue/consumer';
+import type { Clock, Logger, PodRunner, PodSpec, RunHooks, RunResult } from './ports';
 
 /**
  * Scan-controller bootstrap (Task 84).

@@ -6,7 +6,7 @@ import {
   type Team,
   type UserRole,
 } from '@vunvault/contracts';
-import type { HttpError } from '../../../lib/http-error.js';
+import type { HttpError } from '../../../lib/http-error';
 import type {
   CreateInvitationInput,
   CreateProfileInput,
@@ -15,9 +15,9 @@ import type {
   StaffRow,
   SummaryCounts,
   UsersRepo,
-} from './repo.js';
-import { MAX_RESENDS, UsersService, initials } from './service.js';
-import { hashInvitationToken } from './tokens.js';
+} from './repo';
+import { MAX_RESENDS, UsersService, initials } from './service';
+import { hashInvitationToken } from './tokens';
 
 const ADMIN_ID = 'b1000000-0000-4000-8000-000000000001';
 const OTHER_ADMIN_ID = 'b1000000-0000-4000-8000-000000000002';

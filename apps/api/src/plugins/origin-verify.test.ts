@@ -1,8 +1,8 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Env } from '../config/env.js';
-import originVerifyPlugin, { ORIGIN_VERIFY_HEADER } from './origin-verify.js';
-import { resolveClientIp } from './rate-limit.js';
+import type { Env } from '../config/env';
+import originVerifyPlugin, { ORIGIN_VERIFY_HEADER } from './origin-verify';
+import { resolveClientIp } from './rate-limit';
 
 /**
  * The edge origin lock's API half (Task 99).

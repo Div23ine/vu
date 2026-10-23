@@ -3,13 +3,13 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ScanClientMessage } from '@vunvault/contracts';
-import { PROTOCOL_PREFIX, parseProtocolLine } from '../output/protocol.js';
-import { MAX_LINE_BYTES, sanitiseLine } from '../output/sanitise.js';
-import { Redactor } from '../output/redact.js';
-import { ALLOWED_ENV_KEYS } from '../k8s/pod-manifest.js';
-import { buildJobManifest, forbiddenVolumes } from '../k8s/pod-manifest.js';
-import { buildNetworkPolicy } from '../k8s/network-policy.js';
-import type { PodSpec } from '../ports.js';
+import { PROTOCOL_PREFIX, parseProtocolLine } from '../output/protocol';
+import { MAX_LINE_BYTES, sanitiseLine } from '../output/sanitise';
+import { Redactor } from '../output/redact';
+import { ALLOWED_ENV_KEYS } from '../k8s/pod-manifest';
+import { buildJobManifest, forbiddenVolumes } from '../k8s/pod-manifest';
+import { buildNetworkPolicy } from '../k8s/network-policy';
+import type { PodSpec } from '../ports';
 
 /**
  * Isolation conformance suite (Task 88).

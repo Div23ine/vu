@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { ScanStreamMessage } from '@vunvault/contracts';
 import type { InternalFinding } from '@vunvault/contracts';
-import type { ApiClient, Clock, Logger } from '../ports.js';
-import { LogArchive } from './log-archive.js';
+import type { ApiClient, Clock, Logger } from '../ports';
+import { LogArchive } from './log-archive';
 import {
   FINAL_FLUSH_ATTEMPTS,
   FINDING_FLUSH_MS,
   PROGRESS_THROTTLE_MS,
   makeRunHooks,
-} from './run-hooks.js';
-import type { OutputChannel } from './output-channel.js';
+} from './run-hooks';
+import type { OutputChannel } from './output-channel';
 
 /**
  * Run-hook tests (Task 88).

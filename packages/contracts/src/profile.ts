@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { IsoDateTime, Uuid } from './common.js';
-import { IndustrySchema, SubscriptionStatusSchema } from './enums.js';
+import { IsoDateTime, Uuid } from './common';
+import { IndustrySchema, SubscriptionStatusSchema } from './enums';
 
 /** The client portal's "My Profile" read model. */
 export const ClientProfile = z.object({

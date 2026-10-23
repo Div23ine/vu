@@ -1,10 +1,10 @@
-import type { Logger } from '../ports.js';
-import type { RunHooks } from '../ports.js';
-import { LineBuffer } from '../output/line-buffer.js';
-import { classifyLine } from '../output/classify.js';
-import { isProtocolLine, parseProtocolLine } from '../output/protocol.js';
-import { sanitiseLine } from '../output/sanitise.js';
-import { Redactor } from '../output/redact.js';
+import type { Logger } from '../ports';
+import type { RunHooks } from '../ports';
+import { LineBuffer } from '../output/line-buffer';
+import { classifyLine } from '../output/classify';
+import { isProtocolLine, parseProtocolLine } from '../output/protocol';
+import { sanitiseLine } from '../output/sanitise';
+import { Redactor } from '../output/redact';
 
 /**
  * Log stream (Task 86) — pod stdout to sanitised, classified terminal lines.

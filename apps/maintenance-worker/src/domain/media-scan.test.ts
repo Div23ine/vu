@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isAllowedImageUrl, isValidAvatarKey, runMediaScan } from './media-scan.js';
-import type { Logger, MaintenanceRepo } from '../ports.js';
+import { isAllowedImageUrl, isValidAvatarKey, runMediaScan } from './media-scan';
+import type { Logger, MaintenanceRepo } from '../ports';
 
 const R2_BASE = 'https://cdn.vunvault.com';
 

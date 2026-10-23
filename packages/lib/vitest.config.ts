@@ -1,4 +1,4 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
-import { domConfig } from '../../vitest.shared.js';
+import { domConfig } from '../../vitest.shared';
 
 export default mergeConfig(domConfig, defineConfig({}));

@@ -5,7 +5,7 @@
  * ids); Twilio carries everything else. Both are plain `fetch` calls with an
  * 8-second timeout and no internal retry — BullMQ owns retries.
  */
-import { ProviderError } from './error.js';
+import { ProviderError } from './error';
 
 export const PROVIDER_TIMEOUT_MS = 8000;
 export const AFRICAS_TALKING_URL = 'https://api.africastalking.com/version1/messaging';

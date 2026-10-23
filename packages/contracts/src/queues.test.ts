@@ -4,7 +4,7 @@ import {
   MaintenanceJobPayload,
   QUEUE_NAME_VALUES,
   QUEUE_PAYLOADS,
-} from './queues.js';
+} from './queues';
 
 describe('MAINTENANCE_TASKS', () => {
   it('lists exactly the twelve scheduled tasks in wire order', () => {

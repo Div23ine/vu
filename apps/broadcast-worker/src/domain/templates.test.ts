@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { emailFor, inAppNotification, IN_APP_BODY_MAX, SMS_BODY_MAX, smsFor } from './templates.js';
-import type { AdvisoryDeliveryView } from '../ports.js';
+import { emailFor, inAppNotification, IN_APP_BODY_MAX, SMS_BODY_MAX, smsFor } from './templates';
+import type { AdvisoryDeliveryView } from '../ports';
 
 function advisory(overrides: Partial<AdvisoryDeliveryView> = {}): AdvisoryDeliveryView {
   return {

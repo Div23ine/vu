@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { IsoDateTime, UsdCents } from './common.js';
-import { NodeStatusSchema, ScanTypeSchema } from './enums.js';
-import type { NodeStatus } from './enums.js';
+import { IsoDateTime, UsdCents } from './common';
+import { NodeStatusSchema, ScanTypeSchema } from './enums';
+import type { NodeStatus } from './enums';
 
 /**
  * Admin Command Center: KPIs, revenue, transactions, traffic, endpoints, the

@@ -908,105 +908,10 @@
   padding-top: 0;
   border-top: 0;
 }
-.vv-plan-meta {
-  margin-top: 18px;
-  padding-top: 14px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  line-height: 1.6;
-  letter-spacing: 0.02em;
-  color: var(--ink-faint);
-  border-top: 1px dashed var(--line);
-}
-.vv-plan--featured .vv-plan-meta {
-  color: #7d8b9e;
-  border-top-color: rgba(255, 255, 255, 0.12);
-}
 .vv-price-note {
   margin-top: 22px;
   font-size: 0.72rem;
   line-height: 1.7;
   color: var(--ink-faint);
   text-align: center;
-}
-
-/* ——— Academy banner ——— */
-.academy-banner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 22px;
-  padding: 26px 30px;
-  border-radius: var(--r-2xl);
-  background:
-    radial-gradient(80% 120% at 100% 0%, rgba(59, 153, 252, 0.28), transparent 60%),
-    linear-gradient(135deg, var(--dark) 0%, #060a10 100%);
-  border: 1px solid rgba(59, 153, 252, 0.32);
-  box-shadow: 0 30px 60px -34px rgba(0, 0, 0, 0.6);
-  color: var(--white);
-}
-.academy-banner > div {
-  flex: 1 1 380px;
-  min-width: 0;
-}
-.academy-banner-eyebrow {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--brand);
-}
-.academy-banner-title {
-  margin-top: 8px;
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: var(--white);
-}
-.academy-banner-text {
-  margin-top: 8px;
-  font-size: 0.8rem;
-  line-height: 1.65;
-  color: #9aa8ba;
-  max-width: 56ch;
-}
-.academy-banner-cta {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 15px 30px;
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: var(--dark);
-  background: linear-gradient(135deg, var(--brand-soft), var(--brand));
-  border-radius: var(--r-full);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 16px 34px -16px var(--brand-glow);
-  transition:
-    transform 0.25s var(--ease),
-    box-shadow 0.25s var(--ease),
-    filter 0.25s var(--ease);
-}
-.academy-banner-cta:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.06);
-  box-shadow: 0 22px 44px -18px var(--brand-glow);
-}
-.academy-banner-cta:active {
-  transform: translateY(0) scale(0.98);
-}
-.academy-banner-cta:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
-}
-@media (max-width: 768px) {
-  .academy-banner {
-    padding: 22px 22px;
-  }
-  .academy-banner-cta {
-    width: 100%;
-    justify-content: center;
-  }
 }

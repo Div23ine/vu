@@ -1,8 +1,8 @@
-import type { PaymentProviders } from '../../../billing/providers/index.js';
-import { HttpError } from '../../../lib/http-error.js';
-import type { SqlExecutor } from '../../../audit/repo.js';
-import { refundKey, type WebhookService } from '../webhooks/service.js';
-import type { PaymentsRepo, WebhookAttemptRow } from './repo.js';
+import type { PaymentProviders } from '../../../billing/providers/index';
+import { HttpError } from '../../../lib/http-error';
+import type { SqlExecutor } from '../../../audit/repo';
+import { refundKey, type WebhookService } from '../webhooks/service';
+import type { PaymentsRepo, WebhookAttemptRow } from './repo';
 
 /**
  * Admin money operations: refunds and ledger reconciliation.

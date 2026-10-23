@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { products, publicContent } from '../fixtures/store.js';
+import { products, publicContent } from '../fixtures/store';
 import {
   DownloadUrlResponse,
   EntitlementView,
@@ -11,16 +11,16 @@ import {
   ProductView,
   PurchaseBody,
   PurchaseResponse,
-} from './store.js';
+} from './store';
 import {
   PublicContentDetail,
   PublicContentItem,
   PublicContentQuery,
   SEVERITY_CHIP_LABELS,
   SEVERITY_PRIORITY,
-} from './content.js';
-import { BLOG_CATEGORY_LABELS } from './studio.js';
-import { ROUTES_D } from './routes-d.js';
+} from './content';
+import { BLOG_CATEGORY_LABELS } from './studio';
+import { ROUTES_D } from './routes-d';
 
 /**
  * Contracts D: the store, the extended public content shapes and the route

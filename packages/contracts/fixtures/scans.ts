@@ -1,5 +1,5 @@
 import { REVIEW_CHECK_KEYS, type ReviewCheckKey } from '@vunvault/db/enum-values';
-import type { GateChecks, ScanJob, ScanQueueSummary } from '../src/scans.js';
+import type { GateChecks, ScanJob, ScanQueueSummary } from '../src/scans';
 
 /**
  * Scan queue fixtures. Reference "now" is 2026-09-24T12:00:00Z, so `requestedAt`

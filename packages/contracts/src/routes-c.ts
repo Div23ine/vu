@@ -1,5 +1,5 @@
-import type { RouteDoc } from './routes-a.js';
-import type { Permission } from './permissions.js';
+import type { RouteDoc } from './routes-a';
+import type { Permission } from './permissions';
 
 /**
  * Route documentation for the zero-day desk, the Command Center dashboard,
@@ -282,17 +282,7 @@ export const ROUTES_C = [
     response: 'RecoveryCodesResponse',
     successStatus: 201,
   },
-  {
-    method: 'POST',
-    path: '/api/v1/auth/mfa/recovery',
-    request: 'RecoveryCodeBody',
-    response: 'SessionUser',
-    successStatus: 200,
-    errors: [{ status: 401, code: 'mfa_failed' }],
-    notes:
-      'Supabase cannot raise the assurance level from a recovery code, so a ' +
-      'recovery login drops TOTP and forces staff to re-enrol.',
-  },
+
   {
     method: 'GET',
     path: '/api/v1/account/sessions',
