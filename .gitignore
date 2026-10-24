@@ -53,3 +53,4 @@ test-results
 !example.tfvars
 crash.log
 crash.*.log
+apps/web/core
