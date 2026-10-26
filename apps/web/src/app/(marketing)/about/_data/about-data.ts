@@ -34,13 +34,13 @@ export interface TeamMember {
  */
 export const TEAM_MEMBERS: readonly TeamMember[] = [
   {
-    name: 'Esther',
+    name: 'Esther Haule',
     role: 'Cybersecurity and Digital Operations',
     photo: '/images/contributors/contributor-01.jpg',
     bio: 'Esther sits at the intersection of security and operations at VUNVAULT. She keeps the team’s digital workspace, tooling and internal processes hardened and running smoothly — from identity and access hygiene to automating the routine operational work that surrounds every engagement. She also coordinates the digital operations behind client projects, so each one moves securely from kickoff to final report.',
   },
   {
-    name: 'Natasha',
+    name: 'Bukeonya Natasha',
     role: 'Cybersecurity Analyst',
     photo: '/images/contributors/contributor-02.jpg',
     bio: 'Natasha monitors, triages and investigates security events across VUNVAULT’s client environments, turning noisy alert streams into clear, actionable findings. She digs into malware behaviour, phishing campaigns and misconfigurations, and documents every step so remediation can be verified rather than assumed. Her analysis feeds directly into the threat briefings VUNVAULT publishes for clients.',
@@ -67,7 +67,19 @@ export const TEAM_MEMBERS: readonly TeamMember[] = [
     name: 'Thugu Maina',
     role: 'Marketing Strategist and Social Media Manager',
     photo: '/images/contributors/contributor-06.jpg',
-    bio: 'Divine shapes how VUNVAULT communicates its work to the world. He plans and runs the company’s marketing strategy and social media presence, translating deep technical research into clear stories for executives, developers and the wider security community. He also grows the reach of the VUNVAULT Academy and keeps the community channels active and well informed.',
+    bio: 'Thsugu shapes how VUNVAULT communicates its work to the world. He plans and runs the company’s marketing strategy and social media presence, translating deep technical research into clear stories for executives, developers and the wider security community. He also grows the reach of the VUNVAULT Academy and keeps the community channels active and well informed.',
+  },
+  {
+    name: 'Newton Mwatabu',
+    role: 'SOC Analyst',
+    photo: '/images/contributors/contributor-07.jpg',
+    bio: 'Newton works the front line of VUNVAULT’s security operations centre, holding the round-the-clock monitoring rota that backs the company’s attack-surface retainers. He engineers the detections themselves — writing and tuning SIEM and EDR rules mapped to MITRE ATT&CK — and owns incidents end to end, from first triage through containment to a documented post-mortem. He also runs the Academy’s Blue Team labs, where SOC tradecraft gets taught rather than assumed..',
+  },
+  {
+    name: 'Inazamam Nizam',
+    role: 'Offensive Security Specialist',
+    photo: '/images/contributors/contributor-08.jpg',
+    bio: 'Inazamam leads VUNVAULT’s offensive work, running red-team engagements and adversary simulations that test client defences the way a real attacker would. He chains reconnaissance, exploitation and turn a theoretical weakness into evidence no one can argue with. His findings set the remediation priorities VUNVAULT hands clients, and he teaches the Academy’s Red Team track. ',
   },
 ];
 

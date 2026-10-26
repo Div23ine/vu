@@ -50,6 +50,16 @@ export const CONTRIBUTORS: readonly Contributor[] = [
     role: 'Marketing Strategist and Social Media Manager',
     photo: '/images/contributors/contributor-06.jpg',
   },
+  {
+    name: 'Newton Mwatabu',
+    role: 'SOC Analyst',
+    photo: '/images/contributors/contributor-07.jpg',
+  },
+  {
+    name: 'Inazamam Nizam',
+    role: 'Offensive Security Specialist',
+    photo: '/images/contributors/contributor-08.jpg',
+  },
 ];
 
 export function Contributors() {

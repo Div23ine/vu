@@ -47,7 +47,7 @@ describe('AboutTeam', () => {
       ),
     ).toBeInTheDocument();
 
-    expect(TEAM_MEMBERS).toHaveLength(6);
+    expect(TEAM_MEMBERS).toHaveLength(8);
     expect(document.querySelectorAll('article.vv-team-card')).toHaveLength(6);
     // The initials tiles are gone — every avatar is a photograph.
     expect(document.querySelectorAll('.vv-team-initials')).toHaveLength(0);
