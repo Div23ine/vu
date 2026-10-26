@@ -31,6 +31,8 @@ export type SessionUser = z.infer<typeof SessionUser>;
  */
 export const LoginBody = z.object({
   email: z.string().email(),
+  password: z.string().min(8),
+  remember: z.boolean().optional(),
 });
 export type LoginBody = z.infer<typeof LoginBody>;
 
@@ -82,6 +84,13 @@ export type MfaVerifyBody = z.infer<typeof MfaVerifyBody>;
 export const SignupBody = z.object({
   fullName: z.string().min(2),
   email: z.string().email(),
+  phone: z
+    .string()
+    .regex(/^\+?[1-9]\d{6,14}$/)
+    .optional(),
+  country: z.string().length(2).optional(),
+  accountType: z.string().optional(),
+  password: z.string().min(8),
 });
 export type SignupBody = z.infer<typeof SignupBody>;
 

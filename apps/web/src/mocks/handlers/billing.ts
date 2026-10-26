@@ -115,6 +115,8 @@ export const billingHandlers = [
       NGN: '1650.00',
       GHS: '15.80',
       ZAR: '18.20',
+      GBP: '0.79',
+      EUR: '0.92',
     };
     const rate = rates[currency];
     const localMinor = Math.round(invoice.outstandingUsdCents * Number(rate));

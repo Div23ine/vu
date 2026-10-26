@@ -50,7 +50,7 @@ afterEach(() => {
 
 describe('login — no invisible native constraints', () => {
   it('renders the email step with app-level validation only', () => {
-    render(<LoginPage />);
+    render(<LoginPage searchParams={Promise.resolve({})} />);
 
     const form = document.querySelector('form');
     expect(form).not.toBeNull();
@@ -66,7 +66,7 @@ describe('login — no invisible native constraints', () => {
   it('renders the code step with app-level validation only', () => {
     searchParams.set('step', 'code');
     searchParams.set('handle', 'mock-handle-abcdef123456');
-    render(<LoginPage />);
+    render(<LoginPage searchParams={Promise.resolve({})} />);
 
     const form = document.querySelector('form');
     expect(form?.noValidate).toBe(true);
@@ -81,7 +81,7 @@ describe('login — no invisible native constraints', () => {
 
   it('shows a visible error (not a browser bubble) for an empty email', async () => {
     const user = userEvent.setup();
-    render(<LoginPage />);
+    render(<LoginPage searchParams={Promise.resolve({})} />);
 
     await user.click(screen.getByRole('button', { name: /sign-in link/i }));
 
@@ -94,7 +94,7 @@ describe('login — no invisible native constraints', () => {
     const user = userEvent.setup();
     searchParams.set('step', 'code');
     searchParams.set('handle', 'mock-handle-abcdef123456');
-    render(<LoginPage />);
+    render(<LoginPage searchParams={Promise.resolve({})} />);
 
     await user.type(screen.getByLabelText('Six-digit code from your email'), '424242');
     await user.click(screen.getByRole('button', { name: /verify and sign in/i }));
@@ -107,7 +107,7 @@ describe('login — no invisible native constraints', () => {
     const user = userEvent.setup();
     searchParams.set('step', 'code');
     searchParams.set('handle', 'mock-handle-abcdef123456');
-    render(<LoginPage />);
+    render(<LoginPage searchParams={Promise.resolve({})} />);
 
     await user.type(screen.getByLabelText('Six-digit code from your email'), '111111');
     await user.click(screen.getByRole('button', { name: /verify and sign in/i }));

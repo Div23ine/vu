@@ -128,7 +128,6 @@ export function SignupCard() {
           country: values.country,
           accountType: values.accountType,
           password: values.password,
-          confirmPassword: values.confirmPassword,
         } satisfies SignupBody);
         // 202: park the pending account and hand off to an earlier iteration's dialog.
         dialog.open({ email: data.email, fullName: values.fullName });

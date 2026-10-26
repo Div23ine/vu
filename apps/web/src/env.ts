@@ -71,6 +71,7 @@ export const PublicEnvSchema = z.object({
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: optionalString,
   /** Human-readable build label, shown in the admin footer. */
   NEXT_PUBLIC_BUILD_LABEL: optionalString,
+  NEXT_PUBLIC_ZURA_LLM_URL: optionalUrl,
   /** Verifying-node label shown on the audit chain panel. */
   NEXT_PUBLIC_NODE_LABEL: optionalString,
 });
@@ -89,6 +90,7 @@ export function readPublicEnv(): Record<keyof Env, string | undefined> {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_BUILD_LABEL: process.env.NEXT_PUBLIC_BUILD_LABEL,
     NEXT_PUBLIC_NODE_LABEL: process.env.NEXT_PUBLIC_NODE_LABEL,
+    NEXT_PUBLIC_ZURA_LLM_URL: process.env.NEXT_PUBLIC_ZURA_LLM_URL,
   };
 }
 

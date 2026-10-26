@@ -6,7 +6,7 @@ import type { PublicContentDetail } from '@vunvault/contracts';
 import { publicContent } from '@vunvault/contracts/fixtures/store';
 import { ArticleReader } from '../_components/article-reader';
 import { SafeMarkdown } from '../_components/safe-markdown';
-import { fetchArticle } from './page';
+import { fetchArticle } from './article-fetch';
 
 /**
  * Article reader tests — the safe-markdown renderer (including the

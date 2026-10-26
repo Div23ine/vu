@@ -56,7 +56,7 @@ describe('passwordless login page', () => {
         return HttpResponse.json({ data: { id: 'u1', email: 'member@example.test' } });
       }),
     );
-    renderWithProviders(<LoginPage />);
+    renderWithProviders(<LoginPage searchParams={Promise.resolve({})} />);
     await user.type(screen.getByLabelText('Email address'), 'member@example.test');
     await user.click(screen.getByRole('button', { name: /Email me a sign-in link/ }));
     expect(await screen.findByText(/confirmation link is on its way/)).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('passwordless login page', () => {
     // The confirm route hands back the handle; simulate arriving at the code step.
     paramsState.step = 'code';
     paramsState.handle = 'handle-abcdef123456';
-    renderWithProviders(<LoginPage />);
+    renderWithProviders(<LoginPage searchParams={Promise.resolve({})} />);
     expect(screen.getByLabelText(/Six-digit code from your email/)).toBeInTheDocument();
     await user.type(screen.getByLabelText(/Six-digit code from your email/), '424242');
     await user.click(screen.getByRole('button', { name: /Verify and sign in/ }));
@@ -82,7 +82,7 @@ describe('passwordless login page', () => {
         HttpResponse.json({ error: 'mfa_failed' }, { status: 401 }),
       ),
     );
-    renderWithProviders(<LoginPage />);
+    renderWithProviders(<LoginPage searchParams={Promise.resolve({})} />);
     await user.type(screen.getByLabelText(/Six-digit code/), '123456');
     await user.click(screen.getByRole('button', { name: /Verify and sign in/ }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();

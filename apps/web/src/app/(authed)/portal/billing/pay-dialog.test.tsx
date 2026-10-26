@@ -71,6 +71,8 @@ const RATES: Record<Exclude<DisplayCurrency, 'USD'>, string> = {
   NGN: '1650.00',
   GHS: '15.80',
   ZAR: '18.20',
+  GBP: '0.79',
+  EUR: '0.92',
 };
 
 function quotePayload(currency: Exclude<DisplayCurrency, 'USD'>, expiresInMs = 15 * 60_000) {

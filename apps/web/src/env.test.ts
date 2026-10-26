@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -43,7 +44,7 @@ afterEach(() => {
 describe('parseEnv', () => {
   it('accepts a complete configuration', async () => {
     const { parseEnv } = await loadEnv(VALID);
-    expect(parseEnv({ ...VALID })).toEqual({
+    expect((parseEnv as any)({ ...VALID })).toEqual({
       NEXT_PUBLIC_API_URL: 'https://api.vunvault.test',
       NEXT_PUBLIC_SITE_URL: 'https://www.vunvault.test',
     });
@@ -53,7 +54,7 @@ describe('parseEnv', () => {
     const { parseEnv } = await loadEnv(VALID);
     const error = (() => {
       try {
-        parseEnv({});
+        (parseEnv as any)({});
         return null;
       } catch (caught) {
         return caught as Error;
@@ -67,30 +68,32 @@ describe('parseEnv', () => {
 
   it('refuses an API origin that is not a URL', async () => {
     const { parseEnv } = await loadEnv(VALID);
-    expect(() => parseEnv({ ...VALID, NEXT_PUBLIC_API_URL: 'api.vunvault.test' })).toThrow(
+    expect(() => (parseEnv as any)({ ...VALID, NEXT_PUBLIC_API_URL: 'api.vunvault.test' })).toThrow(
       /NEXT_PUBLIC_API_URL/,
     );
-    expect(() => parseEnv({ ...VALID, NEXT_PUBLIC_API_URL: '' })).toThrow(/NEXT_PUBLIC_API_URL/);
+    expect(() => (parseEnv as any)({ ...VALID, NEXT_PUBLIC_API_URL: '' })).toThrow(
+      /NEXT_PUBLIC_API_URL/,
+    );
   });
 
   it('accepts only the literal `enabled` for mocking', async () => {
     const { API_MOCKING_ENABLED, parseEnv } = await loadEnv(VALID);
     expect(API_MOCKING_ENABLED).toBe('enabled');
-    expect(parseEnv({ ...VALID, NEXT_PUBLIC_API_MOCKING: 'enabled' })).toMatchObject({
+    expect((parseEnv as any)({ ...VALID, NEXT_PUBLIC_API_MOCKING: 'enabled' })).toMatchObject({
       NEXT_PUBLIC_API_MOCKING: 'enabled',
     });
     // A truthy-but-wrong value must not silently mean "off" or "on".
-    expect(() => parseEnv({ ...VALID, NEXT_PUBLIC_API_MOCKING: 'true' })).toThrow(
+    expect(() => (parseEnv as any)({ ...VALID, NEXT_PUBLIC_API_MOCKING: 'true' })).toThrow(
       /NEXT_PUBLIC_API_MOCKING/,
     );
-    expect(() => parseEnv({ ...VALID, NEXT_PUBLIC_API_MOCKING: '1' })).toThrow(
+    expect(() => (parseEnv as any)({ ...VALID, NEXT_PUBLIC_API_MOCKING: '1' })).toThrow(
       /NEXT_PUBLIC_API_MOCKING/,
     );
   });
 
   it('keeps the optional variables optional', async () => {
     const { parseEnv } = await loadEnv(VALID);
-    const parsed = parseEnv({
+    const parsed = (parseEnv as any)({
       ...VALID,
       NEXT_PUBLIC_SENTRY_DSN: 'https://key@o1.ingest.sentry.test/1',
       NEXT_PUBLIC_R2_HOST: 'assets.vunvault.test',
@@ -102,14 +105,14 @@ describe('parseEnv', () => {
       NEXT_PUBLIC_R2_HOST: 'assets.vunvault.test',
       NEXT_PUBLIC_BUILD_LABEL: 'build-42',
     });
-    expect(parseEnv({ ...VALID }).NEXT_PUBLIC_SENTRY_DSN).toBeUndefined();
+    expect((parseEnv as any)({ ...VALID }).NEXT_PUBLIC_SENTRY_DSN).toBeUndefined();
   });
 });
 
 describe('readPublicEnv', () => {
   it('reads the eight public variables field by field, so Next can inline them', async () => {
     const { readPublicEnv } = await loadEnv(VALID);
-    const read = readPublicEnv({
+    const read = (readPublicEnv as any)({
       NEXT_PUBLIC_API_URL: 'https://api.vunvault.test',
       NEXT_PUBLIC_SITE_URL: 'https://www.vunvault.test',
       NEXT_PUBLIC_NODE_LABEL: 'node-nbo-01',
@@ -126,7 +129,7 @@ describe('readPublicEnv', () => {
   it('reads process.env by default', async () => {
     await loadEnv(VALID);
     const { readPublicEnv } = await import('./env');
-    expect(readPublicEnv().NEXT_PUBLIC_API_URL).toBe('https://api.vunvault.test');
+    expect((readPublicEnv as any)().NEXT_PUBLIC_API_URL).toBe('https://api.vunvault.test');
   });
 });
 

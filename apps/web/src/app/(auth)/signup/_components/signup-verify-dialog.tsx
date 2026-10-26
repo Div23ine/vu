@@ -251,7 +251,7 @@ export function SignupVerifyDialog() {
       setError('');
       setBoxState('idle');
       try {
-        const user = await verifyEmail.mutateAsync({ email, code });
+        const user = await verifyEmail.mutateAsync({ handle: email, code });
         // The API set the aal1 session cookies; seed the client cache to match.
         queryClient.setQueryData(queryKeys.session(), user);
         setBoxState('ok');
