@@ -9,13 +9,13 @@ import {
   PurchaseBody,
   PurchaseResponse,
 } from '@vunvault/contracts';
-import { audited } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import { HttpError } from '../../../lib/http-error';
-import type { ObjectStorage } from '../../../lib/object-storage';
-import { InvoiceIssuer } from '../../../billing/invoice-issuer';
-import { SqlStoreRepo, type StoreRepo } from './repo';
-import { EntitlementService, StoreService, type AuditInstruction } from './service';
+import { audited } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage } from '../../../lib/object-storage.js';
+import { InvoiceIssuer } from '../../../billing/invoice-issuer.js';
+import { SqlStoreRepo, type StoreRepo } from './repo.js';
+import { EntitlementService, StoreService, type AuditInstruction } from './service.js';
 
 /**
  * The public store (Task 40c).

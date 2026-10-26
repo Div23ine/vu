@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import type { DisplayCurrency } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
-import type { PaystackClient, PaystackTransaction } from '../../../billing/providers/paystack';
-import type { FxRateSource } from '../../../billing/fx-rates';
-import type { GuestOrderRow, OrdersRepo, PlanRow } from './repo';
+import { HttpError } from '../../../lib/http-error.js';
+import type { PaystackClient, PaystackTransaction } from '../../../billing/providers/paystack.js';
+import type { FxRateSource } from '../../../billing/fx-rates.js';
+import type { GuestOrderRow, OrdersRepo, PlanRow } from './repo.js';
 
 /**
  * Guest checkout service.

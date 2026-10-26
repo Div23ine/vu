@@ -10,17 +10,17 @@ import {
   ChangePasswordBody,
 } from '@vunvault/contracts';
 import { z } from 'zod';
-import { audited, auditFailure } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import { HttpError } from '../../../lib/http-error';
-import { NO_BREACH_CHECK, type BreachCheck } from '../../../lib/breach';
-import { readSessionCookies } from '../../../lib/session-cookies';
-import type { SupabaseAdmin } from '../../../lib/supabase-admin';
-import { COOKIE_NAMES } from '../../../plugins/cookies';
-import { memoryKvStore, type KvStore } from '../auth/challenge';
-import { SqlAccountSecurityRepo, type AccountSecurityRepo } from './repo';
-import { AccountSecurityService, type WebauthnKeyView } from './service';
-import { SimpleWebauthnService, type WebauthnService } from './webauthn';
+import { audited, auditFailure } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { NO_BREACH_CHECK, type BreachCheck } from '../../../lib/breach.js';
+import { readSessionCookies } from '../../../lib/session-cookies.js';
+import type { SupabaseAdmin } from '../../../lib/supabase-admin.js';
+import { COOKIE_NAMES } from '../../../plugins/cookies.js';
+import { memoryKvStore, type KvStore } from '../auth/challenge.js';
+import { SqlAccountSecurityRepo, type AccountSecurityRepo } from './repo.js';
+import { AccountSecurityService, type WebauthnKeyView } from './service.js';
+import { SimpleWebauthnService, type WebauthnService } from './webauthn.js';
 
 /**
  * Password Manager and Profile Settings security routes.

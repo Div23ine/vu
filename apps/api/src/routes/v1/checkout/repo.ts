@@ -1,4 +1,4 @@
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 
 /**
  * Checkout and FX-quote data access (Task 33).

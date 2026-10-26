@@ -1,4 +1,4 @@
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 
 /**
  * Guest-order persistence. Every fulfilment path (verify route, Paystack

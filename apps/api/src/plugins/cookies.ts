@@ -1,7 +1,7 @@
 import cookie from '@fastify/cookie';
 import fp from 'fastify-plugin';
 import type { FastifyPluginAsync } from 'fastify';
-import type { Env } from '../config/env';
+import type { Env } from '../config/env.js';
 
 /**
  * Cookie parsing plus the one place cookie attributes are defined.

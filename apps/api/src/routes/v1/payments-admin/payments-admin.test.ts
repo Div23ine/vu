@@ -2,15 +2,15 @@ import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Permission, UserRole } from '@vunvault/contracts';
-import type { Env } from '../../../config/env';
-import errorHandler from '../../../plugins/error-handler';
-import type { AuthUser } from '../../../plugins/auth';
-import { HttpError } from '../../../lib/http-error';
-import { StripeClient } from '../../../billing/providers/stripe';
-import { PaystackClient } from '../../../billing/providers/paystack';
-import type { PaymentProviders } from '../../../billing/providers/index';
-import type { LedgerEntryInput, LedgerService } from '../../../billing/ledger';
-import type { AuditEntryRow } from '../../../audit/repo';
+import type { Env } from '../../../config/env.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import type { AuthUser } from '../../../plugins/auth.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { StripeClient } from '../../../billing/providers/stripe.js';
+import { PaystackClient } from '../../../billing/providers/paystack.js';
+import type { PaymentProviders } from '../../../billing/providers/index.js';
+import type { LedgerEntryInput, LedgerService } from '../../../billing/ledger.js';
+import type { AuditEntryRow } from '../../../audit/repo.js';
 import type {
   BillingContactRow,
   EntryBalanceRow,
@@ -18,8 +18,8 @@ import type {
   PaymentsRepo,
   ScanJobStateRow,
   WebhookAttemptRow,
-} from './repo';
-import paymentsAdminRoutes from './index';
+} from './repo.js';
+import paymentsAdminRoutes from './index.js';
 
 /**
  * Refunds and ledger reconciliation.

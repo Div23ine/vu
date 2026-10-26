@@ -1,4 +1,4 @@
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 
 /**
  * Store data access (Task 40c): the product catalogue, the licence entitlements a

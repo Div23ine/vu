@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ProviderError } from '../../providers/error';
+import { ProviderError } from '../../providers/error.js';
 
 /**
  * Paystack REST client.

@@ -4,17 +4,17 @@ import { fileURLToPath } from 'node:url';
 import { SignJWT } from 'jose';
 import { describe, expect, it } from 'vitest';
 import { PERMISSIONS, ROLE_PERMISSIONS, type Permission, type UserRole } from '@vunvault/contracts';
-import { buildApp, type App } from '../app';
-import type { Env } from '../config/env';
-import { HttpError } from '../lib/http-error';
-import { tokenIssuer } from '../lib/jwt';
+import { buildApp, type App } from '../app.js';
+import type { Env } from '../config/env.js';
+import { HttpError } from '../lib/http-error.js';
+import { tokenIssuer } from '../lib/jwt.js';
 import {
   SESSION_CACHE_TTL_SECONDS,
   SessionRegistry,
   type SessionRecord,
-} from '../lib/session-registry';
-import { isStaff, STAFF_ROLES } from '../lib/staff';
-import { COOKIE_NAMES } from './cookies';
+} from '../lib/session-registry.js';
+import { isStaff, STAFF_ROLES } from '../lib/staff.js';
+import { COOKIE_NAMES } from './cookies.js';
 
 const SECRET = 'test-jwt-secret-that-is-long-enough-to-be-safe';
 const USER_ID = 'c0000000-0000-4000-8000-000000000001';

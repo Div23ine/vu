@@ -1,3 +1,4 @@
+CREATE SCHEMA IF NOT EXISTS billing;
 -- 0032: per-year invoice counters.
 --
 -- Invoice numbers are human-facing (`VV-INV-2026-0842`) and must never repeat or

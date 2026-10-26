@@ -1,6 +1,6 @@
 import process from 'node:process';
-import { buildApp } from './app';
-import { loadEnv } from './config/env';
+import { buildApp } from './app.js';
+import { loadEnv } from './config/env.js';
 
 /** Give in-flight requests ten seconds to finish, then exit hard. */
 const CLOSE_TIMEOUT_MS = 10_000;

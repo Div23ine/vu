@@ -3,14 +3,14 @@ import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { NodeHeartbeatBody } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
+import { HttpError } from '../../../lib/http-error.js';
 import {
   MemoryRateCounter,
   NodesService,
   SqlNodesRepo,
   type NodesRepo,
   type RateCounter,
-} from './service';
+} from './service.js';
 
 /**
  * Sensor-node ingest (Task 37).

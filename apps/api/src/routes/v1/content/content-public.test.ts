@@ -4,13 +4,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Permission, UserRole } from '@vunvault/contracts';
 import { ROLE_PERMISSIONS } from '@vunvault/contracts';
 import { publicContent } from '@vunvault/contracts/fixtures/store';
-import type { Env } from '../../../config/env';
-import errorHandler from '../../../plugins/error-handler';
-import type { AuthUser } from '../../../plugins/auth';
-import { HttpError } from '../../../lib/http-error';
-import type { AuditEntryRow } from '../../../audit/repo';
-import contentRoutes from './index';
-import { ModerationService } from './service';
+import type { Env } from '../../../config/env.js';
+import errorHandler from '../../../plugins/error-handler.js';
+import type { AuthUser } from '../../../plugins/auth.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { AuditEntryRow } from '../../../audit/repo.js';
+import contentRoutes from './index.js';
+import { ModerationService } from './service.js';
 import type {
   BadgeRow,
   ContentItemRow,
@@ -20,7 +20,7 @@ import type {
   NewContentItem,
   PublicContentFilters,
   SummaryCounts,
-} from './repo';
+} from './repo.js';
 
 /**
  * The public feed and the article route (Task 40c).

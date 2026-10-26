@@ -4,15 +4,15 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { ChainStatus } from '@vunvault/contracts';
 import { AuditQuery } from '@vunvault/contracts';
-import { actorLabelFor, audited } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
+import { actorLabelFor, audited } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 import {
   AUDIT_STREAM_CHANNEL,
   type AuditEntryView,
   type AuditService,
-} from '../../../audit/service';
-import { HttpError } from '../../../lib/http-error';
-import { auditCsvFilename, auditCsvHeaderLine, auditCsvRow, EXPORT_MAX_ROWS } from './csv';
+} from '../../../audit/service.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { auditCsvFilename, auditCsvHeaderLine, auditCsvRow, EXPORT_MAX_ROWS } from './csv.js';
 import {
   MAX_STREAMS_PER_USER,
   parseLastEventId,
@@ -20,9 +20,9 @@ import {
   SSE_HEADERS,
   StreamRegistry,
   type SseWriter,
-} from './sse';
-import { SqlAuditReadRepo, type AuditReadRepo } from './repo';
-import { AuditReadService, RedisVerifyLock, type VerifyLock } from './service';
+} from './sse.js';
+import { SqlAuditReadRepo, type AuditReadRepo } from './repo.js';
+import { AuditReadService, RedisVerifyLock, type VerifyLock } from './service.js';
 
 /**
  * The audit trail, read-only (Task 39).

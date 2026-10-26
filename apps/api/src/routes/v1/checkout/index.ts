@@ -3,15 +3,15 @@ import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { CheckoutBody, CheckoutResponse, FxQuote, FxQuoteRequest } from '@vunvault/contracts';
-import { actorLabelFor, AUDITED, audited } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import type { Tx } from '../../../plugins/db';
-import { HttpError } from '../../../lib/http-error';
-import { resolveFxConfig } from '../../../config/env';
-import type { PaymentProviders } from '../../../billing/providers/index';
-import { HttpFxRateSource, type FxCache, type FxRateSource } from '../../../billing/fx-rates';
-import { SqlCheckoutRepo, type CheckoutRepo } from './repo';
-import { CheckoutService, FxService, type CheckoutResponseData } from './service';
+import { actorLabelFor, AUDITED, audited } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import type { Tx } from '../../../plugins/db.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { resolveFxConfig } from '../../../config/env.js';
+import type { PaymentProviders } from '../../../billing/providers/index.js';
+import { HttpFxRateSource, type FxCache, type FxRateSource } from '../../../billing/fx-rates.js';
+import { SqlCheckoutRepo, type CheckoutRepo } from './repo.js';
+import { CheckoutService, FxService, type CheckoutResponseData } from './service.js';
 
 /**
  * FX quotes and USD checkout (Task 33).

@@ -29,7 +29,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { migrate as runDrizzleMigrations } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
-import { createDb } from './client';
+import { createDb } from './client.js';
 
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DRIZZLE_FOLDER = path.join(PACKAGE_ROOT, 'drizzle');
@@ -149,7 +149,7 @@ async function main(): Promise<void> {
         const message = error instanceof Error ? error.message : String(error);
         if (!ALREADY_PRESENT.test(message)) throw error;
         // Every statement in this file is already in the database: roll back
-        // (already implicit), record it, and converge onwards.
+        // (already implicit), record it, and converge onwards
         await sql.unsafe(
           `INSERT INTO ${TRACKING_TABLE} (name) VALUES ($1) ON CONFLICT DO NOTHING`,
           [file],

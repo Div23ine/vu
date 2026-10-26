@@ -1,8 +1,8 @@
 import Fastify from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { describe, expect, it } from 'vitest';
-import analyticsRoutes from './index';
-import type { SqlExecutor } from '../../../audit/repo';
+import analyticsRoutes from './index.js';
+import type { SqlExecutor } from '../../../audit/repo.js';
 
 /**
  * Analytics intake tests: the event vocabulary is closed, the payload lands

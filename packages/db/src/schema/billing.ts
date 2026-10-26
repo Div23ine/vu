@@ -16,7 +16,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { citext, createdAtCol, idCol, timestamps, tz, usdCents } from './_columns';
+import { citext, createdAtCol, idCol, timestamps, tz, usdCents } from './_columns.js';
 import {
   billingCycleEnum,
   displayCurrencyEnum,
@@ -28,13 +28,13 @@ import {
   paymentChannelEnum,
   paymentProviderEnum,
   subscriptionStatusEnum,
-} from './_enums';
-import { organizations, profiles } from './identity';
-import { scanJobs } from './scans';
+} from './_enums.js';
+import { organizations, profiles } from './identity.js';
+import { scanJobs } from './scans.js';
 // Circular by design: `store.ts` points entitlements at an invoice, and an invoice
 // line points at a product. Both references are inside lambdas, so neither module
 // dereferences the other while it is being evaluated.
-import { products } from './store';
+import { products } from './store.js';
 
 /**
  * Money rules — non-negotiable:

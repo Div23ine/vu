@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { boolean, check, index, integer, pgTable, smallint, text, uuid } from 'drizzle-orm/pg-core';
-import { citext, createdAtCol, idCol, timestamps, tz } from './_columns';
+import { citext, createdAtCol, idCol, timestamps, tz } from './_columns.js';
 import {
   blogCategoryEnum,
   broadcastStatusEnum,
@@ -12,8 +12,8 @@ import {
   contentTypeEnum,
   riskFlagEnum,
   teamEnum,
-} from './_enums';
-import { profiles } from './identity';
+} from './_enums.js';
+import { profiles } from './identity.js';
 
 /**
  * Editorial moderation, public contact messages and advisory broadcasts.

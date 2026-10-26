@@ -8,7 +8,7 @@ import {
   scanFindings,
   scanJobs,
   scanRuns,
-} from './scans';
+} from './scans.js';
 
 /** Render a `SQL` fragment to its literal text so expressions can be asserted. */
 function renderSql(value: unknown): string {

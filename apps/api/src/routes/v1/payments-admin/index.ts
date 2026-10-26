@@ -2,21 +2,21 @@ import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { audited } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import { HttpError } from '../../../lib/http-error';
-import { LedgerService } from '../../../billing/ledger';
-import type { PaymentProviders } from '../../../billing/providers/index';
-import { usd } from '../billing/service';
-import { WebhookService } from '../webhooks/service';
-import { SqlPaymentsRepo, type PaymentsRepo } from './repo';
+import { audited } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { LedgerService } from '../../../billing/ledger.js';
+import type { PaymentProviders } from '../../../billing/providers/index.js';
+import { usd } from '../billing/service.js';
+import { WebhookService } from '../webhooks/service.js';
+import { SqlPaymentsRepo, type PaymentsRepo } from './repo.js';
 import {
   ReconcileService,
   RefundService,
   type RefundHandlerResult,
   type RefundResult,
   type ReconcileReport,
-} from './service';
+} from './service.js';
 
 /**
  * Payments admin (Task 34): refunds and ledger reconciliation.

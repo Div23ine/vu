@@ -5,11 +5,11 @@ import type {
   ChainStatus,
   VerifyChainResult,
 } from '@vunvault/contracts';
-import type { AuditEntryView, AuditService } from '../../../audit/service';
-import type { SqlExecutor } from '../../../audit/repo';
-import { HttpError } from '../../../lib/http-error';
-import { EXPORT_BATCH_SIZE, EXPORT_MAX_ROWS } from './csv';
-import type { AuditReadFilters, AuditReadRepo } from './repo';
+import type { AuditEntryView, AuditService } from '../../../audit/service.js';
+import type { SqlExecutor } from '../../../audit/repo.js';
+import { HttpError } from '../../../lib/http-error.js';
+import { EXPORT_BATCH_SIZE, EXPORT_MAX_ROWS } from './csv.js';
+import type { AuditReadFilters, AuditReadRepo } from './repo.js';
 
 /**
  * Reading the audit trail (Task 39).

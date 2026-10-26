@@ -4,10 +4,10 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ROUTES_A, ROUTES_B, ROUTES_C, ROUTES_D } from '@vunvault/contracts';
-import type { Env } from '../config/env';
-import healthRoutes from '../routes/health';
-import v1Routes from '../routes/v1/index';
-import { isAudited } from '../audit/audited';
+import type { Env } from '../config/env.js';
+import healthRoutes from '../routes/health.js';
+import v1Routes from '../routes/v1/index.js';
+import { isAudited } from '../audit/audited.js';
 import {
   AUDIT_EXEMPT,
   AUDIT_IMMUTABLE_PREFIX,
@@ -20,7 +20,7 @@ import {
   NOT_YET_IMPLEMENTED,
   PUBLIC_ROUTES,
   RATE_LIMITED_ROUTES,
-} from './route-manifest';
+} from './route-manifest.js';
 
 /**
  * The API closeout: one suite that walks the WHOLE route table and enforces the

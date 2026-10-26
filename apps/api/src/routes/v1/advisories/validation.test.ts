@@ -4,7 +4,7 @@ import {
   ADVISORY_TITLE_MESSAGE,
   SEVERITY_CVSS_MISMATCH_MESSAGE,
 } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
+import { HttpError } from '../../../lib/http-error.js';
 import {
   assertBroadcastable,
   messageFor,
@@ -12,7 +12,7 @@ import {
   severityFromCvss,
   statusAllows,
   type BroadcastableInput,
-} from './validation';
+} from './validation.js';
 
 /** The bands the platform publishes, and the gate every broadcast passes through. */
 

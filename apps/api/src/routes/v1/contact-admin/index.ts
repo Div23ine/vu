@@ -10,10 +10,10 @@ import {
   ContactTriageBody,
   type ContactStatus,
 } from '@vunvault/contracts';
-import { audited } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import { SqlContactAdminRepo, type ContactAdminRepo } from './repo';
-import { ContactAdminService } from './service';
+import { audited } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { SqlContactAdminRepo, type ContactAdminRepo } from './repo.js';
+import { ContactAdminService } from './service.js';
 
 /**
  * Admin contact inbox + client directory (Task 40f).

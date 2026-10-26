@@ -1,5 +1,5 @@
 import type { AuditStreamEvent, ChainStatus } from '@vunvault/contracts';
-import type { AuditEntryView } from '../../../audit/service';
+import type { AuditEntryView } from '../../../audit/service.js';
 
 /**
  * Server-Sent Events for the live audit tail (Task 39).

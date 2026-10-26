@@ -1,24 +1,24 @@
 import type { Db } from '@vunvault/db';
 import type { Redis } from 'ioredis';
-import type { Env } from '../config/env';
-import type { SecretProvider } from '../lib/secrets/provider';
-import type { Tx } from '../plugins/db';
-import type { QueueRegistry } from '../queues/index';
-import type { EmailProvider } from '../providers/email';
-import type { SmsProvider } from '../providers/sms';
-import type { ObjectStorage } from '../lib/object-storage';
-import type { NotificationDispatcher } from '../lib/notify';
-import type { PaymentProviders } from '../billing/providers/index';
-import type { CookieOptionsResolver } from '../plugins/cookies';
-import type { CaptureError } from '../plugins/sentry';
-import type { RatePolicy } from '../plugins/rate-limit';
+import type { Env } from '../config/env.js';
+import type { SecretProvider } from '../lib/secrets/provider.js';
+import type { Tx } from '../plugins/db.js';
+import type { QueueRegistry } from '../queues/index.js';
+import type { EmailProvider } from '../providers/email.js';
+import type { SmsProvider } from '../providers/sms.js';
+import type { ObjectStorage } from '../lib/object-storage.js';
+import type { NotificationDispatcher } from '../lib/notify.js';
+import type { PaymentProviders } from '../billing/providers/index.js';
+import type { CookieOptionsResolver } from '../plugins/cookies.js';
+import type { CaptureError } from '../plugins/sentry.js';
+import type { RatePolicy } from '../plugins/rate-limit.js';
 import type { preHandlerHookHandler } from 'fastify';
 import type { Permission, UserRole } from '@vunvault/contracts';
-import type { AuthUser } from '../plugins/auth';
-import type { SupabaseAdmin } from '../lib/supabase-admin';
-import type { MfaVerifierRegistry } from '../routes/v1/auth/mfa-registry';
-import type { AuditService } from '../audit/service';
-import type { AuditSpec, AuditedHandler, AuditedRouteHandler } from '../audit/audited';
+import type { AuthUser } from '../plugins/auth.js';
+import type { SupabaseAdmin } from '../lib/supabase-admin.js';
+import type { MfaVerifierRegistry } from '../routes/v1/auth/mfa-registry.js';
+import type { AuditService } from '../audit/service.js';
+import type { AuditSpec, AuditedHandler, AuditedRouteHandler } from '../audit/audited.js';
 
 /**
  * Instance and request decorations.

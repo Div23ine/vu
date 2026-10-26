@@ -3,8 +3,8 @@ import fp from 'fastify-plugin';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { AnalyticsBodySchema } from '@vunvault/contracts';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import { HttpError } from '../../../lib/http-error';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { HttpError } from '../../../lib/http-error.js';
 
 /**
  * First-party analytics intake. Anonymous by construction: no IP, no

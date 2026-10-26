@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { HttpError } from '../../../lib/http-error';
-import type { PaystackClient, PaystackTransaction } from '../../../billing/providers/paystack';
-import type { FxRateSource } from '../../../billing/fx-rates';
-import { OrdersService } from './service';
-import type { GuestOrderRow, NewGuestOrder, OrdersRepo, PlanRow } from './repo';
+import { HttpError } from '../../../lib/http-error.js';
+import type { PaystackClient, PaystackTransaction } from '../../../billing/providers/paystack.js';
+import type { FxRateSource } from '../../../billing/fx-rates.js';
+import { OrdersService } from './service.js';
+import type { GuestOrderRow, NewGuestOrder, OrdersRepo, PlanRow } from './repo.js';
 
 /**
  * Guest checkout service tests — the money rules: the plan catalogue prices

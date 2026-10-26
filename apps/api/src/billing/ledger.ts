@@ -1,5 +1,5 @@
-import { asExecutor, type SqlExecutor } from '../audit/repo';
-import { HttpError } from '../lib/http-error';
+import { asExecutor, type SqlExecutor } from '../audit/repo.js';
+import { HttpError } from '../lib/http-error.js';
 
 /**
  * Double-entry ledger.

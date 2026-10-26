@@ -12,15 +12,15 @@ import {
   VerifyOrderBodySchema,
   type OrderSummary,
 } from '@vunvault/contracts';
-import { AUDITED, audited } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import { HttpFxRateSource, type FxCache, type FxRateSource } from '../../../billing/fx-rates';
-import type { PaystackClient } from '../../../billing/providers/paystack';
-import { resolveFxConfig } from '../../../config/env';
-import { HttpError } from '../../../lib/http-error';
-import type { Tx } from '../../../plugins/db';
-import { SqlOrdersRepo, type OrdersRepo } from './repo';
-import { OrdersService } from './service';
+import { AUDITED, audited } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import { HttpFxRateSource, type FxCache, type FxRateSource } from '../../../billing/fx-rates.js';
+import type { PaystackClient } from '../../../billing/providers/paystack.js';
+import { resolveFxConfig } from '../../../config/env.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { Tx } from '../../../plugins/db.js';
+import { SqlOrdersRepo, type OrdersRepo } from './repo.js';
+import { OrdersService } from './service.js';
 
 /**
  * Guest checkout: public plan catalogue, display rates, order creation,
@@ -171,12 +171,18 @@ const ordersRoutes: FastifyPluginAsync<OrdersRoutesOptions> = async (fastify, op
   app.get('/fx-rates', {
     schema: { response: { 200: FxRatesResponseSchema } },
     handler: async (_request, reply) => {
-      const table = await rateSource().getRateTable();
+      const currencies = ['KES', 'NGN', 'GHS', 'ZAR'] as const;
       const ratesOut: Record<string, string> = { USD: '1.00000000' };
-      for (const [currency, value] of Object.entries(table.rates)) {
-        ratesOut[currency] = String(value);
+      for (const currency of currencies) {
+        try {
+          ratesOut[currency] = await rateSource().getRate(currency);
+        } catch {
+          ratesOut[currency] = '0.00000000';
+        }
       }
-      return reply.status(200).send({ data: { rates: ratesOut, fetchedAt: table.fetchedAt } });
+      return reply
+        .status(200)
+        .send({ data: { rates: ratesOut, fetchedAt: new Date().toISOString() } });
     },
   });
 

@@ -1,15 +1,15 @@
 import { LANGUAGES, TIMEZONES, type ProfileSettings, type UserRole } from '@vunvault/contracts';
-import { HttpError } from '../../../lib/http-error';
-import type { ObjectStorage } from '../../../lib/object-storage';
+import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage } from '../../../lib/object-storage.js';
 import {
   AVATAR_MAX_BYTES,
   AVATAR_PREFIX,
   PRESIGN_PUT_SECONDS,
   avatarExtension,
   isAllowedAvatarType,
-} from '../../../lib/object-storage';
-import type { AccountSettingsRepo, SettingsRow } from './repo';
-import { SqlAccountSettingsRepo } from './repo';
+} from '../../../lib/object-storage.js';
+import type { AccountSettingsRepo, SettingsRow } from './repo.js';
+import { SqlAccountSettingsRepo } from './repo.js';
 
 /**
  * Account settings and avatar uploads.

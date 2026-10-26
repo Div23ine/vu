@@ -1,10 +1,10 @@
 import type { Permission, ScanControlType, ScanStreamStatus, UserRole } from '@vunvault/contracts';
-import type { AuditService } from '../../../audit/service';
-import { asExecutor } from '../../../audit/repo';
-import { HttpError } from '../../../lib/http-error';
-import type { Tx } from '../../../plugins/db';
-import type { ScansRepo } from '../scans/repo';
-import { controlChannel } from './channels';
+import type { AuditService } from '../../../audit/service.js';
+import { asExecutor } from '../../../audit/repo.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { Tx } from '../../../plugins/db.js';
+import type { ScansRepo } from '../scans/repo.js';
+import { controlChannel } from './channels.js';
 
 /**
  * Scan stream authorisation and control (Task 95).
@@ -27,7 +27,7 @@ import { controlChannel } from './channels';
 const KILL_ROLES: ReadonlySet<UserRole> = new Set(['admin', 'super_admin']);
 
 /** One definition, owned by the session module (it stays contracts-only). */
-import type { ScanStreamTarget } from './session';
+import type { ScanStreamTarget } from './session.js';
 
 export type { ScanStreamTarget };
 

@@ -1,5 +1,5 @@
 import { PASSWORD_RULE_TESTS } from '@vunvault/contracts';
-import { isStaff } from '../../../lib/staff';
+import { isStaff } from '../../../lib/staff.js';
 
 /** Client minimum. The shared contract owns the rule copy and the predicates. */
 export const PASSWORD_MIN_LENGTH = 12;

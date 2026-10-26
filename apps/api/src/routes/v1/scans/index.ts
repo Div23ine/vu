@@ -12,21 +12,21 @@ import {
   ScanListQuery,
   ScanQueueSummary,
 } from '@vunvault/contracts';
-import { actorLabelFor, AUDITED, audited } from '../../../audit/audited';
-import { asExecutor, type SqlExecutor } from '../../../audit/repo';
-import type { Tx } from '../../../plugins/db';
-import { HttpError } from '../../../lib/http-error';
-import type { ObjectStorage } from '../../../lib/object-storage';
-import { InvoiceIssuer } from '../../../billing/invoice-issuer';
-import { SqlScansRepo, type ScansRepo } from './repo';
+import { actorLabelFor, AUDITED, audited } from '../../../audit/audited.js';
+import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
+import type { Tx } from '../../../plugins/db.js';
+import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage } from '../../../lib/object-storage.js';
+import { InvoiceIssuer } from '../../../billing/invoice-issuer.js';
+import { SqlScansRepo, type ScansRepo } from './repo.js';
 import {
   ScansService,
   workerSlotsTotal,
   type AuditInstruction,
   type ScanActor,
   type ScansServiceDeps,
-} from './service';
-import { AUTHORISATION_CONTENT_TYPE, AUTHORISATION_MAX_BYTES } from './authorisation';
+} from './service.js';
+import { AUTHORISATION_CONTENT_TYPE, AUTHORISATION_MAX_BYTES } from './authorisation.js';
 
 /**
  * Scans: client intake and the admin queue (Task 35).

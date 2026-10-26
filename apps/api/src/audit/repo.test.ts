@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { asExecutor } from './repo';
+import { asExecutor } from './repo.js';
 
 describe('asExecutor date safety', () => {
   it('stringifies Date parameters before they reach the driver', async () => {
