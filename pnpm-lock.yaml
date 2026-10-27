@@ -302,8 +302,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/lib
       bullmq:
-        specifier: ^5.81.5
-        version: 5.81.5(supports-color@10.2.2)
+        specifier: ^6.4.1
+        version: 6.4.1(ioredis@5.11.1(supports-color@10.2.2))
       fastify:
         specifier: 'catalog:'
         version: 5.12.5
@@ -366,8 +366,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/lib
       bullmq:
-        specifier: ^5.81.5
-        version: 5.81.5(supports-color@10.2.2)
+        specifier: ^6.4.1
+        version: 6.4.1(ioredis@5.11.1(supports-color@10.2.2))
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@cloudflare/workers-types@5.20261013.1)(@opentelemetry/api@1.9.1)(@types/pg@8.6.1)(postgres@3.4.9)
@@ -439,8 +439,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/lib
       bullmq:
-        specifier: ^5.81.5
-        version: 5.81.5(supports-color@10.2.2)
+        specifier: ^6.4.1
+        version: 6.4.1(ioredis@5.11.1(supports-color@10.2.2))
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@cloudflare/workers-types@5.20261013.1)(@opentelemetry/api@1.9.1)(@types/pg@8.6.1)(postgres@3.4.9)
@@ -491,8 +491,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/lib
       bullmq:
-        specifier: ^5.81.5
-        version: 5.81.5(supports-color@10.2.2)
+        specifier: ^6.4.1
+        version: 6.4.1(ioredis@5.11.1(supports-color@10.2.2))
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@cloudflare/workers-types@5.20261013.1)(@opentelemetry/api@1.9.1)(@types/pg@8.6.1)(postgres@3.4.9)
@@ -556,8 +556,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/contracts
       bullmq:
-        specifier: ^5.81.5
-        version: 5.81.5(supports-color@10.2.2)
+        specifier: ^6.4.1
+        version: 6.4.1(ioredis@5.11.1(supports-color@10.2.2))
       fast-xml-parser:
         specifier: ^4.5.7
         version: 4.5.7
@@ -4013,12 +4013,21 @@ packages:
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
 
-  bullmq@5.81.5:
-    resolution: {integrity: sha512-pW7pFc/X+9AEIx91TWTdIpZ1icfbJnA0unsyzD7VICjCUw8a3qedSjej5dxxn6LjfM1kr2jvalOCGbCmoA5Kxg==}
-    engines: {node: '>=12.22.0'}
+  bullmq@6.4.1:
+    resolution: {integrity: sha512-zvDtEf9Pok+nPqU+F617ihoA6LFK8We5c3tozdpTo7VNnUMg+4I80BWiUOdtGHslc4uwpidBTK3yG8WI1faZug==}
+    engines: {node: '>=14.17.0'}
     peerDependencies:
+      bullmq-otel: '>=2.0.0'
+      ioredis: '>=5.0.0'
+      pg: '>=8.0.0'
       redis: '>=5.0.0'
     peerDependenciesMeta:
+      bullmq-otel:
+        optional: true
+      ioredis:
+        optional: true
+      pg:
+        optional: true
       redis:
         optional: true
 
@@ -4213,10 +4222,9 @@ packages:
       typescript:
         optional: true
 
-  cron-parser@4.9.0:
-    resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
-    engines: {node: '>=12.0.0'}
-    deprecated: v4 is no longer maintained, upgrade to v5
+  cron-parser@5.10.2:
+    resolution: {integrity: sha512-JfAYMY0LZaWQTuict8PhtF/ksSnq8xefSDmQUnnoqvkPYkU/y3UP0DTWzJKFBz0P1IXsDG8q0vY3zHkoFZOhvw==}
+    engines: {node: '>=18'}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -5639,8 +5647,8 @@ packages:
     resolution: {integrity: sha512-4kmO/MdyUIkLIvTPr8VHLil4AtoKIoniWPIEk5+CDy0xnWC84azhSFmuJ7PxZdsYtiP5kEeQsORAVIeMgxT+Hw==}
     hasBin: true
 
-  msgpackr@2.0.5:
-    resolution: {integrity: sha512-cef05H/dSYpLpqp3sj/qyZh5vhUYCalnaLO7j1yOmpsR0y/XwLVtK7r5gn+U/F7CTEfMowcGhlUQJDLcLf7jcA==}
+  msgpackr@2.1.2:
+    resolution: {integrity: sha512-JHAdwubWNEadHQsFAib6uXOzKFxY8QOWHu9LCCksOINMC+TjgaKS2Tdrw7dW5SY0LLz8YK2/YqLSi2vigQt05w==}
 
   msw@2.15.0:
     resolution: {integrity: sha512-2wQAmKkQKxRuXvYJxVhPGG0wZNBQyD06oJvxqw90XqLvptdqxdlHrFUfEteKkpaNORX3Xzc+HtEl/q0nfmN2wQ==}
@@ -10500,16 +10508,15 @@ snapshots:
 
   buffer-from@1.1.2: {}
 
-  bullmq@5.81.5(supports-color@10.2.2):
+  bullmq@6.4.1(ioredis@5.11.1(supports-color@10.2.2)):
     dependencies:
-      cron-parser: 4.9.0
-      ioredis: 5.11.1(supports-color@10.2.2)
-      msgpackr: 2.0.5
+      cron-parser: 5.10.2
+      msgpackr: 2.1.2
       node-abort-controller: 3.1.1
       semver: 7.8.5
       tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
+    optionalDependencies:
+      ioredis: 5.11.1(supports-color@10.2.2)
 
   bytes@3.1.2: {}
 
@@ -10685,7 +10692,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.5.4
 
-  cron-parser@4.9.0:
+  cron-parser@5.10.2:
     dependencies:
       luxon: 3.7.2
 
@@ -12258,7 +12265,7 @@ snapshots:
       '@msgpackr-extract/msgpackr-extract-win32-x64': 3.0.4
     optional: true
 
-  msgpackr@2.0.5:
+  msgpackr@2.1.2:
     optionalDependencies:
       msgpackr-extract: 3.0.4
 

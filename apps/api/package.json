@@ -27,7 +27,7 @@
     "@vunvault/contracts": "workspace:*",
     "@vunvault/db": "workspace:*",
     "@vunvault/lib": "workspace:*",
-    "bullmq": "^5.81.5",
+    "bullmq": "^6.4.1",
     "fastify": "catalog:",
     "fastify-plugin": "^5.1.0",
     "fastify-raw-body": "^5.0.0",
