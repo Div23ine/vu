@@ -46,7 +46,7 @@ jobs:
     needs: release
     environment: ${{ inputs.environment || 'staging' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ env.GIT_SHA }}
@@ -68,7 +68,7 @@ jobs:
     needs: [release, migrate]
     environment: ${{ inputs.environment || 'staging' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ env.GIT_SHA }}
@@ -110,7 +110,7 @@ jobs:
     needs: [release, migrate]
     environment: ${{ inputs.environment || 'staging' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ env.GIT_SHA }}
@@ -142,7 +142,7 @@ jobs:
     needs: release
     environment: ${{ inputs.environment || 'staging' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ env.GIT_SHA }}
@@ -182,7 +182,7 @@ jobs:
     needs: deploy-edge
     environment: ${{ inputs.environment || 'staging' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ env.GIT_SHA }}
@@ -221,7 +221,7 @@ jobs:
     needs: [deploy-oke, deploy-k3s, deploy-edge, deploy-web]
     environment: ${{ inputs.environment || 'staging' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ env.GIT_SHA }}
@@ -240,7 +240,7 @@ jobs:
     needs: [smoke, deploy-oke]
     environment: ${{ inputs.environment || 'staging' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: oracle-actions/configure-oci-cli@v1
