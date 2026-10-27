@@ -57,7 +57,7 @@ jobs:
         run: pnpm test -- --coverage
       - name: Node policy-script suites
         run: node --test scripts/*.test.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage
@@ -96,7 +96,7 @@ jobs:
       # bundle for workerd. Requires the previous step — do not reorder.
       - name: Build the web Worker (@opennextjs/cloudflare)
         run: pnpm --filter web exec opennextjs-cloudflare build --skipNextBuild
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: opennext-build-log
@@ -119,7 +119,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Run the E2E suite (dev server + MSW mock layer)
         run: pnpm exec playwright test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
