@@ -26,38 +26,42 @@ export const SessionUser = z.object({
 export type SessionUser = z.infer<typeof SessionUser>;
 
 /**
- * Passwordless login, step 1: the email address only. Whether the address
- * exists is never revealed — the route answers 202 either way.
+ * Magic-link login (Phase 1): the ONLY credential the login flow accepts is an
+ * email address. No route, component or API endpoint takes a password for login.
+ * Whether the address is registered is never revealed — the route answers with
+ * the identical generic body either way.
  */
-export const LoginBody = z.object({
+export const MagicLinkRequestBody = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
-  remember: z.boolean().optional(),
 });
-export type LoginBody = z.infer<typeof LoginBody>;
+export type MagicLinkRequestBody = z.infer<typeof MagicLinkRequestBody>;
 
-export const LoginConfirmBody = z.object({ token: z.string().min(8).max(200) });
-export type LoginConfirmBody = z.infer<typeof LoginConfirmBody>;
-
-export const LoginVerifyBody = z.object({
-  handle: z.string().min(8).max(200),
-  code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
-  remember: z.boolean().optional(),
+/** The byte-identical acknowledgement for known and unknown addresses alike. */
+export const MagicLinkRequestResponse = z.object({
+  message: z.literal('If an account exists for that address, a sign-in link is on its way.'),
 });
-export type LoginVerifyBody = z.infer<typeof LoginVerifyBody>;
+export type MagicLinkRequestResponse = z.infer<typeof MagicLinkRequestResponse>;
 
 /**
- * A successful password check may still require a second factor: `user` is null
- * and `mfaRequired` is true until `/auth/mfa/verify` completes.
+ * A magic-link token is single-use, bound to its email + purpose, and lives for
+ * 15 minutes; the verify leg consumes it atomically (replays fail).
  */
-export const LoginResponse = z.object({
+export const MagicLinkToken = z.string().min(20).max(400);
+
+/**
+ * After the link passes, every login continues at the six-digit MFA step:
+ * `MagicLinkVerifyResponse` carries the pre-MFA challenge state, never a full
+ * session. The full session opens only when `POST /auth/mfa/verify` accepts the
+ * code against the HttpOnly `vv_mfa` challenge cookie.
+ */
+export const MagicLinkVerifyResponse = z.object({
   data: z.object({
-    user: SessionUser.nullable(),
-    mfaRequired: z.boolean(),
-    mfaMethods: z.array(MfaMethodSchema),
+    status: z.enum(['mfa_required', 'mfa_setup_required']),
+    email: z.string().email(),
+    methods: z.array(MfaMethodSchema),
   }),
 });
-export type LoginResponse = z.infer<typeof LoginResponse>;
+export type MagicLinkVerifyResponse = z.infer<typeof MagicLinkVerifyResponse>;
 
 const OtpCode = z
   .string()
