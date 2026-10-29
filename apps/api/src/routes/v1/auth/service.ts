@@ -87,10 +87,9 @@ export interface SignupInput {
   description?: string;
 }
 
-export interface LoginInput {
+/** Magic-link step 1 input: possession of the mailbox is the credential. */
+export interface MagicLinkInput {
   email: string;
-  password: string;
-  remember?: boolean;
 }
 
 /** Lockout thresholds: 5 per address per 15 minutes, 20 per IP per 15 minutes. */
