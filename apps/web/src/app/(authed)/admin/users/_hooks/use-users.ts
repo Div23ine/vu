@@ -11,7 +11,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '../../../../../lib/api';
  * invitations). The summary key extends the canonical `users` namespace —
  * packages/lib is out of this task's reach (the an earlier iteration precedent).
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export const USERS_SUMMARY_KEY = [...queryKeys.users.all(), 'summary'] as const;

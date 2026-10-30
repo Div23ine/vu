@@ -78,6 +78,12 @@ export interface AuthRepo {
   touchSession(sessionId: string, at: Date): Promise<void>;
   touchProfileLastActive(profileId: string, at: Date): Promise<void>;
 
+  // --- forced MFA setup (Phase 2) -------------------------------------------
+  /** Move the account status (e.g. `active` → `blocked_mfa_setup` and back). */
+  setAccountStatus(profileId: string, status: AccountStatus): Promise<void>;
+  /** Persist the `mfa_enrolled` flag once a factor has been verified. */
+  setMfaEnrolled(profileId: string, enrolled: boolean): Promise<void>;
+
   // --- pending signups (Task 40d) -------------------------------------------
   /** Flip `pending_verification` → `active`. False when the profile moved on. */
   activatePendingSignup(profileId: string): Promise<boolean>;
@@ -287,6 +293,20 @@ export class SqlAuthRepo implements AuthRepo {
     await this.executor.unsafe('update profiles set last_active_at = $2 where id = $1::uuid', [
       profileId,
       at,
+    ]);
+  }
+
+  async setAccountStatus(profileId: string, status: AccountStatus): Promise<void> {
+    await this.executor.unsafe(
+      'update profiles set account_status = $2::account_status where id = $1::uuid',
+      [profileId, status],
+    );
+  }
+
+  async setMfaEnrolled(profileId: string, enrolled: boolean): Promise<void> {
+    await this.executor.unsafe('update profiles set mfa_enrolled = $2 where id = $1::uuid', [
+      profileId,
+      enrolled,
     ]);
   }
 

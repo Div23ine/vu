@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LoginResponse } from '@vunvault/contracts';
+import { MAGIC_LINK_ACK_MESSAGE, type MagicLinkRequestResponse } from '@vunvault/contracts';
 import { clientProfile } from '@vunvault/contracts/fixtures/profile';
 import { createQueryClient, queryKeys } from '@vunvault/lib';
 import { env } from '../env';
@@ -127,31 +127,27 @@ describe('session mock handlers', () => {
     expect(response.data.csrfToken).toBe('mock');
   });
 
-  it('answers login from the fixtures and rejects everybody else', async () => {
-    const client = await apiPost<LoginResponse>('/api/v1/auth/login', {
+  it('answers every magic-link request with the identical generic ack', async () => {
+    const registered = await apiPost<MagicLinkRequestResponse>('/api/v1/auth/magic-link', {
       email: clientProfile.email,
-      password: 'anything-8-chars',
     });
-    expect(client.data.user?.email).toBe(clientProfile.email);
-    expect(client.data.mfaRequired).toBe(false);
-    expect(client.data.mfaMethods).toEqual([]);
+    expect(registered.message).toBe(MAGIC_LINK_ACK_MESSAGE);
 
-    const staff = await apiPost<LoginResponse>('/api/v1/auth/login', {
-      email: 'e.reed@vunvault.com',
-      password: 'anything-8-chars',
+    const unregistered = await apiPost<MagicLinkRequestResponse>('/api/v1/auth/magic-link', {
+      email: 'imposter@example.com',
     });
-    expect(staff.data.user).toBeNull();
-    expect(staff.data.mfaRequired).toBe(true);
-    expect(staff.data.mfaMethods).toEqual(['totp', 'webauthn', 'email_otp']);
+    // The same generic body either way — registration status is never revealed.
+    expect(unregistered).toEqual(registered);
 
+    // A malformed email fails the strict contract with a generic envelope.
     await expect(
-      apiPost('/api/v1/auth/login', { email: 'imposter@example.com', password: 'anything-8' }),
-    ).rejects.toMatchObject({ status: 401, code: 'invalid_credentials' });
+      apiPost('/api/v1/auth/magic-link', { email: 'not-an-email' }),
+    ).rejects.toMatchObject({ status: 400, code: 'validation_failed' });
 
-    // A too-short password fails the LoginBody contract, same envelope.
+    // The body is STRICT: a stale client still sending `password` fails loudly.
     await expect(
-      apiPost('/api/v1/auth/login', { email: clientProfile.email, password: 'short' }),
-    ).rejects.toMatchObject({ status: 401, code: 'invalid_credentials' });
+      apiPost('/api/v1/auth/magic-link', { email: clientProfile.email, password: 'hunter2!' }),
+    ).rejects.toMatchObject({ status: 400, code: 'validation_failed' });
   });
 });
 

@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
-import { LoginCard } from './_components/login-card';
-import { MfaDialog } from './_components/mfa-dialog';
-import { safeNextPath } from './_hooks/use-login';
+import { MagicLinkCard } from './_components/magic-link-card';
+import { safeNextPath } from './_lib/next-path';
 
 /**
- * `/login` (an earlier iteration; an earlier iteration mounts the MFA dialog here — the login card is
- * untouched). The route reads `?next=` (sanitised on the server before the
- * card ever sees it), `?error=` (OAuth/MFA return codes → toasts) and
- * `?mfa=1` (an OAuth return that still needs a second factor → the dialog
- * opens immediately via the store).
+ * `/login` (Phase 1 magic-link work order).
+ *
+ * The password form is GONE: the only email credential path is the magic
+ * link (`POST /auth/magic-link`), and the second factor lives on its own
+ * page at `/login/mfa` (the API redirects there after a verified link or an
+ * OAuth staff sign-in). This route reads `?next=` (sanitised on the server
+ * before the card ever sees it) and `?error=` (OAuth returns AND magic-link
+ * verify refusals → toasts).
  */
 
 export const metadata: Metadata = {
@@ -17,19 +19,10 @@ export const metadata: Metadata = {
 };
 
 interface LoginPageProps {
-  searchParams: Promise<{ next?: string; error?: string; mfa?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  return (
-    <>
-      <LoginCard
-        next={safeNextPath(params.next)}
-        error={params.error ?? null}
-        mfaRequested={params.mfa === '1'}
-      />
-      <MfaDialog />
-    </>
-  );
+  return <MagicLinkCard next={safeNextPath(params.next)} error={params.error ?? null} />;
 }

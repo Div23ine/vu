@@ -9,7 +9,7 @@ import { apiGet, apiPost } from '../../../../lib/api';
  * (the API's `clientVisibleWhere`), and a job the caller may not see is a
  * 404 — the UI never infers review, gate or payment state.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export interface AuthorisationUpload {

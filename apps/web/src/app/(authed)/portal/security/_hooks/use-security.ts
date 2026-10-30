@@ -17,7 +17,7 @@ import { apiDelete, apiGet, apiPost } from '../../../../../lib/api';
  * the combined status read, the password change, the TOTP enrol/verify/disable
  * trio, WebAuthn registration + removal, and the recovery-code pair.
  *
- * No `'use client'` directive (the `use-login.ts` pattern): only client
+ * No `'use client'` directive (the directive-free hook-module pattern): only client
  * components import this module.
  */
 

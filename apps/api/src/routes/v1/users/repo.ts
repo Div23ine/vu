@@ -89,7 +89,8 @@ export interface CreateProfileInput {
   jobTitle: string | null;
   baseLocation: string | null;
   role: UserRole;
-  team: Team;
+  /** `null` for org-level administrators provisioned from the roster (no team). */
+  team: Team | null;
   accessTier: string;
   scopeNotes: string | null;
   accessReviewDue: string | null;

@@ -9,7 +9,7 @@ import { apiGet, apiPatch } from '../../../../../lib/api';
  * cache entry; the PATCH invalidates the profile AND the session (the header
  * greeting mirrors the display name).
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export function useClientProfile() {

@@ -263,6 +263,9 @@ describe('enum tuples', () => {
       'pending_verification',
       'suspended',
       'dormant',
+      // Phase 2 of the magic-link work order: an admin who let the 5:00
+      // first-login MFA setup window expire waits here for a super-admin reset.
+      'blocked_mfa_setup',
     ]);
     expect(ACCESS_TIERS).toEqual(['standard', 'elevated', 'restricted']);
     expect(MFA_METHODS).toEqual(['totp', 'webauthn', 'email_otp']);

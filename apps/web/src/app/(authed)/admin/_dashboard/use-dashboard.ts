@@ -13,7 +13,7 @@ import { apiGet } from '../../../../lib/api';
  * read-through cache. The 30 s auto-refresh polls while the tab is visible
  * (`refetchIntervalInBackground: false`) WITHOUT the flag.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export const DASHBOARD_KEY = ['dashboard'] as const;

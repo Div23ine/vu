@@ -147,6 +147,27 @@ export interface SupabaseAdminOptions {
   userClient?: (accessToken: string) => SupabaseClient;
 }
 
+/**
+ * GoTrue exposes the session id ONLY as a JWT claim — its REST responses carry
+ * no session-id field. Decoding (not verifying; the signature is verified by
+ * the auth plugin's `resolveUser`) restores the correspondence the fail-closed
+ * session registry depends on: the `user_sessions` row created from this object
+ * must carry the same id as the access token's `session_id` claim, or every
+ * authenticated request 401s at the registry lookup.
+ */
+export function sessionIdFromAccessToken(accessToken: string): string {
+  try {
+    const part = accessToken.split('.')[1];
+    if (part === undefined || part === '') return '';
+    const claims = JSON.parse(Buffer.from(part, 'base64url').toString('utf8')) as {
+      session_id?: unknown;
+    };
+    return typeof claims.session_id === 'string' ? claims.session_id : '';
+  } catch {
+    return '';
+  }
+}
+
 function toSession(
   session: {
     access_token: string;
@@ -160,7 +181,7 @@ function toSession(
     accessToken: session.access_token,
     refreshToken: session.refresh_token,
     expiresIn: session.expires_in,
-    sessionId: '',
+    sessionId: sessionIdFromAccessToken(session.access_token),
     userId: session.user.id,
     aal,
   };
@@ -414,7 +435,7 @@ export function createSupabaseAdmin(options: SupabaseAdminOptions): SupabaseAdmi
           accessToken: verified.data.access_token,
           refreshToken: verified.data.refresh_token,
           expiresIn: verified.data.expires_in,
-          sessionId: '',
+          sessionId: sessionIdFromAccessToken(verified.data.access_token),
           userId: verified.data.user.id,
           aal: 'aal2',
         };

@@ -23,7 +23,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '../../../../../lib/api';
  * the inbox and directory — packages/lib has neither and this task must not add
  * them (the an earlier iteration `SECURITY_STATUS_KEY` precedent).
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export const CONTACT_ADMIN_KEY = ['contact-admin'] as const;

@@ -153,6 +153,14 @@ class FakeAuthRepo implements AuthRepo {
     const row = this.sessions.find((s) => s.id === sessionId);
     if (row !== undefined) row.lastSeenAt = at;
   }
+  async setAccountStatus(profileId: string, status: AuthProfileRow['accountStatus']) {
+    const row = this.profiles.find((p) => p.id === profileId);
+    if (row !== undefined) row.accountStatus = status;
+  }
+  async setMfaEnrolled(profileId: string, enrolled: boolean) {
+    const row = this.profiles.find((p) => p.id === profileId);
+    if (row !== undefined) row.mfaEnrolled = enrolled;
+  }
   async touchProfileLastActive() {
     /* no-op */
   }

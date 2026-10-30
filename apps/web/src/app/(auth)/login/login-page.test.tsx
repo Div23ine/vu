@@ -1,119 +1,108 @@
-import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import type { QueryClient } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createQueryClient } from '@vunvault/lib';
+import { useToastStore } from '@vunvault/ui';
+import { env } from '../../../env';
+import { safeNextPath } from './_lib/next-path';
 import LoginPage from './page';
 
 /**
- * `/login` — the passwordless email → link → code machine.
+ * `/login` route tests (Phase 1) — the server page renders the magic-link
+ * card, sanitises `?next=` BEFORE the client ever sees it (open-redirect
+ * guard, unit-pinned here) and forwards `?error=` to the card's toast map.
  *
- * Two guarantees are pinned here. First, the forms carry no native
- * constraint-validation layer: every form is `noValidate` and no input wears
- * `required`/`pattern`, so the browser can never block a submit behind an
- * invisible bubble — validation is the app's own, rendered in the visible
- * error panel. Accessible semantics survive via `aria-required`. Second, the
- * app-level validation still fires and stays on the page (no navigation)
- * when the input is unusable, and a correct code against the MSW auth
- * handler signs the visitor in (`router.replace('/')`).
+ * The old `?mfa=1` / step=code&handle surfaces are gone: the second factor
+ * lives at `/login/mfa` and the API redirects there itself.
  */
 
 const routerReplace = vi.hoisted(() => vi.fn());
-const searchParams = vi.hoisted(() => new Map<string, string>());
+const locationAssign = vi.hoisted(() => vi.fn());
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: routerReplace }),
-  useSearchParams: () => ({ get: (key: string) => searchParams.get(key) ?? null }),
+  useRouter: () => ({ replace: routerReplace, push: vi.fn() }),
 }));
 
-const originalLocation = window.location;
-let assignSpy: ReturnType<typeof vi.fn>;
+let queryClient: QueryClient;
+
+async function renderPage(params: { next?: string; error?: string } = {}) {
+  const ui = await LoginPage({ searchParams: Promise.resolve(params) });
+  queryClient = createQueryClient();
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 beforeEach(() => {
-  assignSpy = vi.fn();
-  // lib/api.ts reads `window.location.pathname` for the auth-flow guard;
-  // jsdom's Location is unforgeable, so swap the whole object (session.test
-  // pattern) and assert redirects instead of following them.
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    writable: true,
-    value: { pathname: '/login', search: '', assign: assignSpy },
-  });
   routerReplace.mockClear();
-  searchParams.clear();
+  locationAssign.mockClear();
+  useToastStore.setState({ toasts: [] });
+  vi.stubGlobal('location', {
+    pathname: '/login',
+    search: '',
+    href: 'http://localhost/login',
+    assign: locationAssign,
+  });
 });
 
 afterEach(() => {
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    writable: true,
-    value: originalLocation,
+  vi.unstubAllGlobals();
+});
+
+describe('safeNextPath — open-redirect guard', () => {
+  it('accepts only single-slash same-origin paths', () => {
+    expect(safeNextPath('/portal')).toBe('/portal');
+    expect(safeNextPath('/portal/billing?tab=x')).toBe('/portal/billing?tab=x');
+  });
+
+  it('rejects protocol-relative, backslash, absolute and empty values', () => {
+    expect(safeNextPath('//evil.example')).toBeNull();
+    expect(safeNextPath('/\\evil.example')).toBeNull();
+    expect(safeNextPath('https://evil.example')).toBeNull();
+    expect(safeNextPath('javascript:alert(1)')).toBeNull();
+    expect(safeNextPath('')).toBeNull();
+    expect(safeNextPath(undefined)).toBeNull();
+    expect(safeNextPath(null)).toBeNull();
   });
 });
 
-describe('login — no invisible native constraints', () => {
-  it('renders the email step with app-level validation only', () => {
-    render(<LoginPage searchParams={Promise.resolve({})} />);
-
-    const form = document.querySelector('form');
-    expect(form).not.toBeNull();
-    expect(form?.noValidate).toBe(true);
-    expect(form?.querySelector('[required]')).toBeNull();
-    expect(form?.querySelector('[pattern]')).toBeNull();
-
-    const email = screen.getByLabelText('Email address');
-    expect(email).toHaveAttribute('aria-required', 'true');
-    expect(email).not.toHaveAttribute('required');
+describe('LoginPage — server route', () => {
+  it('renders the magic-link card with no password surface', async () => {
+    await renderPage();
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Email address')).toBeInTheDocument();
+    expect(document.querySelector('input[type="password"]')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Send Sign-In Link' })).toBeInTheDocument();
   });
 
-  it('renders the code step with app-level validation only', () => {
-    searchParams.set('step', 'code');
-    searchParams.set('handle', 'mock-handle-abcdef123456');
-    render(<LoginPage searchParams={Promise.resolve({})} />);
-
-    const form = document.querySelector('form');
-    expect(form?.noValidate).toBe(true);
-    expect(form?.querySelector('[required]')).toBeNull();
-    expect(form?.querySelector('[pattern]')).toBeNull();
-
-    const code = screen.getByLabelText('Six-digit code from your email');
-    expect(code).toHaveAttribute('aria-required', 'true');
-    expect(code).not.toHaveAttribute('required');
-    expect(code).not.toHaveAttribute('pattern');
-  });
-
-  it('shows a visible error (not a browser bubble) for an empty email', async () => {
+  it('passes a safe ?next= through to the OAuth start URL', async () => {
     const user = userEvent.setup();
-    render(<LoginPage searchParams={Promise.resolve({})} />);
-
-    await user.click(screen.getByRole('button', { name: /sign-in link/i }));
-
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
-    expect(routerReplace).not.toHaveBeenCalled();
-    expect(assignSpy).not.toHaveBeenCalled();
+    await renderPage({ next: '/portal/billing' });
+    await user.click(screen.getByRole('button', { name: 'Google' }));
+    expect(locationAssign).toHaveBeenCalledWith(
+      `${env.NEXT_PUBLIC_API_URL}/api/v1/auth/oauth/google/start?next=%2Fportal%2Fbilling`,
+    );
   });
 
-  it('verifies a correct code and signs the visitor in', async () => {
+  it('sanitises an unsafe ?next= away before the client sees it', async () => {
     const user = userEvent.setup();
-    searchParams.set('step', 'code');
-    searchParams.set('handle', 'mock-handle-abcdef123456');
-    render(<LoginPage searchParams={Promise.resolve({})} />);
-
-    await user.type(screen.getByLabelText('Six-digit code from your email'), '424242');
-    await user.click(screen.getByRole('button', { name: /verify and sign in/i }));
-
-    expect(routerReplace).toHaveBeenCalledWith('/');
-    expect(assignSpy).not.toHaveBeenCalled();
+    await renderPage({ next: '//evil.example/phish' });
+    await user.click(screen.getByRole('button', { name: 'Google' }));
+    // Falls back to the neutral '/' — the hostile target never reaches a URL.
+    expect(locationAssign).toHaveBeenCalledWith(
+      `${env.NEXT_PUBLIC_API_URL}/api/v1/auth/oauth/google/start?next=%2F`,
+    );
   });
 
-  it('keeps a wrong code on the page with a visible message', async () => {
-    const user = userEvent.setup();
-    searchParams.set('step', 'code');
-    searchParams.set('handle', 'mock-handle-abcdef123456');
-    render(<LoginPage searchParams={Promise.resolve({})} />);
-
-    await user.type(screen.getByLabelText('Six-digit code from your email'), '111111');
-    await user.click(screen.getByRole('button', { name: /verify and sign in/i }));
-
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
-    expect(routerReplace).not.toHaveBeenCalled();
-    expect(assignSpy).not.toHaveBeenCalled();
+  it('forwards ?error= into the card toast map', async () => {
+    await renderPage({ error: 'magic_link_used' });
+    await waitFor(() =>
+      expect(useToastStore.getState().toasts[0]).toMatchObject({
+        kind: 'warn',
+        title: 'Sign-in',
+        message: 'This sign-in link has already been used. Please request a new one.',
+      }),
+    );
   });
 });

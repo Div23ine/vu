@@ -74,6 +74,12 @@ export const PublicEnvSchema = z.object({
   NEXT_PUBLIC_ZURA_LLM_URL: optionalUrl,
   /** Verifying-node label shown on the audit chain panel. */
   NEXT_PUBLIC_NODE_LABEL: optionalString,
+  /**
+   * Cloudflare Turnstile site key (public by design — it only renders
+   * challenges). Needed when the API runs with `TURNSTILE_ENFORCE=true`;
+   * absent means the captcha-gated login view shows its fallback copy.
+   */
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: optionalString,
 });
 
 export type Env = z.infer<typeof PublicEnvSchema>;
@@ -91,6 +97,7 @@ export function readPublicEnv(): Record<keyof Env, string | undefined> {
     NEXT_PUBLIC_BUILD_LABEL: process.env.NEXT_PUBLIC_BUILD_LABEL,
     NEXT_PUBLIC_NODE_LABEL: process.env.NEXT_PUBLIC_NODE_LABEL,
     NEXT_PUBLIC_ZURA_LLM_URL: process.env.NEXT_PUBLIC_ZURA_LLM_URL,
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
   };
 }
 

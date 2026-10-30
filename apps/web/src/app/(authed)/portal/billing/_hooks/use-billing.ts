@@ -18,7 +18,7 @@ import { env } from '../../../../../env';
  * streams, and the JSON-parsing transport cannot carry them. Both are GETs —
  * no CSRF token involved — with `credentials: "include"` for the session.
  *
- * No `'use client'` directive (the `use-login.ts` pattern): only client
+ * No `'use client'` directive (the directive-free hook-module pattern): only client
  * components import this module.
  */
 

@@ -46,8 +46,6 @@ export interface DbPluginOptions {
 const dbPlugin: FastifyPluginAsync<DbPluginOptions> = async (app, options) => {
   const db = options.db ?? createDb(await app.secrets.get('DATABASE_URL'));
 
-  console.warn('[db] client has types?', Boolean((db as WithClient).$client?.options?.types?.date));
-
   app.decorate('db', db);
   app.decorate('withTx', <T>(work: (tx: Tx) => Promise<T>): Promise<T> => db.transaction(work));
 

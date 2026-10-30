@@ -27,7 +27,7 @@ import {
  * browser's `EventSource` owns it): a raw `WebSocket` does not retry, so the
  * backoff schedule lives in the reducer's world and the timer lives here.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 /** `https://api.x` → `wss://api.x` (and `http:` → `ws:`). */

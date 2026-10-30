@@ -34,6 +34,17 @@ export const EMAIL_OTP_TTL_SECONDS = 600;
 export const EMAIL_OTP_RESEND_SECONDS = 60;
 export const EMAIL_OTP_LENGTH = 6;
 
+/**
+ * Phase 2: a challenge opened for FORCED first-sign-in MFA setup carries this
+ * marker. `deadlineEpochMs` is the close of the administrator's visible 5:00
+ * window; `null` means "no deadline" (unenrolled clients are routed to
+ * enrolment but never blocked). Absent on ordinary verify challenges.
+ */
+export interface MfaSetupMarker {
+  required: true;
+  deadlineEpochMs: number | null;
+}
+
 export interface MfaChallenge {
   userId: string;
   email: string;
@@ -42,12 +53,36 @@ export interface MfaChallenge {
   methods: MfaMethod[];
   /** AES-256-GCM ciphertext of the aal1 session, base64. */
   sessionEnc: string;
+  /** Present only on forced-setup challenges (Phase 2). */
+  setup?: MfaSetupMarker;
+  /**
+   * Exponential-backoff lock (Phase 4): until this instant (epoch ms) the
+   * challenge refuses verification with 429 + Retry-After instead of burning
+   * another attempt. Set from the 2nd failure on: 2s, 4s, 8s…
+   */
+  lockedUntilEpochMs?: number;
+}
+
+/**
+ * Backoff seconds after a given failure count: none on the 1st, then
+ * 2^(attempts-1) capped at 16s. The 5th failure destroys the challenge
+ * outright (`MFA_MAX_ATTEMPTS`), so the cap only shapes attempts 2–4.
+ */
+export function mfaBackoffSeconds(attempts: number): number {
+  if (attempts < 2) return 0;
+  return Math.min(16, 2 ** (attempts - 1));
 }
 
 /** The narrow Redis surface these stores need. */
 export interface KvStore {
   get(key: string): Promise<string | null>;
-  set(key: string, value: string, mode: 'EX', seconds: number): Promise<unknown>;
+  /**
+   * `nx: 'NX'` makes the write conditional — it resolves `'OK'` only when the
+   * key did NOT exist (and was not set), `null` otherwise. This is exactly
+   * ioredis' `SET key value EX seconds NX` call shape, so a live Redis satisfies
+   * the interface unchanged; `memoryKvStore` implements the same semantics.
+   */
+  set(key: string, value: string, mode: 'EX', seconds: number, nx?: 'NX'): Promise<unknown>;
   del(key: string): Promise<unknown>;
 }
 
@@ -69,7 +104,11 @@ export function memoryKvStore(now: () => number = () => Date.now()): MemoryKvSto
       }
       return entry.value;
     },
-    async set(key, value, _mode, seconds) {
+    async set(key, value, _mode, seconds, nx) {
+      if (nx === 'NX') {
+        const existing = entries.get(key);
+        if (existing !== undefined && existing.expiresAt > now()) return null;
+      }
       entries.set(key, { value, expiresAt: now() + seconds * 1000 });
       return 'OK';
     },
@@ -144,6 +183,7 @@ export class MfaChallengeStore {
     remember: boolean;
     methods: MfaMethod[];
     session: SupabaseSession;
+    setup?: MfaSetupMarker;
   }): Promise<{ handle: string }> {
     const handle = this.randomHandle();
     const challenge: MfaChallenge = {
@@ -153,6 +193,7 @@ export class MfaChallengeStore {
       attempts: 0,
       methods: input.methods,
       sessionEnc: encryptJson(this.key, input.session),
+      ...(input.setup !== undefined ? { setup: input.setup } : {}),
     };
     await this.store.set(
       MfaChallengeStore.keyFor(handle),
@@ -175,11 +216,15 @@ export class MfaChallengeStore {
   }
 
   /**
-   * Count a failed attempt. At the fifth failure the challenge is destroyed, so a
-   * stolen handle cannot be brute-forced for longer than five tries.
+   * Count a failed attempt. From the 2nd failure on, the challenge is also
+   * LOCKED for an exponential backoff (`mfaBackoffSeconds`) — verification
+   * before the lock expires answers 429 + Retry-After without burning an
+   * attempt. At the fifth failure the challenge is destroyed, so a stolen
+   * handle cannot be brute-forced for longer than five tries.
    */
   async recordFailure(
     handle: string,
+    nowMs: number = Date.now(),
   ): Promise<{ challenge: MfaChallenge | null; exhausted: boolean }> {
     const challenge = await this.read(handle);
     if (challenge === null) return { challenge: null, exhausted: false };
@@ -189,13 +234,19 @@ export class MfaChallengeStore {
       await this.delete(handle);
       return { challenge: { ...challenge, attempts }, exhausted: true };
     }
+    const backoff = mfaBackoffSeconds(attempts);
+    const next: MfaChallenge = {
+      ...challenge,
+      attempts,
+      ...(backoff > 0 ? { lockedUntilEpochMs: nowMs + backoff * 1000 } : {}),
+    };
     await this.store.set(
       MfaChallengeStore.keyFor(handle),
-      JSON.stringify({ ...challenge, attempts }),
+      JSON.stringify(next),
       'EX',
       this.ttlSeconds,
     );
-    return { challenge: { ...challenge, attempts }, exhausted: false };
+    return { challenge: next, exhausted: false };
   }
 
   async delete(handle: string): Promise<void> {
@@ -205,6 +256,79 @@ export class MfaChallengeStore {
   /** The aal1 session, decrypted. Throws when the payload has been tampered with. */
   decryptSession(challenge: MfaChallenge): SupabaseSession {
     return decryptJson<SupabaseSession>(this.key, challenge.sessionEnc);
+  }
+}
+
+export const MFA_SETUP_USER_PREFIX = 'mfasetup:u:';
+export const MFA_SETUP_HANDLE_PREFIX = 'mfasetup:h:';
+/** Long enough for lazy expiry detection; the window itself is 5 minutes. */
+export const MFA_SETUP_RECORD_TTL_SECONDS = 24 * 60 * 60;
+
+/**
+ * The forced-setup ledger (Phase 2).
+ *
+ * The setup WINDOW is the challenge TTL (5 minutes); this record OUTLIVES the
+ * challenge so a missed window can still be detected lazily — on the next
+ * setup call with the dead handle, or on the next magic-link request — and
+ * turned into `blocked_mfa_setup`. Two keys per open window (by user and by
+ * handle) so either side can find the record; blocking or completing deletes
+ * both, which is also what makes a super-admin unblock safe without KV access
+ * (a blocked account never has a live record left behind it).
+ *
+ * Only TIMED windows (administrators) are recorded: a client enrolment has no
+ * deadline and no block, so it needs no ledger.
+ */
+export interface MfaSetupRecord {
+  handle: string;
+  userId: string;
+  email: string;
+  deadlineEpochMs: number;
+  createdAtEpochMs: number;
+}
+
+export class MfaSetupStore {
+  constructor(private readonly store: KvStore) {}
+
+  /** Open (or replace) the timed setup window for an administrator. */
+  async open(record: MfaSetupRecord): Promise<void> {
+    const encoded = JSON.stringify(record);
+    await this.store.set(
+      `${MFA_SETUP_USER_PREFIX}${record.userId}`,
+      encoded,
+      'EX',
+      MFA_SETUP_RECORD_TTL_SECONDS,
+    );
+    await this.store.set(
+      `${MFA_SETUP_HANDLE_PREFIX}${record.handle}`,
+      encoded,
+      'EX',
+      MFA_SETUP_RECORD_TTL_SECONDS,
+    );
+  }
+
+  async forUser(userId: string): Promise<MfaSetupRecord | null> {
+    return this.read(`${MFA_SETUP_USER_PREFIX}${userId}`);
+  }
+
+  async forHandle(handle: string): Promise<MfaSetupRecord | null> {
+    return this.read(`${MFA_SETUP_HANDLE_PREFIX}${handle}`);
+  }
+
+  /** Delete both keys. Safe to call with a stale/unknown record. */
+  async clear(record: Pick<MfaSetupRecord, 'userId' | 'handle'>): Promise<void> {
+    await this.store.del(`${MFA_SETUP_USER_PREFIX}${record.userId}`);
+    await this.store.del(`${MFA_SETUP_HANDLE_PREFIX}${record.handle}`);
+  }
+
+  private async read(key: string): Promise<MfaSetupRecord | null> {
+    const raw = await this.store.get(key);
+    if (raw === null) return null;
+    try {
+      return JSON.parse(raw) as MfaSetupRecord;
+    } catch {
+      await this.store.del(key);
+      return null;
+    }
   }
 }
 

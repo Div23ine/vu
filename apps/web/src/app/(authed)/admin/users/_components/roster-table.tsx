@@ -23,6 +23,7 @@ const STATUS_BADGE: Record<AccountStatus, string> = {
   pending_verification: 'adm-badge--pending',
   suspended: 'adm-badge--refunded',
   dormant: 'adm-badge--info',
+  blocked_mfa_setup: 'adm-badge--refunded',
 };
 
 /** The MFA/Access chip — the data section's derivation order. */

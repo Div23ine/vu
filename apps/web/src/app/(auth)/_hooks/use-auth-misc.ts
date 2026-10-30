@@ -1,20 +1,14 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import type {
-  AcceptInvitationBody,
-  ForgotPasswordBody,
-  InvitationPreview,
-  ResetPasswordBody,
-  SessionUser,
-} from '@vunvault/contracts';
+import type { AcceptInvitationBody, InvitationPreview, SessionUser } from '@vunvault/contracts';
 import { queryKeys } from '@vunvault/lib';
 import { apiGet, apiPost } from '../../../lib/api';
 
 /**
- * Auth-adjacent hooks — the four small flows around the session:
- * forgot password (always-202, enumeration-safe), reset password, the public
+ * Auth-adjacent hooks — the small flows around the session: the public
  * invitation preview + acceptance, and the newsletter double-opt-in confirm.
+ * (Forgot/reset password died with password login in Phase 5.)
  *
- * No `'use client'` directive (the `use-login.ts` pattern): these hooks are
+ * No `'use client'` directive (the directive-free hook-module pattern): these hooks are
  * only ever called from client components, which pull the module into their
  * bundle.
  */
@@ -24,22 +18,6 @@ export interface AcceptInvitationResponse {
   data: SessionUser;
   mfaEnrolmentRequired: true;
   deviceLabel?: string;
-}
-
-export function useForgotPassword() {
-  return useMutation({
-    // TODO(backend-contract): POST /api/v1/auth/forgot-password body { email } → 202 {}
-    //  (always 202 — the route never reveals whether the address exists)
-    mutationFn: (body: ForgotPasswordBody) => apiPost<void>('/api/v1/auth/forgot-password', body),
-  });
-}
-
-export function useResetPassword() {
-  return useMutation({
-    // TODO(backend-contract): POST /api/v1/auth/reset-password body { token; newPassword; confirmPassword }
-    //  → 204 | 400 | 410 { error: "token_invalid" } | 422 { error: "breached_password" }
-    mutationFn: (body: ResetPasswordBody) => apiPost<void>('/api/v1/auth/reset-password', body),
-  });
 }
 
 export function useInvitationPreview(token: string | null) {

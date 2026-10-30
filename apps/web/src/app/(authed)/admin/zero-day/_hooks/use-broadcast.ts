@@ -20,7 +20,7 @@ import { ADMIN_ADVISORIES_KEY } from './use-advisories-admin';
  * Controls panel renders the same numbers, and one query key must not be
  * fetched twice for one dialog.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export type BroadcastMode = 'initial' | 'rebroadcast';

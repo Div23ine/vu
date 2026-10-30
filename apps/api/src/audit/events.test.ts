@@ -55,8 +55,11 @@ describe('AUDIT_EVENTS catalog', () => {
       byCategory.set(category, (byCategory.get(category) ?? 0) + 1);
     }
     expect([...byCategory.keys()].sort()).toEqual([...AUDIT_CATEGORIES].sort());
-    expect(byCategory.get('authentication')).toBe(10);
-    expect(byCategory.get('security_event')).toBe(4);
+    // 14 since the magic-link work order added MAGIC_LINK_ISSUED,
+    // MAGIC_LINK_VERIFIED, SIGNUP_INVITE_SENT and MFA_SETUP_BLOCKED.
+    expect(byCategory.get('authentication')).toBe(14);
+    // 5 since Phase 4 added AUTH_BOT_REJECTED to the security events.
+    expect(byCategory.get('security_event')).toBe(5);
     // 7 since Task 95 added SCAN_CONTROL_SENT to the scan lifecycle.
     expect(byCategory.get('scan_completion')).toBe(7);
     expect(byCategory.get('report_release')).toBe(2);

@@ -18,7 +18,7 @@ import { apiGet, apiPost } from '../../../../../lib/api';
  * until the invoice flips to `paid`. There is no payment-attempt read endpoint
  * in the contract, so the invoice row IS the confirmation.
  *
- * No `'use client'` directive (the `use-login.ts` pattern): only client
+ * No `'use client'` directive (the directive-free hook-module pattern): only client
  * components import this module.
  */
 

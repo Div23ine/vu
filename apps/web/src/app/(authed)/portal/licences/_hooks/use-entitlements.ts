@@ -12,7 +12,7 @@ import { apiGet, apiPost } from '../../../../../lib/api';
  * not touch packages/lib, so the key lives here — the an earlier iteration
  * `SECURITY_STATUS_KEY` precedent.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export const ENTITLEMENTS_KEY = ['entitlements'] as const;

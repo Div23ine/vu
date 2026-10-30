@@ -252,6 +252,34 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
     handler: reactivateHandler,
   });
 
+  const unblockMfaHandler = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = IdParams.parse(request.params);
+    const who = actor(request);
+
+    const member = await app.withTx(async (tx: Tx) => {
+      const executor = asExecutor(tx);
+      const updated = await serviceFor(executor).unblockMfa(who, id);
+      await app.audit.append(executor, {
+        eventType: 'MFA_SETUP_UNBLOCKED',
+        actor: { id: who.id, label: label(who.email) },
+        subject: updated.email,
+        message: `MFA setup block lifted for ${updated.email} — the next sign-in restarts the setup window`,
+        ip: request.ip,
+      });
+      return updated;
+    });
+
+    return reply.send({ data: member });
+  };
+  (unblockMfaHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
+
+  app.post('/admin/users/:id/unblock-mfa', {
+    preHandler: guards('users:manage'),
+    config: { rateLimitPolicy: 'sensitive' },
+    schema: { params: IdParams, body: UserActionBody, response: memberResponse },
+    handler: unblockMfaHandler,
+  });
+
   const enforceMfaHandler = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = IdParams.parse(request.params);
     const who = actor(request);

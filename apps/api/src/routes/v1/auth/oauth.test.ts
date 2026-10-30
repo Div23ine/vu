@@ -160,6 +160,14 @@ class FakeAuthRepo implements AuthRepo {
     const row = this.sessions.find((s) => s.id === sessionId);
     if (row !== undefined) row.lastSeenAt = at;
   }
+  async setAccountStatus(profileId: string, status: AuthProfileRow['accountStatus']) {
+    const row = this.profiles.find((p) => p.id === profileId);
+    if (row !== undefined) row.accountStatus = status;
+  }
+  async setMfaEnrolled(profileId: string, enrolled: boolean) {
+    const row = this.profiles.find((p) => p.id === profileId);
+    if (row !== undefined) row.mfaEnrolled = enrolled;
+  }
   async touchProfileLastActive() {
     /* no-op */
   }
@@ -683,7 +691,12 @@ describe('GET /api/v1/auth/oauth/callback', () => {
     const started = await start('google', '/portal');
     const response = await callback({ code: 'provider-code', state: started.state });
     expect(response.statusCode).toBe(302);
-    expect(response.headers['location']).toBe(`${TEST_ENV.WEB_ORIGIN}/login?mfa=1&next=%2Fportal`);
+    // Phase 1: the MFA step is its own page; methods + masked address ride along.
+    const location = new URL(String(response.headers['location']));
+    expect(`${location.origin}${location.pathname}`).toBe(`${TEST_ENV.WEB_ORIGIN}/login/mfa`);
+    expect(location.searchParams.get('methods')).toBe('totp');
+    expect(location.searchParams.get('next')).toBe('/portal');
+    expect(location.searchParams.get('to')).toContain('\u2022');
     const names = cookieNames(response);
     expect(names).toContain('vv_mfa');
     expect(names).not.toContain('vv_at');

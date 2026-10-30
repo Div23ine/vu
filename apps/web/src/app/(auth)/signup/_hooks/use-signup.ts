@@ -6,7 +6,7 @@ import { apiPost } from '../../../../lib/api';
  * Signup hooks + helpers .
  *
  * No `'use client'` directive on purpose (same split as an earlier iteration's
- * `use-login.ts`): `normalizePhone` is a pure helper, and `useSignup` is only
+ * the directive-free hook-module pattern): `normalizePhone` is a pure helper, and `useSignup` is only
  * ever called from client components, which pull this module into their bundle.
  */
 
@@ -25,7 +25,8 @@ export function useSignup() {
     //  { fullName; email; phone?; country: string(2); accountType: "individual"|"company";
     //   password: string(min12); confirmPassword; description? }
     //  → 202 SignupStartResponse | 400 | 409 { error: "email_taken" }
-    //  | 422 { error: "breached_password" } | 429
+    //  | 422 { error: "breached_password" } | 422 { error: "signup_not_allowed" }
+    //  (Phase 4: admin-roster emails are provisioned, never self-registered) | 429
     mutationFn: (body: SignupBody) =>
       apiPost<SignupStartResponse>('/api/v1/auth/signup', body).then((response) => response.data),
   });

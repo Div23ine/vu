@@ -128,11 +128,16 @@ export function SignupCard() {
           country: values.country,
           accountType: values.accountType,
           password: values.password,
+          confirmPassword: values.confirmPassword,
         } satisfies SignupBody);
         // 202: park the pending account and hand off to an earlier iteration's dialog.
         dialog.open({ email: data.email, fullName: values.fullName });
       } catch (submitError) {
-        if (isApiError(submitError) && submitError.status === 409) {
+        if (isApiError(submitError) && submitError.code === 'signup_not_allowed') {
+          // Phase 4 guard: admin-roster addresses are provisioned, never
+          // self-registered — the spec's verbatim refusal on the email field.
+          setError('email', { message: 'This email is not eligible for signup.' });
+        } else if (isApiError(submitError) && submitError.status === 409) {
           setError('email', { message: 'An account with this email already exists.' });
         } else if (isApiError(submitError) && submitError.status === 422) {
           setError('password', {

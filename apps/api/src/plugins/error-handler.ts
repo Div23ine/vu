@@ -53,6 +53,13 @@ const errorHandler: FastifyPluginAsync = async (app) => {
       const envelope: ErrorEnvelope = { error: error.code };
       if (error.status < 500 && error.message !== '') envelope.message = error.message;
       if (error.details !== undefined) envelope.details = error.details;
+      // Phase 4: a deliberate refusal may carry headers (e.g. `retry-after`
+      // on MFA backoff) — copy them across exactly as the plugin path does.
+      if (error.headers !== undefined) {
+        for (const [name, value] of Object.entries(error.headers)) {
+          reply.header(name, String(value));
+        }
+      }
       if (error.status >= 500) {
         request.log.error({ err: error, requestId: request.id }, 'handled 5xx');
       }

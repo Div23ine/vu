@@ -29,6 +29,13 @@ export const ACCOUNT_STATUSES = [
   'pending_verification',
   'suspended',
   'dormant',
+  /**
+   * Phase 2 (magic-link work order): an ADMIN who let the 5:00 first-login MFA
+   * setup window expire (or abandoned setup) is parked here until a super admin
+   * resets the MFA state. The super admin account itself is exempt and can
+   * never land in this status via the timer.
+   */
+  'blocked_mfa_setup',
 ] as const;
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 

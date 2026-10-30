@@ -29,9 +29,22 @@ export const AUDIT_EVENTS = {
   RECOVERY_CODES_GENERATED: { category: 'authentication', severity: 'info', sevLevel: 3 },
   SESSION_REVOKED: { category: 'authentication', severity: 'info' },
   ACCOUNT_REGISTERED: { category: 'authentication', severity: 'info' },
+  // Phase 1/3 (magic-link work order): the login surface is the mailbox. An
+  // issuance is a fact about an account; an invitation is a fact about an
+  // address that has none. Neither records the token (work order §7).
+  MAGIC_LINK_ISSUED: { category: 'authentication', severity: 'info' },
+  MAGIC_LINK_VERIFIED: { category: 'authentication', severity: 'ok' },
+  SIGNUP_INVITE_SENT: { category: 'authentication', severity: 'info' },
+  // Phase 2: an admin parked in `blocked_mfa_setup`, and the super-admin reset.
+  MFA_SETUP_BLOCKED: { category: 'authentication', severity: 'warning', sevLevel: 3 },
+  MFA_SETUP_UNBLOCKED: { category: 'administrative', severity: 'info' },
+  ADMIN_PROVISIONED: { category: 'administrative', severity: 'info' },
 
   // --- security events ---
   AUTH_RATE_LIMIT: { category: 'security_event', severity: 'warning' },
+  // Phase 4: a magic-link request dropped by a bot signal (honeypot filled or
+  // inhuman form timing). The subject is the probed address; no token exists.
+  AUTH_BOT_REJECTED: { category: 'security_event', severity: 'warning' },
   RELEASE_LOCK_VIOLATION: { category: 'security_event', severity: 'critical', sevLevel: 2 },
   CSRF_REJECTED: { category: 'security_event', severity: 'warning' },
   WEBHOOK_SIGNATURE_INVALID: { category: 'security_event', severity: 'warning' },

@@ -1,7 +1,5 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
 import {
   ROLE_PERMISSIONS,
-  type AccountStatus,
   type MfaMethod,
   type Permission,
   type UserRole,
@@ -10,26 +8,35 @@ import type { BreachCheck } from '../../../lib/breach.js';
 import { HttpError } from '../../../lib/http-error.js';
 import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
 import type { EmailProvider } from '../../../providers/email.js';
-import { isStaff } from '../../../lib/staff.js';
-import { validatePassword } from '../account-security/password-policy.js';
+import type { MfaSetupStore } from './challenge.js';
 import {
   EmailOtpStore,
   generateOtpCode,
   MfaChallengeStore,
   newSessionId,
   type MfaChallenge,
+  type MfaSetupRecord,
 } from './challenge.js';
+import { ADMINISTRATOR_ROLES } from '../../../lib/staff.js';
+import {
+  ADMIN_MFA_SETUP_WINDOW_SECONDS,
+  isAdminEmail,
+  isMfaSetupExempt,
+  rosterSlotFor,
+} from '../../../lib/admin-roster.js';
 import { deviceLabel, geoCity, geoCountry, type GeoHeaders } from './device.js';
-import { generateResetToken, resetTokenHash, type PasswordResetStore } from './password-reset.js';
 import type { SignupOtpStore } from './email-otp.js';
+import type { MagicLinkTokenStore, SignupInviteCooldown } from './magic-link.js';
+import { LoginAbuseGuard } from './login-abuse.js';
+import { ALWAYS_HUMAN, type TurnstileVerifier } from '../public/turnstile.js';
 import type { AuthProfileRow, AuthRepo } from './repo.js';
 import { emailHash } from './repo.js';
 import type { MfaVerifierRegistry, VerifierMethod } from './mfa-registry.js';
 import type { FastifyRequest } from 'fastify';
 
 /**
- * Session lifecycle: signup, login, the MFA challenge, refresh, logout and the
- * session read.
+ * Session lifecycle: signup, magic-link login, the MFA challenge, refresh,
+ * logout and the session read.
  *
  * Invariants this service exists to protect:
  *  - a token never appears in a response body;
@@ -63,19 +70,64 @@ export interface IssuedSession {
   mfaMethod: MfaMethod | null;
 }
 
-export interface LoginOutcome {
-  kind: 'session';
-  session: IssuedSession;
-  mfaMethods: MfaMethod[];
-}
+/** What `POST /auth/magic-link` actually did — the route audits from this; the HTTP answer never differs. */
+export type MagicLinkRequestOutcome =
+  | { sent: 'link'; email: string } // registered: a single-use verify link went out
+  | { sent: 'invite'; email: string } // unregistered: a signup invitation went out (Phase 3)
+  | { sent: 'suppressed'; email: string } // unregistered, inside the invite cooldown: nothing sent
+  // Phase 4 anti-abuse outcomes — all still answer the identical generic 200:
+  | { sent: 'bot_dropped'; email: string; reason: 'honeypot' | 'timing' }
+  | { sent: 'window_suppressed'; email: string; retryAfterSeconds: number }
+  | { sent: 'captcha_required'; email: string };
 
-export interface MfaChallengeOutcome {
-  kind: 'challenge';
-  handle: string;
-  mfaMethods: MfaMethod[];
-}
+/**
+ * Why a verify leg failed. These codes only ever reach the browser that proved
+ * mailbox possession (or presented a token at all), rendered on the web app's
+ * own login screen — they are never an answer to an unauthenticated probe, so
+ * they leak nothing an enumerator could use.
+ */
+export type MagicLinkErrorCode =
+  | 'magic_link_invalid'
+  | 'magic_link_expired'
+  | 'magic_link_used'
+  | 'account_inactive'
+  | 'account_blocked'
+  | 'sign_in_unavailable';
 
-export type LoginResult = LoginOutcome | MfaChallengeOutcome;
+export type MagicLinkVerifyResult =
+  | {
+      kind: 'challenge';
+      handle: string;
+      methods: MfaMethod[];
+      email: string;
+      userId: string;
+      /** Absolute `${WEB_ORIGIN}` URL the route 302s to (the MFA step). */
+      redirectTo: string;
+    }
+  | {
+      /**
+       * Phase 2: the EXEMPT super admin (roster window `null`) never faces a
+       * setup gate — an unenrolled exempt sign-in gets the full session here,
+       * straight from the verify leg.
+       */
+      kind: 'session';
+      issued: IssuedSession;
+      email: string;
+      userId: string;
+      redirectTo: string;
+    }
+  | {
+      /**
+       * Phase 2: a timed administrator setup window closed without enrolment
+       * (or the visitor abandoned it) — the account is now `blocked_mfa_setup`
+       * and stays that way until a super admin unblocks it.
+       */
+      kind: 'setup_blocked';
+      email: string;
+      userId: string;
+      reason: 'window_expired' | 'abandoned';
+    }
+  | { kind: 'error'; code: MagicLinkErrorCode; email: string | null };
 
 export interface SignupInput {
   fullName: string;
@@ -90,6 +142,14 @@ export interface SignupInput {
 /** Magic-link step 1 input: possession of the mailbox is the credential. */
 export interface MagicLinkInput {
   email: string;
+  /** Sanitised same-origin path the user returns to after the MFA step. */
+  next?: string | null;
+  /** Honeypot field (Phase 4) — any non-empty value silently drops the request. */
+  website?: string | null;
+  /** Epoch ms when the login form rendered (Phase 4 timing signal). */
+  formTs?: number | null;
+  /** Turnstile token (Phase 4) — demanded once the IP trips the soft limit. */
+  captchaToken?: string | null;
 }
 
 /** Lockout thresholds: 5 per address per 15 minutes, 20 per IP per 15 minutes. */
@@ -98,12 +158,74 @@ export const LOGIN_MAX_FAILURES_PER_EMAIL = 5;
 export const LOGIN_MAX_FAILURES_PER_IP = 20;
 export const LOGIN_RETRY_AFTER_SECONDS = 900;
 
-/** A fixed digest compared on every failure so timing does not leak existence. */
-const DUMMY_DIGEST = createHash('sha256').update('vv-timing-equaliser').digest();
+/**
+ * Open-redirect guard for the `next` parameter (server-side twin of the web
+ * app's `safeNextPath`): a usable `next` must start with a single `/` —
+ * protocol-relative (`//evil.com`), backslash-trick (`/\\evil.com`) and absolute
+ * URLs are rejected. Invalid or absent → `null` (fall back to the role's home).
+ */
+export function sanitizeNextPath(raw: string | undefined | null): string | null {
+  if (typeof raw !== 'string' || raw === '') return null;
+  if (!raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return null;
+  return raw;
+}
 
-function equaliseTiming(password: string): void {
-  const digest = createHash('sha256').update(password).digest();
-  timingSafeEqual(digest, DUMMY_DIGEST);
+/**
+ * Display mask for the MFA screen's "code sent to re••@…" copy. Masked
+ * SERVER-side: the full address never appears in a redirect URL (browsers,
+ * proxies and logs see only the mask).
+ */
+export function maskEmailForRedirect(email: string): string {
+  const at = email.indexOf('@');
+  if (at < 1) return email;
+  const name = email.slice(0, at);
+  const domain = email.slice(at);
+  const head = name.slice(0, Math.min(2, name.length));
+  return head + '\u2022'.repeat(Math.max(1, name.length - 2)) + domain;
+}
+
+/** `WEB_ORIGIN` may be a comma-separated list; redirects use the first entry. */
+export function primaryWebOrigin(webOrigin: string): string {
+  const first = webOrigin.split(',')[0]?.trim();
+  return first === undefined || first === '' ? webOrigin : first;
+}
+
+// ——— Phase 2: forced-setup policy helpers ———
+
+/**
+ * Who faces a forced first-sign-in setup gate when unenrolled: administrators
+ * (timed 5:00 window, blockable) and clients (untimed enrolment routing — the
+ * work order's "blocked + routed to enrolment": they cannot reach a session
+ * without enrolling, but they are never `blocked_mfa_setup`).
+ */
+export function needsForcedSetup(role: UserRole): boolean {
+  return (ADMINISTRATOR_ROLES as readonly string[]).includes(role) || role === 'client';
+}
+
+/**
+ * The setup window in seconds for an unenrolled profile: the roster slot's
+ * window when the address is on the roster (`null` = EXEMPT — the super
+ * admin), the standard 5:00 for any other administrator-role account, and
+ * `null` (untimed enrolment) for clients.
+ */
+export function setupWindowSecondsFor(profile: { email: string; role: UserRole }): number | null {
+  const slot = rosterSlotFor(profile.email);
+  if (slot !== null) return slot.mfaSetupWindowSeconds;
+  return (ADMINISTRATOR_ROLES as readonly string[]).includes(profile.role)
+    ? ADMIN_MFA_SETUP_WINDOW_SECONDS
+    : null;
+}
+
+/**
+ * Post-sign-in landing per role — mirrors the web app's `homeFor`
+ * (`apps/web/src/lib/permissions.ts`). Only used where the API itself 302s a
+ * browser (the exempt super admin's full-session leg); every JSON leg lets
+ * the web app route itself.
+ */
+export function homeForRole(role: UserRole): '/admin' | '/admin/profile' | '/portal' {
+  if (role === 'client') return '/portal';
+  if (role === 'support_engineer') return '/admin/profile';
+  return '/admin';
 }
 
 /** `Dr. Evelyn Reed` → `{ first: 'Dr.', last: 'Evelyn Reed' }`? No: split on the FIRST space. */
@@ -125,15 +247,29 @@ export interface AuthServiceDeps {
   otp: EmailOtpStore;
   /** Task 40d: the signup mailbox OTP store. */
   signupOtp: SignupOtpStore;
-  /** Task 40d: the password-reset token store. */
-  resets: PasswordResetStore;
+  /** Phase 1: single-use HMAC magic-link tokens. */
+  magicLinks: MagicLinkTokenStore;
+  /** Phase 3: one signup invitation per address per cooldown window. */
+  invites: SignupInviteCooldown;
+  /**
+   * Phase 4 anti-abuse: per-address issuance window + per-IP soft limit.
+   * Optional so test harnesses that predate Phase 4 keep constructing; when
+   * absent the checks are skipped (the plugin hard limit still applies).
+   */
+  abuse?: LoginAbuseGuard;
+  /** Phase 4: Turnstile verification for soft-limited IPs. */
+  turnstile?: TurnstileVerifier;
+  /** Phase 4: whether captcha enforcement is switched on (`TURNSTILE_ENFORCE`). */
+  turnstileEnforced?: boolean;
+  /** Phase 2: forced-setup ledger — timed administrator windows only. */
+  setups: MfaSetupStore;
   verifiers: MfaVerifierRegistry;
   breach: BreachCheck;
   email?: EmailProvider;
-  /** Queue-backed notification; falls back to `email` when absent. */
-  notify?: (input: { to: string; template: string; vars: Record<string, string> }) => Promise<void>;
   /** `${WEB_ORIGIN}`: the reset link points at the web app, not the API. */
   webOrigin: string;
+  /** `${API_PUBLIC_URL}`: the magic link points at THIS API's verify leg. */
+  apiPublicUrl: string;
   /** Development logging of the OTP lives and dies with this. */
   nodeEnv?: string;
   now?: () => Date;
@@ -174,9 +310,12 @@ export class AuthService {
     const methods: MfaMethod[] = [];
     if (factors.some((factor) => factor.verified)) methods.push('totp');
     if (webauthnCount > 0) methods.push('webauthn');
-    // Email OTP is a staff fallback: a client's mailbox is not a second factor we
-    // control, and staff are required to hold MFA anyway.
-    if (isStaff(profile.role)) methods.push('email_otp');
+    // Phase 1: EVERY magic-link login continues at a six-digit code, so the
+    // emailed OTP is always an available method — for staff as a fallback next
+    // to TOTP/WebAuthn, and for clients as the standard second factor. The
+    // mailbox just proved itself at the link leg; the code leg is what raises
+    // the session to aal2.
+    methods.push('email_otp');
     return methods;
   }
 
@@ -198,6 +337,16 @@ export class AuthService {
    * cookies. The session opens only when the mailbox proves itself.
    */
   async signup(input: SignupInput): Promise<{ email: string }> {
+    // Phase 4 guard: the admin roster is provisioned by super admins (work
+    // order §1.4), never self-registered. All populated roster slots are
+    // refused with the spec's exact copy BEFORE any other signup work — no
+    // breach check, no repo read — so the guard cannot be probed as an
+    // oracle for the other validation rules either. Placeholder slots carry
+    // no email and can never match; filling one extends the guard for free.
+    if (isAdminEmail(input.email)) {
+      throw HttpError.unprocessable('signup_not_allowed', 'This email is not eligible for signup.');
+    }
+
     if (await this.deps.breach.isBreached(input.password)) {
       throw new HttpError(422, 'breached_password', 'That password has appeared in a known breach');
     }
@@ -329,88 +478,6 @@ export class AuthService {
     await this.sendSignupCode(address, code);
   }
 
-  /**
-   * Forgot password: ALWAYS the same `202 {}`. An active profile gets a
-   * single-use 30-minute link; an unknown address gets the same answer, the same
-   * body and roughly the same work, because which addresses hold accounts is not
-   * a question the internet gets to ask. Nothing is audited here — the audit
-   * entry is written on the successful reset.
-   */
-  async forgotPassword(email: string): Promise<void> {
-    const address = email.trim().toLowerCase();
-    const profile = await this.deps.repo.findProfileByEmail(address);
-    if (profile === null || profile.accountStatus !== 'active' || profile.deletedAt !== null) {
-      // Equalise the cost: mint and hash a token that goes nowhere.
-      void resetTokenHash(generateResetToken());
-      return;
-    }
-
-    const { token } = await this.deps.resets.issue(profile.id);
-    const link = `${this.deps.webOrigin}/reset-password?token=${token}`;
-    if (this.deps.email === undefined) {
-      this.warn('reset email requested but no email provider is configured');
-      return;
-    }
-    await this.deps.email.send({
-      to: address,
-      subject: 'Reset your VUNVAULT password',
-      html: `<p>We received a request to reset your VUNVAULT password.</p><p><a href="${link}">${link}</a></p><p>This link expires in 30 minutes. If you did not request it, you can safely ignore this email.</p>`,
-      text: `We received a request to reset your VUNVAULT password:\n\n${link}\n\nThis link expires in 30 minutes. If you did not request it, you can safely ignore this email.`,
-    });
-  }
-
-  /**
-   * Reset password: consume the single-use token, re-validate the password
-   * against the account's role (staff 14, everyone else 12), hand the new secret
-   * to Supabase and revoke EVERY session — Supabase's own refresh tokens die with
-   * the admin password update, and our `user_sessions` rows die here. MFA is not
-   * bypassed: the next login still challenges.
-   */
-  async resetPassword(input: {
-    token: string;
-    newPassword: string;
-    confirmPassword: string;
-  }): Promise<{ userId: string; email: string; revokedSessions: number }> {
-    const record = await this.deps.resets.consume(input.token);
-    if (record === null) {
-      throw new HttpError(410, 'token_invalid', 'That reset link is no longer valid');
-    }
-    const profile = await this.deps.repo.findProfileById(record.userId);
-    if (profile === null || profile.accountStatus !== 'active' || profile.deletedAt !== null) {
-      throw new HttpError(410, 'token_invalid', 'That reset link is no longer valid');
-    }
-
-    if (input.newPassword !== input.confirmPassword) {
-      throw HttpError.badRequest('validation_failed', [
-        { path: ['confirmPassword'], message: 'Both entries must match exactly.' },
-      ]);
-    }
-    const policy = validatePassword(input.newPassword, profile.role);
-    if (!policy.valid) {
-      throw HttpError.badRequest(
-        'validation_failed',
-        policy.issues.map((issue) => ({
-          path: ['newPassword'],
-          rule: issue.rule,
-          message: issue.message,
-        })),
-      );
-    }
-    if (await this.deps.breach.isBreached(input.newPassword)) {
-      throw new HttpError(422, 'breached_password', 'That password has appeared in a known breach');
-    }
-
-    await this.deps.supabase.updatePassword(profile.id, input.newPassword);
-    const revoked = await this.deps.repo.revokeAllSessions(profile.id, this.now());
-    await this.deps.repo.setLastPasswordChangeAt(profile.id, this.now());
-    // The session registry's Redis cache expires within 30 s, so the revoked
-    // rows are authoritative from then on at the latest — the same window the
-    // authenticated password change (Task 27) relies on.
-    await this.notifyCredentialsChanged(profile.email, profile.id);
-
-    return { userId: profile.id, email: profile.email, revokedSessions: revoked.length };
-  }
-
   /** The six-digit signup code. Its ONLY destinations are the email and, in development, the log. */
   private async sendSignupCode(email: string, code: string): Promise<void> {
     if (this.deps.email !== undefined) {
@@ -428,109 +495,465 @@ export class AuthService {
     }
   }
 
-  /** Best-effort notice: a failed email must not fail a password reset. */
-  private async notifyCredentialsChanged(to: string, userId: string): Promise<void> {
-    try {
-      if (this.deps.notify !== undefined) {
-        await this.deps.notify({ to, template: 'credentials_changed', vars: { userId } });
-        return;
-      }
-      await this.deps.email?.send({
-        to,
-        subject: 'Your VUNVAULT credentials changed',
-        html: '<p>Your password was changed. If this was not you, contact support immediately.</p>',
-        text: 'Your password was changed. If this was not you, contact support immediately.',
-      });
-    } catch (error) {
-      this.warn('credentials-changed notice failed', error);
+  /**
+   * Magic-link step 1 (Phase 1): `POST /auth/magic-link`.
+   *
+   * The HTTP answer is ONE generic acknowledgement whether the address holds an
+   * account or not — enumeration is impossible. What differs is only the email:
+   * a registered, live profile receives a single-use verify link (any previous
+   * link for the address dies when the new one is minted); an unregistered
+   * address receives a signup invitation instead (Phase 3), at most one per
+   * cooldown window so the endpoint cannot be weaponised as an email bomb.
+   *
+   * A missing email provider is a warning, not a failure — the posture the
+   * login surface has always had (a provider outage must never change the
+   * generic HTTP answer).
+   */
+  async requestMagicLink(
+    input: MagicLinkInput,
+    meta: RequestMeta,
+  ): Promise<MagicLinkRequestOutcome> {
+    const email = input.email.trim().toLowerCase();
+    const next = sanitizeNextPath(input.next);
+
+    // ——— Phase 4: bot signals first — a dropped bot consumes no budget and
+    // never reaches the repo, so it cannot probe registration status either.
+    // The HTTP answer is the identical generic 200 (the route composes it).
+    if ((input.website ?? '').trim() !== '') {
+      return { sent: 'bot_dropped', email, reason: 'honeypot' };
     }
+    if (LoginAbuseGuard.isTooFast(input.formTs, this.now().getTime())) {
+      return { sent: 'bot_dropped', email, reason: 'timing' };
+    }
+
+    // ——— Phase 4: per-IP soft limit → Turnstile (only when enforcement is
+    // on; the flag depends on the IP alone, never on registration status).
+    const abuse = this.deps.abuse;
+    if (abuse !== undefined && (await abuse.softLimitHit(meta.ip))) {
+      if (this.deps.turnstileEnforced === true) {
+        const token = input.captchaToken?.trim();
+        if (token === undefined || token === '') {
+          return { sent: 'captcha_required', email };
+        }
+        // Throws 400 `captcha_failed` (one generic refusal, fail-closed).
+        await (this.deps.turnstile ?? ALWAYS_HUMAN).assertHuman(token);
+      }
+    }
+
+    const profile = await this.deps.repo.findProfileByEmail(email);
+    const registered = profile !== null && profile.deletedAt === null;
+
+    // ——— Phase 4: per-address issuance window — beyond it the request is
+    // suppressed with the identical 200; no link, no invite, no enumeration.
+    if (abuse !== undefined) {
+      const window = await abuse.emailWindowClaim(email);
+      if (!window.allowed) {
+        return {
+          sent: 'window_suppressed',
+          email,
+          retryAfterSeconds: window.retryAfterSeconds,
+        };
+      }
+    }
+
+    if (!registered) {
+      // Phase 3: the invitation is the ONLY signal, and it goes to the address
+      // itself — never to the HTTP response.
+      if (!(await this.deps.invites.claim(email))) {
+        return { sent: 'suppressed', email };
+      }
+      const signupLink = `${primaryWebOrigin(this.deps.webOrigin)}/signup`;
+      if (this.deps.email === undefined) {
+        this.warn('signup invitation requested but no email provider is configured');
+        return { sent: 'suppressed', email };
+      }
+      await this.deps.email.send({
+        to: email,
+        subject: 'No VUNVAULT account found for this email',
+        html: `<p>We received a sign-in request for <strong>${email}</strong>, but no VUNVAULT account is registered for this address.</p><p>If you would like an account, sign up here: <a href="${signupLink}">${signupLink}</a></p><p>If you did not request this, you can safely ignore this email.</p>`,
+        text: `We received a sign-in request for ${email}, but no VUNVAULT account is registered for this address.\n\nIf you would like an account, sign up here: ${signupLink}\n\nIf you did not request this, you can safely ignore this email.`,
+      });
+      void meta;
+      return { sent: 'invite', email };
+    }
+
+    const { token } = await this.deps.magicLinks.issue(email);
+    const verifyUrl = new URL('/api/v1/auth/magic-link/verify', this.deps.apiPublicUrl);
+    verifyUrl.searchParams.set('token', token);
+    if (next !== null) verifyUrl.searchParams.set('next', next);
+    const link = verifyUrl.toString();
+
+    if (this.deps.email !== undefined) {
+      await this.deps.email.send({
+        to: email,
+        subject: 'Your VUNVAULT sign-in link',
+        html: `<p>Click the link below to sign in to VUNVAULT:</p><p><a href="${link}">${link}</a></p><p>The link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.</p>`,
+        text: `Click the link below to sign in to VUNVAULT:\n\n${link}\n\nThe link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.`,
+      });
+    } else {
+      this.warn('magic link requested but no email provider is configured');
+    }
+    // The token itself is never logged, at any level (work order §7).
+    return { sent: 'link', email };
   }
 
-  /** Password login. Returns a session, or a challenge handle when MFA is required. */
-  async login(input: LoginInput, meta: RequestMeta): Promise<LoginResult> {
-    const email = input.email.trim().toLowerCase();
-    const hash = emailHash(email);
-    const since = new Date(this.now().getTime() - LOGIN_WINDOW_MS);
+  /**
+   * Magic-link step 2 (Phase 1): `GET /auth/magic-link/verify?token=…`.
+   *
+   * Consumes the token atomically — signature first (a forgery never touches
+   * storage), then TTL, then single-use, then the email binding. On success the
+   * aal1 Supabase session is minted server-side (`issueSession`: the link never
+   * leaves this process) and stored ENCRYPTED inside the pre-MFA challenge. The
+   * browser gets only the challenge handle in the HttpOnly `vv_mfa` cookie —
+   * never `vv_at`/`vv_rt` — so no protected route is reachable until
+   * `POST /auth/mfa/verify` accepts the six-digit code and rotates the cookies.
+   *
+   * Every failure is a code the route turns into a redirect to the web login
+   * screen; nothing here throws for an expected outcome.
+   */
+  async verifyMagicLink(
+    token: string,
+    next: string | null,
+    meta: RequestMeta,
+  ): Promise<MagicLinkVerifyResult> {
+    const consumed = await this.deps.magicLinks.consume(token);
+    if (consumed.status === 'invalid')
+      return { kind: 'error', code: 'magic_link_invalid', email: null };
+    if (consumed.status === 'expired')
+      return { kind: 'error', code: 'magic_link_expired', email: null };
+    if (consumed.status === 'used') return { kind: 'error', code: 'magic_link_used', email: null };
 
-    const [byEmail, byIp] = await Promise.all([
-      this.deps.repo.countRecentFailuresByEmail(hash, since),
-      this.deps.repo.countRecentFailuresByIp(meta.ip, since),
-    ]);
-
-    if (byEmail >= LOGIN_MAX_FAILURES_PER_EMAIL || byIp >= LOGIN_MAX_FAILURES_PER_IP) {
-      throw new HttpError(
-        429,
-        'rate_limited',
-        `${byEmail} failed attempts in 15 min from ${meta.ip} targeting ${email} · source IP temporarily blocked for 15 min`,
-        undefined,
-      );
+    const email = consumed.payload.email;
+    const profile = await this.deps.repo.findProfileByEmail(email);
+    if (profile === null || profile.deletedAt !== null) {
+      // The address was live when the link was minted and is not now.
+      return { kind: 'error', code: 'magic_link_invalid', email };
+    }
+    if (profile.accountStatus === 'blocked_mfa_setup' || profile.accountStatus === 'suspended') {
+      return { kind: 'error', code: 'account_blocked', email };
+    }
+    if (profile.accountStatus !== 'active') {
+      return { kind: 'error', code: 'account_inactive', email };
     }
 
-    // Always talk to Supabase, even for an unknown address, so the two failures are
-    // indistinguishable from the outside.
-    const signedIn = await this.deps.supabase
-      .signInWithPassword(email, input.password)
-      .catch(() => null);
-    const profile = await this.deps.repo.findProfileByEmail(email);
-    equaliseTiming(input.password);
-
-    const usable =
-      signedIn !== null &&
-      signedIn.session !== null &&
-      profile !== null &&
-      profile.accountStatus === 'active' &&
-      profile.deletedAt === null;
-
-    if (!usable || signedIn === null || profile === null || signedIn.session === null) {
-      const reason =
-        profile === null
-          ? 'unknown_email'
-          : profile.accountStatus !== 'active'
-            ? `account_${profile.accountStatus as AccountStatus}`
-            : profile.deletedAt !== null
-              ? 'account_deleted'
-              : 'invalid_credentials';
-
-      await this.deps.repo.recordLoginAttempt({
-        emailHash: hash,
-        ip: meta.ip,
-        succeeded: false,
-        reason,
-      });
-
-      throw new HttpError(401, 'invalid_credentials', 'Those credentials were not recognised');
+    let supabaseSession: SupabaseSession;
+    try {
+      supabaseSession = await this.deps.supabase.issueSession(email);
+    } catch (error) {
+      this.warn('magic-link session issuance failed', error);
+      return { kind: 'error', code: 'sign_in_unavailable', email };
     }
 
     await this.deps.repo.recordLoginAttempt({
-      emailHash: hash,
+      emailHash: emailHash(email),
       ip: meta.ip,
       succeeded: true,
       reason: null,
     });
 
     const methods = await this.availableMethods(profile);
-    const remember = input.remember ?? false;
+    const origin = primaryWebOrigin(this.deps.webOrigin);
 
-    if (methods.length === 0) {
-      const session = await this.issueSession(signedIn.session, profile, {
-        meta,
-        mfaMethod: null,
-        remember,
-      });
-      return { kind: 'session', session, mfaMethods: [] };
+    // ——— Phase 2: forced first-sign-in MFA setup ———
+    const enrolled = await this.mfaEnrolledFor(profile.id, profile.mfaEnrolled);
+    if (!enrolled && needsForcedSetup(profile.role)) {
+      // Lazy expiry first: a timed administrator window that closed without
+      // enrolment blocks the account the next time it surfaces here.
+      const stale = await this.deps.setups.forUser(profile.id);
+      if (stale !== null && stale.deadlineEpochMs <= this.now().getTime()) {
+        await this.blockSetupWindow(stale);
+        return {
+          kind: 'setup_blocked',
+          email: profile.email,
+          userId: profile.id,
+          reason: 'window_expired',
+        };
+      }
+
+      // The EXEMPT super admin (roster window `null` — divine@vunvault.com):
+      // no setup gate, no timer, no block — MFA is optional, so an unenrolled
+      // exempt sign-in gets the FULL session straight from this leg.
+      if (isMfaSetupExempt(profile.email)) {
+        const issued = await this.issueSession(supabaseSession, profile, {
+          meta,
+          mfaMethod: null,
+        });
+        return {
+          kind: 'session',
+          issued,
+          email: profile.email,
+          userId: profile.id,
+          redirectTo: `${origin}${homeForRole(profile.role)}`,
+        };
+      }
+
+      const windowSeconds = setupWindowSecondsFor(profile);
+      const deadlineEpochMs =
+        windowSeconds !== null ? this.now().getTime() + windowSeconds * 1000 : null;
+      const setupHandle = (
+        await this.deps.challenges.create({
+          userId: profile.id,
+          email: profile.email,
+          remember: false,
+          methods,
+          session: supabaseSession,
+          setup: { required: true, deadlineEpochMs },
+        })
+      ).handle;
+      if (deadlineEpochMs !== null) {
+        // Only TIMED windows are ledgered: the record outlives the challenge
+        // so a missed window is detected lazily and turns into a block.
+        await this.deps.setups.open({
+          handle: setupHandle,
+          userId: profile.id,
+          email: profile.email,
+          deadlineEpochMs,
+          createdAtEpochMs: this.now().getTime(),
+        });
+      }
+      const setupParams = new URLSearchParams({ to: maskEmailForRedirect(profile.email) });
+      if (deadlineEpochMs !== null) setupParams.set('deadline', String(deadlineEpochMs));
+      if (next !== null) setupParams.set('next', next);
+      return {
+        kind: 'challenge',
+        handle: setupHandle,
+        methods,
+        email: profile.email,
+        userId: profile.id,
+        redirectTo: `${origin}/login/mfa/setup?${setupParams.toString()}`,
+      };
     }
 
-    // Do NOT set vv_at / vv_rt: the challenge handle in vv_mfa is all the browser
-    // gets until a second factor passes.
     const { handle } = await this.deps.challenges.create({
       userId: profile.id,
       email: profile.email,
-      remember,
+      remember: false,
       methods,
-      session: signedIn.session,
+      session: supabaseSession,
     });
 
-    return { kind: 'challenge', handle, mfaMethods: methods };
+    const params = new URLSearchParams({
+      methods: methods.join(','),
+      to: maskEmailForRedirect(profile.email),
+    });
+    if (next !== null) params.set('next', next);
+    const redirectTo = `${origin}/login/mfa?${params.toString()}`;
+    return {
+      kind: 'challenge',
+      handle,
+      methods,
+      email: profile.email,
+      userId: profile.id,
+      redirectTo,
+    };
+  }
+
+  // ——— Phase 2: forced-setup legs (all guarded by the vv_mfa challenge) ———
+
+  /**
+   * Setup leg 1: start a TOTP enrolment against the pre-MFA session held in
+   * the challenge. A dead handle whose ledger window has closed blocks the
+   * administrator lazily (that is what makes walking away detectable).
+   */
+  async setupOptions(handle: string | undefined): Promise<
+    | {
+        kind: 'options';
+        factorId: string;
+        qrCodeSvg: string;
+        secret: string;
+        uri: string;
+        deadlineEpochMs: number | null;
+      }
+    | { kind: 'blocked'; email: string; userId: string; reason: 'window_expired' }
+  > {
+    const challenge = await this.readSetupChallenge(handle);
+    if (challenge === null) {
+      const record = await this.blockIfWindowExpired(handle);
+      if (record !== null) {
+        return {
+          kind: 'blocked',
+          email: record.email,
+          userId: record.userId,
+          reason: 'window_expired',
+        };
+      }
+      throw new HttpError(410, 'challenge_expired');
+    }
+    const session = this.deps.challenges.decryptSession(challenge);
+    const enrollment = await this.deps.supabase.mfa.enrollTotp(
+      session.accessToken,
+      'Authenticator app',
+    );
+    return {
+      kind: 'options',
+      factorId: enrollment.factorId,
+      qrCodeSvg: enrollment.qrSvg,
+      secret: enrollment.secret,
+      uri: enrollment.uri,
+      deadlineEpochMs: challenge.setup?.deadlineEpochMs ?? null,
+    };
+  }
+
+  /**
+   * Setup leg 2: the first correct code verifies the factor AND opens the
+   * full session (aal2). Wrong codes count against the challenge's attempt
+   * budget; an exhausted budget destroys the challenge — and an administrator
+   * whose window is ledgered is blocked immediately (brute-force defence).
+   */
+  async setupVerify(
+    handle: string | undefined,
+    body: { factorId: string; code: string },
+    meta: RequestMeta,
+  ): Promise<
+    | { kind: 'session'; issued: IssuedSession }
+    | { kind: 'blocked'; email: string; userId: string; reason: 'window_expired' }
+  > {
+    const challenge = await this.readSetupChallenge(handle);
+    if (challenge === null) {
+      const record = await this.blockIfWindowExpired(handle);
+      if (record !== null) {
+        return {
+          kind: 'blocked',
+          email: record.email,
+          userId: record.userId,
+          reason: 'window_expired',
+        };
+      }
+      throw new HttpError(410, 'challenge_expired');
+    }
+    const safeHandle = handle as string; // readSetupChallenge proved it non-empty
+
+    // Phase 4: the setup leg honours the same exponential-backoff lock.
+    this.assertNotLocked(challenge);
+
+    const aal1 = this.deps.challenges.decryptSession(challenge);
+    let aal2: SupabaseSession;
+    try {
+      aal2 = await this.deps.supabase.mfa.challengeAndVerify(
+        aal1.accessToken,
+        body.factorId,
+        body.code,
+      );
+    } catch (error) {
+      // The attempt budget is the brute-force defence: at the fifth failure the
+      // challenge dies. For an administrator the ledgered window then expires
+      // on its own and the LAZY block fires on the next touch — blocking here
+      // instead would punish typos inside the window with no audit trail.
+      const { exhausted } = await this.deps.challenges.recordFailure(
+        safeHandle,
+        this.now().getTime(),
+      );
+      if (exhausted) await this.deps.challenges.delete(safeHandle);
+      if (error instanceof HttpError) throw error;
+      throw new HttpError(401, 'mfa_failed', 'That code was not accepted');
+    }
+
+    await this.deps.repo.setMfaEnrolled(challenge.userId, true);
+    await this.deps.challenges.delete(safeHandle);
+    const record = await this.deps.setups.forUser(challenge.userId);
+    if (record !== null) await this.deps.setups.clear(record);
+
+    const profile = await this.deps.repo.findProfileById(challenge.userId);
+    if (profile === null || profile.accountStatus !== 'active' || profile.deletedAt !== null) {
+      throw HttpError.unauthorized();
+    }
+    const issued = await this.issueSession(aal2, profile, {
+      meta,
+      mfaMethod: 'totp',
+      remember: challenge.remember,
+    });
+    return { kind: 'session', issued };
+  }
+
+  /**
+   * Setup leg 3: explicit abandonment. An administrator inside a TIMED window
+   * is blocked (that is the work order's abandonment rule); an unenrolled
+   * client simply loses the challenge and may request a fresh magic link.
+   */
+  async setupAbandon(handle: string | undefined): Promise<{
+    blocked: boolean;
+    email: string | null;
+    userId: string | null;
+  }> {
+    const challenge = await this.readSetupChallenge(handle);
+    if (challenge === null) {
+      const record = await this.blockIfWindowExpired(handle);
+      return {
+        blocked: record !== null,
+        email: record?.email ?? null,
+        userId: record?.userId ?? null,
+      };
+    }
+    const record = await this.deps.setups.forUser(challenge.userId);
+    await this.deps.challenges.delete(handle as string);
+    if (record === null) {
+      // Untimed window (client enrolment): nothing to block.
+      return { blocked: false, email: challenge.email, userId: challenge.userId };
+    }
+    const profile = await this.deps.repo.findProfileById(challenge.userId);
+    if (profile !== null && profile.accountStatus === 'active' && profile.deletedAt === null) {
+      const enrolled = await this.mfaEnrolledFor(profile.id, profile.mfaEnrolled);
+      if (!enrolled) {
+        await this.deps.repo.setAccountStatus(profile.id, 'blocked_mfa_setup');
+        await this.deps.setups.clear(record);
+        return { blocked: true, email: profile.email, userId: profile.id };
+      }
+    }
+    await this.deps.setups.clear(record);
+    return { blocked: false, email: challenge.email, userId: challenge.userId };
+  }
+
+  /** The challenge behind a setup call — and it MUST be a setup challenge. */
+  private async readSetupChallenge(handle: string | undefined): Promise<MfaChallenge | null> {
+    if (handle === undefined || handle === '') return null;
+    const challenge = await this.deps.challenges.read(handle);
+    if (challenge === null) return null;
+    if (challenge.setup === undefined) throw HttpError.forbidden();
+    return challenge;
+  }
+
+  /**
+   * Dead handle → is there a ledgered window that closed? If so, block and
+   * return the record (for the route's audit); otherwise null (plain 410).
+   */
+  private async blockIfWindowExpired(handle: string | undefined): Promise<MfaSetupRecord | null> {
+    if (handle === undefined || handle === '') return null;
+    const record = await this.deps.setups.forHandle(handle);
+    if (record === null || record.handle !== handle) return null;
+    if (record.deadlineEpochMs > this.now().getTime()) return null; // window still open (challenge evicted): plain 410
+    await this.blockSetupWindow(record);
+    return record;
+  }
+
+  /** Flip an unenrolled, still-active administrator to `blocked_mfa_setup`. */
+  private async blockSetupWindow(record: MfaSetupRecord): Promise<void> {
+    await this.deps.setups.clear(record);
+    const profile = await this.deps.repo.findProfileById(record.userId);
+    if (profile === null || profile.deletedAt !== null || profile.accountStatus !== 'active')
+      return;
+    if (await this.mfaEnrolledFor(profile.id, profile.mfaEnrolled)) return;
+    await this.deps.repo.setAccountStatus(profile.id, 'blocked_mfa_setup');
+  }
+
+  /**
+   * Phase 4: refuse while the previous failure's exponential-backoff lock is
+   * running (2s → 4s → 8s from the 2nd failure; the 5th destroys the
+   * challenge). 429 + Retry-After, one generic message, and — importantly —
+   * no attempt consumed, so a locked client cannot burn its own budget.
+   */
+  private assertNotLocked(challenge: MfaChallenge): void {
+    const lockedUntil = challenge.lockedUntilEpochMs;
+    if (lockedUntil === undefined) return;
+    const nowMs = this.now().getTime();
+    if (lockedUntil <= nowMs) return;
+    const retryAfter = Math.max(1, Math.ceil((lockedUntil - nowMs) / 1000));
+    throw new HttpError(
+      429,
+      'rate_limited',
+      `Too many incorrect codes. Try again in ${retryAfter} second${retryAfter === 1 ? '' : 's'}.`,
+      undefined,
+      { 'retry-after': retryAfter },
+    );
   }
 
   /** Second-factor verification against a live challenge. */
@@ -546,6 +969,10 @@ export class AuthService {
     const challenge = await this.deps.challenges.read(handle);
     if (challenge === null) throw new HttpError(410, 'challenge_expired');
 
+    // Phase 4: a challenge in its exponential-backoff lock refuses outright —
+    // 429 + Retry-After, and the attempt budget is NOT consumed while locked.
+    this.assertNotLocked(challenge);
+
     const verifier = this.deps.verifiers.get(method);
     if (verifier === undefined) {
       throw new HttpError(501, 'not_implemented', `${method} verification is not available yet`);
@@ -555,7 +982,7 @@ export class AuthService {
     try {
       result = await verifier.verify({ challenge, body, req });
     } catch (error) {
-      const { exhausted } = await this.deps.challenges.recordFailure(handle);
+      const { exhausted } = await this.deps.challenges.recordFailure(handle, this.now().getTime());
       if (exhausted) await this.deps.challenges.delete(handle);
       if (error instanceof HttpError && error.status === 501) throw error;
       throw new HttpError(401, 'mfa_failed', 'Multi-factor verification failed');

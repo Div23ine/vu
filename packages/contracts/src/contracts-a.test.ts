@@ -8,11 +8,14 @@ import {
 } from '../fixtures/scans';
 import { invitations, staffMembers, staffSummary } from '../fixtures/users';
 import {
-  ForgotPasswordBody,
-  LoginBody,
-  LoginConfirmBody,
-  LoginVerifyBody,
-  ResetPasswordBody,
+  JwtClaims,
+  MAGIC_LINK_ACK_MESSAGE,
+  MagicLinkRequestBody,
+  MagicLinkRequestResponse,
+  MagicLinkToken,
+  MagicLinkVerifyQuery,
+  MfaVerifyBody,
+  SessionUser,
   SignupBody,
   SignupStartResponse,
   SignupVerifyBody,
@@ -172,117 +175,141 @@ describe('permissions', () => {
 });
 
 describe('auth schemas', () => {
-  it('parses the passwordless login bodies', () => {
-    expect(LoginBody.parse({ email: 'a.njoroge@vunvault.com' })).toEqual({
+  it('parses a session user and its JWT claims', () => {
+    const session = {
+      id: UUID,
+      email: 'e.reed@vunvault.com',
+      fullName: 'Dr. Evelyn Reed',
+      role: 'super_admin',
+      orgId: null,
+      permissions: [...PERMISSIONS],
+      mfaEnrolled: true,
+    };
+    expect(SessionUser.parse(session)).toEqual(session);
+    expect(
+      JwtClaims.parse({ sub: UUID, role: 'admin', org_id: null, permissions: ['users:read'] }),
+    ).toMatchObject({ role: 'admin' });
+    expect(SessionUser.safeParse({ ...session, role: 'root' }).success).toBe(false);
+    expect(JwtClaims.safeParse({ sub: 'not-a-uuid', role: 'admin' }).success).toBe(false);
+  });
+
+  it('takes only an email address for a magic link — no password exists anywhere', () => {
+    expect(MagicLinkRequestBody.parse({ email: 'a.njoroge@vunvault.com' })).toEqual({
       email: 'a.njoroge@vunvault.com',
     });
-    expect(LoginBody.safeParse({}).success).toBe(false);
-    expect(LoginConfirmBody.parse({ token: 'tok-1234567890' })).toMatchObject({
-      token: 'tok-1234567890',
+    expect(MagicLinkRequestBody.safeParse({}).success).toBe(false);
+    expect(MagicLinkRequestBody.safeParse({ email: 'not-an-email' }).success).toBe(false);
+    // A password field is not part of the login contract at all.
+    expect(MagicLinkRequestBody.safeParse({ email: 'a@b.test', password: 'x' }).success).toBe(
+      false,
+    );
+  });
+
+  it('answers every magic-link request with one byte-identical acknowledgement', () => {
+    const ack = MagicLinkRequestResponse.parse({ message: MAGIC_LINK_ACK_MESSAGE });
+    expect(ack.message).toBe(
+      'If an account exists for that address, a sign-in link is on its way.',
+    );
+    // Any other message shape is a contract violation: the response must not be
+    // able to differ between a registered and an unregistered address.
+    expect(MagicLinkRequestResponse.safeParse({ message: 'Link sent!' }).success).toBe(false);
+  });
+
+  it('validates the magic-link verify query', () => {
+    expect(MagicLinkVerifyQuery.parse({ token: 'x'.repeat(64), next: '/portal' })).toMatchObject({
+      next: '/portal',
     });
-    expect(LoginConfirmBody.safeParse({ token: 'short' }).success).toBe(false);
-    expect(LoginVerifyBody.parse({ handle: 'handle-abcdef12', code: '481920' })).toEqual({
-      handle: 'handle-abcdef12',
+    // The query is loose on purpose — the token's HMAC is the real validator —
+    // but it must still reject an absent or absurdly long token.
+    expect(MagicLinkVerifyQuery.safeParse({}).success).toBe(false);
+    expect(MagicLinkVerifyQuery.safeParse({ token: '' }).success).toBe(false);
+    expect(MagicLinkVerifyQuery.safeParse({ token: 'x'.repeat(2001) }).success).toBe(false);
+    // The documented token shape itself stays tight.
+    expect(MagicLinkToken.safeParse('too-short').success).toBe(false);
+  });
+
+  it('discriminates the three MFA methods', () => {
+    expect(MfaVerifyBody.parse({ method: 'totp', code: '481920' })).toEqual({
+      method: 'totp',
       code: '481920',
     });
-    expect(LoginVerifyBody.safeParse({ handle: 'handle-abcdef12', code: '48192' }).success).toBe(
-      false,
+    expect(MfaVerifyBody.parse({ method: 'email_otp', code: '007123' }).method).toBe('email_otp');
+    expect(MfaVerifyBody.parse({ method: 'webauthn', assertion: { raw: true } }).method).toBe(
+      'webauthn',
     );
+    expect(MfaVerifyBody.safeParse({ method: 'totp', code: '12345' }).success).toBe(false);
+    expect(MfaVerifyBody.safeParse({ method: 'sms', code: '481920' }).success).toBe(false);
   });
 
-  it('parses the passwordless login bodies', () => {
-    expect(LoginBody.parse({ email: 'a.njoroge@vunvault.com' })).toEqual({
-      email: 'a.njoroge@vunvault.com',
-    });
-    expect(LoginBody.safeParse({}).success).toBe(false);
-    expect(LoginConfirmBody.parse({ token: 'tok-1234567890' })).toMatchObject({
-      token: 'tok-1234567890',
-    });
-    expect(LoginVerifyBody.parse({ handle: 'handle-abcdef12', code: '481920' })).toEqual({
-      handle: 'handle-abcdef12',
-      code: '481920',
-    });
-  });
-
-  it('signup takes only a name and an email — no password exists', () => {
-    expect(SignupBody.parse({ email: 'new@example.test', fullName: 'New Person' })).toEqual({
-      email: 'new@example.test',
-      fullName: 'New Person',
-    });
-    expect(SignupBody.safeParse({ email: 'new@example.test' }).success).toBe(false);
-  });
-
-  it('keeps the six-digit shape on every code leg', () => {
-    expect(SignupVerifyBody.parse({ handle: 'handle-abcdef12', code: '000000' })).toMatchObject({
-      code: '000000',
-    });
-    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: '12345' }).success).toBe(
-      false,
-    );
-    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: 'abcdef' }).success).toBe(
-      false,
-    );
-  });
-
-  it('describes the silent signup start response', () => {
-    expect(SignupStartResponse.parse({ data: { email: 'new@example.test' } })).toEqual({
-      data: { email: 'new@example.test' },
-    });
-  });
-
-  it('describes the silent signup start', () => {
-    const start = SignupStartResponse.parse({ data: { email: 'jane.wanjiru@acmefintech.co.ke' } });
-    expect(start.data.email).toBe('jane.wanjiru@acmefintech.co.ke');
-    // The response carries no hint of whether the address was free.
-    expect(Object.keys(start.data)).toEqual(['email']);
-  });
-
-  it('accepts only a six-digit verification code', () => {
-    expect(SignupVerifyBody.parse({ handle: 'handle-abcdef12', code: '007123' })).toMatchObject({
-      code: '007123',
-    });
-    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: '12345' }).success).toBe(
-      false,
-    );
-    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: '1234567' }).success).toBe(
-      false,
-    );
-    expect(SignupVerifyBody.safeParse({ handle: 'handle-abcdef12', code: 'abcdef' }).success).toBe(
-      false,
-    );
-  });
-
-  it('validates the forgot / reset password pair', () => {
-    expect(ForgotPasswordBody.parse({ email: 'jane@example.test' }).email).toBe(
-      'jane@example.test',
-    );
-    expect(ForgotPasswordBody.safeParse({}).success).toBe(false);
-
+  it('requires matching passwords on signup', () => {
     const valid = {
-      token: 'x'.repeat(43),
-      newPassword: 'Str0ng-Passphrase!',
+      fullName: 'Jane Wanjiru',
+      email: 'jane.wanjiru@acmefintech.co.ke',
+      country: 'KE',
+      accountType: 'company',
+      password: 'Str0ng-Passphrase!',
       confirmPassword: 'Str0ng-Passphrase!',
     };
-    expect(ResetPasswordBody.parse(valid)).toMatchObject({ token: valid.token });
+    expect(SignupBody.parse(valid)).toMatchObject({ accountType: 'company' });
 
-    // A token shorter than 32 characters is not a token.
-    expect(ResetPasswordBody.safeParse({ ...valid, token: 'too-short' }).success).toBe(false);
-
-    const mismatch = ResetPasswordBody.safeParse({ ...valid, confirmPassword: 'Different-1!' });
+    const mismatch = SignupBody.safeParse({ ...valid, confirmPassword: 'Different-1!' });
     expect(mismatch.success).toBe(false);
     if (!mismatch.success) {
       expect(mismatch.error.issues[0]?.path).toEqual(['confirmPassword']);
-      expect(mismatch.error.issues[0]?.message).toBe('Both entries must match exactly.');
+      expect(mismatch.error.issues[0]?.message).toBe('Passwords do not match');
     }
+    expect(SignupBody.safeParse({ ...valid, password: 'short' }).success).toBe(false);
+  });
 
-    // The same complexity rules as signup apply to the new password.
+  it('enforces the Task 26 complexity rules on the signup password', () => {
+    const base = {
+      fullName: 'Jane Wanjiru',
+      email: 'jane.wanjiru@acmefintech.co.ke',
+      country: 'KE',
+      accountType: 'individual',
+    };
+    // Long enough but missing upper / digit / symbol is still rejected.
     expect(
-      ResetPasswordBody.safeParse({
-        ...valid,
-        newPassword: 'weak',
-        confirmPassword: 'weak',
+      SignupBody.safeParse({
+        ...base,
+        password: 'a-long-enough-passphrase',
+        confirmPassword: 'a-long-enough-passphrase',
       }).success,
     ).toBe(false);
+    expect(
+      SignupBody.safeParse({
+        ...base,
+        password: 'Str0ng-Passphrase!',
+        confirmPassword: 'Str0ng-Passphrase!',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('keeps the six-digit shape on every code leg', () => {
+    expect(
+      SignupVerifyBody.parse({ email: 'jane.wanjiru@acmefintech.co.ke', code: '000000' }),
+    ).toMatchObject({ code: '000000' });
+    expect(
+      SignupVerifyBody.safeParse({ email: 'jane.wanjiru@acmefintech.co.ke', code: '12345' })
+        .success,
+    ).toBe(false);
+    expect(
+      SignupVerifyBody.safeParse({ email: 'jane.wanjiru@acmefintech.co.ke', code: 'abcdef' })
+        .success,
+    ).toBe(false);
+  });
+
+  it('describes the silent signup start', () => {
+    const start = SignupStartResponse.parse({
+      data: {
+        email: 'jane.wanjiru@acmefintech.co.ke',
+        verificationRequired: true,
+        resendAfterSeconds: 30,
+        expiresInSeconds: 600,
+      },
+    });
+    expect(start.data.email).toBe('jane.wanjiru@acmefintech.co.ke');
+    expect(start.data.verificationRequired).toBe(true);
   });
 });
 
@@ -543,7 +570,9 @@ describe('ROUTES_A', () => {
     const paths = ROUTES_A.map((route) => `${route.method} ${route.path}`);
     for (const expected of [
       'POST /api/v1/auth/signup',
-      'POST /api/v1/auth/login',
+      'POST /api/v1/auth/magic-link',
+      'GET /api/v1/auth/magic-link/verify',
+      'POST /api/v1/auth/mfa/verify',
       'POST /api/v1/auth/logout',
       'GET /api/v1/auth/session',
       'GET /api/v1/profile',
@@ -589,15 +618,27 @@ describe('ROUTES_A', () => {
     const signup = ROUTES_A.find((route) => route.path === '/api/v1/auth/signup');
     expect(signup?.errors?.map((error) => error.code)).toEqual([
       'validation_failed',
+      'email_taken',
+      'breached_password',
+      'signup_not_allowed',
       'rate_limited',
     ]);
-    // Task 40d: the verified flow's four new public routes are documented too.
+    // Phase 1: the magic-link pair replaced every password-login route.
+    const magic = ROUTES_A.find((route) => route.path === '/api/v1/auth/magic-link');
+    expect(magic?.request).toBe('MagicLinkRequestBody');
+    expect(magic?.response).toBe('MagicLinkRequestResponse');
+    const verify = ROUTES_A.find((route) => route.path === '/api/v1/auth/magic-link/verify');
+    expect(verify?.method).toBe('GET');
+    expect(verify?.successStatus).toBe(302);
+    // Phase 5: forgot/reset password died with password login — the docs must
+    // not advertise routes that no longer exist.
     const paths = ROUTES_A.map((route) => `${route.method} ${route.path}`);
-    for (const expected of [
+    for (const removed of [
       'POST /api/v1/auth/forgot-password',
       'POST /api/v1/auth/reset-password',
+      'POST /api/v1/auth/login',
     ]) {
-      expect(paths, expected).toContain(expected);
+      expect(paths, removed).not.toContain(removed);
     }
     const gate = ROUTES_A.find((route) => route.path === '/api/v1/admin/scans/:id/gate-decision');
     expect(gate?.errors?.map((error) => error.code)).toContain('payment_outstanding');

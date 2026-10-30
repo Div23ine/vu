@@ -13,27 +13,27 @@ environment secret; migrations and images only).
 
 ## api (`apps/api/src/config/env.ts`)
 
-| Variable                                           | Class | Purpose / default                                                                                |
-| -------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------ |
-| `NODE_ENV`                                         | C     | `development` \| `test` \| `production` (default development)                                    |
-| `PORT`                                             | C     | HTTP listen port (default 8080)                                                                  |
-| `LOG_LEVEL`                                        | C     | pino level (default info)                                                                        |
-| `RECON_URL`                                        | O     | base URL of the unprivileged recon (scanner) backend; absent disables live scans                 |
-| `WEB_ORIGIN`                                       | C     | exact web origin — CORS + the Task 95 WS Origin check                                            |
-| `COOKIE_DOMAIN`                                    | C     | session cookie domain (empty allowed in dev)                                                     |
-| `API_PUBLIC_URL`                                   | C     | public API base — OpenAPI server + absolute links                                                |
-| `SECRETS_PROVIDER`                                 | C     | `env` (dev) or `oci-vault` (prod)                                                                |
-| `OCI_SECRET_MAP`                                   | C     | JSON name→Vault-OCID map (the Task 98 `secret_ocids` output); OCIDs are identifiers, not secrets |
-| `SUPABASE_URL`                                     | V/C   | Supabase project URL (auth provider)                                                             |
-| `WEBAUTHN_RP_ID`                                   | C     | WebAuthn relying-party id, e.g. `vunvault.com` — never a URL, never localhost                    |
-| `WEBAUTHN_RP_NAME`                                 | C     | relying-party name shown in the browser's passkey prompt (default VUNVAULT)                      |
-| `SENTRY_DSN`                                       | C     | optional browser+server error reporting DSN                                                      |
-| `ORIGIN_VERIFY_ENFORCE`                            | C     | `false` disables the Task 99 edge origin lock (escape hatch only)                                |
-| `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` | C     | media storage coordinates                                                                        |
-| `FX_API_URL`                                       | C     | optional FX quote source override                                                                |
-| `FX_QUOTE_TTL_SECONDS`                             | C     | FX quote cache TTL                                                                               |
-| `SCAN_CONTROLLER_CIDRS`                            | C     | NAT egress CIDR(s) of the k3s cluster — the internal-callback allow-list                         |
-| `DIRECT_URL`                                       | D     | Supabase DIRECT connection — DDL/migrations only (`pnpm --filter @vunvault/db db:migrate`)       |
+| Variable                                           | Class | Purpose / default                                                                                                                    |
+| -------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `NODE_ENV`                                         | C     | `development` \| `test` \| `production` (default development)                                                                        |
+| `PORT`                                             | C     | HTTP listen port (default 8080)                                                                                                      |
+| `LOG_LEVEL`                                        | C     | pino level (default info)                                                                                                            |
+| `WEB_ORIGIN`                                       | C     | exact web origin — CORS + the Task 95 WS Origin check                                                                                |
+| `COOKIE_DOMAIN`                                    | C     | session cookie domain (empty allowed in dev)                                                                                         |
+| `API_PUBLIC_URL`                                   | C     | public API base — OpenAPI server + absolute links                                                                                    |
+| `SECRETS_PROVIDER`                                 | C     | `env` (dev) or `oci-vault` (prod)                                                                                                    |
+| `OCI_SECRET_MAP`                                   | C     | JSON name→Vault-OCID map (the Task 98 `secret_ocids` output); OCIDs are identifiers, not secrets                                     |
+| `SUPABASE_URL`                                     | V/C   | Supabase project URL (auth provider)                                                                                                 |
+| `WEBAUTHN_RP_ID`                                   | C     | WebAuthn relying-party id, e.g. `vunvault.com` — never a URL, never localhost                                                        |
+| `WEBAUTHN_RP_NAME`                                 | C     | relying-party name shown in the browser's passkey prompt (default VUNVAULT)                                                          |
+| `SENTRY_DSN`                                       | C     | optional browser+server error reporting DSN                                                                                          |
+| `ORIGIN_VERIFY_ENFORCE`                            | C     | `false` disables the Task 99 edge origin lock (escape hatch only)                                                                    |
+| `TURNSTILE_ENFORCE`                                | O     | `true` switches on Cloudflare Turnstile (contact form + Phase 4 magic-link soft limit); secret is the vault's `TURNSTILE_SECRET_KEY` |
+| `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` | C     | media storage coordinates                                                                                                            |
+| `FX_API_URL`                                       | C     | optional FX quote source override                                                                                                    |
+| `FX_QUOTE_TTL_SECONDS`                             | C     | FX quote cache TTL                                                                                                                   |
+| `SCAN_CONTROLLER_CIDRS`                            | C     | NAT egress CIDR(s) of the k3s cluster — the internal-callback allow-list                                                             |
+| `DIRECT_URL`                                       | D     | Supabase DIRECT connection — DDL/migrations only (`pnpm --filter @vunvault/db db:migrate`)                                           |
 
 The Vault-backed secrets the API reads at runtime through
 `SECRETS_PROVIDER=oci-vault` are listed in `vault-map.md` (they are
@@ -41,16 +41,17 @@ deliberately NOT process env in production).
 
 ## web (`apps/web/src/env.ts`) — all build-time, all public
 
-| Variable                                            | Class | Purpose                                                            |
-| --------------------------------------------------- | ----- | ------------------------------------------------------------------ |
-| `NEXT_PUBLIC_API_URL`                               | P     | API origin the browser calls                                       |
-| `NEXT_PUBLIC_SITE_URL`                              | P     | canonical web origin (metadataBase, OG)                            |
-| `NEXT_PUBLIC_R2_HOST`                               | P     | CDN host for uploaded/generated media                              |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`                | P     | Stripe publishable key (tokenises in-browser by design)            |
-| `NEXT_PUBLIC_SENTRY_DSN`                            | P     | optional browser error reporting                                   |
-| `NEXT_PUBLIC_API_MOCKING`                           | P     | exactly `enabled` turns on the MSW mock layer (dev/preview only)   |
-| `NEXT_PUBLIC_BUILD_LABEL`, `NEXT_PUBLIC_NODE_LABEL` | P     | build provenance strings for the admin footer                      |
-| `NEXT_PUBLIC_ZURA_LLM_URL`                          | P     | Zura's optional LLM endpoint; absent = knowledge-base-only answers |
+| Variable                                            | Class | Purpose                                                                      |
+| --------------------------------------------------- | ----- | ---------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`                               | P     | API origin the browser calls                                                 |
+| `NEXT_PUBLIC_SITE_URL`                              | P     | canonical web origin (metadataBase, OG)                                      |
+| `NEXT_PUBLIC_R2_HOST`                               | P     | CDN host for uploaded/generated media                                        |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`                | P     | Stripe publishable key (tokenises in-browser by design)                      |
+| `NEXT_PUBLIC_SENTRY_DSN`                            | P     | optional browser error reporting                                             |
+| `NEXT_PUBLIC_API_MOCKING`                           | P     | exactly `enabled` turns on the MSW mock layer (dev/preview only)             |
+| `NEXT_PUBLIC_BUILD_LABEL`, `NEXT_PUBLIC_NODE_LABEL` | P     | build provenance strings for the admin footer                                |
+| `NEXT_PUBLIC_ZURA_LLM_URL`                          | P     | Zura's optional LLM endpoint; absent = knowledge-base-only answers           |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`                    | P     | Cloudflare Turnstile site key (public); needed when `TURNSTILE_ENFORCE=true` |
 
 ### Build-only (not in `env.ts`, never inlined into the bundle)
 
@@ -82,14 +83,13 @@ build produces, and a production deploy sets neither.
 
 Everything the broadcast-worker has (same channels), plus:
 
-| Variable                                           | Class | Purpose / default                                                                |
-| -------------------------------------------------- | ----- | -------------------------------------------------------------------------------- |
-| `NOTIFY_CONCURRENCY`                               | C     | notify queue concurrency (default 8)                                             |
-| `PDF_CONCURRENCY`                                  | C     | PDF render concurrency (default 2)                                               |
-| `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` | C     | invoice/report PDF storage                                                       |
-| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`         | V     | S3-compatible credentials                                                        |
-| `RECON_URL`                                        | O     | base URL of the unprivileged recon (scanner) backend; absent disables live scans |
-| `WEB_ORIGIN`                                       | C     | absolute links inside transactional e-mail                                       |
+| Variable                                           | Class | Purpose / default                          |
+| -------------------------------------------------- | ----- | ------------------------------------------ |
+| `NOTIFY_CONCURRENCY`                               | C     | notify queue concurrency (default 8)       |
+| `PDF_CONCURRENCY`                                  | C     | PDF render concurrency (default 2)         |
+| `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` | C     | invoice/report PDF storage                 |
+| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`         | V     | S3-compatible credentials                  |
+| `WEB_ORIGIN`                                       | C     | absolute links inside transactional e-mail |
 
 ## maintenance-worker (`apps/maintenance-worker/src/config/env.ts`)
 

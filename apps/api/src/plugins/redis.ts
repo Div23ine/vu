@@ -6,7 +6,9 @@ import type { FastifyPluginAsync } from 'fastify';
  * Upstash terminates TLS and BullMQ issues blocking commands, so both of these
  * options are mandatory: `maxRetriesPerRequest: null` lets a blocking call wait
  * indefinitely instead of erroring, and `enableReadyCheck: false` avoids a
- * handshake round trip on every reconnect.
+ * handshake round trip on every reconnect. TLS follows the URL scheme:
+ * `rediss://` (Upstash, production) negotiates it, plain `redis://` (local
+ * development, sandbox boot verification) does not.
  */
 export function redisOptionsFromUrl(url: string): RedisOptions {
   const parsed = new URL(url);
@@ -17,7 +19,7 @@ export function redisOptionsFromUrl(url: string): RedisOptions {
     password: parsed.password === '' ? undefined : decodeURIComponent(parsed.password),
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
-    tls: {},
+    tls: parsed.protocol === 'rediss:' ? {} : undefined,
   };
 }
 

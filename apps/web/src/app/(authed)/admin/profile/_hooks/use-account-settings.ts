@@ -23,7 +23,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '../../../../../lib/api';
  * Step 2 is a raw `fetch`: a presigned URL is absolute, carries no CSRF token
  * and must not be rewritten by the API transport.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export const ACCOUNT_SETTINGS_KEY = ['account-settings'] as const;

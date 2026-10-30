@@ -10,7 +10,7 @@ import { apiPost } from '../../../../../lib/api';
  * flipped the job to `blocked_payment`, so the list must show it; on
  * `409 already_released` somebody else got there first.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export function useGateDecision() {

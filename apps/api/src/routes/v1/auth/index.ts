@@ -1,12 +1,15 @@
 import fp from 'fastify-plugin';
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import {
-  ForgotPasswordBody,
-  LoginBody,
-  LoginResponse,
+  MAGIC_LINK_ACK_MESSAGE,
+  MagicLinkRequestBody,
+  MagicLinkRequestResponse,
+  MagicLinkVerifyQuery,
+  MfaSetupAbandonResponse,
+  MfaSetupOptionsResponse,
+  MfaSetupVerifyBody,
   MfaVerifyBody,
   RecoveryCodeBody,
-  ResetPasswordBody,
   SessionUser,
   SignupBody,
   SignupResendBody,
@@ -14,7 +17,7 @@ import {
   SignupVerifyBody,
 } from '@vunvault/contracts';
 import { z } from 'zod';
-import { actorLabelFor, AUDITED, audited, auditFailure } from '../../../audit/audited.js';
+import { AUDITED, audited, auditFailure } from '../../../audit/audited.js';
 import type { SqlExecutor } from '../../../audit/repo.js';
 import { asExecutor } from '../../../audit/repo.js';
 import type { Tx } from '../../../plugins/db.js';
@@ -33,10 +36,17 @@ import {
   EmailOtpStore,
   memoryKvStore,
   MfaChallengeStore,
+  MfaSetupStore,
   type KvStore,
 } from './challenge.js';
 import { SignupOtpStore } from './email-otp.js';
-import { PasswordResetStore } from './password-reset.js';
+import { deriveMagicLinkSecret, MagicLinkTokenStore, SignupInviteCooldown } from './magic-link.js';
+import { LoginAbuseGuard } from './login-abuse.js';
+import {
+  HttpTurnstileVerifier,
+  turnstileEnforced,
+  type TurnstileVerifier,
+} from '../public/turnstile.js';
 import oauthRoutes from './oauth.js';
 import type { OnboardingRepo } from './oauth-service.js';
 import { createMfaVerifierRegistry, type MfaVerifierRegistry } from './mfa-registry.js';
@@ -44,13 +54,21 @@ import { AccountSecurityService } from '../account-security/service.js';
 import { SqlAccountSecurityRepo } from '../account-security/repo.js';
 import { SimpleWebauthnService } from '../account-security/webauthn.js';
 import { SqlAuthRepo, type AuthRepo } from './repo.js';
-import { AuthService, type RequestMeta } from './service.js';
+import {
+  AuthService,
+  primaryWebOrigin,
+  sanitizeNextPath,
+  type MagicLinkRequestOutcome,
+  type RequestMeta,
+} from './service.js';
 
 /**
  * Session lifecycle routes.
  *
- * Public: signup (verified flow, Task 40d), signup verify/resend, login, MFA
- * verify, MFA email-otp send, forgot/reset password, refresh.
+ * Public: signup (verified flow, Task 40d), signup verify/resend, magic-link
+ * login (Phase 1), MFA verify, MFA email-otp send, refresh. There is NO
+ * password-login route — and, since Phase 5, no forgot/reset-password route
+ * either: the mailbox is the credential and the stored password is vestigial.
  * Authenticated: logout, session.
  *
  * No route returns a token in its body — tokens exist only inside HttpOnly cookies.
@@ -65,6 +83,9 @@ export interface AuthRoutesOptions {
   supabase?: SupabaseAdmin;
   verifiers?: MfaVerifierRegistry;
   onboarding?: OnboardingRepo;
+  /** Phase 4 test seams: the captcha verifier and its enforcement switch. */
+  turnstile?: TurnstileVerifier;
+  turnstileEnforced?: boolean;
 }
 
 function requestMeta(request: FastifyRequest): RequestMeta {
@@ -92,15 +113,33 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
     return options.repo ?? new SqlAuthRepo(executor ?? app.db);
   }
 
-  const challengeKey = deriveChallengeKey(
-    app.hasDecorator('secrets')
-      ? await app.secrets.get('SUPABASE_SERVICE_ROLE_KEY').catch(() => 'development-only-key')
-      : 'development-only-key',
-  );
+  const secretMaterial = app.hasDecorator('secrets')
+    ? await app.secrets.get('SUPABASE_SERVICE_ROLE_KEY').catch(() => 'development-only-key')
+    : 'development-only-key';
+  const challengeKey = deriveChallengeKey(secretMaterial);
   const challenges = new MfaChallengeStore({ store: kv, key: challengeKey });
   const otp = new EmailOtpStore(kv);
+  // Phase 2: the forced-setup ledger (timed administrator windows only).
+  const setups = new MfaSetupStore(kv);
   const signupOtp = new SignupOtpStore(kv);
-  const resets = new PasswordResetStore(kv);
+  // Phase 1: single-use HMAC magic-link tokens + the Phase 3 invitation cooldown.
+  const magicLinks = new MagicLinkTokenStore(kv, deriveMagicLinkSecret(secretMaterial));
+  const invites = new SignupInviteCooldown(kv);
+  // Phase 4: login-surface abuse controls — the per-address issuance window
+  // and the per-IP soft limit that demands a Turnstile token.
+  const abuse = new LoginAbuseGuard(kv);
+  // Phase 4: same switch and secret as the public contact form; when
+  // enforcement is off the captcha leg is inert (dev/test posture).
+  const captchaEnforced = options.turnstileEnforced ?? turnstileEnforced();
+  const turnstile =
+    options.turnstile ??
+    new HttpTurnstileVerifier({
+      enforced: captchaEnforced,
+      secretKey: app.hasDecorator('secrets')
+        ? await app.secrets.get('TURNSTILE_SECRET_KEY').catch(() => undefined)
+        : undefined,
+      log: app.log,
+    });
   const breach =
     options.breach ?? new HibpBreachCheck({ warn: (m, e) => app.log.warn({ err: e }, m) });
 
@@ -165,16 +204,17 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
       challenges,
       otp,
       signupOtp,
-      resets,
+      magicLinks,
+      invites,
+      abuse,
+      turnstile,
+      turnstileEnforced: captchaEnforced,
+      setups,
       verifiers,
       breach,
       email: app.email,
-      notify: app.hasDecorator('queues')
-        ? async (input) => {
-            await app.queues.notify.add(input.template, { channel: 'email', ...input });
-          }
-        : undefined,
       webOrigin: app.env.WEB_ORIGIN,
+      apiPublicUrl: app.env.API_PUBLIC_URL,
       nodeEnv: app.env.NODE_ENV,
       now: () => new Date(),
       log: app.log,
@@ -304,135 +344,216 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
     handler: resendHandler,
   });
 
-  // ------------------------------------------------------- forgot-password
+  // ------------------------------------------------------- magic-link login
   /**
-   * Always `202 {}` with an identical body and similar timing for known and
-   * unknown addresses. Nothing is audited at request time (only a `debug` log
-   * lives in the service path); the audit entry is written on the reset itself.
+   * Phase 1, step 1: the ONLY login entry point. Body is `{ email; next? }` —
+   * a password field is rejected outright (the schema is `.strict()`). The
+   * acknowledgement is ONE literal for registered and unregistered addresses
+   * alike; which email actually went out (a sign-in link vs. a signup
+   * invitation) lives in the mailbox, never in this response, so the endpoint
+   * cannot be used to enumerate accounts. The rate limit is `public_form`
+   * (5 / 10 min / IP) and the invitation leg has its own per-address cooldown,
+   * so it cannot be weaponised as an email bomb either.
    */
-  const forgotHandler = async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = ForgotPasswordBody.parse(request.body);
-    await pooled().forgotPassword(body.email);
-    return reply.status(202).send({});
-  };
-  (forgotHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
-
-  app.post('/auth/forgot-password', {
-    config: { rateLimitPolicy: 'public_form' },
-    schema: { body: ForgotPasswordBody, response: { 202: z.object({}) } },
-    handler: forgotHandler,
-  });
-
-  // -------------------------------------------------------- reset-password
-  /**
-   * Consumes the single-use token, rotates the credential and revokes every
-   * session, all in one transaction with its `PASSWORD_CHANGED` entry. MFA is
-   * NOT bypassed: the next login still challenges.
-   */
-  const resetHandler = async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = ResetPasswordBody.parse(request.body);
+  const magicLinkHandler = async (request: FastifyRequest) => {
+    const body = MagicLinkRequestBody.parse(request.body);
     const meta = requestMeta(request);
 
-    await app.withTx(async (tx: Tx) => {
-      const executor = asExecutor(tx);
-      const result = await serviceFor(executor).resetPassword(body);
-      await app.audit.append(executor, {
-        eventType: 'PASSWORD_CHANGED',
-        actor: { id: result.userId, label: actorLabelFor(result.email) },
-        subject: result.email,
-        message: `Password reset for ${result.email} · ${result.revokedSessions} sessions revoked`,
-        // Never the passwords, never the token: only the fact and the fallout.
-        details: { via: 'reset', revokedSessions: result.revokedSessions },
-        ip: meta.ip,
+    let outcome: MagicLinkRequestOutcome;
+    try {
+      outcome = await app.withTx(async (tx: Tx) => {
+        const executor = asExecutor(tx);
+        const sent = await serviceFor(executor).requestMagicLink(
+          {
+            email: body.email,
+            next: sanitizeNextPath(body.next),
+            website: body.website,
+            formTs: body.formTs,
+            captchaToken: body.captchaToken,
+          },
+          meta,
+        );
+        // Record WHICH email went out. Never the token (work order §7): the chain
+        // is a fact log, not a credential store. A suppressed invite is not a fact
+        // about a person and is left unrecorded (like the resend posture).
+        if (sent.sent === 'link') {
+          await app.audit.append(executor, {
+            eventType: 'MAGIC_LINK_ISSUED',
+            actor: { id: null, label: 'external' },
+            subject: sent.email,
+            message: `Magic-link sign-in requested for ${sent.email}`,
+            details: { channel: 'email' },
+            ip: meta.ip,
+          });
+        } else if (sent.sent === 'invite') {
+          await app.audit.append(executor, {
+            eventType: 'SIGNUP_INVITE_SENT',
+            actor: { id: null, label: 'external' },
+            subject: sent.email,
+            message: `Sign-in requested for unregistered ${sent.email} · signup invitation sent`,
+            details: { channel: 'email' },
+            ip: meta.ip,
+          });
+        } else if (sent.sent === 'bot_dropped') {
+          // Phase 4: the honeypot/timing drop IS a security fact — record which
+          // signal fired (never any token; there is none).
+          await app.audit.append(executor, {
+            eventType: 'AUTH_BOT_REJECTED',
+            actor: { id: null, label: 'external' },
+            subject: sent.email,
+            message: `Magic-link request dropped · bot signal: ${sent.reason}`,
+            details: { reason: sent.reason },
+            ip: meta.ip,
+          });
+        } else if (sent.sent === 'window_suppressed') {
+          await app.audit.append(executor, {
+            eventType: 'AUTH_RATE_LIMIT',
+            actor: { id: null, label: 'external' },
+            subject: sent.email,
+            message: `Magic-link issuance suppressed for ${sent.email} · per-address window`,
+            details: {
+              scope: 'magic_link_email_window',
+              retryAfterSeconds: sent.retryAfterSeconds,
+            },
+            ip: meta.ip,
+          });
+        }
+        return sent;
       });
-    });
+    } catch (error) {
+      if (error instanceof HttpError && error.code === 'captcha_failed') {
+        // Fail-closed captcha refusal: audited as a bot rejection, answered
+        // with the verifier's single generic 400.
+        await auditFailure(
+          app,
+          {
+            eventType: 'AUTH_BOT_REJECTED',
+            subject: meta.ip,
+            message: 'Magic-link captcha verification failed',
+            details: { scope: 'magic_link_captcha' },
+          },
+          request,
+          error,
+        );
+      }
+      throw error;
+    }
 
-    return reply.status(204).send();
+    // Byte-identical for every ADDRESS: a single literal message. The only
+    // variation is the IP-keyed captcha flag (Phase 4) — registration status
+    // still cannot be read from the response.
+    if (outcome.sent === 'captcha_required') {
+      return MagicLinkRequestResponse.parse({
+        message: MAGIC_LINK_ACK_MESSAGE,
+        captchaRequired: true,
+      });
+    }
+    return MagicLinkRequestResponse.parse({ message: MAGIC_LINK_ACK_MESSAGE });
   };
-  (resetHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
+  (magicLinkHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
 
-  app.post('/auth/reset-password', {
-    config: { rateLimitPolicy: 'login' },
-    schema: { body: ResetPasswordBody, response: { 204: z.null() } },
-    handler: resetHandler,
+  app.post('/auth/magic-link', {
+    config: { rateLimitPolicy: 'public_form' },
+    schema: { body: MagicLinkRequestBody, response: { 200: MagicLinkRequestResponse } },
+    handler: magicLinkHandler,
   });
 
-  // ----------------------------------------------------------------- login
-  const loginHandler = async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = LoginBody.parse(request.body);
+  // -------------------------------------------------- magic-link / verify
+  /**
+   * Phase 1, step 2: the emailed link lands here. The token is consumed
+   * atomically — signature first, then TTL, single-use and the email binding —
+   * so a replay, a forgery and an expiry all end the same way: a redirect to
+   * the web login screen with an error code and NO cookie set. On success the
+   * aal1 session is minted server-side and stored encrypted inside the pre-MFA
+   * challenge; the browser gets only the `vv_mfa` handle. `vv_at`/`vv_rt` are
+   * NOT set — no protected route is reachable until `POST /auth/mfa/verify`
+   * accepts the six-digit code and rotates the cookies.
+   *
+   * This is a bare 302 (NO_JSON_RESPONSE in the manifest): the pre-MFA state
+   * travels in the HttpOnly cookie, never in a URL or a JSON body.
+   */
+  const magicLinkVerifyHandler = async (request: FastifyRequest, reply: FastifyReply) => {
+    const query = MagicLinkVerifyQuery.parse(request.query);
     const meta = requestMeta(request);
+    const next = sanitizeNextPath(query.next);
 
     const result = await app.withTx(async (tx: Tx) => {
       const executor = asExecutor(tx);
-      const txService = serviceFor(executor);
-      let outcome;
-      try {
-        outcome = await txService.login(body, meta);
-      } catch (error) {
-        if (error instanceof HttpError && error.status === 429) {
-          reply.header('retry-after', String(900));
-          await auditFailure(
-            app,
-            {
-              eventType: 'AUTH_RATE_LIMIT',
-              subject: body.email,
-              message: error.message,
-            },
-            request,
-          );
-        } else if (error instanceof HttpError && error.status === 401) {
-          await auditFailure(
-            app,
-            {
-              eventType: 'AUTH_FAILURE',
-              subject: body.email,
-              message: `Login attempt against ${body.email} was refused`,
-              details: { reason: 'invalid_credentials' },
-            },
-            request,
-          );
-        }
-        throw error;
+      const outcome = await serviceFor(executor).verifyMagicLink(query.token, next, meta);
+      if (outcome.kind === 'challenge') {
+        await app.audit.append(executor, {
+          eventType: 'MAGIC_LINK_VERIFIED',
+          actor: { id: outcome.userId, label: outcome.email },
+          subject: outcome.email,
+          message: `${outcome.email} passed the magic link · MFA challenge opened`,
+          details: {
+            methods: outcome.methods,
+            setup: outcome.redirectTo.includes('/login/mfa/setup'),
+          },
+          ip: meta.ip,
+        });
+      } else if (outcome.kind === 'session') {
+        // Phase 2: the EXEMPT super admin signs straight in (MFA optional).
+        await app.audit.append(executor, {
+          eventType: 'AUTH_SUCCESS',
+          actor: { id: outcome.userId, label: outcome.email },
+          subject: outcome.email,
+          message: `${outcome.email} signed in via magic link · MFA-exempt super admin`,
+          details: { exempt: true },
+          ip: meta.ip,
+        });
+      } else if (outcome.kind === 'setup_blocked') {
+        await app.audit.append(executor, {
+          eventType: 'MFA_SETUP_BLOCKED',
+          actor: { id: outcome.userId, label: outcome.email },
+          subject: outcome.email,
+          message: `${outcome.email} missed the MFA setup window (${outcome.reason}) · account blocked`,
+          details: { reason: outcome.reason },
+          ip: meta.ip,
+        });
+      } else {
+        await auditFailure(
+          app,
+          {
+            eventType: 'AUTH_FAILURE',
+            subject: outcome.email ?? meta.ip,
+            message: `Magic-link verification refused (${outcome.code})`,
+            details: { reason: outcome.code },
+          },
+          request,
+        );
       }
-
-      if (outcome.kind === 'challenge') return outcome;
-
-      // A session was issued: record it in the same transaction.
-      await app.audit.append(executor, {
-        eventType: 'AUTH_SUCCESS',
-        actor: { id: outcome.session.user.id, label: outcome.session.user.email },
-        subject: outcome.session.user.email,
-        message: `${outcome.session.user.email} signed in from ${meta.ip}`,
-        ip: meta.ip,
-      });
       return outcome;
     });
 
-    if (result.kind === 'challenge') {
-      reply.setCookie(COOKIE_NAMES.mfaChallenge, result.handle, {
-        ...app.cookieOptions(COOKIE_NAMES.mfaChallenge),
+    const origin = primaryWebOrigin(app.env.WEB_ORIGIN);
+    if (result.kind === 'error') {
+      return reply.redirect(`${origin}/login?error=${result.code}`);
+    }
+    if (result.kind === 'setup_blocked') {
+      // The block itself is the answer; the login screen toasts the reason.
+      return reply.redirect(`${origin}/login?error=account_blocked`);
+    }
+    if (result.kind === 'session') {
+      // Exempt super admin: full session cookies straight from the verify leg.
+      setSessionCookies(reply, result.issued.tokens, {
+        remember: false,
+        ...cookieContext(request, reply),
       });
-      return LoginResponse.parse({
-        data: { user: null, mfaRequired: true, mfaMethods: result.mfaMethods },
-      });
+      return reply.redirect(result.redirectTo);
     }
 
-    setSessionCookies(reply, result.session.tokens, {
-      remember: body.remember ?? false,
-      ...cookieContext(request, reply),
+    reply.setCookie(COOKIE_NAMES.mfaChallenge, result.handle, {
+      ...app.cookieOptions(COOKIE_NAMES.mfaChallenge),
     });
-    return LoginResponse.parse({
-      data: { user: result.session.user, mfaRequired: false, mfaMethods: [] },
-    });
+    return reply.redirect(result.redirectTo);
   };
-  // Login audits conditionally (a challenge is not a successful authentication),
-  // inside the same transaction as the session write.
-  (loginHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
+  (magicLinkVerifyHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
 
-  app.post('/auth/login', {
-    config: { rateLimitPolicy: 'login' },
-    schema: { body: LoginBody, response: { 200: LoginResponse } },
-    handler: loginHandler,
+  app.get('/auth/magic-link/verify', {
+    config: { rateLimitPolicy: 'sensitive' },
+    schema: { querystring: MagicLinkVerifyQuery },
+    handler: magicLinkVerifyHandler,
   });
 
   // ---------------------------------------------------------- mfa / verify
@@ -592,6 +713,167 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
     config: { rateLimitPolicy: 'sensitive' },
     schema: { body: RecoveryCodeBody, response: { 200: z.object({ data: SessionUser }) } },
     handler: recoveryHandler,
+  });
+
+  // ---------------------------------------------------- mfa / setup (Phase 2)
+  /**
+   * Forced first-sign-in MFA setup. All three legs are guarded by the same
+   * HttpOnly `vv_mfa` challenge cookie as the verify siblings, and the
+   * challenge MUST carry the setup marker (an ordinary verify challenge gets
+   * 403 here). `options` starts a TOTP enrolment against the pre-MFA session;
+   * `verify` accepts the first correct code, flips `mfa_enrolled` and opens
+   * the FULL session (cookies rotate exactly like `/auth/mfa/verify`);
+   * `abandon` ends the window — for an administrator inside a TIMED window
+   * that means `blocked_mfa_setup` until a super admin unblocks the account.
+   * A dead handle whose ledgered window has closed blocks lazily and answers
+   * 410 `setup_expired`, which is what makes walking away detectable.
+   */
+  const setupOptionsHandler = async (request: FastifyRequest) => {
+    const { mfa } = readSessionCookies(request);
+    const meta = requestMeta(request);
+
+    const result = await app.withTx(async (tx: Tx) => {
+      const executor = asExecutor(tx);
+      const outcome = await serviceFor(executor).setupOptions(mfa);
+      if (outcome.kind === 'blocked') {
+        await app.audit.append(executor, {
+          eventType: 'MFA_SETUP_BLOCKED',
+          actor: { id: outcome.userId, label: outcome.email },
+          subject: outcome.email,
+          message: `${outcome.email} missed the MFA setup window (${outcome.reason}) · account blocked`,
+          details: { reason: outcome.reason },
+          ip: meta.ip,
+        });
+      }
+      return outcome;
+    });
+
+    if (result.kind === 'blocked') {
+      throw new HttpError(410, 'setup_expired', 'The MFA setup window has closed');
+    }
+    return {
+      data: {
+        factorId: result.factorId,
+        qrCodeSvg: result.qrCodeSvg,
+        secret: result.secret,
+        uri: result.uri,
+        deadlineEpochMs: result.deadlineEpochMs,
+      },
+    };
+  };
+  (setupOptionsHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
+
+  app.post('/auth/mfa/setup/options', {
+    config: { rateLimitPolicy: 'sensitive' },
+    schema: { response: { 200: MfaSetupOptionsResponse } },
+    handler: setupOptionsHandler,
+  });
+
+  const setupVerifyHandler = async (request: FastifyRequest, reply: FastifyReply) => {
+    const body = MfaSetupVerifyBody.parse(request.body);
+    const { mfa } = readSessionCookies(request);
+    const meta = requestMeta(request);
+
+    const result = await app.withTx(async (tx: Tx) => {
+      const executor = asExecutor(tx);
+      let outcome;
+      try {
+        outcome = await serviceFor(executor).setupVerify(mfa, body, meta);
+      } catch (error) {
+        if (error instanceof HttpError && error.code === 'mfa_failed') {
+          await auditFailure(
+            app,
+            {
+              eventType: 'AUTH_MFA_FAILURE',
+              subject: meta.ip,
+              message: 'MFA setup code rejected',
+              details: { flow: 'first_signin_setup' },
+            },
+            request,
+            error,
+          );
+        }
+        throw error;
+      }
+      if (outcome.kind === 'blocked') {
+        await app.audit.append(executor, {
+          eventType: 'MFA_SETUP_BLOCKED',
+          actor: { id: outcome.userId, label: outcome.email },
+          subject: outcome.email,
+          message: `${outcome.email} missed the MFA setup window (${outcome.reason}) · account blocked`,
+          details: { reason: outcome.reason },
+          ip: meta.ip,
+        });
+        return outcome;
+      }
+      const user = outcome.issued.user;
+      await app.audit.append(executor, {
+        eventType: 'MFA_ENABLED',
+        actor: { id: user.id, label: user.email },
+        subject: user.email,
+        message: `Authenticator app enrolled for ${user.email} during first-sign-in setup`,
+        details: { factor: 'totp', flow: 'first_signin_setup' },
+        ip: meta.ip,
+      });
+      await app.audit.append(executor, {
+        eventType: 'AUTH_SUCCESS',
+        actor: { id: user.id, label: user.email },
+        subject: user.email,
+        message: `${user.email} completed forced MFA setup and signed in`,
+        details: { mfa: 'totp', flow: 'first_signin_setup' },
+        ip: meta.ip,
+      });
+      return outcome;
+    });
+
+    if (result.kind === 'blocked') {
+      throw new HttpError(410, 'setup_expired', 'The MFA setup window has closed');
+    }
+    reply.clearCookie(COOKIE_NAMES.mfaChallenge, app.cookieOptions(COOKIE_NAMES.mfaChallenge));
+    setSessionCookies(reply, result.issued.tokens, {
+      remember: false,
+      ...cookieContext(request, reply),
+    });
+    return { data: result.issued.user };
+  };
+  (setupVerifyHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
+
+  app.post('/auth/mfa/setup/verify', {
+    config: { rateLimitPolicy: 'sensitive' },
+    schema: { body: MfaSetupVerifyBody, response: { 200: z.object({ data: SessionUser }) } },
+    handler: setupVerifyHandler,
+  });
+
+  const setupAbandonHandler = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { mfa } = readSessionCookies(request);
+    const meta = requestMeta(request);
+
+    const result = await app.withTx(async (tx: Tx) => {
+      const executor = asExecutor(tx);
+      const outcome = await serviceFor(executor).setupAbandon(mfa);
+      if (outcome.blocked && outcome.email !== null && outcome.userId !== null) {
+        await app.audit.append(executor, {
+          eventType: 'MFA_SETUP_BLOCKED',
+          actor: { id: outcome.userId, label: outcome.email },
+          subject: outcome.email,
+          message: `${outcome.email} abandoned the MFA setup window · account blocked`,
+          details: { reason: 'abandoned' },
+          ip: meta.ip,
+        });
+      }
+      return outcome;
+    });
+
+    // Abandoning always ends the challenge; a client may simply start over.
+    reply.clearCookie(COOKIE_NAMES.mfaChallenge, app.cookieOptions(COOKIE_NAMES.mfaChallenge));
+    return { data: { blocked: result.blocked } };
+  };
+  (setupAbandonHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
+
+  app.post('/auth/mfa/setup/abandon', {
+    config: { rateLimitPolicy: 'sensitive' },
+    schema: { response: { 200: MfaSetupAbandonResponse } },
+    handler: setupAbandonHandler,
   });
 
   // ------------------------------------------------------------- refresh

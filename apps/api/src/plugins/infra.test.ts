@@ -278,6 +278,8 @@ describe('redis connection options', () => {
     const options = redisOptionsFromUrl('redis://localhost');
     expect(options.port).toBe(6379);
     expect(options.password).toBeUndefined();
+    // Plain `redis://` is plaintext by definition — only `rediss://` gets TLS.
+    expect(options.tls).toBeUndefined();
   });
 });
 

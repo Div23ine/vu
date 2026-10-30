@@ -13,7 +13,7 @@ import { apiGet } from '../../../../../lib/api';
  * touch packages/lib, so the keys live here — the an earlier iteration
  * `SECURITY_STATUS_KEY` precedent.
  *
- * No `'use client'` directive (the `use-login.ts` pattern): only client
+ * No `'use client'` directive (the directive-free hook-module pattern): only client
  * components import this module.
  */
 

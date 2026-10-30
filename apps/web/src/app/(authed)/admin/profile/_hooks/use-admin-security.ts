@@ -22,7 +22,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from '../../../../../lib/api';
  * packages/lib has no session or notification namespace and this task must not
  * add one.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export const SESSIONS_KEY = ['account', 'sessions'] as const;

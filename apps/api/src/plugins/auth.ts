@@ -10,6 +10,7 @@ import {
   type SessionRegistryOptions,
 } from '../lib/session-registry.js';
 import { isStaff, STAFF_ROLES } from '../lib/staff.js';
+import { isMfaSetupExempt } from '../lib/admin-roster.js';
 import { createSupabaseAdmin, SupabaseError, type SupabaseAdmin } from '../lib/supabase-admin.js';
 import { COOKIE_NAMES } from './cookies.js';
 
@@ -187,8 +188,11 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (app, options) =
     const user = request.user;
     if (user === undefined) throw HttpError.unauthorized();
     if (!isStaff(user.role)) throw HttpError.forbidden();
-    // Staff act on other people's data: a second factor is not optional.
-    if (user.aal !== 'aal2') {
+    // Staff act on other people's data: a second factor is not optional —
+    // EXCEPT for the roster's exempt super admin (Phase 2 hard constraint:
+    // divine@vunvault.com has optional MFA, no timer and no block, so an aal1
+    // session for that identity is a legitimate full-access staff session).
+    if (user.aal !== 'aal2' && !isMfaSetupExempt(user.email)) {
       throw HttpError.forbidden('mfa_required', 'Complete MFA to continue');
     }
   };

@@ -26,7 +26,7 @@ import { apiGet, apiPost } from '../../../../../lib/api';
  * summary key extends it locally because packages/lib has no `audit.summary`
  * entry and this task must not add one (the an earlier iteration precedent).
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export const AUDIT_SUMMARY_KEY = [...queryKeys.audit.all(), 'summary'] as const;

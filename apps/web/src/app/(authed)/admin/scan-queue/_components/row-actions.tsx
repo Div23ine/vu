@@ -46,7 +46,7 @@ export function RowActions({ job, canReview }: RowActionsProps) {
   const [terminalOpen, setTerminalOpen] = useState(false);
 
   // an earlier iteration: the live terminal. The session is read here rather than threaded
-  // through the table (the `use-login.ts` pattern); the relay re-checks it on
+  // through the table (the directive-free hook-module pattern); the relay re-checks it on
   // every handshake regardless, so the button's visibility is a courtesy, not
   // the gate.
   const { user } = useSession();

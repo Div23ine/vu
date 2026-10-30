@@ -14,8 +14,8 @@
      postgres_data:
   recon:
     # Unprivileged scanner backend: loopback-only, non-root, no capabilities,
-    # read-only rootfs. The API proxies to it via RECON_URL; when this service
-    # is absent the site honestly reports "scanner not active".
+    # read-only rootfs. When this service is absent the site honestly reports
+    # "scanner not active".
     image: node:22-alpine
     working_dir: /srv
     volumes:

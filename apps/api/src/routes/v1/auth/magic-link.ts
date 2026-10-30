@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { KvStore } from './challenge.js';
 
 /**
@@ -106,12 +106,7 @@ export class MagicLinkTokenStore {
       await this.store.del(`${MAGIC_TOKEN_PREFIX}${previousJti}`);
     }
 
-    await this.store.set(
-      `${MAGIC_TOKEN_PREFIX}${jti}`,
-      token,
-      'EX',
-      this.ttlSeconds,
-    );
+    await this.store.set(`${MAGIC_TOKEN_PREFIX}${jti}`, token, 'EX', this.ttlSeconds);
     await this.store.set(`${MAGIC_POINTER_PREFIX}${normalized}`, jti, 'EX', this.ttlSeconds);
     return { token, expiresInSeconds: this.ttlSeconds };
   }
@@ -153,4 +148,43 @@ export class MagicLinkTokenStore {
 /** Derive a dedicated magic-link signing secret from the app's master secret material. */
 export function deriveMagicLinkSecret(secretMaterial: string): string {
   return createHmac('sha256', secretMaterial).update('vv-magic-link').digest('hex');
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3: signup-invitation cooldown.
+//
+// An unregistered address that hits POST /auth/magic-link receives a signup
+// invitation instead of a link. Without a cooldown the endpoint would be an
+// email bomb: one request, one email, forever. `claim` is the gate — the first
+// caller inside the window may send, everyone else is suppressed, and the HTTP
+// response is the identical generic acknowledgement either way.
+// ---------------------------------------------------------------------------
+
+export const SIGNUP_INVITE_PREFIX = 'ml:invite:';
+/** One invitation per address per 15 minutes — the magic-link TTL doubled as the calm-down. */
+export const SIGNUP_INVITE_COOLDOWN_SECONDS = 15 * 60;
+
+export class SignupInviteCooldown {
+  constructor(
+    private readonly store: KvStore,
+    private readonly ttlSeconds: number = SIGNUP_INVITE_COOLDOWN_SECONDS,
+  ) {}
+
+  /** Only the digest is stored: the KV must not become a directory of probed addresses. */
+  static keyFor(email: string): string {
+    const normalized = MagicLinkTokenStore.emailKey(email);
+    return `${SIGNUP_INVITE_PREFIX}${createHash('sha256').update(normalized).digest('hex')}`;
+  }
+
+  /** `true` when this caller may send the invitation (first claim inside the window). */
+  async claim(email: string): Promise<boolean> {
+    const result = await this.store.set(
+      SignupInviteCooldown.keyFor(email),
+      '1',
+      'EX',
+      this.ttlSeconds,
+      'NX',
+    );
+    return result === 'OK';
+  }
 }

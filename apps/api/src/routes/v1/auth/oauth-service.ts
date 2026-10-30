@@ -9,7 +9,7 @@ import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 import { newSessionId, type KvStore, type MfaChallengeStore } from './challenge.js';
 import { deviceLabel, geoCity, geoCountry, type GeoHeaders } from './device.js';
 import type { AuthProfileRow, AuthRepo } from './repo.js';
-import { splitName } from './service.js';
+import { maskEmailForRedirect, splitName } from './service.js';
 
 /**
  * OAuth sign-in (Task 40e): Google, GitHub and Microsoft through Supabase PKCE.
@@ -323,10 +323,17 @@ export class OAuthService {
         methods,
         session,
       });
+      // Phase 1: the MFA step is a page, not a dialog on /login. The masked
+      // address and the method list ride along for the panel's copy.
+      const params = new URLSearchParams({
+        methods: methods.join(','),
+        to: maskEmailForRedirect(profile.email),
+        next: stored.next,
+      });
       return {
         kind: 'mfa',
         handle,
-        location: `${this.deps.webOrigin}/login?mfa=1&next=${encodeURIComponent(stored.next)}`,
+        location: `${this.deps.webOrigin}/login/mfa?${params.toString()}`,
       };
     }
 

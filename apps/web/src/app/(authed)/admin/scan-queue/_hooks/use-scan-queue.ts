@@ -19,7 +19,7 @@ import { apiGet, apiPost } from '../../../../../lib/api';
  * while the tab is visible (the real-time push arrives in Layer L12); the
  * keys are the canonical `queryKeys.scans.adminQueue`/`summary` entries.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 const POLL_MS = 15_000;

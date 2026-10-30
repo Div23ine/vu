@@ -10,13 +10,25 @@ export class HttpError extends Error {
   readonly status: number;
   readonly code: string;
   readonly details?: unknown[];
+  /**
+   * Extra response headers the error handler must set (Phase 4: `retry-after`
+   * on backoff refusals). Values are header-safe strings/numbers only.
+   */
+  readonly headers?: Record<string, string | number>;
 
-  constructor(status: number, code: string, message?: string, details?: unknown[]) {
+  constructor(
+    status: number,
+    code: string,
+    message?: string,
+    details?: unknown[],
+    headers?: Record<string, string | number>,
+  ) {
     super(message ?? code);
     this.name = 'HttpError';
     this.status = status;
     this.code = code;
     this.details = details;
+    this.headers = headers;
   }
 
   static unauthorized(message = 'Authentication required'): HttpError {

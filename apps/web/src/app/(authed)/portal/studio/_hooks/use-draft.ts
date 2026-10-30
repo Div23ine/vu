@@ -34,7 +34,7 @@ import { STUDIO_SUBMISSIONS_KEY, useStudioSubmissions } from './use-studio';
  * carries the server's six booleans in `details[0]` and the checklist
  * highlights exactly those failures.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 /** Long enough for a real title, from the design's autosave rule. */

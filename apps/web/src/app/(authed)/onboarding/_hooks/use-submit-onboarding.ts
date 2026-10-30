@@ -11,7 +11,7 @@ import type { OnboardingFormValues } from '../_components/onboarding-wizard';
  * proven every declaration is `true` and the question is a real enum member
  * by the time this runs).
  *
- * No `'use client'` directive (the `use-login.ts` pattern): only ever called
+ * No `'use client'` directive (the directive-free hook-module pattern): only ever called
  * from the client wizard, which pulls this module into its bundle.
  */
 

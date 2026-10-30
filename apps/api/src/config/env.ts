@@ -55,6 +55,13 @@ export const EnvSchema = z
      * (cluster-internal consumers). Absent/anything else = enforce.
      */
     ORIGIN_VERIFY_ENFORCE: z.enum(['true', 'false']).optional(),
+    /**
+     * `true` switches on Cloudflare Turnstile enforcement: the public contact
+     * form and (Phase 4) magic-link requests past the per-IP soft limit then
+     * demand a human-verification token. Absent/anything else = inert. The
+     * SITE SECRET is a vault secret (`TURNSTILE_SECRET_KEY`), never env.
+     */
+    TURNSTILE_ENFORCE: z.enum(['true', 'false']).optional(),
     /** JSON object mapping a secret name to its OCI Vault OCID. */
     OCI_SECRET_MAP: z.string().optional(),
 

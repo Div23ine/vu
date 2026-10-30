@@ -1256,3 +1256,175 @@ body.vv-modal-open {
     width: 100%;
   }
 }
+
+/* -------------------------------------------------------------------------
+ * Phase 1 (magic-link work order): the MFA step is a standalone PAGE at
+ * /login/mfa, not a modal over the password card. Same `.vv-otp-card` chrome,
+ * minus the overlay machinery: the card is simply visible, centred by the
+ * `(auth)` layout's `.vv-auth-overlay` flex.
+ * ---------------------------------------------------------------------- */
+.vv-otp-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 24px 20px;
+}
+.vv-otp-page .vv-otp-card {
+  transform: none;
+}
+
+/* -------------------------------------------------------------------------
+ * Phase 1 (magic-link work order): the "Check your email" state replaces the
+ * request form inside `.vv-auth-card`. Centred like the OTP views, reusing
+ * `.vv-otp-icon` / `.vv-link-btn` / `.vv-back` chrome.
+ * ---------------------------------------------------------------------- */
+.vv-sent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 6px 0 2px;
+}
+.vv-sent .vv-auth-title {
+  font-size: 1.05rem;
+  margin: 0;
+}
+.vv-sent .vv-auth-sub {
+  margin: 0;
+  max-width: 34ch;
+}
+
+/* -------------------------------------------------------------------------
+ * Phase 2 (magic-link work order): `/login/mfa/setup` — the forced
+ * first-sign-in MFA SETUP panel. Reuses the `.vv-otp-*` card chrome; adds the
+ * visible mm:ss window countdown, the QR/secret enrolment block (signup
+ * dialog parity, tokens only) and the copy control.
+ * ---------------------------------------------------------------------- */
+.vv-setup-timer {
+  margin: 2px 0 0;
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.vv-setup-timer.is-low {
+  color: #fb7185;
+  animation: vvSetupPulse 1s ease-in-out infinite;
+}
+@keyframes vvSetupPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.vv-setup-qr {
+  display: grid;
+  place-items: center;
+  width: fit-content;
+  margin: 18px auto 0;
+  padding: 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.vv-setup-qr img {
+  display: block;
+  width: 180px;
+  height: 180px;
+}
+.vv-setup-secret {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px dashed var(--brand-line);
+  border-radius: var(--r-md);
+  background: var(--brand-tint);
+}
+.vv-setup-secret-label {
+  display: block;
+  text-align: center;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.vv-setup-secret-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+.vv-setup-secret-code {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 4px 10px;
+  word-break: break-all;
+}
+.vv-setup-copy {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--brand-strong);
+  background: var(--white);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.vv-setup-copy:hover {
+  background: var(--brand-tint);
+}
+
+/* -------------------------------------------------------------------------
+ * Phase 4 (magic-link work order): bot defence + captcha on the login card.
+ * The honeypot is rendered but never shown or focusable; the captcha view
+ * reuses the `.vv-auth-*` card chrome.
+ * ---------------------------------------------------------------------- */
+.vv-honeypot {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.vv-captcha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 6px 0 2px;
+}
+.vv-captcha .vv-auth-title {
+  font-size: 1.05rem;
+  margin: 0;
+}
+.vv-captcha .vv-auth-sub {
+  margin: 0;
+  max-width: 34ch;
+}
+.vv-turnstile {
+  display: grid;
+  place-items: center;
+  min-height: 66px;
+}

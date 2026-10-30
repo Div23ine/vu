@@ -11,7 +11,9 @@ import {
   type UserRole,
 } from '@vunvault/contracts';
 import type { Invitation, ProvisionInviteBody } from '@vunvault/contracts';
+import { randomBytes } from 'node:crypto';
 import { HttpError } from '../../../lib/http-error.js';
+import { populatedRosterSlots } from '../../../lib/admin-roster.js';
 import type { BreachCheck } from '../../../lib/breach.js';
 import type { EmailProvider } from '../../../providers/email.js';
 import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
@@ -87,6 +89,13 @@ export interface UsersServiceDeps {
   now?: () => Date;
   /** Test seam: a deterministic invitation token. */
   randomToken?: () => string;
+}
+
+/** What one `provisionAdminRoster` pass did (the script audits `created`). */
+export interface ProvisionRosterSummary {
+  created: Array<{ userId: string; email: string; role: UserRole }>;
+  roleCorrected: Array<{ userId: string; email: string; role: UserRole }>;
+  skipped: string[];
 }
 
 export interface RosterFilters {
@@ -444,6 +453,78 @@ export class UsersService {
       suspendedAt: null,
       suspendedReason: null,
     });
+    return this.memberView(id);
+  }
+
+  /**
+   * Phase 2 unblock path (work order §2): a super admin (`users:manage`)
+   * resets an administrator whose first-sign-in MFA setup window expired or
+   * was abandoned. The account returns to `active` with `mfa_enrolled` still
+   * false, so the NEXT magic-link sign-in opens a fresh 5:00 setup window —
+   * the forced-setup gate is never waived, only re-armed. (The setup ledger
+   * needs no cleanup here: blocking already deleted the record.)
+   */
+  /**
+   * Phase 2 provisioning: materialise the administrator roster (work order
+   * §2 — data-driven from `lib/admin-roster.ts`, names resolved from the
+   * contributor records, never invented). IDEMPOTENT: a filled slot whose
+   * profile already exists is left alone (its role is corrected if it
+   * drifted); placeholders are skipped. New identities get a Supabase user
+   * with a random never-used password (the only login credential is the
+   * magic link), `email_confirm: true` and an `active` staff profile with
+   * `mfa_enrolled = false` — so the first sign-in hits the forced setup
+   * window (or, for the exempt super admin, walks straight through).
+   */
+  async provisionAdminRoster(): Promise<ProvisionRosterSummary> {
+    const summary: ProvisionRosterSummary = { created: [], roleCorrected: [], skipped: [] };
+    for (const slot of populatedRosterSlots()) {
+      if (slot.email === null || slot.fullName === null) continue;
+      const existing = await this.repo.findByEmail(slot.email);
+      if (existing !== null) {
+        if (existing.role !== slot.role) {
+          await this.repo.updateMember(existing.id, { role: slot.role });
+          summary.roleCorrected.push({ userId: existing.id, email: slot.email, role: slot.role });
+        } else {
+          summary.skipped.push(slot.email);
+        }
+        continue;
+      }
+      // A random password nobody knows: magic links are the only credential.
+      const { id } = await this.supabase.createUser({
+        email: slot.email,
+        password: randomBytes(32).toString('base64url'),
+        emailConfirm: true,
+        userMetadata: { full_name: slot.fullName, provisioned_by: 'admin-roster' },
+      });
+      await this.repo.createProfile({
+        userId: id,
+        email: slot.email,
+        fullName: slot.fullName,
+        jobTitle: slot.jobTitle,
+        baseLocation: null,
+        role: slot.role,
+        team: null, // org-level administrators: the fixture precedent (super_admin) has no team
+        accessTier: slot.role === 'super_admin' ? 'elevated' : 'standard',
+        scopeNotes: 'Provisioned from the administrator roster (Phase 2)',
+        accessReviewDue: null,
+        joinedAt: this.now(),
+      });
+      summary.created.push({ userId: id, email: slot.email, role: slot.role });
+    }
+    return summary;
+  }
+
+  async unblockMfa(actor: ActorContext, id: string): Promise<StaffMember> {
+    void actor;
+    const member = await this.requireMember(id);
+    if (member.accountStatus !== 'blocked_mfa_setup') {
+      throw new HttpError(
+        409,
+        'invalid_state',
+        'Only an account blocked on MFA setup can be unblocked',
+      );
+    }
+    await this.repo.updateMember(id, { accountStatus: 'active' });
     return this.memberView(id);
   }
 

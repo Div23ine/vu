@@ -21,7 +21,7 @@ import { apiGet, apiPost } from '../../../../../lib/api';
  * packages/lib has no `content.summary` entry and this task must not add one
  * (the an earlier iteration `SECURITY_STATUS_KEY` precedent).
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export const MODERATION_SUMMARY_KEY = [...queryKeys.content.all(), 'summary'] as const;

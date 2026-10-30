@@ -8,7 +8,7 @@ import { OnboardingSubmitBody } from '@vunvault/contracts';
  * mode. The standing GET answers "not completed" so the wizard is reachable
  * in dev; tests that need the completed-guard use `server.use` overrides.
  *
- * DISCLOSED (created ahead of its owner, the mfa-dialog-store precedent):
+ * DISCLOSED (created ahead of its owner):
  * the POST is an earlier iteration's endpoint, but an earlier iteration's deliverables list no mock
  * file — registering it here keeps the browser demo of the submit flow
  * functional and the aggregated handler list honest. It validates with the

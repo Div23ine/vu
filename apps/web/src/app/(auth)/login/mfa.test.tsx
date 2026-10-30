@@ -5,23 +5,25 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SessionUser } from '@vunvault/contracts';
+import type { MfaMethod, SessionUser } from '@vunvault/contracts';
 import { createQueryClient, queryKeys } from '@vunvault/lib';
 import { useToastStore } from '@vunvault/ui';
 import { server } from '../../../mocks/server';
-import { MfaDialog } from './_components/mfa-dialog';
-import { useMfaDialogStore, type MfaUiMethod } from './_store/mfa-dialog-store';
+import { MfaPanel } from './_components/mfa-panel';
 
 /**
- * MFA dialog tests — the six-box UX (digits only, paste-and-submit
- * once, backspace navigation), the verbatim error copy, the success view and
- * navigation (including the staff recovery-login bounce), the method
- * switcher, Escape, the resend cooldown (fake timers) and the WebAuthn path
- * with a mocked `navigator.credentials`.
+ * MFA panel tests (Phase 1) — the second factor is a standalone PAGE panel,
+ * not a modal: no overlay, no store, no Escape/close, no focus trap; the card
+ * is a `<main>` inside `.vv-otp-page`. Pinned here: the six-box UX (digits
+ * only, paste-and-submit once, backspace navigation), the verbatim error
+ * copy, the success view and navigation (including the staff recovery-login
+ * bounce and `homeFor` fallback), the method-priority default
+ * (totp > email_otp > webauthn), the email-OTP auto-send + resend cooldown
+ * (fake timers), the server-masked `to` target, and the WebAuthn path —
+ * which is NEVER auto-prompted on a page load, only via its button.
  *
- * The MFA endpoints live in `server.use` overrides inside this file: an earlier iteration's
- * deliverables do not include the shared auth handler, and per-test routes
- * keep the failure paths (401/410/cancel) controllable.
+ * The MFA endpoints live in `server.use` overrides inside this file: per-test
+ * routes keep the failure paths (401/410/cancel) controllable.
  */
 
 const routerReplace = vi.hoisted(() => vi.fn());
@@ -42,6 +44,8 @@ const CLIENT_USER: SessionUser = {
 
 const STAFF_USER: SessionUser = { ...CLIENT_USER, role: 'admin', fullName: 'Admin User' };
 
+const MASKED_TO = 're••@example.com';
+
 const credentialsGet = vi.hoisted(() => vi.fn());
 
 let lastVerify: Record<string, unknown> | null = null;
@@ -52,23 +56,20 @@ let successUser: SessionUser = CLIENT_USER;
 
 let queryClient: QueryClient;
 
-function renderDialog() {
+function renderPanel(
+  methods: MfaMethod[],
+  overrides: { to?: string | null; next?: string | null } = {},
+) {
   queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <MfaDialog />
+      <MfaPanel
+        methods={methods}
+        to={overrides.to === undefined ? MASKED_TO : overrides.to}
+        next={overrides.next === undefined ? null : overrides.next}
+      />
     </QueryClientProvider>,
   );
-}
-
-function openDialog(methods: MfaUiMethod[], overrides: { email?: string; next?: string } = {}) {
-  act(() => {
-    useMfaDialogStore.getState().openDialog({
-      email: overrides.email ?? 'reed@example.com',
-      methods,
-      next: overrides.next ?? '/',
-    });
-  });
 }
 
 async function flush(ms = 20) {
@@ -91,10 +92,9 @@ beforeEach(() => {
   optionsCalls = 0;
   successUser = CLIENT_USER;
   useToastStore.setState({ toasts: [] });
-  useMfaDialogStore.setState({ open: false, email: '', methods: [], next: '/' });
   document.body.classList.remove('vv-modal-open');
 
-  // jsdom has no WebAuthn; the dialog only calls navigator.credentials.get.
+  // jsdom has no WebAuthn; the panel only calls navigator.credentials.get.
   Object.defineProperty(navigator, 'credentials', {
     value: { get: credentialsGet },
     configurable: true,
@@ -139,10 +139,35 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('MfaDialog — OTP entry', () => {
+describe('MfaPanel — page chrome', () => {
+  it('is a page-level main inside .vv-otp-page, never a dialog', async () => {
+    renderPanel(['totp']);
+    await flush();
+    expect(document.getElementById('vvOtpPage')).not.toBeNull();
+    expect(document.getElementById('vvOtpCard')?.tagName).toBe('MAIN');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.body).not.toHaveClass('vv-modal-open');
+    // No close button — the way out is the "Back to sign in" link.
+    expect(document.getElementById('vvOtpClose')).toBeNull();
+    expect(screen.getByRole('link', { name: /Back to sign in/i })).toHaveAttribute(
+      'href',
+      '/login',
+    );
+  });
+
+  it('the back link carries a sanitised next', async () => {
+    renderPanel(['totp'], { next: '/portal/billing' });
+    await flush();
+    expect(screen.getByRole('link', { name: /Back to sign in/i })).toHaveAttribute(
+      'href',
+      '/login?next=%2Fportal%2Fbilling',
+    );
+  });
+});
+
+describe('MfaPanel — OTP entry', () => {
   it('accepts digits only', async () => {
-    renderDialog();
-    openDialog(['totp']);
+    renderPanel(['totp']);
     await flush();
 
     const [first] = digitBoxes();
@@ -156,8 +181,7 @@ describe('MfaDialog — OTP entry', () => {
   });
 
   it('paste of 123456 fills six boxes and submits once', async () => {
-    renderDialog();
-    openDialog(['totp']);
+    renderPanel(['totp']);
     await flush();
 
     const [first] = digitBoxes();
@@ -172,8 +196,7 @@ describe('MfaDialog — OTP entry', () => {
   });
 
   it('backspace on an empty box moves focus back and clears', async () => {
-    renderDialog();
-    openDialog(['totp']);
+    renderPanel(['totp']);
     await flush();
 
     const boxes = digitBoxes();
@@ -187,8 +210,7 @@ describe('MfaDialog — OTP entry', () => {
   });
 
   it('incomplete codes ask for all six digits', async () => {
-    renderDialog();
-    openDialog(['totp']);
+    renderPanel(['totp']);
     await flush();
 
     const boxes = digitBoxes();
@@ -204,8 +226,7 @@ describe('MfaDialog — OTP entry', () => {
   });
 
   it('a wrong code shows the verbatim error', async () => {
-    renderDialog();
-    openDialog(['totp']);
+    renderPanel(['totp']);
     await flush();
 
     const [first] = digitBoxes();
@@ -218,33 +239,30 @@ describe('MfaDialog — OTP entry', () => {
     expect(document.getElementById('vvOtpCard')).toHaveClass('vv-shake');
   });
 
-  it('410 challenge_expired closes the dialog and toasts', async () => {
+  it('410 challenge_expired toasts and returns to /login', async () => {
     server.use(
       http.post('*/api/v1/auth/mfa/verify', () =>
         HttpResponse.json({ error: 'challenge_expired' }, { status: 410 }),
       ),
     );
-    renderDialog();
-    openDialog(['totp']);
+    renderPanel(['totp']);
     await flush();
     const [first] = digitBoxes();
     if (first === undefined) throw new Error('OTP boxes did not render.');
     fireEvent.paste(first, { clipboardData: { getData: () => '123456' } });
     await flush();
-    expect(useMfaDialogStore.getState().open).toBe(false);
-    expect(screen.queryByRole('dialog')).toBeNull();
     expect(useToastStore.getState().toasts[0]).toMatchObject({
       kind: 'warn',
       title: 'Session expired',
       message: 'Please sign in again.',
     });
+    expect(routerReplace).toHaveBeenCalledWith('/login');
   });
 });
 
-describe('MfaDialog — success and navigation', () => {
+describe('MfaPanel — success and navigation', () => {
   it('shows the success view, seeds the session and replaces to next', async () => {
-    renderDialog();
-    openDialog(['totp'], { next: '/portal/billing' });
+    renderPanel(['totp'], { next: '/portal/billing' });
     await flush();
     const [first] = digitBoxes();
     if (first === undefined) throw new Error('OTP boxes did not render.');
@@ -259,13 +277,25 @@ describe('MfaDialog — success and navigation', () => {
     });
     expect(routerReplace).toHaveBeenCalledWith('/portal/billing');
     expect(queryClient.getQueryData(queryKeys.session())).toMatchObject({ id: CLIENT_USER.id });
-    expect(useMfaDialogStore.getState().open).toBe(false);
+  });
+
+  it('without next, lands on homeFor(role)', async () => {
+    renderPanel(['totp']);
+    await flush();
+    const [first] = digitBoxes();
+    if (first === undefined) throw new Error('OTP boxes did not render.');
+    fireEvent.paste(first, { clipboardData: { getData: () => '123456' } });
+    await flush();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1400);
+    });
+    // CLIENT_USER → the portal.
+    expect(routerReplace).toHaveBeenCalledWith('/portal');
   });
 
   it('a staff recovery login is sent to /login?error=mfa_required', async () => {
     successUser = STAFF_USER;
-    renderDialog();
-    openDialog(['totp']);
+    renderPanel(['totp']);
     await flush();
     fireEvent.click(screen.getByRole('button', { name: 'Use a recovery code' }));
     await flush();
@@ -282,10 +312,25 @@ describe('MfaDialog — success and navigation', () => {
   });
 });
 
-describe('MfaDialog — method switcher', () => {
+describe('MfaPanel — method priority and switcher', () => {
+  it('defaults to totp over email_otp over webauthn, with no side effects', async () => {
+    renderPanel(['webauthn', 'email_otp', 'totp']);
+    await flush();
+    expect(screen.getByText('Enter the 6-digit code from your authenticator app.')).toBeVisible();
+    expect(emailOtpCalls).toBe(0);
+    expect(optionsCalls).toBe(0);
+  });
+
+  it('defaults to email_otp (auto-sending) when totp is absent', async () => {
+    renderPanel(['email_otp', 'webauthn']);
+    await flush();
+    expect(emailOtpCalls).toBe(1);
+    expect(screen.getByText(MASKED_TO)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Resend code' })).toBeDisabled();
+  });
+
   it('shows only the offered methods (recovery always available)', async () => {
-    renderDialog();
-    openDialog(['totp']);
+    renderPanel(['totp']);
     await flush();
     expect(screen.queryByRole('button', { name: 'Use authenticator app' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Use security key' })).toBeNull();
@@ -301,25 +346,29 @@ describe('MfaDialog — method switcher', () => {
   });
 
   it('switching to email OTP sends the code, masks the email and starts the cooldown', async () => {
-    renderDialog();
-    openDialog(['totp', 'email_otp']);
+    renderPanel(['totp', 'email_otp']);
     await flush();
     expect(emailOtpCalls).toBe(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Email me a code' }));
     await flush();
     expect(emailOtpCalls).toBe(1);
-    expect(screen.getByText('re••@example.com')).toBeVisible();
+    expect(screen.getByText(MASKED_TO)).toBeVisible();
     expect(screen.getByText('Didn’t get the code?')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Resend code' })).toBeDisabled();
     expect(screen.getByText('Resend in 60s')).toBeInTheDocument();
   });
+
+  it('falls back to "your email" when the redirect carried no masked to', async () => {
+    renderPanel(['email_otp'], { to: null });
+    await flush();
+    expect(screen.getByText('your email')).toBeVisible();
+  });
 });
 
-describe('MfaDialog — resend cooldown', () => {
+describe('MfaPanel — resend cooldown', () => {
   it('counts down 60 s and re-arms Resend', async () => {
-    renderDialog();
-    openDialog(['email_otp']);
+    renderPanel(['email_otp']);
     await flush();
     expect(emailOtpCalls).toBe(1);
     const resend = screen.getByRole('button', { name: 'Resend code' });
@@ -344,35 +393,7 @@ describe('MfaDialog — resend cooldown', () => {
   });
 });
 
-describe('MfaDialog — dismissal', () => {
-  it('Escape closes and clears the store without calling the API', async () => {
-    renderDialog();
-    openDialog(['totp']);
-    await flush();
-    expect(document.body).toHaveClass('vv-modal-open');
-
-    fireEvent.keyDown(document, { key: 'Escape' });
-    await flush();
-    expect(useMfaDialogStore.getState().open).toBe(false);
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(lastVerify).toBeNull();
-  });
-
-  it('Close verification and Back to sign in both dismiss', async () => {
-    renderDialog();
-    openDialog(['totp']);
-    await flush();
-    fireEvent.click(screen.getByRole('button', { name: 'Back to sign in' }));
-    expect(useMfaDialogStore.getState().open).toBe(false);
-
-    openDialog(['totp']);
-    await flush();
-    fireEvent.click(screen.getByRole('button', { name: 'Close verification' }));
-    expect(useMfaDialogStore.getState().open).toBe(false);
-  });
-});
-
-describe('MfaDialog — WebAuthn', () => {
+describe('MfaPanel — WebAuthn (button-driven, never auto-prompted)', () => {
   const assertionCredential = {
     id: 'cred-1',
     rawId: new Uint8Array([1, 2, 3]).buffer,
@@ -385,10 +406,20 @@ describe('MfaDialog — WebAuthn', () => {
     },
   };
 
-  it('auto-prompts once: options endpoint → credentials.get → verify with the assertion', async () => {
+  it('does NOT prompt on mount even when webauthn is the default', async () => {
+    renderPanel(['webauthn']);
+    await flush();
+    expect(optionsCalls).toBe(0);
+    expect(credentialsGet).not.toHaveBeenCalled();
+    expect(screen.getByText('Insert or tap your security key when prompted.')).toBeVisible();
+  });
+
+  it('the button runs options → credentials.get → verify with the assertion', async () => {
     credentialsGet.mockResolvedValue(assertionCredential);
-    renderDialog();
-    openDialog(['webauthn']);
+    renderPanel(['webauthn']);
+    await flush();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Verify OTP' }));
     await flush();
 
     expect(optionsCalls).toBe(1);
@@ -412,15 +443,16 @@ describe('MfaDialog — WebAuthn', () => {
     expect(screen.getByText('Verification successful')).toBeVisible();
   });
 
-  it('a cancelled security key stays on the dialog with the verbatim message', async () => {
+  it('a cancelled security key stays on the page with the verbatim message', async () => {
     credentialsGet.mockRejectedValue(
       Object.assign(new Error('denied'), { name: 'NotAllowedError' }),
     );
-    renderDialog();
-    openDialog(['webauthn']);
+    renderPanel(['webauthn']);
+    await flush();
+    fireEvent.click(screen.getByRole('button', { name: 'Verify OTP' }));
     await flush();
     expect(screen.getByText('Security key request was cancelled.')).toBeVisible();
-    expect(useMfaDialogStore.getState().open).toBe(true);
     expect(screen.getByText('Insert or tap your security key when prompted.')).toBeVisible();
+    expect(routerReplace).not.toHaveBeenCalled();
   });
 });

@@ -72,10 +72,6 @@ function fakePaystack(verify: () => Promise<PaystackTransaction>): PaystackClien
 
 const RATES: FxRateSource = {
   getRate: async (currency) => (currency === 'KES' ? '129.00000000' : '1.00000000'),
-  getRateTable: async () => ({
-    rates: { USD: '1.00000000', KES: '129.00000000' },
-    fetchedAt: new Date().toISOString(),
-  }),
 };
 
 function service(repo: FakeRepo, paystack: PaystackClient) {

@@ -149,6 +149,7 @@ export const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
   pending_verification: 'Pending Verification',
   suspended: 'Suspended',
   dormant: 'Dormant',
+  blocked_mfa_setup: 'Blocked — MFA Setup Incomplete',
 };
 
 export const SCAN_TYPE_LABELS: Record<ScanType, string> = {

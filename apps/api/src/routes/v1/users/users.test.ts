@@ -856,3 +856,166 @@ describe('account actions', () => {
     expect((error as HttpError).status).toBe(404);
   });
 });
+
+// ------------------------------------------------- Phase 2: unblock + roster
+
+describe('unblockMfa (Phase 2 unblock path)', () => {
+  const BLOCKED_ID = 'b1000000-0000-4000-8000-0000000000b1';
+
+  function seedBlocked(repo: ReturnType<typeof makeService>['repo']) {
+    repo.staff.push(
+      staffRow(BLOCKED_ID, {
+        fullName: 'Daniel Okafor',
+        email: 'daniel@vunvault.com',
+        role: 'admin',
+        accountStatus: 'blocked_mfa_setup',
+        mfaEnrolled: false,
+        mfaMethods: [],
+      }),
+    );
+  }
+
+  it('returns a blocked administrator to active (the next sign-in restarts the window)', async () => {
+    const { service, repo } = makeService();
+    seedBlocked(repo);
+
+    const member = await service.unblockMfa(SUPER_ADMIN, BLOCKED_ID);
+    expect(member.accountStatus).toBe('active');
+    expect(member.email).toBe('daniel@vunvault.com');
+    // MFA stays unenrolled: the forced-setup gate is re-armed, never waived.
+    expect(member.mfa.enrolled).toBe(false);
+    expect(repo.staff.find((row) => row.id === BLOCKED_ID)?.accountStatus).toBe('active');
+  });
+
+  it('refuses accounts that are not blocked on setup', async () => {
+    const { service } = makeService();
+    const error = await service
+      .unblockMfa(SUPER_ADMIN, ADMIN_ID) // active
+      .catch((caught: unknown) => caught);
+    expect((error as HttpError).status).toBe(409);
+    expect((error as HttpError).code).toBe('invalid_state');
+  });
+
+  it('refuses a suspended account (that is reactivate territory)', async () => {
+    const { service, repo } = makeService();
+    repo.staff.push(staffRow(BLOCKED_ID, { accountStatus: 'suspended', email: 'x@vunvault.com' }));
+    const error = await service
+      .unblockMfa(SUPER_ADMIN, BLOCKED_ID)
+      .catch((caught: unknown) => caught);
+    expect((error as HttpError).status).toBe(409);
+  });
+
+  it('answers 404 for an account that does not exist', async () => {
+    const { service } = makeService();
+    const error = await service
+      .unblockMfa(SUPER_ADMIN, 'b1000000-0000-4000-8000-0000000000ff')
+      .catch((caught: unknown) => caught);
+    expect((error as HttpError).status).toBe(404);
+  });
+});
+
+describe('provisionAdminRoster (Phase 2 provisioning)', () => {
+  it('creates the four filled slots and ignores the five placeholders', async () => {
+    const { service, repo, created } = makeService();
+
+    const summary = await service.provisionAdminRoster();
+    expect(summary.created.map((entry) => entry.email)).toEqual([
+      'daniel@vunvault.com',
+      'divine@vunvault.com',
+      'tshepiso@vunvault.com',
+      'bukenya@vunvault.com',
+    ]);
+    expect(summary.roleCorrected).toEqual([]);
+    expect(summary.skipped).toEqual([]);
+    expect(created).toHaveLength(4);
+
+    // Every identity is email-confirmed with a random, never-used password
+    // (magic links are the only credential) and distinct per slot.
+    const passwords = created.map((entry) => (entry as { password?: string }).password ?? '');
+    for (const password of passwords) expect(password.length).toBeGreaterThanOrEqual(32);
+    expect(new Set(passwords).size).toBe(4);
+    for (const entry of created) expect(entry.emailConfirm).toBe(true);
+
+    // Profiles: divine is the SUPER ADMIN; the others are admins. No team
+    // (org-level, the super_admin fixture precedent); mfa_enrolled false so
+    // the first sign-in hits the forced setup window.
+    expect(repo.profiles).toHaveLength(4);
+    const divine = repo.profiles.find((p) => p.email === 'divine@vunvault.com');
+    expect(divine).toMatchObject({
+      fullName: 'Divine Gospel',
+      role: 'super_admin',
+      team: null,
+      accessTier: 'elevated',
+      jobTitle: null,
+    });
+    const daniel = repo.profiles.find((p) => p.email === 'daniel@vunvault.com');
+    expect(daniel).toMatchObject({
+      fullName: 'Daniel Okafor',
+      role: 'admin',
+      team: null,
+      accessTier: 'standard',
+      jobTitle: 'Security and Project Coordinator',
+    });
+    const tshepiso = repo.profiles.find((p) => p.email === 'tshepiso@vunvault.com');
+    expect(tshepiso).toMatchObject({ fullName: 'Raphunga Tshepiso', jobTitle: 'Research Analyst' });
+    const bukenya = repo.profiles.find((p) => p.email === 'bukenya@vunvault.com');
+    expect(bukenya).toMatchObject({
+      fullName: 'Bukenoya Natasha',
+      jobTitle: 'Cybersecurity Analyst',
+    });
+    for (const profile of repo.profiles) {
+      expect(profile.joinedAt).toEqual(NOW);
+      expect(profile.scopeNotes).toContain('roster');
+    }
+    for (const row of repo.staff.filter(
+      (r) => r.email.endsWith('@vunvault.com') && summary.created.some((c) => c.email === r.email),
+    )) {
+      expect(row.mfaEnrolled).toBe(false);
+      expect(row.accountStatus).toBe('active');
+    }
+  });
+
+  it('is idempotent: a second pass creates nothing', async () => {
+    const { service, repo, created } = makeService();
+    await service.provisionAdminRoster();
+
+    const second = await service.provisionAdminRoster();
+    expect(second.created).toEqual([]);
+    expect(second.roleCorrected).toEqual([]);
+    expect(second.skipped).toHaveLength(4);
+    expect(created).toHaveLength(4); // no duplicate Supabase users
+    expect(repo.profiles).toHaveLength(4);
+  });
+
+  it('corrects a drifted role instead of recreating the identity', async () => {
+    const { service, repo, created } = makeService();
+    repo.staff.push(
+      staffRow('b1000000-0000-4000-8000-0000000000d1', {
+        fullName: 'Daniel Okafor',
+        email: 'daniel@vunvault.com',
+        role: 'security_analyst',
+      }),
+    );
+
+    const summary = await service.provisionAdminRoster();
+    expect(summary.roleCorrected).toEqual([
+      {
+        userId: 'b1000000-0000-4000-8000-0000000000d1',
+        email: 'daniel@vunvault.com',
+        role: 'admin',
+      },
+    ]);
+    expect(summary.created.map((entry) => entry.email)).not.toContain('daniel@vunvault.com');
+    expect(created).toHaveLength(3);
+    expect(repo.staff.find((row) => row.email === 'daniel@vunvault.com')?.role).toBe('admin');
+  });
+
+  it('leaves the existing staff roster untouched', async () => {
+    const { service, repo } = makeService();
+    await service.provisionAdminRoster();
+    // Reed, Otieno and Yusuf predate the roster and are not slots on it.
+    expect(repo.staff.find((row) => row.id === ADMIN_ID)?.role).toBe('super_admin');
+    expect(repo.staff.find((row) => row.id === OTHER_ADMIN_ID)?.role).toBe('security_analyst');
+    expect(repo.staff).toHaveLength(7); // 3 seeded + 4 provisioned
+  });
+});

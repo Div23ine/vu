@@ -32,9 +32,11 @@ export const PUBLIC_ROUTES: readonly string[] = [
   'POST /api/v1/auth/signup',
   'POST /api/v1/auth/signup/verify-email',
   'POST /api/v1/auth/signup/resend',
-  'POST /api/v1/auth/forgot-password',
-  'POST /api/v1/auth/reset-password',
-  'POST /api/v1/auth/login',
+  // Phase 1 (magic-link work order): the login surface. The request answers one
+  // generic literal for every address; the verify leg authenticates with a
+  // single-use, TTL'd, email-bound HMAC token that dies on consumption.
+  'POST /api/v1/auth/magic-link',
+  'GET /api/v1/auth/magic-link/verify',
   // OAuth PKCE (Task 40e): the `state` cookie + Redis record is the CSRF bound,
   // and the callback's code is worthless without the PKCE verifier.
   'GET /api/v1/auth/oauth/:provider/start',
@@ -43,6 +45,11 @@ export const PUBLIC_ROUTES: readonly string[] = [
   'POST /api/v1/auth/mfa/email-otp',
   'POST /api/v1/auth/mfa/webauthn/options',
   'POST /api/v1/auth/mfa/recovery',
+  // Phase 2 (forced first-sign-in setup): same `vv_mfa` challenge-cookie guard
+  // as the siblings above, and the challenge must carry the setup marker.
+  'POST /api/v1/auth/mfa/setup/options',
+  'POST /api/v1/auth/mfa/setup/verify',
+  'POST /api/v1/auth/mfa/setup/abandon',
   'POST /api/v1/auth/refresh',
   'GET /api/v1/auth/csrf',
   // A staff invitation carries its own one-time token.
@@ -100,10 +107,6 @@ export const AUDIT_EXEMPT: readonly string[] = [
   // intention is not a fact about a person; the verification that follows is
   // (`ACCOUNT_REGISTERED` with `stage: "email_verified"`).
   'POST /api/v1/auth/signup/resend',
-  // Task 40d: forgot-password must answer identically for known and unknown
-  // addresses, and "a reset was requested" is exactly the fact an enumerator
-  // would read off the chain. The successful RESET is audited (`PASSWORD_CHANGED`).
-  'POST /api/v1/auth/forgot-password',
   // Starts a WebAuthn ceremony; only its completion is a decision worth recording.
   'POST /api/v1/auth/mfa/webauthn/options',
   // A machine actor; entries are appended inside the service (see above).
@@ -156,6 +159,9 @@ export const NO_BODY_MUTATIONS: readonly string[] = [
   'POST /api/v1/auth/refresh',
   'POST /api/v1/auth/mfa/email-otp',
   'POST /api/v1/auth/mfa/webauthn/options',
+  // Phase 2 (forced setup): the `vv_mfa` challenge cookie IS the input.
+  'POST /api/v1/auth/mfa/setup/options',
+  'POST /api/v1/auth/mfa/setup/abandon',
   // The provider signs the raw bytes; a JSON body schema would re-parse them.
   'POST /api/v1/webhooks/stripe',
   'POST /api/v1/webhooks/paystack',
@@ -196,6 +202,10 @@ export const NO_JSON_RESPONSE: readonly string[] = [
   // Task 40e: bare 302s. The browser follows them; there is no body to shape.
   'GET /api/v1/auth/oauth/:provider/start',
   'GET /api/v1/auth/oauth/callback',
+  // Phase 1: the emailed link lands here and the browser is redirected to the
+  // web MFA screen (or the login screen with an error code). The pre-MFA state
+  // travels in the HttpOnly `vv_mfa` cookie, never in a body.
+  'GET /api/v1/auth/magic-link/verify',
 ];
 
 /** Routes the CSRF double-submit check must not apply to, and why. */
@@ -224,12 +234,15 @@ export const CSRF_EXEMPT: readonly string[] = [
  * ones an attacker automates first.
  */
 export const RATE_LIMITED_ROUTES: readonly string[] = [
-  'POST /api/v1/auth/login',
+  'POST /api/v1/auth/magic-link',
+  'GET /api/v1/auth/magic-link/verify',
+  'POST /api/v1/auth/mfa/verify',
+  'POST /api/v1/auth/mfa/setup/options',
+  'POST /api/v1/auth/mfa/setup/verify',
+  'POST /api/v1/auth/mfa/setup/abandon',
   'POST /api/v1/auth/signup',
   'POST /api/v1/auth/signup/verify-email',
   'POST /api/v1/auth/signup/resend',
-  'POST /api/v1/auth/forgot-password',
-  'POST /api/v1/auth/reset-password',
   'POST /api/v1/contact',
   'POST /api/v1/consent',
   'POST /api/v1/account/password',

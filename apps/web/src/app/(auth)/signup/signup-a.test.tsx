@@ -378,6 +378,28 @@ describe('SignupCard — submit outcomes', () => {
     expect(useSignupStore.getState().open).toBe(false);
   });
 
+  it('422 signup_not_allowed becomes the spec refusal on email (Phase 4 guard)', async () => {
+    const user = userEvent.setup();
+    renderCard();
+    mockSignup(
+      http.post('*/api/v1/auth/signup', () =>
+        HttpResponse.json(
+          { error: 'signup_not_allowed', message: 'This email is not eligible for signup.' },
+          { status: 422 },
+        ),
+      ),
+    );
+    await fillForm(user);
+    await user.click(screen.getByRole('button', { name: 'Sign Up' }));
+    expect(await screen.findByText('This email is not eligible for signup.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Email address')).toHaveAttribute('aria-invalid', 'true');
+    // The refusal must NOT be mistaken for the breached-password copy.
+    expect(
+      screen.queryByText('This password has appeared in a data breach. Choose a different one.'),
+    ).toBeNull();
+    expect(useSignupStore.getState().open).toBe(false);
+  });
+
   it('429 toasts the rate-limit copy', async () => {
     const user = userEvent.setup();
     renderCard();

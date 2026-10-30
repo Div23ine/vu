@@ -9,7 +9,7 @@ import { apiPost } from '../../../../../lib/api';
  * sending). Success invalidates the users namespace so the roster's pending
  * slice and the summary tiles refresh.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export function useProvisionInvite() {

@@ -1,6 +1,6 @@
 /**
  * `(auth)` — the unauthenticated flows: `/login`, `/signup`, `/accept-invite`,
- * `/forgot-password`, `/reset-password`, `/newsletter/confirm`.
+ * `/newsletter/confirm`.
  *
  * an earlier iteration turns the pass-through into the full-screen auth shell: the
  * animated background plus a centred overlay the cards sit in. No marketing

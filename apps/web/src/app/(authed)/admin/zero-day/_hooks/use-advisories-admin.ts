@@ -25,7 +25,7 @@ import { apiGet, apiPatch, apiPost, apiPut } from '../../../../../lib/api';
  * Every write invalidates the whole `admin-advisories` namespace so the tiles,
  * the drafts panel and the published table cannot drift apart.
  *
- * No `'use client'` directive (the `use-login.ts` pattern).
+ * No `'use client'` directive (the directive-free hook-module pattern).
  */
 
 export const ADMIN_ADVISORIES_KEY = ['admin-advisories'] as const;

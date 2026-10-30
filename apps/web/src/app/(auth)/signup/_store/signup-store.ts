@@ -35,8 +35,7 @@ export const useSignupStore = create<SignupState>((set) => ({
 }));
 
 /**
- * Convenience accessor mirroring an earlier iteration's `useMfaDialog()` shape:
- * `useSignupDialog().open({ email, fullName })` / `.close()`.
+ * Convenience accessor: `useSignupDialog().open({ email, fullName })` / `.close()`.
  */
 export function useSignupDialog() {
   const start = useSignupStore((state) => state.start);
