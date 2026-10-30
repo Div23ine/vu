@@ -52,6 +52,8 @@ function staffRow(id: string, overrides: Partial<StaffRow> = {}): StaffRow {
 }
 
 class FakeUsersRepo implements UsersRepo {
+  /** Test seam: make the next createProfile throw (compensation coverage). */
+  failCreateProfile = false;
   staff: Array<StaffRow & { require2fa?: boolean; deletedAt?: string | null }> = [
     staffRow(ADMIN_ID),
     staffRow(OTHER_ADMIN_ID, {
@@ -187,6 +189,7 @@ class FakeUsersRepo implements UsersRepo {
     return row;
   }
   async createProfile(input: CreateProfileInput) {
+    if (this.failCreateProfile) throw new Error('profile write failed');
     this.profiles.push(input);
     this.staff.push(
       staffRow(input.userId, {
@@ -231,31 +234,40 @@ class FakeUsersRepo implements UsersRepo {
   }
 }
 
-function fakeSupabase() {
+function fakeSupabase(options: { failSignIn?: boolean } = {}) {
   const created: Array<{ email: string; emailConfirm?: boolean }> = [];
   const deleted: string[] = [];
+  const deletedUsers: string[] = [];
   return {
     created,
     deleted,
+    deletedUsers,
     supabase: {
       createUser: async (input: { email: string; emailConfirm?: boolean }) => {
         created.push(input);
         return { id: 'b1000000-0000-4000-8000-0000000000ff' };
       },
-      signInWithPassword: async () => ({
-        session: {
-          accessToken: 'access-token',
-          refreshToken: 'refresh-token',
-          expiresIn: 3600,
-          sessionId: 'new-session-id',
-          userId: 'b1000000-0000-4000-8000-0000000000ff',
-          aal: 'aal1' as const,
-          mfaMethod: null,
-        },
-        userId: 'b1000000-0000-4000-8000-0000000000ff',
-        mfaRequired: false,
-        factors: [],
-      }),
+      signInWithPassword: async () =>
+        options.failSignIn === true
+          ? { session: null, userId: 'x', mfaRequired: false, factors: [] }
+          : {
+              session: {
+                accessToken: 'access-token',
+                refreshToken: 'refresh-token',
+                expiresIn: 3600,
+                sessionId: 'new-session-id',
+                userId: 'b1000000-0000-4000-8000-0000000000ff',
+                aal: 'aal1' as const,
+                mfaMethod: null,
+              },
+              userId: 'b1000000-0000-4000-8000-0000000000ff',
+              mfaRequired: false,
+              factors: [],
+            },
+      deleteUser: async (userId: string) => {
+        deletedUsers.push(userId);
+      },
+      findAuthUserByEmail: async () => null,
       refresh: async () => {
         throw new Error('unused');
       },
@@ -282,10 +294,13 @@ interface Harness {
   emails: Array<{ to: string; subject: string; text?: string }>;
   created: Array<{ email: string; emailConfirm?: boolean }>;
   deleted: string[];
+  deletedUsers: string[];
   invalidated: string[];
 }
 
-function makeService(options: { breach?: boolean; admins?: number } = {}): Harness {
+function makeService(
+  options: { breach?: boolean; admins?: number; failSignIn?: boolean } = {},
+): Harness {
   const repo = new FakeUsersRepo();
   if (options.admins !== undefined) {
     repo.staff = repo.staff.filter((row) => row.role !== 'super_admin');
@@ -299,7 +314,9 @@ function makeService(options: { breach?: boolean; admins?: number } = {}): Harne
   }
   const emails: Array<{ to: string; subject: string; text?: string }> = [];
   const invalidated: string[] = [];
-  const { supabase, created, deleted } = fakeSupabase();
+  const { supabase, created, deleted, deletedUsers } = fakeSupabase({
+    failSignIn: options.failSignIn,
+  });
 
   const service = new UsersService({
     repo,
@@ -318,7 +335,7 @@ function makeService(options: { breach?: boolean; admins?: number } = {}): Harne
     now: () => NOW,
     randomToken: () => TOKEN,
   });
-  return { service, repo, emails, created, deleted, invalidated };
+  return { service, repo, emails, created, deleted, deletedUsers, invalidated };
 }
 
 const INVITE_BODY: ProvisionInviteBody = {
@@ -710,6 +727,26 @@ describe('invitation acceptance', () => {
     expect(breachedRepo.invitations[0]?.status).toBe('pending');
   });
 
+  it('compensates: deletes the confirmed auth user when sign-in withholds the session', async () => {
+    const { service, created, deletedUsers } = makeService({ failSignIn: true });
+    await service.createInvitation(SUPER_ADMIN, INVITE_BODY);
+
+    const failure = await service
+      .accept(
+        TOKEN,
+        { password: PASSWORD, confirmPassword: PASSWORD },
+        { ip: '1.1.1.1', userAgent: null },
+      )
+      .catch((caught: unknown) => caught);
+
+    expect((failure as HttpError).status).toBe(502);
+    expect((failure as HttpError).code).toBe('upstream_error');
+    // The user WAS created in Supabase, then compensated away — no orphan
+    // survives the rolled-back acceptance.
+    expect(created).toHaveLength(1);
+    expect(deletedUsers).toEqual(['b1000000-0000-4000-8000-0000000000ff']);
+  });
+
   it('cannot be replayed: the token is spent', async () => {
     const { service } = makeService();
     await service.createInvitation(SUPER_ADMIN, INVITE_BODY);
@@ -1017,5 +1054,17 @@ describe('provisionAdminRoster (Phase 2 provisioning)', () => {
     expect(repo.staff.find((row) => row.id === ADMIN_ID)?.role).toBe('super_admin');
     expect(repo.staff.find((row) => row.id === OTHER_ADMIN_ID)?.role).toBe('security_analyst');
     expect(repo.staff).toHaveLength(7); // 3 seeded + 4 provisioned
+  });
+
+  it('compensates: a failed profile write never leaves the auth user behind', async () => {
+    const { service, repo, created, deletedUsers } = makeService();
+    repo.failCreateProfile = true;
+
+    // The first slot (daniel@) creates its Supabase user, then the profile
+    // write fails — provisioning must delete that user before the error escapes,
+    // so no confirmed account exists for a slot that never completed.
+    await expect(service.provisionAdminRoster()).rejects.toThrow('profile write failed');
+    expect(created).toHaveLength(1);
+    expect(deletedUsers).toEqual(['b1000000-0000-4000-8000-0000000000ff']);
   });
 });

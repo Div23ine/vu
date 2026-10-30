@@ -239,6 +239,9 @@ class FakeSupabase implements SupabaseAdmin {
   async deleteUser(userId: string) {
     this.deletedUsers.push(userId);
   }
+  async findAuthUserByEmail() {
+    return null;
+  }
   async signInWithPassword(): Promise<SignInResult> {
     throw new Error('not used');
   }

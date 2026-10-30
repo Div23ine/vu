@@ -324,57 +324,71 @@ export class UsersService {
       },
     });
 
-    await this.repo.createProfile({
-      userId: created.id,
-      email: invitation.email,
-      fullName: invitation.fullName,
-      jobTitle: invitation.jobTitle,
-      baseLocation: invitation.baseLocation,
-      role: invitation.role,
-      team: invitation.team,
-      accessTier: invitation.accessTier,
-      scopeNotes: invitation.scopeNotes,
-      accessReviewDue: invitation.accessReviewDue,
-      joinedAt: now,
-    });
-    await this.repo.updateInvitation(invitation.id, { status: 'accepted', tokenHash: null });
-
-    // Signing in immediately means the new colleague lands in the product at aal1:
-    // every /admin/* route answers `mfa_required` until they enrol a factor.
-    const signed = await this.supabase.signInWithPassword(invitation.email, body.password);
-    const session = signed.session as SupabaseSession | null;
-    if (session === null) {
-      throw new HttpError(502, 'upstream_error', 'The identity provider did not return a session');
-    }
-    const sessionId = session.sessionId ?? created.id;
-    await this.repo.recordSession({
-      sessionId,
-      userId: created.id,
-      deviceLabel: deviceLabel(meta.userAgent),
-      userAgent: meta.userAgent,
-      ip: meta.ip,
-      mfaMethod: null,
-      startedAt: now,
-    });
-
-    return {
-      user: {
-        id: created.id,
+    // GoTrue cannot join the PG transaction this acceptance runs in: if ANY
+    // step after the create fails, the transaction rolls back (the invitation
+    // stays claimable) but the CONFIRMED auth user would survive — poisoning
+    // the retry with `email_taken` and leaving an account that never followed
+    // the workflow. Compensate by deleting it before rethrowing.
+    try {
+      await this.repo.createProfile({
+        userId: created.id,
         email: invitation.email,
         fullName: invitation.fullName,
+        jobTitle: invitation.jobTitle,
+        baseLocation: invitation.baseLocation,
         role: invitation.role,
-        orgId: null,
-        permissions: [...ROLE_PERMISSIONS[invitation.role]],
-        mfaEnrolled: false,
-      },
-      tokens: {
-        accessToken: session.accessToken,
-        refreshToken: session.refreshToken,
-        expiresIn: session.expiresIn,
-      },
-      sessionId,
-      mfaEnrolmentRequired: true,
-    };
+        team: invitation.team,
+        accessTier: invitation.accessTier,
+        scopeNotes: invitation.scopeNotes,
+        accessReviewDue: invitation.accessReviewDue,
+        joinedAt: now,
+      });
+      await this.repo.updateInvitation(invitation.id, { status: 'accepted', tokenHash: null });
+
+      // Signing in immediately means the new colleague lands in the product at aal1:
+      // every /admin/* route answers `mfa_required` until they enrol a factor.
+      const signed = await this.supabase.signInWithPassword(invitation.email, body.password);
+      const session = signed.session as SupabaseSession | null;
+      if (session === null) {
+        throw new HttpError(
+          502,
+          'upstream_error',
+          'The identity provider did not return a session',
+        );
+      }
+      const sessionId = session.sessionId ?? created.id;
+      await this.repo.recordSession({
+        sessionId,
+        userId: created.id,
+        deviceLabel: deviceLabel(meta.userAgent),
+        userAgent: meta.userAgent,
+        ip: meta.ip,
+        mfaMethod: null,
+        startedAt: now,
+      });
+
+      return {
+        user: {
+          id: created.id,
+          email: invitation.email,
+          fullName: invitation.fullName,
+          role: invitation.role,
+          orgId: null,
+          permissions: [...ROLE_PERMISSIONS[invitation.role]],
+          mfaEnrolled: false,
+        },
+        tokens: {
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+          expiresIn: session.expiresIn,
+        },
+        sessionId,
+        mfaEnrolmentRequired: true,
+      };
+    } catch (error) {
+      await this.supabase.deleteUser(created.id).catch(() => undefined);
+      throw error;
+    }
   }
 
   private async findUsableInvitation(rawToken: string): Promise<InvitationRow> {
@@ -496,19 +510,27 @@ export class UsersService {
         emailConfirm: true,
         userMetadata: { full_name: slot.fullName, provisioned_by: 'admin-roster' },
       });
-      await this.repo.createProfile({
-        userId: id,
-        email: slot.email,
-        fullName: slot.fullName,
-        jobTitle: slot.jobTitle,
-        baseLocation: null,
-        role: slot.role,
-        team: null, // org-level administrators: the fixture precedent (super_admin) has no team
-        accessTier: slot.role === 'super_admin' ? 'elevated' : 'standard',
-        scopeNotes: 'Provisioned from the administrator roster (Phase 2)',
-        accessReviewDue: null,
-        joinedAt: this.now(),
-      });
+      // GoTrue cannot join the provisioning transaction: if the profile write
+      // fails, the confirmed auth user would survive the rollback — an account
+      // that never followed the workflow, poisoning the slot for every retry.
+      try {
+        await this.repo.createProfile({
+          userId: id,
+          email: slot.email,
+          fullName: slot.fullName,
+          jobTitle: slot.jobTitle,
+          baseLocation: null,
+          role: slot.role,
+          team: null, // org-level administrators: the fixture precedent (super_admin) has no team
+          accessTier: slot.role === 'super_admin' ? 'elevated' : 'standard',
+          scopeNotes: 'Provisioned from the administrator roster (Phase 2)',
+          accessReviewDue: null,
+          joinedAt: this.now(),
+        });
+      } catch (error) {
+        await this.supabase.deleteUser(id).catch(() => undefined);
+        throw error;
+      }
       summary.created.push({ userId: id, email: slot.email, role: slot.role });
     }
     return summary;

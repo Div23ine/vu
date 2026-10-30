@@ -70,6 +70,15 @@ export interface SupabaseAdmin {
   /** Task 40d: remove an unverified (or stale pending) auth user. */
   deleteUser(userId: string): Promise<void>;
   /**
+   * Locate the GoTrue auth user owning an email address (paginated admin scan;
+   * `null` when nobody owns it). Signup and roster provisioning use it to
+   * detect ORPHANED auth users — rows GoTrue wrote for a transaction that
+   * later rolled back, which GoTrue cannot roll back with it. An unconfirmed
+   * orphan with no profile behind it poisons the address for every future
+   * signup (`email_taken`), so the flows reclaim it instead of failing.
+   */
+  findAuthUserByEmail(email: string): Promise<{ id: string; emailConfirmedAt: boolean } | null>;
+  /**
    * Task 40e: the Supabase `/auth/v1/authorize` URL the browser is redirected to
    * to start an OAuth PKCE flow.
    */
@@ -287,6 +296,26 @@ export function createSupabaseAdmin(options: SupabaseAdminOptions): SupabaseAdmi
     async deleteUser(userId) {
       const { error } = await admin.auth.admin.deleteUser(userId);
       if (error !== null) fail(error);
+    },
+
+    async findAuthUserByEmail(email) {
+      const wanted = email.trim().toLowerCase();
+      const perPage = 50;
+      // Loop to the first EMPTY page rather than trusting `length < perPage`:
+      // a server that clamps per_page lower than requested would otherwise end
+      // the scan early and miss the user. 200 pages = 10 000 users of cover.
+      for (let page = 1; page <= 200; page += 1) {
+        const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+        if (error !== null) fail(error);
+        const users = data.users ?? [];
+        for (const user of users) {
+          if ((user.email ?? '').trim().toLowerCase() === wanted) {
+            return { id: user.id, emailConfirmedAt: user.email_confirmed_at !== null };
+          }
+        }
+        if (users.length === 0) return null;
+      }
+      return null;
     },
 
     buildAuthorizeUrl({ provider, redirectTo, codeChallenge, state }) {

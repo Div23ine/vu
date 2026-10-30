@@ -3,6 +3,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Env } from '../../../config/env.js';
+import { SupabaseError } from '../../../lib/supabase-admin.js';
 import type { SignInResult, SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
 import { memoryKvStore } from './challenge.js';
 import { SIGNUP_OTP_PREFIX, SIGNUP_OTP_RESEND_SECONDS, type SignupOtpRecord } from './email-otp.js';
@@ -184,9 +185,22 @@ class FakeSupabase implements SupabaseAdmin {
   issuedSessions: string[] = [];
   deletedUsers: string[] = [];
   passwordUpdates: Array<{ userId: string; password: string }> = [];
+  createdUsers: string[] = [];
+  /** Throws `email_taken` from the NEXT createUser call, once. */
+  failCreateOnceWith: 'email_taken' | null = null;
+  /** What findAuthUserByEmail reports (the orphan probe). */
+  authUserByEmail: { id: string; emailConfirmedAt: boolean } | null = null;
 
   async createUser() {
+    if (this.failCreateOnceWith === 'email_taken') {
+      this.failCreateOnceWith = null;
+      throw new SupabaseError('email_taken', 'User already registered', 422);
+    }
+    this.createdUsers.push(USER_ID);
     return { id: USER_ID };
+  }
+  async findAuthUserByEmail() {
+    return this.authUserByEmail;
   }
   async confirmEmail(userId: string) {
     this.confirmedUsers.push(userId);
@@ -254,6 +268,8 @@ interface Harness {
     details: Record<string, unknown>;
   }>;
   emails: Array<{ to: string; subject: string; text?: string }>;
+  /** Makes every subsequent email send throw — the provider-outage seam. */
+  failEmailSend: (error: Error) => void;
 }
 
 async function makeHarness(): Promise<Harness> {
@@ -306,8 +322,10 @@ async function makeHarness(): Promise<Harness> {
     },
     publish: async () => undefined,
   } as unknown as FastifyInstance['audit']);
+  let emailFailure: Error | null = null;
   app.decorate('email', {
     send: async (message: { to: string; subject: string; text?: string }) => {
+      if (emailFailure !== null) throw emailFailure;
       emails.push(message);
       return { id: 'email-1' };
     },
@@ -345,7 +363,17 @@ async function makeHarness(): Promise<Harness> {
     { prefix: '/api/v1' },
   );
 
-  return { app, repo, supabase, kv, audits, emails };
+  return {
+    app,
+    repo,
+    supabase,
+    kv,
+    audits,
+    emails,
+    failEmailSend: (error: Error) => {
+      emailFailure = error;
+    },
+  };
 }
 
 function otpKey(email: string): string {
@@ -539,5 +567,71 @@ describe('POST /api/v1/auth/signup/resend', () => {
     });
     expect(response.statusCode).toBe(202);
     expect(harness.emails).toHaveLength(0);
+  });
+});
+
+// ------------------------------------------- signup workflow integrity (P7)
+//
+// The guarantee under test: an account exists in Supabase if and only if the
+// signup workflow is being followed. A failed transaction must never leave an
+// auth user behind (compensation), and a leftover orphan must never wedge the
+// address for the next honest attempt (self-heal).
+
+describe('POST /api/v1/auth/signup — Supabase-side workflow integrity', () => {
+  function signupWith(email = SIGNUP_BODY.email) {
+    return harness.app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/signup',
+      payload: { ...SIGNUP_BODY, email },
+    });
+  }
+
+  it('deletes the auth user when a step AFTER createUser fails (email provider down)', async () => {
+    harness.failEmailSend(new Error('provider outage'));
+
+    const response = await signupWith();
+    expect(response.statusCode).toBe(500);
+
+    // The unconfirmed auth user is compensated away — no orphan survives the
+    // rolled-back transaction, and nothing was confirmed or issued.
+    expect(harness.supabase.createdUsers).toEqual([USER_ID]);
+    expect(harness.supabase.deletedUsers).toEqual([USER_ID]);
+    expect(harness.supabase.confirmedUsers).toEqual([]);
+    expect(harness.supabase.issuedSessions).toEqual([]);
+  });
+
+  it('self-heals an unconfirmed orphan: email_taken, then delete + retry succeeds', async () => {
+    harness.supabase.failCreateOnceWith = 'email_taken';
+    harness.supabase.authUserByEmail = { id: 'orphan-id', emailConfirmedAt: false };
+
+    const response = await signupWith();
+    expect(response.statusCode, response.body).toBe(202);
+
+    // The orphan was reclaimed and the honest signup went through.
+    expect(harness.supabase.deletedUsers).toEqual(['orphan-id']);
+    expect(harness.supabase.createdUsers).toEqual([USER_ID]);
+    expect(harness.emails).toHaveLength(1);
+  });
+
+  it('NEVER deletes a confirmed auth user — genuine drift stays a 409', async () => {
+    harness.supabase.failCreateOnceWith = 'email_taken';
+    harness.supabase.authUserByEmail = { id: 'confirmed-id', emailConfirmedAt: true };
+
+    const response = await signupWith();
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toMatchObject({ error: 'email_taken' });
+
+    // Fail closed: a confirmed identity is never deleted by the signup path.
+    expect(harness.supabase.deletedUsers).toEqual([]);
+    expect(harness.supabase.createdUsers).toEqual([]);
+  });
+
+  it('email_taken with no orphan found still surfaces 409 (no delete)', async () => {
+    harness.supabase.failCreateOnceWith = 'email_taken';
+    harness.supabase.authUserByEmail = null;
+
+    const response = await signupWith();
+    expect(response.statusCode).toBe(409);
+    expect(harness.supabase.deletedUsers).toEqual([]);
   });
 });

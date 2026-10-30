@@ -527,6 +527,63 @@ types?', …)` debug line (work order §7: fix all boot errors _and warnings_).
     provisions can leave orphan `auth.users` rows; stub user lookup prefers `profiles`. One
     orphan (`daniel@`) was cleaned during verification.
 
+### 2026-10-29 — Signup workflow integrity: no Supabase account unless the workflow completes
+
+- **Changed:** Hardened the signup authentication/authorization workflow so a Supabase (GoTrue)
+  auth user exists **if and only if** the workflow is being followed — a failed step never leaves
+  an account behind, and leftover debris never wedges the address for the next honest attempt.
+  The defect: `signup()` calls `supabase.createUser` FIRST (unconfirmed), then does the org /
+  profile / OTP / email-send work inside the route's PG transaction. GoTrue cannot join that
+  transaction, so if ANY later step threw — most realistically the email provider being down at
+  `sendSignupCode` — the PG work rolled back but the unconfirmed auth user **survived**, both
+  violating the workflow (an account with no completed signup) and poisoning the address (every
+  retry hit GoTrue `email_taken` → 409 forever). The staff paths (`accept` invitation,
+  `provisionAdminRoster`) had the same rollback gap.
+  - **`apps/api/src/lib/supabase-admin.ts`** — new `findAuthUserByEmail(email)` on the
+    `SupabaseAdmin` interface + implementation: a paginated `listUsers` scan (loops to the first
+    EMPTY page so a server that clamps `per_page` cannot truncate the search) returning
+    `{ id, emailConfirmedAt }` or `null`. `plugins/auth.ts`'s unconfigured-admin literal gets the
+    matching `fail` stub.
+  - **`apps/api/src/routes/v1/auth/service.ts` (`signup`)** — (1) **Compensation:** everything
+    after `createUser` is wrapped so any failure best-effort `deleteUser`s the unconfirmed auth
+    user before rethrowing — the rolled-back transaction leaves no Supabase account. (2)
+    **Self-heal:** if `createUser` fails `email_taken` while no profile row exists, the address is
+    probed with `findAuthUserByEmail`; an **unconfirmed** orphan (debris of a prior rolled-back
+    signup) is deleted and the create retried ONCE, so an honest signup is never wedged. A
+    **confirmed** auth user with no profile is genuine drift → fail closed with the original
+    `email_taken` (the route maps it to 409); a confirmed identity is NEVER deleted by signup.
+  - **`apps/api/src/routes/v1/users/service.ts`** — the same compensation guard around
+    `accept` (a confirmed user created for an invitation is deleted if the profile write, the
+    invitation update, or the immediate sign-in fails — e.g. the provider withholds the session → 502) and around `provisionAdminRoster` (a slot's user is deleted if its profile write fails).
+    No self-heal here: roster provisioning is already idempotent via its `findByEmail` profile
+    check, and these are operator-driven paths, not the public workflow.
+  - **Sandbox stub (`scratch/stub-server.mjs`, uncommitted)** — made the GoTrue stub faithful so
+    the guarantee is testable live: `POST /admin/users` now REJECTS a duplicate email with 422
+    `user_already_exists` (it previously inserted blindly), tracks a real `email_confirmed_at`
+    (added the column to the `auth.users` shim and backfilled active profiles), `PUT` persists
+    confirmation, `DELETE` removes the PG row, and a new paginated `GET /admin/users` backs
+    `listUsers`. `userJson` now reports `email_confirmed_at` truthfully (was always "now").
+- **Files:** `apps/api/src/lib/supabase-admin.ts`, `apps/api/src/plugins/auth.ts`,
+  `apps/api/src/routes/v1/auth/service.ts`, `apps/api/src/routes/v1/users/service.ts`, and the
+  test fakes/cases in `signup-verify.test.ts`, `users.test.ts`, `auth.test.ts`, `oauth.test.ts`.
+- **Reason:** Stakeholder directive — "make sure the signup authentication doesn't fail and it
+  should follow the workflow; if not, don't create an account in Supabase." The authorization
+  gates were already correct (a `pending_verification` profile can neither complete signup nor
+  borrow a magic link — `verifyMagicLink` requires `accountStatus === 'active'`); this closes the
+  account-lifecycle gap so an incomplete/failed workflow cannot leave a Supabase account behind.
+- **Verification:** `tsc -p tsconfig.build.json --noEmit` ✅ (source); eslint on all eight files
+  ✅; full API suite **1017/1017 (55 files)** ✅ — up from 1011 with **6 new tests**: signup
+  deletes the auth user when the OTP email send fails; signup self-heals an unconfirmed orphan
+  (`email_taken` → delete → retry → 202); signup NEVER deletes a confirmed orphan (stays 409);
+  `email_taken` with no orphan found still 409s (no delete); invitation `accept` deletes the
+  confirmed user when sign-in withholds the session (502); `provisionAdminRoster` deletes the
+  slot's user when the profile write fails. **Live** against the booted API + stub
+  (`scratch/signup-verify.mjs`, output `scratch/signup-verify-result.txt`): **27/27** — happy path
+  (unconfirmed on signup → confirmed + active + `vv_at` only after the OTP), wrong-code failure
+  (401, auth user stays unconfirmed, profile stays pending, no session, correct code recovers),
+  unconfirmed-orphan self-heal (202, orphan id reclaimed, fresh user + profile), confirmed-orphan
+  fail-closed (409, orphan untouched, no profile). Main Phase-7 smoke re-run still **35/35**.
+
 ## Definition of Done — status
 
 | #   | Criterion (work order)                                                                      | Status | Where                                                                                                   |

@@ -6,6 +6,7 @@ import {
 } from '@vunvault/contracts';
 import type { BreachCheck } from '../../../lib/breach.js';
 import { HttpError } from '../../../lib/http-error.js';
+import { SupabaseError } from '../../../lib/supabase-admin.js';
 import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
 import type { EmailProvider } from '../../../providers/email.js';
 import type { MfaSetupStore } from './challenge.js';
@@ -370,44 +371,75 @@ export class AuthService {
     // Mailbox ownership IS verified (Task 40d replaces the v1 decision): the user
     // is created unconfirmed and Supabase's own mailer stays off — the OTP below
     // is ours.
-    const created = await this.deps.supabase.createUser({
+    const authUser = {
       email,
       password: input.password,
       emailConfirm: false,
       userMetadata: { fullName: input.fullName },
-    });
+    };
+    let created: { id: string };
+    try {
+      created = await this.deps.supabase.createUser(authUser);
+    } catch (error) {
+      // Self-heal: no profile row exists at this point (checked above), so an
+      // auth user owning the address can only be debris from an earlier signup
+      // whose transaction rolled back AFTER GoTrue had written — an unconfirmed
+      // orphan that would otherwise poison the address for every future attempt
+      // (`email_taken` → 409 forever). Reclaim it and retry, ONCE. A CONFIRMED
+      // auth user without a profile is genuine drift, not debris: fail closed
+      // and let an operator look — a confirmed identity is never deleted here.
+      if (!(error instanceof SupabaseError) || error.code !== 'email_taken') throw error;
+      const orphan = await this.deps.supabase.findAuthUserByEmail(email).catch(() => null);
+      if (orphan === null || orphan.emailConfirmedAt) throw error;
+      this.warn(`reclaiming orphaned unconfirmed auth user for ${email}`);
+      await this.deps.supabase.deleteUser(orphan.id);
+      created = await this.deps.supabase.createUser(authUser);
+    }
 
-    const { firstName, lastName } = splitName(input.fullName);
-    const clientCode = await this.deps.repo.nextClientCode();
-    const organizationName =
-      input.accountType === 'individual'
-        ? input.fullName
-        : input.description?.trim() || input.fullName;
+    // Everything below runs inside the route's PG transaction, which GoTrue
+    // cannot join: if ANY step fails (org/profile write, OTP issue, or the
+    // email provider being down), the transaction rolls back but the auth user
+    // above survives — an unconfirmed orphan that both violates the workflow
+    // (an account exists without the signup having completed) and blocks the
+    // address for the next attempt. Compensate by deleting it before rethrowing.
+    try {
+      const { firstName, lastName } = splitName(input.fullName);
+      const clientCode = await this.deps.repo.nextClientCode();
+      const organizationName =
+        input.accountType === 'individual'
+          ? input.fullName
+          : input.description?.trim() || input.fullName;
 
-    const orgId = await this.deps.repo.createOrganization({
-      name: organizationName,
-      clientCode,
-      country: input.country,
-    });
+      const orgId = await this.deps.repo.createOrganization({
+        name: organizationName,
+        clientCode,
+        country: input.country,
+      });
 
-    await this.deps.repo.createProfile({
-      id: created.id,
-      orgId,
-      email,
-      fullName: input.fullName,
-      firstName,
-      lastName,
-      phone: input.phone ?? null,
-      country: input.country,
-      accountType: input.accountType,
-      role: 'client',
-      accountStatus: 'pending_verification',
-      require2fa: true,
-    });
+      await this.deps.repo.createProfile({
+        id: created.id,
+        orgId,
+        email,
+        fullName: input.fullName,
+        firstName,
+        lastName,
+        phone: input.phone ?? null,
+        country: input.country,
+        accountType: input.accountType,
+        role: 'client',
+        accountStatus: 'pending_verification',
+        require2fa: true,
+      });
 
-    const { code } = await this.deps.signupOtp.issue(email);
-    await this.sendSignupCode(email, code);
-    return { email };
+      const { code } = await this.deps.signupOtp.issue(email);
+      await this.sendSignupCode(email, code);
+      return { email };
+    } catch (error) {
+      await this.deps.supabase.deleteUser(created.id).catch((cleanupError: unknown) => {
+        this.warn('signup rolled back; could not delete the unverified auth user', cleanupError);
+      });
+      throw error;
+    }
   }
 
   /**

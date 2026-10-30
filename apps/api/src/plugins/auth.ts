@@ -60,6 +60,7 @@ function unavailableSupabase(): SupabaseAdmin {
     confirmEmail: fail,
     issueSession: fail,
     deleteUser: fail,
+    findAuthUserByEmail: fail,
     buildAuthorizeUrl: fail,
     exchangeCodeForSession: fail,
     mfa: { enrollTotp: fail, challengeAndVerify: fail, unenroll: fail, listFactors: fail },
