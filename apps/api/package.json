@@ -34,7 +34,7 @@
     "fastify-raw-body": "^5.0.0",
     "fastify-type-provider-zod": "^4.0.2",
     "ioredis": "^5.11.1",
-    "jose": "^5.10.0",
+    "jose": "^6.2.13",
     "oci-common": "^2.142.2",
     "oci-secrets": "^2.142.2",
     "zod": "catalog:"
