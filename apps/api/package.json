@@ -32,7 +32,7 @@
     "fastify": "catalog:",
     "fastify-plugin": "^5.1.0",
     "fastify-raw-body": "^5.0.0",
-    "fastify-type-provider-zod": "^4.0.2",
+    "fastify-type-provider-zod": "^7.0.0",
     "ioredis": "^5.11.1",
     "jose": "^5.10.0",
     "oci-common": "^2.142.2",
