@@ -191,8 +191,16 @@ describe('faq / breadcrumb / service / article JSON-LD', () => {
     const entities = faq?.['mainEntity'] as Array<Record<string, unknown>>;
     const [first, second] = entries;
     expect(entities).toEqual([
-      { '@type': 'Question', name: first?.q, acceptedAnswer: { '@type': 'Answer', text: first?.a } },
-      { '@type': 'Question', name: second?.q, acceptedAnswer: { '@type': 'Answer', text: second?.a } },
+      {
+        '@type': 'Question',
+        name: first?.q,
+        acceptedAnswer: { '@type': 'Answer', text: first?.a },
+      },
+      {
+        '@type': 'Question',
+        name: second?.q,
+        acceptedAnswer: { '@type': 'Answer', text: second?.a },
+      },
     ]);
   });
 

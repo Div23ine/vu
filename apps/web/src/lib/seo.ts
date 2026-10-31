@@ -118,7 +118,8 @@ export function isPublicSiteUrl(origin = siteOrigin()): boolean {
 }
 
 /** How often a crawler should re-check a page, per the sitemaps protocol. */
-export type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+export type ChangeFrequency =
+  'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
 
 export interface SeoRoute {
   /** App Router path. `/` for the home page; no trailing slash elsewhere. */

@@ -247,7 +247,10 @@ export class MemoryRedis {
   async keys(pattern: string): Promise<string[]> {
     this.sweep();
     const expression = new RegExp(
-      `^${pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`,
+      `^${pattern
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*')
+        .replace(/\?/g, '.')}$`,
     );
     return [...this.entries.keys()].filter((key) => expression.test(key));
   }

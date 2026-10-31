@@ -1,6 +1,7 @@
 import Fastify, {
   type FastifyBaseLogger,
   type FastifyInstance,
+  type FastifyRequest,
   type FastifyServerOptions,
   type RawReplyDefaultExpression,
   type RawRequestDefaultExpression,
@@ -21,7 +22,7 @@ import dbPlugin, { pingDb } from './plugins/db.js';
 import openApi from './plugins/openapi.js';
 import providersPlugin from './plugins/providers.js';
 import redisPlugin from './plugins/redis.js';
-import { resolveRequestId } from './plugins/request-context.js';
+import { resolveRequestId, sanitizeLoggedUrl } from './plugins/request-context.js';
 import requestContext from './plugins/request-context.js';
 import cookiesPlugin from './plugins/cookies.js';
 import corsPlugin from './plugins/cors.js';
@@ -97,6 +98,20 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<App> {
     logger: {
       level: env.LOG_LEVEL,
       redact: { paths: [...REDACT_PATHS], censor: '[Redacted]' },
+      // The default `req` serializer logs the raw URL — which on the magic-link
+      // verify leg carries the single-use token as a query parameter. Redact
+      // credential-bearing query values so the access log honours work order
+      // §7 ("tokens are never logged at any level"). Field shape matches the
+      // Fastify default so log consumers see no difference.
+      serializers: {
+        req: (req: FastifyRequest) => ({
+          method: req.method,
+          url: sanitizeLoggedUrl(req.url ?? ''),
+          host: req.headers?.host,
+          remoteAddress: req.ip ?? req.socket?.remoteAddress,
+          remotePort: req.socket?.remotePort,
+        }),
+      },
     },
     genReqId: (request) => resolveRequestId(request.headers),
     trustProxy: true,

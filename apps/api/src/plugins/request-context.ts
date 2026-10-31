@@ -14,6 +14,36 @@ export function resolveRequestId(headers: IncomingHttpHeaders): string {
 }
 
 /**
+ * Query parameters whose VALUES are credentials. The magic-link verify leg
+ * carries its single-use token as `?token=…` (work order §7: tokens are never
+ * logged at any level), and `code`/`otp` legs must never reach the log either.
+ * Keys are matched case-insensitively; only the value is replaced, so the
+ * shape of the request stays readable in the log.
+ */
+const SENSITIVE_QUERY_PARAMS = new Set(['token', 'code', 'otp', 'secret', 'sig', 'signature']);
+
+/**
+ * Rewrite a request URL for logging: every sensitive query parameter's value
+ * becomes `[Redacted]` (the logger's censor literal). URLs without a query
+ * string — or without sensitive parameters — are returned untouched, so the
+ * common case costs one `indexOf`.
+ */
+export function sanitizeLoggedUrl(url: string): string {
+  const queryStart = url.indexOf('?');
+  if (queryStart === -1) return url;
+  const path = url.slice(0, queryStart);
+  const params = new URLSearchParams(url.slice(queryStart + 1));
+  let redacted = false;
+  for (const key of new Set(params.keys())) {
+    if (SENSITIVE_QUERY_PARAMS.has(key.toLowerCase())) {
+      params.set(key, '[Redacted]');
+      redacted = true;
+    }
+  }
+  return redacted ? `${path}?${params.toString()}` : url;
+}
+
+/**
  * Request context.
  *
  * `buildApp` installs `resolveRequestId` as Fastify's `genReqId`, so `request.id`

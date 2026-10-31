@@ -14,20 +14,20 @@ signals, links) which no code change can do and which is the checklist in
 
 ## What is implemented
 
-| Surface | File | What it does |
-| --- | --- | --- |
-| Single source of truth | `apps/web/src/lib/seo.ts` | Brand constants, organisation facts, the indexable route table, and every JSON-LD builder. |
-| JSON-LD renderer | `apps/web/src/lib/json-ld.tsx` | Serialises a graph node into a `<script type="application/ld+json">` data block, escaping `<` so content cannot break out of the element. |
-| `/robots.txt` | `apps/web/src/app/robots.ts` | Crawl policy + sitemap advertisement + an explicit AI-crawler group. |
-| `/sitemap.xml` | `apps/web/src/app/sitemap.ts` | Every indexable route, plus blog articles fetched best-effort from the content API. |
-| `/llms.txt` | `apps/web/src/app/llms.txt/route.ts` | Markdown brief for answer engines: entity, facts, one line per page, and the published Q&A. |
-| Entity graph | `apps/web/src/app/layout.tsx` | `Organization` + `WebSite` JSON-LD on every page; site-wide title template, description, keywords, Open Graph and Twitter defaults including the share card. |
-| FAQ graph | `apps/web/src/app/(marketing)/page.tsx` | `FAQPage` mirroring the visible `QaSection` band. |
-| Service graph | `services/**/page.tsx` | `Service` on the catalogue and each of the three service pages; `BreadcrumbList` on the nested ones. |
-| Article graph | `blog/[slug]/page.tsx` | `Article` + `BreadcrumbList`, `article` Open Graph type, per-article canonical. |
-| Canonicals | every indexable page | `alternates.canonical` per route. |
-| Index policy | `(auth)`, `(authed)`, `(marketing)/checkout` layouts | Group-level `noindex` covering client-component pages that cannot export metadata. |
-| Tests | `src/lib/seo.test.ts`, `src/app/seo-surfaces.test.ts` | 37 tests pinning the route table, the URL helpers, the graph nodes and all three generated surfaces. |
+| Surface                | File                                                  | What it does                                                                                                                                                 |
+| ---------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Single source of truth | `apps/web/src/lib/seo.ts`                             | Brand constants, organisation facts, the indexable route table, and every JSON-LD builder.                                                                   |
+| JSON-LD renderer       | `apps/web/src/lib/json-ld.tsx`                        | Serialises a graph node into a `<script type="application/ld+json">` data block, escaping `<` so content cannot break out of the element.                    |
+| `/robots.txt`          | `apps/web/src/app/robots.ts`                          | Crawl policy + sitemap advertisement + an explicit AI-crawler group.                                                                                         |
+| `/sitemap.xml`         | `apps/web/src/app/sitemap.ts`                         | Every indexable route, plus blog articles fetched best-effort from the content API.                                                                          |
+| `/llms.txt`            | `apps/web/src/app/llms.txt/route.ts`                  | Markdown brief for answer engines: entity, facts, one line per page, and the published Q&A.                                                                  |
+| Entity graph           | `apps/web/src/app/layout.tsx`                         | `Organization` + `WebSite` JSON-LD on every page; site-wide title template, description, keywords, Open Graph and Twitter defaults including the share card. |
+| FAQ graph              | `apps/web/src/app/(marketing)/page.tsx`               | `FAQPage` mirroring the visible `QaSection` band.                                                                                                            |
+| Service graph          | `services/**/page.tsx`                                | `Service` on the catalogue and each of the three service pages; `BreadcrumbList` on the nested ones.                                                         |
+| Article graph          | `blog/[slug]/page.tsx`                                | `Article` + `BreadcrumbList`, `article` Open Graph type, per-article canonical.                                                                              |
+| Canonicals             | every indexable page                                  | `alternates.canonical` per route.                                                                                                                            |
+| Index policy           | `(auth)`, `(authed)`, `(marketing)/checkout` layouts  | Group-level `noindex` covering client-component pages that cannot export metadata.                                                                           |
+| Tests                  | `src/lib/seo.test.ts`, `src/app/seo-surfaces.test.ts` | 37 tests pinning the route table, the URL helpers, the graph nodes and all three generated surfaces.                                                         |
 
 **The invariant to protect:** `robots.ts`, `sitemap.ts`, `llms.txt` and the
 `Service` JSON-LD all read `INDEXABLE_ROUTES` in `lib/seo.ts`. Nothing hard-codes
@@ -64,12 +64,12 @@ de-indexed. **A disallowed page cannot be fetched, so its `noindex` tag is never
 seen**, and Google may still list the bare URL ("No information is available for
 this page") from inbound links.
 
-| Bucket | Treatment | Routes |
-| --- | --- | --- |
-| Public content | crawlable, indexable, in sitemap + `llms.txt` | `/`, `/about`, `/blog`, `/blog/[slug]`, `/contact`, `/pricing`, `/products`, `/services` and its three children, `/status`, `/privacy`, `/terms`, `/cookie-policy`, `/responsible-disclosure` |
-| Crawlable, not indexable | `noindex` meta tag, **not** disallowed, not in sitemap | `/login`, `/login/mfa`, `/login/mfa/setup`, `/signup`, `/signup/enroll`, `/accept-invite`, `/newsletter/confirm`, `/academy`, `/checkout`, `/checkout/cancelled` |
-| Private | disallowed **and** `noindex` at group-layout level | `/portal*`, `/admin*`, `/onboarding` |
-| Not pages | disallowed | `/checkout/callback`, `/checkout/success/*`, `/api` |
+| Bucket                   | Treatment                                              | Routes                                                                                                                                                                                        |
+| ------------------------ | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public content           | crawlable, indexable, in sitemap + `llms.txt`          | `/`, `/about`, `/blog`, `/blog/[slug]`, `/contact`, `/pricing`, `/products`, `/services` and its three children, `/status`, `/privacy`, `/terms`, `/cookie-policy`, `/responsible-disclosure` |
+| Crawlable, not indexable | `noindex` meta tag, **not** disallowed, not in sitemap | `/login`, `/login/mfa`, `/login/mfa/setup`, `/signup`, `/signup/enroll`, `/accept-invite`, `/newsletter/confirm`, `/academy`, `/checkout`, `/checkout/cancelled`                              |
+| Private                  | disallowed **and** `noindex` at group-layout level     | `/portal*`, `/admin*`, `/onboarding`                                                                                                                                                          |
+| Not pages                | disallowed                                             | `/checkout/callback`, `/checkout/success/*`, `/api`                                                                                                                                           |
 
 `/academy` is in the middle bucket on purpose: the page itself is a one-line
 placeholder that already declared `robots: { index: false }`. When real academy
@@ -239,7 +239,11 @@ pnpm --filter web test seo        # 37 tests: route table, URLs, graphs, surface
 
 ## Off-page work (no code change can do this)
 
+<<<<<<< HEAD
 The technical baseline makes the site *legible*. Discoverability for a brand
+=======
+The technical baseline makes the site _legible_. Discoverability for a brand
+>>>>>>> e41dae9 (refactor: web & api code)
 query is mostly earned off-page, in roughly this order of return:
 
 1. **Google Search Console** — verify the property (DNS TXT is the durable
@@ -250,8 +254,13 @@ query is mostly earned off-page, in roughly this order of return:
    IndexNow if the CDN allows it. Bing's index is what ChatGPT search and
    Copilot largely draw on, so this is disproportionately valuable for AEO
    relative to the effort.
+<<<<<<< HEAD
 3. **Google Business Profile** — "VUNVAULT", category *Security service* /
    *Cybersecurity*, Nairobi address, `support@vunvault.com`, `https://vunvault.com`.
+=======
+3. **Google Business Profile** — "VUNVAULT", category _Security service_ /
+   _Cybersecurity_, Nairobi address, `support@vunvault.com`, `https://vunvault.com`.
+>>>>>>> e41dae9 (refactor: web & api code)
    This is the strongest single entity signal for a local-rooted company and it
    is what produces a knowledge panel. Keep the name, address and phone
    **byte-identical** to the site footer (NAP consistency).

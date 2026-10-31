@@ -289,7 +289,12 @@ interface Harness {
 }
 
 async function makeHarness(
-  options: { turnstileEnforced?: boolean; turnstile?: TurnstileVerifier } = {},
+  options: {
+    turnstileEnforced?: boolean;
+    turnstile?: TurnstileVerifier;
+    /** Simulate a provider-side rejection of every send (Resend 422-style). */
+    emailRejects?: boolean;
+  } = {},
 ): Promise<Harness> {
   const repo = new FakeAuthRepo();
   const supabase = new FakeSupabase();
@@ -350,6 +355,14 @@ async function makeHarness(
 
   app.decorate('email', {
     send: async (message: { to: string; subject: string; text?: string }) => {
+      if (options.emailRejects === true) {
+        // Mirrors the Resend recipient-policy rejection seen in live
+        // verification: a ProviderError with code `email_rejected`.
+        throw Object.assign(
+          new Error('Invalid `to` field. Please use our testing email address instead.'),
+          { code: 'email_rejected', retryable: false },
+        );
+      }
       emails.push({ to: message.to, subject: message.subject, text: message.text });
       return { id: 'email-1' };
     },
@@ -759,6 +772,63 @@ describe('POST /api/v1/auth/magic-link', () => {
     expect(`${locationOf(fresh).origin}${locationOf(fresh).pathname}`).toBe(
       'https://www.vunvault.test/login/mfa',
     );
+  });
+});
+
+describe('POST /api/v1/auth/magic-link (provider rejection — enumeration-proof contract)', () => {
+  /**
+   * Live verification (2026-10-31) caught this: a Resend recipient-policy
+   * rejection (422 `email_rejected`) propagated out of `requestMagicLink` as
+   * an unhandled ProviderError → HTTP 500, breaking the byte-identical-answer
+   * contract. Both legs must answer the generic 200 and record NO "email went
+   * out" audit fact when the provider refuses the send.
+   */
+  const ACK = { message: 'If an account exists for that address, a sign-in link is on its way.' };
+
+  it('unregistered address: rejected invite send → generic 200, no SIGNUP_INVITE_SENT', async () => {
+    const local = await makeHarness({ emailRejects: true });
+    try {
+      const response = await local.app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/magic-link',
+        payload: { email: 'nobody@vunvault.test' },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual(ACK);
+      expect(local.emails).toHaveLength(0);
+      expect(local.audits.some((e) => e.eventType === 'SIGNUP_INVITE_SENT')).toBe(false);
+    } finally {
+      await local.app.close();
+    }
+  });
+
+  it('registered address: rejected link send → generic 200, no MAGIC_LINK_ISSUED', async () => {
+    const local = await makeHarness({ emailRejects: true });
+    try {
+      local.repo.profiles.push({
+        id: USER_ID,
+        email: 'e.reed@vunvault.com',
+        fullName: 'Dr. Evelyn Reed',
+        firstName: 'Evelyn',
+        lastName: 'Reed',
+        role: 'client',
+        orgId: ORG_ID,
+        accountStatus: 'active',
+        deletedAt: null,
+        mfaEnrolled: false,
+      });
+      const response = await local.app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/magic-link',
+        payload: { email: 'e.reed@vunvault.com' },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual(ACK);
+      expect(local.emails).toHaveLength(0);
+      expect(local.audits.some((e) => e.eventType === 'MAGIC_LINK_ISSUED')).toBe(false);
+    } finally {
+      await local.app.close();
+    }
   });
 });
 

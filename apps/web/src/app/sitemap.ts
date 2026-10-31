@@ -36,11 +36,14 @@ async function fetchArticles(): Promise<PublicContentItem[]> {
       { next: { revalidate } },
     );
     if (!response.ok) {
-      console.warn(`[sitemap] content API responded ${response.status}; shipping static routes only`);
+      console.warn(
+        `[sitemap] content API responded ${response.status}; shipping static routes only`,
+      );
       return [];
     }
     const body: unknown = await response.json();
-    const data = typeof body === 'object' && body !== null ? (body as { data?: unknown }).data : null;
+    const data =
+      typeof body === 'object' && body !== null ? (body as { data?: unknown }).data : null;
     if (!Array.isArray(data)) {
       console.warn('[sitemap] content API envelope had no data array; shipping static routes only');
       return [];

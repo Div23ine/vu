@@ -125,7 +125,12 @@ export default nextConfig;
 /**
  * Local development only: expose the Cloudflare bindings declared in
  * `wrangler.jsonc` to server code running under `next dev`.
+ *
+ * LOCAL VERIFICATION RUN 2026-10-31 (not for deploy): VV_SKIP_CF_DEV=1 skips
+ * the workerd shim — the 1 GiB verification sandbox cannot run the Cloudflare
+ * simulator alongside Postgres/Redis/GoTrue/API, and the verified flows
+ * (signup, onboarding) use no CF bindings in dev SSR.
  */
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && process.env.VV_SKIP_CF_DEV !== '1') {
   void initOpenNextCloudflareForDev();
 }

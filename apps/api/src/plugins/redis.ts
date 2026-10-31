@@ -120,7 +120,11 @@ async function probeRedis(connection: Redis, ms: number): Promise<void> {
     !alreadyConnecting && typeof connectable.connect === 'function'
       ? connectable.connect()
       : Promise.resolve();
-  await withTimeout(connect.then(() => connection.ping()), ms, 'redis probe');
+  await withTimeout(
+    connect.then(() => connection.ping()),
+    ms,
+    'redis probe',
+  );
 }
 
 export interface RedisPluginOptions {
@@ -179,7 +183,8 @@ const redisPlugin: FastifyPluginAsync<RedisPluginOptions> = async (app, options)
   // The URL is a secret; a missing one throws by design (Task 22). That throw is
   // the "Redis disabled" signal, not a bug — but only when Redis is optional.
   const url = await app.secrets.get('UPSTASH_REDIS_URL').catch((error: unknown) => {
-    if (!optional) throw new Error(redisRequiredMessage(error instanceof Error ? error.message : String(error)));
+    if (!optional)
+      throw new Error(redisRequiredMessage(error instanceof Error ? error.message : String(error)));
     return undefined;
   });
 

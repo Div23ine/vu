@@ -125,7 +125,9 @@ describe('the sender address (A2.3)', () => {
     const down = stubFetch(200, {}, { reject: true });
     await expect(fetchResendDomainStatus('re_key', 'vunvault.com', down.impl)).resolves.toBeNull();
     const denied = stubFetch(401, { message: 'nope' });
-    await expect(fetchResendDomainStatus('re_key', 'vunvault.com', denied.impl)).resolves.toBeNull();
+    await expect(
+      fetchResendDomainStatus('re_key', 'vunvault.com', denied.impl),
+    ).resolves.toBeNull();
   });
 });
 

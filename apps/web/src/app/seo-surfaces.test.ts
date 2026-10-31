@@ -116,7 +116,8 @@ describe('robots.txt', () => {
 
 describe('sitemap.xml', () => {
   it('lists every indexable route with its real URL and hints', async () => {
-    stubFetch((() => Promise.resolve(new Response(JSON.stringify({ data: [], total: 0 })))) as typeof fetch);
+    stubFetch((() =>
+      Promise.resolve(new Response(JSON.stringify({ data: [], total: 0 })))) as typeof fetch);
 
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
@@ -132,7 +133,8 @@ describe('sitemap.xml', () => {
   });
 
   it('never emits a private, transactional or placeholder route', async () => {
-    stubFetch((() => Promise.resolve(new Response(JSON.stringify({ data: [], total: 0 })))) as typeof fetch);
+    stubFetch((() =>
+      Promise.resolve(new Response(JSON.stringify({ data: [], total: 0 })))) as typeof fetch);
     const urls = (await sitemap()).map((entry) => entry.url);
 
     for (const path of NOINDEX_PATHS) expect(urls).not.toContain(siteUrl(path));
@@ -144,7 +146,9 @@ describe('sitemap.xml', () => {
 
   it('appends blog articles from the content API with their real publish date', async () => {
     stubFetch((() =>
-      Promise.resolve(new Response(JSON.stringify({ data: [ARTICLE], total: 1 })))) as typeof fetch);
+      Promise.resolve(
+        new Response(JSON.stringify({ data: [ARTICLE], total: 1 })),
+      )) as typeof fetch);
 
     const entries = await sitemap();
     const article = entries.find((entry) => entry.url === siteUrl(`/blog/${ARTICLE.slug}`));
@@ -155,7 +159,9 @@ describe('sitemap.xml', () => {
 
   it('asks the content API for the newest page of articles', async () => {
     const fetchMock = vi.fn((() =>
-      Promise.resolve(new Response(JSON.stringify({ data: [], total: 0 })))) as unknown as typeof fetch);
+      Promise.resolve(
+        new Response(JSON.stringify({ data: [], total: 0 })),
+      )) as unknown as typeof fetch);
     stubFetch(fetchMock);
 
     await sitemap();
@@ -178,14 +184,17 @@ describe('sitemap.xml', () => {
     stubFetch((() => Promise.resolve(new Response('boom', { status: 500 }))) as typeof fetch);
     expect(await sitemap()).toHaveLength(INDEXABLE_ROUTES.length);
 
-    stubFetch((() => Promise.resolve(new Response(JSON.stringify({ nope: true })))) as typeof fetch);
+    stubFetch((() =>
+      Promise.resolve(new Response(JSON.stringify({ nope: true })))) as typeof fetch);
     expect(await sitemap()).toHaveLength(INDEXABLE_ROUTES.length);
   });
 
   it('skips a row that fails the content contract but keeps its siblings', async () => {
     stubFetch((() =>
       Promise.resolve(
-        new Response(JSON.stringify({ data: [{ ...ARTICLE, publishedAt: null }, ARTICLE], total: 2 })),
+        new Response(
+          JSON.stringify({ data: [{ ...ARTICLE, publishedAt: null }, ARTICLE], total: 2 }),
+        ),
       )) as typeof fetch);
 
     const entries = await sitemap();

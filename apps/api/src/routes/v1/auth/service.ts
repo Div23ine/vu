@@ -626,12 +626,28 @@ export class AuthService {
         this.warn('signup invitation requested but no email provider is configured');
         return { sent: 'suppressed', email };
       }
-      await this.deps.email.send({
-        to: email,
-        subject: 'No VUNVAULT account found for this email',
-        html: `<p>We received a sign-in request for <strong>${email}</strong>, but no VUNVAULT account is registered for this address.</p><p>If you would like an account, sign up here: <a href="${signupLink}">${signupLink}</a></p><p>If you did not request this, you can safely ignore this email.</p>`,
-        text: `We received a sign-in request for ${email}, but no VUNVAULT account is registered for this address.\n\nIf you would like an account, sign up here: ${signupLink}\n\nIf you did not request this, you can safely ignore this email.`,
-      }, { requestId: meta.requestId, purpose: 'signup_invite' });
+      try {
+        await this.deps.email.send(
+          {
+            to: email,
+            subject: 'No VUNVAULT account found for this email',
+            html: `<p>We received a sign-in request for <strong>${email}</strong>, but no VUNVAULT account is registered for this address.</p><p>If you would like an account, sign up here: <a href="${signupLink}">${signupLink}</a></p><p>If you did not request this, you can safely ignore this email.</p>`,
+            text: `We received a sign-in request for ${email}, but no VUNVAULT account is registered for this address.\n\nIf you would like an account, sign up here: ${signupLink}\n\nIf you did not request this, you can safely ignore this email.`,
+          },
+          { requestId: meta.requestId, purpose: 'signup_invite' },
+        );
+      } catch (error) {
+        // A provider-side rejection (recipient policy, suppression list, quota)
+        // must NOT surface as a 500: that would break the enumeration-proof
+        // contract — a registered address gets a byte-identical 200. The
+        // invitation did not go out, so no `SIGNUP_INVITE_SENT` audit fact is
+        // recorded (same posture as the cooldown path); the provider has
+        // already logged the rejection at error level with its status/code.
+        this.warn(
+          `magic-link produced NO EMAIL · reason=provider_rejected · requestId=${meta.requestId ?? 'n/a'} — signup invitation send failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        return { sent: 'suppressed', email };
+      }
       void meta;
       return { sent: 'invite', email };
     }
@@ -643,12 +659,27 @@ export class AuthService {
     const link = verifyUrl.toString();
 
     if (this.deps.email !== undefined) {
-      await this.deps.email.send({
-        to: email,
-        subject: 'Your VUNVAULT sign-in link',
-        html: `<p>Click the link below to sign in to VUNVAULT:</p><p><a href="${link}">${link}</a></p><p>The link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.</p>`,
-        text: `Click the link below to sign in to VUNVAULT:\n\n${link}\n\nThe link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.`,
-      }, { requestId: meta.requestId, purpose: 'magic_link' });
+      try {
+        await this.deps.email.send(
+          {
+            to: email,
+            subject: 'Your VUNVAULT sign-in link',
+            html: `<p>Click the link below to sign in to VUNVAULT:</p><p><a href="${link}">${link}</a></p><p>The link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.</p>`,
+            text: `Click the link below to sign in to VUNVAULT:\n\n${link}\n\nThe link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.`,
+          },
+          { requestId: meta.requestId, purpose: 'magic_link' },
+        );
+      } catch (error) {
+        // Same enumeration-proof contract as the invite leg: a provider
+        // rejection answers with the identical generic 200, never a 500. The
+        // token was minted but its email did NOT go out, so the outcome is
+        // `suppressed` — no `MAGIC_LINK_ISSUED` audit fact — and the orphaned
+        // single-use token simply ages out of Redis at its TTL.
+        this.warn(
+          `magic-link produced NO EMAIL · reason=provider_rejected · requestId=${meta.requestId ?? 'n/a'} — sign-in link send failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        return { sent: 'suppressed', email };
+      }
     } else {
       this.warn('magic link requested but no email provider is configured');
     }

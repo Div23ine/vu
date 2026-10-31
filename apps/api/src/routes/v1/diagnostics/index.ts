@@ -59,7 +59,10 @@ export interface DiagnosticsRoutesOptions {
   send?: (to: string, subject: string, requestId: string) => Promise<{ id: string }>;
 }
 
-const diagnosticsRoutes: FastifyPluginAsync<DiagnosticsRoutesOptions> = async (fastify, options) => {
+const diagnosticsRoutes: FastifyPluginAsync<DiagnosticsRoutesOptions> = async (
+  fastify,
+  options,
+) => {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
 
   const guard = [
@@ -93,8 +96,7 @@ const diagnosticsRoutes: FastifyPluginAsync<DiagnosticsRoutesOptions> = async (f
         if (user === undefined) throw HttpError.unauthorized();
 
         const requestId = request.id;
-        const subject =
-          body.subject ?? `VUNVAULT email-delivery diagnostic (request ${requestId})`;
+        const subject = body.subject ?? `VUNVAULT email-delivery diagnostic (request ${requestId})`;
         const store = app.redisMode?.store ?? 'memory';
 
         try {

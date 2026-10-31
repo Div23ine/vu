@@ -21,7 +21,11 @@ import { ProviderError } from './error';
 
 export const RESEND_URL = 'https://api.resend.com/emails';
 /** The domain Resend must have verified for this address, or delivery is refused. */
-export const DEFAULT_FROM = 'VUNVAULT <no-reply@vunvault.com>';
+// LOCAL VERIFICATION RUN 2026-10-31 (not for commit/deploy): the production
+// sender domain vunvault.com is not verified in the Resend account available
+// for this local test; info.vunvault.com IS verified there (Resend GET
+// /domains: status=verified). Kept as close to production shape as possible.
+export const DEFAULT_FROM = 'VUNVAULT <no-reply@info.vunvault.com>';
 export const PROVIDER_TIMEOUT_MS = 8000;
 
 /** Resend's domain list, used by the boot-time from-domain guard (A2.3). */
@@ -190,7 +194,13 @@ export class ResendEmailProvider implements EmailProvider {
 
     if (response.status >= 500) {
       this.log?.error(
-        { ...fields, status: response.status, id: null, error: payload.message ?? null, durationMs },
+        {
+          ...fields,
+          status: response.status,
+          id: null,
+          error: payload.message ?? null,
+          durationMs,
+        },
         'resend is unavailable — message NOT delivered',
       );
       throw new ProviderError('email_unavailable', 'Resend is unavailable', { retryable: true });

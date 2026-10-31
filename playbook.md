@@ -614,21 +614,21 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
 
 ### Catalog 1 — `vunvault-task-catalogue-part-1.md` (Part 1 of 5 — Layers L0, L1, L2, Tasks 1–20)
 
-- **Signup verification workflow:** *not defined here.* Part 1 lays the data + contract foundations
+- **Signup verification workflow:** _not defined here._ Part 1 lays the data + contract foundations
   only; there is no signup route yet.
-- **Authentication workflow:** *not defined here* (no routes). Task 19 fixes the vocabulary every
+- **Authentication workflow:** _not defined here_ (no routes). Task 19 fixes the vocabulary every
   later auth task must use.
-- **Canonical sections:** Task 15 (line 2284) *Schema: identity, organisations, invitations, WebAuthn,
-  consent* — `profiles`, `organizations`, `invitations`, `webauthn_credentials`, consent records,
-  `ACCOUNT_STATUSES`. Task 19 (line 2760) *Contracts A: common envelopes, auth, roles & permissions*
+- **Canonical sections:** Task 15 (line 2284) _Schema: identity, organisations, invitations, WebAuthn,
+  consent_ — `profiles`, `organizations`, `invitations`, `webauthn_credentials`, consent records,
+  `ACCOUNT_STATUSES`. Task 19 (line 2760) _Contracts A: common envelopes, auth, roles & permissions_
   — `ErrorEnvelope = { error, message?, details? }`; `PERMISSIONS` (19 exact strings:
   `dashboard:read … profile:write`); `ROLE_PERMISSIONS` (`super_admin` = ALL); `ROLE_LABELS`;
   `JwtClaims = { sub, role, org_id, permissions }`;
   `SessionUser = { id, email, fullName, role, orgId, permissions, mfaEnrolled }`;
   `ProvisionInviteBody` — **admin provisioning** gates: email must end `@vunvault.com`, staff roles
   only, and `checklist: { mfaEnrolmentMandatory: true, ndaOnFile, backgroundVerified,
-  trainingAcknowledged }`.
-- **Conflicts with spec:** none direct. Note that `PERMISSIONS` is declared *exact* — there is no
+trainingAcknowledged }`.
+- **Conflicts with spec:** none direct. Note that `PERMISSIONS` is declared _exact_ — there is no
   `diagnostics:*` permission, which constrains A2.4 (see conflict 6 below).
 - **Phases 1–4 traceability:** Phase 2 admin roster + MFA enforcement ← Task 19
   `ProvisionInviteBody.checklist.mfaEnrolmentMandatory` and `ROLE_PERMISSIONS`; Phase 4 signup guard
@@ -636,50 +636,50 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
 
 ### Catalog 2 — `vunvault-task-catalogue-part-2.md` (Part 2 of 5 — addenda 20b–20d, L3, L4, Tasks 20b–40)
 
-- **Signup verification workflow:** Task 26 (line 1208) defines the *original* signup — validate →
+- **Signup verification workflow:** Task 26 (line 1208) defines the _original_ signup — validate →
   HIBP `BreachCheck` (fail-open on timeout/5xx, `warn`) → `409 email_taken` → `createUser(emailConfirm:
-  true)` → one transaction inserting `organizations` + `profiles` → `signInWithPassword` →
+true)` → one transaction inserting `organizations` + `profiles` → `signInWithPassword` →
   `setSessionCookies` → `user_sessions` → audit `ACCOUNT_REGISTERED` → `201 { data: SessionUser }`.
   Task 26 explicitly carries a `// DECISION(v1)` note that **mailbox-ownership verification is NOT
   part of signup** — this is the decision Task 40d later reverses.
 - **Authentication workflow (canonical session model):** Task 24 (line 944) + Task 26 (line 1208).
-  - *Token source:* access token is read **only** from cookie `vv_at` — never an `Authorization`
+  - _Token source:_ access token is read **only** from cookie `vv_at` — never an `Authorization`
     header, never a query string (a valid Bearer header alone must 401).
-  - *Verification:* `jose.jwtVerify`, HS256 with `SUPABASE_JWT_SECRET`, `issuer = <SUPABASE_URL>/auth/v1`,
+  - _Verification:_ `jose.jwtVerify`, HS256 with `SUPABASE_JWT_SECRET`, `issuer = <SUPABASE_URL>/auth/v1`,
     `audience = "authenticated"`, `clockTolerance: 5`. Required claims `sub, exp, session_id, aal`
     (`aal1`|`aal2`) plus custom `role, org_id, permissions`, Zod-validated. Missing/invalid → `401
-    { error: "unauthorized" }`.
-  - *Token lifecycle:* `vv_at` (access) + `vv_rt` (refresh; 30 days when `remember`) + `vv_csrf`
+{ error: "unauthorized" }`.
+  - _Token lifecycle:_ `vv_at` (access) + `vv_rt` (refresh; 30 days when `remember`) + `vv_csrf`
     (re-issued on every set); `vv_mfa` (300 s) carries the pre-second-factor state. `POST /auth/refresh`
     rotates both cookies and updates `user_sessions.last_seen_at` → `204`; invalid → clear cookies,
     `401 unauthorized`. `POST /auth/logout` → `signOut(at, "local")`, `user_sessions.revoked_at`,
     clear all cookies, audit `AUTH_LOGOUT`, `204`. **No route ever returns a token in its body.**
-  - *Revocation path:* `authenticate` consults the Redis **session-registry** (`sess:<sessionId>`,
+  - _Revocation path:_ `authenticate` consults the Redis **session-registry** (`sess:<sessionId>`,
     TTL 30 s); on a miss it reads `user_sessions.revoked_at` + `profiles.account_status, deleted_at`.
     Revoked, non-`active`, or soft-deleted → `401 unauthorized`. `last_seen_at` is updated
     fire-and-forget at most once per minute per session.
-  - *AAL rule:* `AuthUser.aal` is `aal2` when the JWT says `aal2` **or** `user_sessions.mfa_method IS
-    NOT NULL` (in-house WebAuthn / email-OTP cannot raise Supabase's own AAL, so they record
+  - _AAL rule:_ `AuthUser.aal` is `aal2` when the JWT says `aal2` **or** `user_sessions.mfa_method IS
+NOT NULL` (in-house WebAuthn / email-OTP cannot raise Supabase's own AAL, so they record
     `mfa_method` on the session row).
-  - *MFA step:* challenge = random 32-byte base64url handle → Redis `mfa:<handle>` TTL 300 s holding
+  - _MFA step:_ challenge = random 32-byte base64url handle → Redis `mfa:<handle>` TTL 300 s holding
     `{ userId, email, remember, attempts: 0, methods, sessionEnc }`, where `sessionEnc` is the aal1
     session sealed with AES-256-GCM under a key derived by HKDF-SHA256 from
     `SUPABASE_SERVICE_ROLE_KEY` with info `"vv-mfa-challenge"`. `POST /auth/mfa/verify`: missing
     challenge → `410 challenge_expired`; 5 failures → delete challenge, audit `AUTH_MFA_FAILURE`,
     `401 mfa_failed`. Methods `totp` (→ aal2), `email_otp` (Redis `emailotp:<userId>` TTL 600 s, max
     1 send / 60 s, staff roles only), `webauthn`, `recovery`.
-  - *Lockout:* failed `login_attempts` ≥ 5 per `sha256(lower(email))` in 15 min, or ≥ 20 per IP →
+  - _Lockout:_ failed `login_attempts` ≥ 5 per `sha256(lower(email))` in 15 min, or ≥ 20 per IP →
     `429 { error: "rate_limited" }` + `Retry-After: 900` + audit `AUTH_RATE_LIMIT`. Wrong password,
     unknown email, suspended, dormant and soft-deleted all collapse to one byte-identical
     `401 { error: "invalid_credentials" }` with a dummy hash comparison to equalise timing.
-  - *Protected-route rules:* guards compose as
+  - _Protected-route rules:_ guards compose as
     `preHandler: [app.authenticate, app.requireStaff, app.requirePermission("x:y")]` on every
     `/admin/*` route. `requireStaff` = role ∈ `STAFF_ROLES` (`super_admin, admin, security_analyst,
-    soc_operator, compliance_auditor, support_engineer`) **and** `aal === "aal2"`; staff on `aal1` →
+soc_operator, compliance_auditor, support_engineer`) **and** `aal === "aal2"`; staff on `aal1` →
     `403 { error: "mfa_required" }`. Also `requirePermission`, `requireAnyPermission`, `requireRole`,
     `optionalAuth` (never rejects). Task 40 (line 2927) enforces all of this with a conformance suite
     that walks the live route table against the `PUBLIC_ROUTES` allow-list.
-  - *Claims hook:* `0024_auth_hook.sql` — `vv_custom_access_token_hook` injects `role`, `org_id`,
+  - _Claims hook:_ `0024_auth_hook.sql` — `vv_custom_access_token_hook` injects `role`, `org_id`,
     `permissions` from `profiles`; no profile or `account_status <> 'active'` → `role = 'client'`,
     `permissions = []`. A test compares the SQL `CASE` against `ROLE_PERMISSIONS` to prevent drift.
 - **Infrastructure conventions that bind A2/A3:** Task 21 (line 567) — health is **exactly**
@@ -690,7 +690,7 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
   `Error("secret <name> missing")`** when absent; `SECRET_NAMES` is an exact list containing
   `RESEND_API_KEY` and `UPSTASH_REDIS_URL`; the Redis plugin is
   `new Redis(await app.secrets.get("UPSTASH_REDIS_URL"), { maxRetriesPerRequest: null,
-  enableReadyCheck: false, tls: {} })` with readiness checks `db` (`select 1`) and `redis` (`PING`);
+enableReadyCheck: false, tls: {} })` with readiness checks `db` (`select 1`) and `redis` (`PING`);
   email is `ResendEmailProvider` over **global `fetch`, no vendor SDK**.
 - **Conflicts with spec:** Redis mandatory (Task 22) vs A3 Redis-optional; no `/health` route
   (Task 21) vs A3.4; password login canonical (Task 26) vs the work order's zero-password rule.
@@ -712,7 +712,7 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
      same email is **REPLACED** (delete the unverified Supabase user + rows, then continue).
   2. `supabase.createUser({ email, password, emailConfirm: false, userMetadata: { fullName } })`.
   3. In ONE transaction insert `organizations` + `profiles` with `account_status =
-     'pending_verification'` and `require_2fa = true`.
+'pending_verification'` and `require_2fa = true`.
   4. Issue the OTP: 6 random digits (`crypto.randomInt`), Redis
      `signup:otp:<sha256(lower(email))>` = `{ codeHash: sha256(code), attempts: 0 }` TTL **600 s**;
      email via `app.email` (subject `"Your VUNVAULT verification code"`, body shows the code and says
@@ -722,13 +722,13 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
      Audit `ACCOUNT_REGISTERED` with `details: { stage: "started" }`.
   6. `POST /api/v1/auth/signup/verify-email` (public, policy `login`): look up the OTP; compare
      `sha256(code)` **constant-time**; at **5** failed attempts delete the OTP → `401 { error:
-     "otp_exhausted" }`; wrong code → `401 { error: "otp_invalid" }` and `attempts++`; expired/missing
+"otp_exhausted" }`; wrong code → `401 { error: "otp_invalid" }` and `attempts++`; expired/missing
      → `410 { error: "otp_expired" }`. On success: `supabase.confirmEmail(userId)` → profile
      `account_status = 'active'` → delete the OTP → `supabase.issueSession(email)` (implemented as
      `auth.admin.generateLink({ type: "magiclink", email })` then server-side `auth.verifyOtp({
-     token_hash, type: "magiclink" })`) → **aal1** session → `setSessionCookies` (`remember = false`)
-     + `user_sessions` row → audit `ACCOUNT_REGISTERED` `{ stage: "email_verified" }` → `200 { data:
-     SessionUser }` with `mfaEnrolled: false`.
+token_hash, type: "magiclink" })`) → **aal1** session → `setSessionCookies` (`remember = false`)
+     - `user_sessions` row → audit `ACCOUNT_REGISTERED` `{ stage: "email_verified" }` → `200 { data:
+SessionUser }` with `mfaEnrolled: false`.
   7. The web app then calls the Task 27 TOTP routes (`/account/mfa/totp/enroll`, `/verify`) to
      complete step 3; **the verify route replaces the cookies with the aal2 session**.
   8. `POST /api/v1/auth/signup/resend` (public, `public_form`): **always `202 {}`**; only if a
@@ -744,7 +744,7 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
   `/portal/*`, `/admin`, `/admin/*`, `/onboarding` require cookie `vv_at` or `vv_rt`, else
   `302 /login?next=<path+search>`; `/login` and `/signup` with a session cookie present →
   `302 homeFor(role)`; `/admin/*` with a peeked role of `client` → `302 /forbidden`; and the mandated
-  comment that *peeking is a routing convenience, never a security decision* — the API remains the
+  comment that _peeking is a routing convenience, never a security decision_ — the API remains the
   authority. `homeFor(role)`: staff → `/admin` (`support_engineer` → `/admin/profile`, no dashboard
   permission), `client` → `/portal`. `requireSession({ staff?, permission? })` redirects to `/login`
   or `/forbidden`; staff without MFA go to `/login?error=mfa_required`. Task 59 (line 8293) login
@@ -765,11 +765,11 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
   order (no password login remains) — the catalog text is now dead contract; (b) 40d's mailbox proof
   is a **6-digit OTP**, whereas the work order's login surface is a **magic link** — note that 40d's
   own `issueSession` is implemented with `generateLink({type:"magiclink"})`, so the link mechanism is
-  catalog-sanctioned *internally* even though the login surface is not; (c) Task 26's `201 +
-  cookies` signup response is superseded by 40d's `202 + no cookies`.
+  catalog-sanctioned _internally_ even though the login surface is not; (c) Task 26's `201 +
+cookies` signup response is superseded by 40d's `202 + no cookies`.
 - **Phases 1–4 traceability:** Phase 1 verify-leg aal1→aal2 hand-off and the "no token in a body"
   rule ← 40d step 6 + Task 24; Phase 2 forced first-sign-in MFA setup ← 40d step 7 (`require_2fa =
-  true`, `mfaEnrolled: false`); Phase 3 unregistered-email handling ← 40d step 8's always-identical
+true`, `mfaEnrolled: false`); Phase 3 unregistered-email handling ← 40d step 8's always-identical
   `202 {}` anti-enumeration posture applied to the magic-link leg; Phase 4 signup guard ←
   40d step 1's replace-if-`pending_verification` + Task 19's staff-address rule.
 
@@ -777,7 +777,7 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
 
 - **Signup verification workflow:** none. Part 4 contains a single incidental `signup` mention
   (`stale signups` cross-reference); it does not alter Task 40d.
-- **Authentication workflow:** no new auth mechanism. It *consumes* the Task 24 guard model — every
+- **Authentication workflow:** no new auth mechanism. It _consumes_ the Task 24 guard model — every
   admin surface here is built as `[authenticate, requireStaff, requirePermission(…)]`. Relevant
   sections: Task 83b (line 7788) Admin Audit Logs (summary, filters, chain status, verification,
   export, event detail), Task 83d (8828) Admin Profile Settings B — security & credentials, **active
@@ -793,19 +793,19 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
 
 ### Catalog 5 — `vunvault-task-catalogue-part-5.md` (Part 5 of 5 — L11 workers, L12 real-time, L13 DevOps, L14 integration & hardening, Tasks 88b–110)
 
-- **Signup verification workflow:** Task 92 (line 510) *Maintenance worker B* implements the other
+- **Signup verification workflow:** Task 92 (line 510) _Maintenance worker B_ implements the other
   half of Task 40d's cleanup contract — retention purges, invitation expiry, dormant accounts,
   **stale signups** (the >24 h `pending_verification` sweep), upload processing, daily audit
   snapshot. So the signup workflow's final gate (unverified accounts do not survive) is owned here.
-- **Authentication workflow:** no new mechanism. Task 105 (line 2194) *E2E platform: local stack,
-  **fake providers**, seed users with MFA, Playwright fixtures, smoke specs* is the catalog's
+- **Authentication workflow:** no new mechanism. Task 105 (line 2194) _E2E platform: local stack,
+  **fake providers**, seed users with MFA, Playwright fixtures, smoke specs_ is the catalog's
   sanctioned home for test doubles — which matters for A2: a fake email provider belongs in the E2E
   harness, never bound in a production config. Task 102 (1880) edge Worker (API reverse proxy,
   origin verification), Task 103 (1986) CI, Task 110 (2690) closeout — runbooks, key rotation,
   audit-snapshot verification, go-live checklist.
 - **Conflicts with spec:** Task 105's "fake providers" pattern is legitimate for E2E but is exactly
   the mechanism A2.1 warns about (`test-double bound in prod config`); the boundary is that the fake
-  is wired by the *harness*, not by `NODE_ENV` inside the API.
+  is wired by the _harness_, not by `NODE_ENV` inside the API.
 - **Phases 1–4 traceability:** Phase 3's invite cooldown + Phase 1's TTL'd tokens both rely on expiry
   semantics that Task 92's sweeps backstop; Phase 4's audit expectations ← Task 110's runbook/verify
   tooling.
@@ -839,21 +839,21 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
 
 1. **`magic-link` does not exist in the catalogs (0 hits in all 5 parts).** The canonical login is
    `POST /auth/login` with email + password (Task 26) and the canonical mailbox proof is a 6-digit
-   email OTP (Task 40d). *Resolution per A1.3:* the catalogs keep authority over workflow **shape**
+   email OTP (Task 40d). _Resolution per A1.3:_ the catalogs keep authority over workflow **shape**
    (details → mailbox proof → TOTP → aal2; identical generic responses on the unauthenticated legs;
    cookies-only tokens), and the work order keeps authority over the **credential** (magic link
    instead of password). Already implemented this way in Phases 1–3; no change needed.
 2. **Redis is mandatory in the catalogs, optional in the addendum.** Task 22 constructs
-   `new Redis(await app.secrets.get("UPSTASH_REDIS_URL"))` and `SecretProvider.get` *throws* on a
+   `new Redis(await app.secrets.get("UPSTASH_REDIS_URL"))` and `SecretProvider.get` _throws_ on a
    missing secret; `app.ts` registers a hard `redis` readiness probe. A3 requires the system to run
-   correctly with Redis absent. *Resolution per A1.3:* A1.3 names "redis-optional" as one of the
+   correctly with Redis absent. _Resolution per A1.3:_ A1.3 names "redis-optional" as one of the
    spec's own security requirements, so **the addendum wins** and the conflict is recorded here.
    Consequence that must be honoured: `/readyz` may **not** report `not_ready` merely because Redis
    is intentionally offline, or the orchestrator would pull traffic from a healthy pod (Task 21's own
    reasoning for why `/healthz` answers from the process alone).
 3. **There is no `/health` route in the catalogs.** Task 21 defines exactly `/healthz` and `/readyz`;
    Task 40's conformance suite pins the route table and its schema check exempts only those two by
-   name. A3.4 requires `/health → { redis, store }`. *Resolution:* add `/health` as a new public
+   name. A3.4 requires `/health → { redis, store }`. _Resolution:_ add `/health` as a new public
    infra route with a real Zod response schema, listed in `PUBLIC_ROUTES`, leaving `/healthz` and
    `/readyz` byte-identical so catalog conformance is preserved.
 4. **Task 40d's forgot/reset-password routes no longer exist.** Phase 5 deleted every password-login
@@ -863,11 +863,11 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
    40d (the later addendum supersedes).
 6. **A2.4's `POST /admin/diagnostics/email-test` is in no catalog, and no `diagnostics:*` permission
    exists** in Task 19's exact `PERMISSIONS` list — while Task 40's conformance suite demands
-   `requirePermission`/`requireAnyPermission` on every `/api/v1/admin/*` route. *Resolution:* reuse an
+   `requirePermission`/`requireAnyPermission` on every `/api/v1/admin/*` route. _Resolution:_ reuse an
    existing catalog permission rather than inventing one (precedent: `admin-badges` uses
    `users:manage`) and add `requireRole('super_admin')` to satisfy the addendum's "super-admin only".
 7. **Test doubles:** Task 105 sanctions fake providers in the E2E harness; A2.1 forbids a test double
-   bound in prod config. The line drawn here: a fake may be *injected by the harness* through the
+   bound in prod config. The line drawn here: a fake may be _injected by the harness_ through the
    existing `ProvidersPluginOptions.email` seam, but nothing inside the API may select a fake based
    on `NODE_ENV`.
 
@@ -881,16 +881,16 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
   the bug: it already awaited, threw on non-2xx, and refused a 2xx without an `id`. What the trace
   found instead is that **five distinct outcomes answer the byte-identical `200` "check your email"
   ack while sending nothing at all**, and only two of them left any trace:
-  | Outcome | Sent? | Trace before this change |
-  | --- | --- | --- |
-  | `bot_dropped` (honeypot `website` filled — autofill/password managers do this) | no | audit only |
-  | `bot_dropped` (timing — `formTs` too close to submit; **browser/server clock skew fails every request this way**) | no | audit only |
-  | `window_suppressed` (per-address issuance window) | no | audit only |
-  | `suppressed` (unregistered + invite cooldown) | no | **nothing at all** |
-  | `link` with no email provider configured | no | a warn line |
-  Nothing logged the Resend response, so even a *successful* send left no id to correlate with the
-  dashboard. That combination — a generic 200 by design, plus zero observability — is what made this
-  undiagnosable, and it is what this change fixes.
+  | Outcome                                                                                                           | Sent? | Trace before this change |
+  | ----------------------------------------------------------------------------------------------------------------- | ----- | ------------------------ |
+  | `bot_dropped` (honeypot `website` filled — autofill/password managers do this)                                    | no    | audit only               |
+  | `bot_dropped` (timing — `formTs` too close to submit; **browser/server clock skew fails every request this way**) | no    | audit only               |
+  | `window_suppressed` (per-address issuance window)                                                                 | no    | audit only               |
+  | `suppressed` (unregistered + invite cooldown)                                                                     | no    | **nothing at all**       |
+  | `link` with no email provider configured                                                                          | no    | a warn line              |
+  | Nothing logged the Resend response, so even a _successful_ send left no id to correlate with the                  |
+  | dashboard. That combination — a generic 200 by design, plus zero observability — is what made this                |
+  | undiagnosable, and it is what this change fixes.                                                                  |
 - **Changes (A2.2):** `packages/lib/src/providers/email.ts` now takes an optional logger and a send
   context, and logs the full response `{ id, status, error }` with the request id — at `info` on
   success, at `error` on every failure — while never logging the recipient address or the body. A 2xx
@@ -898,14 +898,14 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
   from `request.id` into both magic-link sends as `purpose: 'magic_link' | 'signup_invite'`.
 - **Changes (A2.1, observability of the silent paths):** every outcome that answers `200` without
   sending now emits a greppable warn line — `magic-link produced NO EMAIL · reason=<reason> ·
-  requestId=<id>` — including the invite-cooldown path that previously left no trace anywhere. The
+requestId=<id>` — including the invite-cooldown path that previously left no trace anywhere. The
   HTTP response is **unchanged and still byte-identical** for registered and unregistered addresses:
   the fix adds server-side visibility, never a client-visible distinction (no enumeration, no
   email-status leak). `ProviderError` is not an `HttpError`, so a failed send still collapses to a
   generic `500 internal_error`.
 - **Changes (A2.3, startup guard):** new `buildResendEmailProvider()` in `apps/api/src/plugins/providers.ts`.
   `RESEND_API_KEY` unset/empty → **FATAL + refuse to boot**. From-domain definitively not `verified`
-  in Resend → **FATAL + refuse to boot** (Resend accepts the request and then refuses *delivery*,
+  in Resend → **FATAL + refuse to boot** (Resend accepts the request and then refuses _delivery_,
   which is the reported symptom exactly). From-domain **uncheckable** (Resend's `/domains` API
   unreachable or non-2xx) → loud FATAL-level log, then boot: taking the platform down over a
   control-plane blip is the worse failure. `assertPlausibleFromAddress()` also rejects a placeholder
@@ -914,7 +914,7 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
   (`apps/api/src/routes/v1/diagnostics/index.ts`). Body `{ to, subject? }`; performs one real send and
   returns `{ data: { id, status, store } }` where `id` is the raw Resend id to search the dashboard
   for. Guarded `authenticate → requireStaff (aal2) → requirePermission('users:manage') →
-  requireRole('super_admin')`, rate policy `sensitive`, and audited as the new `EMAIL_DELIVERY_TEST`
+requireRole('super_admin')`, rate policy `sensitive`, and audited as the new `EMAIL_DELIVERY_TEST`
   system event with the destination and Resend id in the sealed chain. The addendum wrote the path as
   `/admin/diagnostics/email-test`; it lives under the `/api/v1` prefix like every other admin route.
 - **Files:** `packages/lib/src/providers/email.ts`, `packages/lib/src/providers/index.ts`,
@@ -933,15 +933,15 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
 
 **A2.5 verification checklist — status**
 
-| # | Check | Result |
-| --- | --- | --- |
-| 1 | Request a magic link → a new entry appears in Resend → Emails within 30 s | ⏳ **user to run** (no API key / dashboard access here) |
-| 2 | That entry shows status `delivered`/`sent` within 30 s | ⏳ **user to run** |
-| 3 | The `info` log line for the request carries the same Resend `id` | ✅ implemented + unit-pinned (`email-guard.test.ts`) |
-| 4 | `POST /api/v1/auth/magic-link` body is identical for registered and unregistered emails | ✅ unchanged by this work + already pinned by Phase 3 tests |
-| 5 | Removing `RESEND_API_KEY` produces a loud startup failure, not silent success | ✅ implemented + unit-pinned (rejects with `FATAL: RESEND_API_KEY is not set`) |
-| 6 | An unverified from-domain refuses to boot | ✅ implemented + unit-pinned |
-| 7 | `POST /api/v1/admin/diagnostics/email-test` returns a raw Resend id | ✅ route live + guarded (401 unauthenticated); ⏳ live id **user to run** |
+| #   | Check                                                                                   | Result                                                                         |
+| --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 1   | Request a magic link → a new entry appears in Resend → Emails within 30 s               | ⏳ **user to run** (no API key / dashboard access here)                        |
+| 2   | That entry shows status `delivered`/`sent` within 30 s                                  | ⏳ **user to run**                                                             |
+| 3   | The `info` log line for the request carries the same Resend `id`                        | ✅ implemented + unit-pinned (`email-guard.test.ts`)                           |
+| 4   | `POST /api/v1/auth/magic-link` body is identical for registered and unregistered emails | ✅ unchanged by this work + already pinned by Phase 3 tests                    |
+| 5   | Removing `RESEND_API_KEY` produces a loud startup failure, not silent success           | ✅ implemented + unit-pinned (rejects with `FATAL: RESEND_API_KEY is not set`) |
+| 6   | An unverified from-domain refuses to boot                                               | ✅ implemented + unit-pinned                                                   |
+| 7   | `POST /api/v1/admin/diagnostics/email-test` returns a raw Resend id                     | ✅ route live + guarded (401 unauthenticated); ⏳ live id **user to run**      |
 
 ### 2026-10-31 — Revision 2 addendum, A3: Redis offline mode
 
@@ -965,8 +965,8 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
 - **Changes (A3.2, in-memory fallback):** new `apps/api/src/lib/memory-redis.ts`. `app.redis` is the
   shim rather than `undefined`, so **every existing consumer keeps one type and no call site needed a
   branch**. It implements exactly the commands the auth paths use — `get/set (EX·PX·NX·XX)/setex/del/
-  exists/incr/incrby/decr/expire/pexpire/ttl/pttl/getdel/lpush/rpush/lrange/llen/publish/keys/flushdb/
-  ping/quit/disconnect` — with real TTL semantics and `GETDEL` atomicity, which is what single-use
+exists/incr/incrby/decr/expire/pexpire/ttl/pttl/getdel/lpush/rpush/lrange/llen/publish/keys/flushdb/
+ping/quit/disconnect` — with real TTL semantics and `GETDEL` atomicity, which is what single-use
   tokens and the invite cooldown depend on. Anything else throws `TypeError` at the call site: loud
   and immediate, which is safer than a shim pretending to be a complete Redis. Covered: magic-link
   single-use (`ml:token:`, `ml:pointer:`), invite cooldown (`ml:invite:`), MFA challenge + replay cache
@@ -985,7 +985,7 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
   orchestrator would pull traffic from a pod that is serving correctly, which is precisely Task 21's
   stated reason for `/healthz` answering from the process alone. `/health` reports the degraded mode;
   `/readyz` remains the live probe.
-- **Changes (A3, queues):** BullMQ *is* Redis, so `queues/index.ts` builds no producer offline. It
+- **Changes (A3, queues):** BullMQ _is_ Redis, so `queues/index.ts` builds no producer offline. It
   decorates the disabled registry instead, whose `add()` logs `job NOT enqueued: Redis is offline…`,
   counts the refusal per queue (`dropCounts()`), and resolves to `undefined` — it never invents a job
   id or reports success. **Auth mail does not go through the queues**: magic-link and signup-OTP sends
@@ -1000,14 +1000,14 @@ workflow, and what that part contributes. Phases 1–4 traceability is in the la
 
 **A3.5 verification checklist — status**
 
-| # | Check | Result |
-| --- | --- | --- |
-| 1 | With Redis offline (`UPSTASH_REDIS_URL` unset, `REDIS_OPTIONAL=always`): API boots, `/health` → `{redis:"down",store:"memory"}`, magic-link issue + consume works on the shim | ✅ unit-pinned (`redis-offline.test.ts`) — no live Redis exists in this sandbox to switch off |
-| 2 | With Redis unreachable but configured (host refuses): same fallback, reason recorded | ✅ unit-pinned |
-| 3 | `REDIS_OPTIONAL=never` (or `auto` in production) + no Redis → loud FATAL boot refusal | ✅ unit-pinned |
-| 4 | Re-enabling Redis: set `UPSTASH_REDIS_URL`, restart, `/health` → `{redis:"up",store:"redis"}`, **no code change** | ✅ unit-pinned (same binary, both modes) — ⏳ live re-enable against the user's Redis is **user to run** |
-| 5 | `/readyz` does not report `not_ready` merely because Redis is intentionally offline | ✅ unit-pinned |
-| 6 | Single-instance caveat logged on every offline boot and documented | ✅ |
+| #   | Check                                                                                                                                                                         | Result                                                                                                   |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1   | With Redis offline (`UPSTASH_REDIS_URL` unset, `REDIS_OPTIONAL=always`): API boots, `/health` → `{redis:"down",store:"memory"}`, magic-link issue + consume works on the shim | ✅ unit-pinned (`redis-offline.test.ts`) — no live Redis exists in this sandbox to switch off            |
+| 2   | With Redis unreachable but configured (host refuses): same fallback, reason recorded                                                                                          | ✅ unit-pinned                                                                                           |
+| 3   | `REDIS_OPTIONAL=never` (or `auto` in production) + no Redis → loud FATAL boot refusal                                                                                         | ✅ unit-pinned                                                                                           |
+| 4   | Re-enabling Redis: set `UPSTASH_REDIS_URL`, restart, `/health` → `{redis:"up",store:"redis"}`, **no code change**                                                             | ✅ unit-pinned (same binary, both modes) — ⏳ live re-enable against the user's Redis is **user to run** |
+| 5   | `/readyz` does not report `not_ready` merely because Redis is intentionally offline                                                                                           | ✅ unit-pinned                                                                                           |
+| 6   | Single-instance caveat logged on every offline boot and documented                                                                                                            | ✅                                                                                                       |
 
 ### 2026-10-31 — Revision 3 addendum, A6: local Redis as the primary store (corrected root cause)
 
@@ -1076,15 +1076,15 @@ page is a one-entry edit plus that page's canonical; the procedure is written in
 
 **Added:**
 
-| Surface | File |
-| --- | --- |
-| Route table + JSON-LD builders | `apps/web/src/lib/seo.ts` (new) |
-| JSON-LD renderer (escapes `<`, unnonced by design) | `apps/web/src/lib/json-ld.tsx` (new) |
-| `/robots.txt` | `apps/web/src/app/robots.ts` (new) |
-| `/sitemap.xml` | `apps/web/src/app/sitemap.ts` (new) |
-| `/llms.txt` | `apps/web/src/app/llms.txt/route.ts` (new) |
-| Tests (37) | `apps/web/src/lib/seo.test.ts`, `apps/web/src/app/seo-surfaces.test.ts` (new) |
-| Off-page runbook | `docs/seo-runbook.md` (new) |
+| Surface                                            | File                                                                          |
+| -------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Route table + JSON-LD builders                     | `apps/web/src/lib/seo.ts` (new)                                               |
+| JSON-LD renderer (escapes `<`, unnonced by design) | `apps/web/src/lib/json-ld.tsx` (new)                                          |
+| `/robots.txt`                                      | `apps/web/src/app/robots.ts` (new)                                            |
+| `/sitemap.xml`                                     | `apps/web/src/app/sitemap.ts` (new)                                           |
+| `/llms.txt`                                        | `apps/web/src/app/llms.txt/route.ts` (new)                                    |
+| Tests (37)                                         | `apps/web/src/lib/seo.test.ts`, `apps/web/src/app/seo-surfaces.test.ts` (new) |
+| Off-page runbook                                   | `docs/seo-runbook.md` (new)                                                   |
 
 **Edited:** root `layout.tsx` (site-wide title template, description, keywords, robots default, full
 Open Graph + Twitter defaults, `Organization` + `WebSite` JSON-LD); 14 marketing pages
@@ -1136,6 +1136,60 @@ were **proven pre-existing** by running the same five files against a clean `HEA
 identical 10 failures → `git stash pop`): contributor-count drift in `home-end`/`about-b`/`page.test`,
 six `env.test` expectations and one signup-enroll wizard assertion. None touch SEO code.
 
+### 2026-10-31 — Local verification run: token-log redaction + magic-link provider-rejection hardening
+
+- **Context:** a full local verification of the work-order flows (Tasks 1–7 plus login/DB/admin
+  walkthroughs) was run against this checkout with a real Resend key, local Postgres/Redis/GoTrue
+  v2.197.0 and real-inbox OTP reads. Two defects surfaced and are fixed here; both were re-verified
+  live and by test. One disclosure: the API process serving the FIRST verification window
+  (12:58–14:55 UTC) answered on `/v1/*` with log strings absent from this checkout, its git history
+  and every cache — the canonical surface (`app.ts` prefix, web client, OpenAPI, route manifest) is
+  `/api/v1/*`. Every flow was therefore **re-run end-to-end on `/api/v1`** against this source;
+  all durable artifacts (Resend ids, GoTrue rows, Postgres rows, audit chain) persist from both
+  windows and agree.
+- **Changed (fix 1 — tokens in the access log):** Fastify's default `req` serializer logs the raw
+  URL, so `GET /api/v1/auth/magic-link/verify?token=…` wrote the single-use sign-in token into the
+  access log — contradicting this playbook's own invariant ("tokens are never logged or audited at
+  any level", work order §7). `buildApp` now installs a custom `req` serializer that keeps the
+  default field shape but passes the URL through the new `sanitizeLoggedUrl`
+  (`plugins/request-context.ts`): values of `token|code|otp|secret|sig|signature` query parameters
+  (case-insensitive) become `[Redacted]`; URLs without sensitive parameters are byte-identical.
+- **Changed (fix 2 — enumeration-proof contract vs provider rejection):** a Resend recipient-policy
+  rejection (422 `email_rejected`, e.g. any `@example.com` address) propagated out of
+  `requestMagicLink` as an unhandled `ProviderError` → HTTP **500** on `POST /auth/magic-link`,
+  breaking the byte-identical-answer contract for unregistered addresses. Both email legs (signup
+  invite, sign-in link) now catch send failures: the provider still logs the rejection at error
+  level, the service adds `magic-link produced NO EMAIL · reason=provider_rejected …` at warn, and
+  the outcome becomes `suppressed` — the generic 200 stands and **no** `SIGNUP_INVITE_SENT` /
+  `MAGIC_LINK_ISSUED` audit fact is recorded for an email that did not go out (an orphaned minted
+  token simply ages out of Redis at TTL).
+- **Files:** `apps/api/src/app.ts`, `apps/api/src/plugins/request-context.ts`,
+  `apps/api/src/plugins/request-context.test.ts` (new, 8 tests),
+  `apps/api/src/routes/v1/auth/service.ts`, `apps/api/src/routes/v1/auth/auth.test.ts`
+  (+`emailRejects` harness seam, 2 tests).
+- **Reason:** local-verification findings F1/F2; user instruction 2026-10-31. Finding F3
+  (`POST /account/mfa/totp/verify` answers 204 without rotating cookies to aal2) is **kept as a
+  documented known limitation** per the same instruction — see Known Gaps.
+- **Verification:** targeted suites 70/70 (62 auth incl. both new tests + 8 sanitizer); full API
+  suite **1055 passed / 3 failed / 9 skipped** — the 3 failures are pre-existing pins on the
+  production `DEFAULT_FROM` constant, caused solely by the local verification patch to
+  `packages/lib/src/providers/email.ts` (proven by stash → 28/28 pass → pop), not by these fixes.
+  Live: the previously-500 call now returns the generic 200 with `reason=provider_rejected`
+  logged; a verify request logs `?token=%5BRedacted%5D`; full happy path (magic-link → 302 masked
+  `/login/mfa` → TOTP → 200 SessionUser) re-proven after the serializer change.
+- **Typecheck follow-up (same day):** the first `apps/api` `tsc --noEmit` attempt was OOM-killed
+  (exit 137) by the 1 GiB sandbox cgroup while the backend ran; retried with the backend stopped
+  and `--max-old-space-size=720` it completed and **caught 2 real type errors in the fix-1
+  serializer edit** — the `serializers.req` parameter was annotated as pino's raw `IncomingMessage`
+  instead of Fastify's `FastifyRequest` (`app.ts` TS2769 + one cascading overload error). Fixed by
+  re-annotating the parameter (annotation-only — `method/url/headers/ip/socket` all exist on
+  `FastifyRequest`, runtime behavior byte-identical) and removing the unused import. After the
+  fix: `apps/api` tsc **exit 0**, `packages/lib` tsc **exit 0**, targeted suites re-run **70/70**,
+  backend restarted and live smoke re-proven (redacted verify log with literal token absent;
+  unregistered-address magic-link → generic 200). Lesson for this repo: whole-repo tsc does not
+  fit in a 1 GiB sandbox, but per-package `tsc --noEmit` with the backend stopped fits under a
+  720 MB heap cap — run it that way instead of skipping typecheck.
+
 ## Email Delivery (Resend)
 
 Per addendum A5.
@@ -1149,13 +1203,13 @@ Per addendum A5.
 - **From-domain (verified?):** `VUNVAULT <no-reply@vunvault.com>` — the constant `DEFAULT_FROM`, so
   the domain is **`vunvault.com`**. Whether it is verified in the Resend dashboard **could not be
   confirmed from this environment** (no API key). It is now checked at boot: `GET
-  https://api.resend.com/domains` must report `vunvault.com` as `verified`, otherwise the API refuses
+https://api.resend.com/domains` must report `vunvault.com` as `verified`, otherwise the API refuses
   to start. **Action for the user:** confirm Resend → Domains shows `vunvault.com` verified — this is
   the single most likely cause of "accepted, never delivered".
 - **Last verified send id:** ⚠️ **none — no live send has been performed by the agent.** There is no
   `RESEND_API_KEY` here and no dashboard/inbox access, so this field is deliberately left empty
   rather than filled with a fabricated id. To populate it: `POST
-  /api/v1/admin/diagnostics/email-test` as a super admin and read `data.id`, or request a magic link
+/api/v1/admin/diagnostics/email-test` as a super admin and read `data.id`, or request a magic link
   and read the `resend accepted the message` info line.
 - **Known failure mode fixed:** the send was **not** swallowed by the provider — it was invisible.
   Five outcomes answered the byte-identical `200` "check your email" ack while sending nothing
@@ -1168,8 +1222,7 @@ Per addendum A5.
   out**, both to check on the user's machine: (a) `playbook.md`'s Phase 7 entry records that
   verification forced an **`/etc/hosts` redirect of `api.resend.com` to a local capture stub** — if
   that entry survived, every send goes to localhost and Resend never sees it; (b)
-  `apps/api/.env.example` ships a **placeholder key** `re_dummy123456789`, which Resend rejects with
-  401.
+  `apps/api/.env.example` ships a **placeholder key** `re_dummy123456789`, which Resend rejects with 401.
 
 ## Redis Mode
 
@@ -1232,16 +1285,36 @@ Per addendum A5.
 
 Additive to the work-order table above; the original 11 criteria are unchanged and still ✅.
 
-| #   | Criterion (addendum A4)                                                              | Status | Where                                                                                                                                          |
-| --- | ------------------------------------------------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| A4.1 | vunvault catalogs 1–5 read; extraction recorded                                      | ✅     | Phase 0 entry + **Catalog Extraction** section (all five parts, with the reading method declared)                                                |
-| A4.2 | Signup-verification + auth workflows match the catalogs                               | ✅     | Catalog Extraction: canonical flow is Task 40d (details → email OTP → TOTP → aal2) + Task 24/26 session model; conflicts 1–7 recorded and resolved |
-| A4.3 | Magic-link email provably delivered via Resend (dashboard id logged)                  | ⚠️ **partial** | The `id` is now logged at `info` on every send and returned by the diagnostics endpoint (implemented + unit-pinned). **No live send was performed** — no API key, dashboard or inbox access here. Handed to the user; see Known Gaps |
-| A4.4 | No swallowed Resend errors; startup fails loudly on missing key/domain                | ✅     | A2 entry; `buildResendEmailProvider` + `email-guard.test.ts` (13 tests)                                                                          |
-| A4.5 | System boots and fully functions with Redis offline (in-memory fallback)              | ✅*    | A3 entry; `redis-offline.test.ts` (16 tests). \*Auth functions fully; **BullMQ queues cannot exist without Redis** and refuse jobs loudly — Known Gaps |
-| A4.6 | `/health` reports Redis state                                                         | ✅     | `GET /health` → `{ redis, store }`; `PUBLIC_ROUTES`; `/healthz` + `/readyz` unchanged                                                            |
-| A4.7 | Re-enabling Redis requires zero code changes                                          | ✅     | Same binary resolves both modes at boot; `redis-offline.test.ts` pins the online path; live re-enable is the user's to run                          |
-| A4.8 | Agent communicated every out-of-scope change with the user before applying it          | ✅     | Four blocking questions asked and answered before any edit (delivery method, Resend verification, Redis switch shape, catalog depth); every deviation recorded in Decisions below |
+| #    | Criterion (addendum A4)                                                       | Status         | Where                                                                                                                                                                                                                                |
+| ---- | ----------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A4.1 | vunvault catalogs 1–5 read; extraction recorded                               | ✅             | Phase 0 entry + **Catalog Extraction** section (all five parts, with the reading method declared)                                                                                                                                    |
+| A4.2 | Signup-verification + auth workflows match the catalogs                       | ✅             | Catalog Extraction: canonical flow is Task 40d (details → email OTP → TOTP → aal2) + Task 24/26 session model; conflicts 1–7 recorded and resolved                                                                                   |
+| A4.3 | Magic-link email provably delivered via Resend (dashboard id logged)          | ⚠️ **partial** | The `id` is now logged at `info` on every send and returned by the diagnostics endpoint (implemented + unit-pinned). **No live send was performed** — no API key, dashboard or inbox access here. Handed to the user; see Known Gaps |
+| A4.4 | No swallowed Resend errors; startup fails loudly on missing key/domain        | ✅             | A2 entry; `buildResendEmailProvider` + `email-guard.test.ts` (13 tests)                                                                                                                                                              |
+| A4.5 | System boots and fully functions with Redis offline (in-memory fallback)      | ✅*            | A3 entry; `redis-offline.test.ts` (16 tests). \*Auth functions fully; **BullMQ queues cannot exist without Redis** and refuse jobs loudly — Known Gaps                                                                               |
+| A4.6 | `/health` reports Redis state                                                 | ✅             | `GET /health` → `{ redis, store }`; `PUBLIC_ROUTES`; `/healthz` + `/readyz` unchanged                                                                                                                                                |
+| A4.7 | Re-enabling Redis requires zero code changes                                  | ✅             | Same binary resolves both modes at boot; `redis-offline.test.ts` pins the online path; live re-enable is the user's to run                                                                                                           |
+| A4.8 | Agent communicated every out-of-scope change with the user before applying it | ✅             | Four blocking questions asked and answered before any edit (delivery method, Resend verification, Redis switch shape, catalog depth); every deviation recorded in Decisions below                                                    |
+
+### Local verification run (2026-10-31) — task status
+
+Marked from the local verification work order (run log + evidence in `VERIFICATION-REPORT.md`;
+append-only correction forward of A4.3, which was ⚠️ partial for lack of a live send).
+
+| #                        | Verification task                              | Status                                    | Evidence                                                                                                                                                                                  |
+| ------------------------ | ---------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1                        | Locate target + real Resend key                | ✅ confirmed (prior window)               | Verified domain `info.vunvault.com`; key live in local `.env` only                                                                                                                        |
+| 2                        | Local infra (Postgres/Redis/GoTrue)            | ✅ confirmed (prior window, re-confirmed) | GoTrue v2.197.0 health JSON; 55 public + 27 auth tables                                                                                                                                   |
+| 3                        | OTP delivery via real Resend + real inbox      | ✅ confirmed + **re-run on `/api/v1`**    | Resend ids `01a19205-…`/`01a19249-…`/`01a19292-…`/`01a192bb-…` all `delivered`; user-read codes `048098` (410 expired), `258197`, `332759` (200 accepted); wrong code 401                 |
+| 4                        | MFA QR + TOTP                                  | ✅ confirmed + **re-run on `/api/v1`**    | Factors `63a40438-…`, `d557295f-…` verified; QR decodes byte-identical to the `otpauth://` URI; secret ≥16 chars Base32; wrong 401 / correct 204                                          |
+| 5                        | Signup 3-step workflow end-to-end              | ✅ PASS (re-run)                          | 202 → OTP 200 → enroll 201 → TOTP 204 → aal2; DB rows + audit chain                                                                                                                       |
+| 6                        | Onboarding wizard end-to-end                   | ✅ PASS (re-run)                          | 400 invalid → 201 completed → GET true → 409 repeat; scrypt answer hash; fixed by migration `0096_profiles_date_of_birth.sql` (was a repo-bug 500)                                        |
+| 7                        | API start + error check (7A–7D)                | ✅ PASS                                   | Documented `pnpm dev` boot, 0 errors/0 warnings, probes 200, graceful SIGTERM                                                                                                             |
+| L1–L3                    | Login walkthrough                              | ✅ PASS                                   | Magic-link E2E + all edge cases (`magic_link_used`/`invalid`, refresh rotation + replay 403, logout, audit)                                                                               |
+| D1–D3                    | DB walkthrough                                 | ✅ PASS                                   | Tables mapped; OTP sha256-at-rest, TTL 600, 5 attempts; bcrypt/scrypt confirmed                                                                                                           |
+| A1–A2                    | Local infra + admin test user                  | ✅ PASS                                   | Inventory captured; local admin promoted (test data only — the roster/`admin-roster.ts` is untouched); `GET /api/v1/admin/users` 200                                                      |
+| A4.3 (corrected forward) | Magic-link email provably delivered via Resend | ✅                                        | Live sends performed: dashboard-equivalent ids incl. `01a192b2-74e3-…` (sign-in link) + `01a192ba-…` (invite), `last_event=delivered`; emailed token proven identical to the verified one |
+| —                        | UI (`pnpm dev`) / `next build`                 | ❌ sandbox-blocked (R4)                   | 1 GiB cgroup, `oom_kill` 9→11, `spawn ENOMEM`; exact errors captured; fallback: 75/75 component tests + 1055 API tests + live HTTP sequences                                              |
 
 ## Decisions & Assumptions
 
@@ -1372,9 +1445,9 @@ Recorded per A0.5 (every user↔agent decision) and A0.2 (nothing out-of-scope a
   Phases 1–7 had already landed (see the entries above and the DoD table). Applied as an amendment to
   shipped code. **Confirmed with the user before any edit.**
 - **Four blocking questions were asked and answered before the first change** (A0.1/A0.2): how to
-  deliver the work (→ the user asked for `gh`), how to close Resend verification (→ *implement the
-  fixes; the user verifies against their dashboard/inbox*), the Redis switch shape (→ *both: an
-  explicit flag defaulting to auto-detect*), and catalog reading depth (→ *targeted extraction*).
+  deliver the work (→ the user asked for `gh`), how to close Resend verification (→ _implement the
+  fixes; the user verifies against their dashboard/inbox_), the Redis switch shape (→ _both: an
+  explicit flag defaulting to auto-detect_), and catalog reading depth (→ _targeted extraction_).
 - **`REDIS_OPTIONAL` semantics for `auto`.** The addendum named the flag but not what `auto` resolves
   to. Chosen: optional outside production, **required in production** — a laptop with Redis switched
   off boots, while a production deployment still fails loudly instead of silently degrading to
@@ -1393,12 +1466,12 @@ Recorded per A0.5 (every user↔agent decision) and A0.2 (nothing out-of-scope a
   from a pod that is serving correctly. `/health` is where degraded mode is reported.
 - **`/health` is a NEW route, not a reshaped one.** Task 21 defines exactly `/healthz` and `/readyz`
   and Task 40's conformance suite pins the table; both stay byte-identical. The new route carries a
-  real Zod response schema (the conformance schema check exempts `/healthz` and `/readyz` *by name*),
+  real Zod response schema (the conformance schema check exempts `/healthz` and `/readyz` _by name_),
   declared locally rather than in `@vunvault/contracts` because health is infrastructure, not a
   consumer contract — the same reason its two siblings have no contract schema.
 - **Unverified from-domain: refuse to boot. Uncheckable from-domain: log FATAL and boot.** A2.3 allows
   either response. A definitive "not verified" is a misconfiguration that reproduces the reported bug
-  exactly, so it blocks the boot; an unreachable Resend *management* API is not evidence of
+  exactly, so it blocks the boot; an unreachable Resend _management_ API is not evidence of
   misconfiguration, and taking the whole platform down over a control-plane blip is the worse outcome.
 - **No new `EMAIL_FROM` config flag was added.** A2.3 refers to "the configured from domain"; the
   sender is the existing `DEFAULT_FROM` constant. Making it env-configurable would have been a new
@@ -1416,7 +1489,7 @@ Recorded per A0.5 (every user↔agent decision) and A0.2 (nothing out-of-scope a
   following that file's own established convention.
 - **Recipient addresses are kept out of application logs but recorded in the audit chain.** The
   provider logs `{ id, status, error, requestId, purpose }` only — stdout/log aggregation is
-  high-volume and broadly readable. The diagnostics *audit* entry records the destination in full,
+  high-volume and broadly readable. The diagnostics _audit_ entry records the destination in full,
   because the chain is sealed, access-controlled (`audit:read`) and is the system of record for admin
   actions. The magic-link suppression warnings likewise omit the address (the audit entry already
   carries it as subject) and correlate by request id.
@@ -1452,7 +1525,7 @@ built speculatively.
   the Revision 3 commit, and the answers are implemented in commit `56386f6`: **FAQ layer → mount the
   section and emit the markup** (home page renders `QaSection` + `faqJsonLd(HOME_QA)`); **brand assets
   → generate both** (done by rendering the repo's own `logo.svg` monogram with sharp — not AI-imagined
-  — see *Brand rasters* in `docs/seo-runbook.md`); **delivery → reconnect GitHub in Arena, then push**.
+  — see _Brand rasters_ in `docs/seo-runbook.md`); **delivery → reconnect GitHub in Arena, then push**.
 - **Push remains blocked at the time of writing.** After the user chose reconnection, `gh auth status`
   still reports "not logged into any GitHub hosts" and `git push origin main` still fails with
   `could not read Username for 'https://github.com'` — the reconnection has not reached this sandbox.
@@ -1498,13 +1571,13 @@ built speculatively.
   `RESEND_API_KEY` and no access to the Resend dashboard or to any inbox, so the two acceptance items
   that require them are handed to the user rather than claimed: (1) a magic-link request produces a
   visible Resend dashboard event within 30 s with status `delivered`/`sent`; (2) the diagnostics
-  endpoint returns a real Resend id. Everything that *can* be proven without a live key is proven —
+  endpoint returns a real Resend id. Everything that _can_ be proven without a live key is proven —
   the contract, the logging, the boot guard and the route guards are unit-pinned (29 new tests). The
   "Last verified send id" field in **Email Delivery (Resend)** is intentionally empty.
-- **A3 live Redis re-enable was NOT performed** *(superseded by Revision 3 — see the A6 entry and the
+- **A3 live Redis re-enable was NOT performed** _(superseded by Revision 3 — see the A6 entry and the
   Revision 3 Known Gaps: a real `redis-server` 7.0.15 was installed in this sandbox and both the
   store-level flows and a full app boot were verified against it, which is what found the
-  `probeRedis` `connect()` defect)*. No Redis server existed in this sandbox at Revision 2 time to
+  `probeRedis` `connect()` defect)_. No Redis server existed in this sandbox at Revision 2 time to
   switch off and back on, so both modes were pinned by unit tests against a fake connection rather
   than observed against a real one. The user's checklist: take Redis down → `/health` reports
   `{redis:"down",store:"memory"}` and login still works; bring it back → set `UPSTASH_REDIS_URL`,
@@ -1585,7 +1658,7 @@ built speculatively.
   results only for well-known government/health sites since August 2023, so the gain is answer-engine
   grounding and on-page clarity, not a SERP snippet.
 - **Brand rasters shipped, rendered from the repo's own monogram (Rev 3 SEO).** `public/brand/
-  logo-512.png` (square, transparent) satisfies schema.org's raster-≥112×112 rule and is now the
+logo-512.png` (square, transparent) satisfies schema.org's raster-≥112×112 rule and is now the
   `Organization.logo`; `public/brand/og-default.png` (1200×630) is wired into `openGraph.images` and
   `twitter.images`. Both are cropped renders of `brand/logo.svg` via sharp — not AI-generated — with
   the card's type set in Liberation Sans because no brand font was available to the offline renderer.
@@ -1605,3 +1678,27 @@ built speculatively.
 - **Ten pre-existing web test failures remain** (contributor-count drift ×3, `env.test` ×6,
   signup-enroll ×1). Proven present on clean `HEAD` before this revision; not fixed here because
   touching contributor data or env expectations is an unlisted change (A0.2).
+
+### Local verification run (2026-10-31) — Known Gaps / documented limitations
+
+- **F3 (kept as a documented known limitation per user decision):** `POST /api/v1/account/mfa/totp/verify`
+  answers **204 without rotating the session cookies to aal2** — the caller keeps its aal1 `vv_at`
+  until the next explicit `POST /auth/refresh`, which then carries the elevated `aal`/`amr` claims.
+  The web flows refresh after enrolment, so behaviour is correct in-product; the raw API contract is
+  the rough edge. A future change could re-issue cookies inside the verify handler.
+- **aal1 fail-safe window:** the very first access token minted inside the signup transaction can
+  carry empty `permissions`/`org_id` (the GoTrue access-token hook fail-safes before the API
+  transaction commits); it self-heals on the first refresh. Same class as F3 — cosmetic at the
+  token-claims layer, invisible to the web flows.
+- **TOTP secrets at rest:** `auth.mfa_factors.secret` stores the Base32 secret in plaintext
+  (GoTrue v2.197.0 upstream behaviour). Recommend encryption at rest (DB-level or a GoTrue
+  security config) before production.
+- **GoTrue hook contract:** v2.197.0 reads custom access-token hook output ONLY from `event.claims`
+  while this repo's hook emits claims at the top level; the local run used an adapter function
+  (`vv_custom_access_token_hook_v2197`). **Verify the production GoTrue version's contract before
+  deploy** — this is the single most deploy-critical finding of the run.
+- **Sandbox limitation (not a repo defect):** the web UI cannot compile in the verification sandbox
+  (1 GiB cgroup, no swap): `pnpm dev` (turbopack + webpack) and `next build` (heap 850/512) were
+  all SIGKILLed mid-compile; `oom_kill` counter 9→11; exact errors in `VERIFICATION-REPORT.md`.
+- **Resend key rotation:** the API key used for verification was shared in chat (full access) —
+  rotate it before any deployment.
