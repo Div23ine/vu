@@ -1,0 +1,20 @@
+# Scan namespace (Task 86).
+#
+# Pod Security Admission is set to `restricted` — the strictest built-in profile
+# — so a manifest that forgets one of the hardening fields in
+# `src/k8s/pod-manifest.ts` is REJECTED by the cluster rather than running
+# privileged. `warn` and `audit` are set to the same level so a regression is
+# visible in logs before it is enforced.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vv-scans
+  labels:
+    app.kubernetes.io/name: vv-scan
+    app.kubernetes.io/part-of: vunvault
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest

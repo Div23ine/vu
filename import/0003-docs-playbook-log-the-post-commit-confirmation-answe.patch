@@ -1,0 +1,35 @@
+From d16c6627c2c7d7a9d6f2d2177eab84160d2e94a7 Mon Sep 17 00:00:00 2001
+From: "Qwen (Arena agent)" <agent@arena.local>
+Date: Sat, 31 Oct 2026 06:48:15 +0000
+Subject: [PATCH 3/3] docs(playbook): log the post-commit confirmation answers
+ and push status
+
+---
+ playbook.md | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/playbook.md b/playbook.md
+index 00427e7..f13d552 100644
+--- a/playbook.md
++++ b/playbook.md
+@@ -1448,6 +1448,17 @@ built speculatively.
+   canonical URLs, JSON-LD Organization + WebSite, OG/Twitter pass; (2) AEO content layer —
+   `llms.txt` and FAQPage structured data derived from the existing `qa-data.ts`; (3) an off-page
+   runbook document. Goal: the site is discoverable when people search "vunvault".
++- **Post-Revision-3 confirmation answers (2026-10-31).** Three questions were put to the user after
++  the Revision 3 commit, and the answers are implemented in commit `56386f6`: **FAQ layer → mount the
++  section and emit the markup** (home page renders `QaSection` + `faqJsonLd(HOME_QA)`); **brand assets
++  → generate both** (done by rendering the repo's own `logo.svg` monogram with sharp — not AI-imagined
++  — see *Brand rasters* in `docs/seo-runbook.md`); **delivery → reconnect GitHub in Arena, then push**.
++- **Push remains blocked at the time of writing.** After the user chose reconnection, `gh auth status`
++  still reports "not logged into any GitHub hosts" and `git push origin main` still fails with
++  `could not read Username for 'https://github.com'` — the reconnection has not reached this sandbox.
++  Revision 3 therefore ships as two commits on `main` plus regenerable artifacts:
++  `../0001-feat-seo-auth-local-Redis-….patch`, `../0002-feat-seo-mount-the-buyer-Q-A-band-….patch`
++  (apply on `b1a5c0b`) and `../vu-addendum-rev3.bundle` (full history).
+ - **Live-Redis verification method.** `redis-server` 7.0.15 was installed in the sandbox and started on
+   demand; live checks run through the gated `redis-live.test.ts` (`REDIS_LIVE_URL=…`), and the server
+   is **stopped before every full-suite run** (see the hermeticity gap below).
+-- 
+2.39.5
+

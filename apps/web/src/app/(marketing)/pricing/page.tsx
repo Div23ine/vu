@@ -5,6 +5,7 @@ import { env } from '../../../env';
 import { PlansClient, type CurrencyOption } from './plans-client';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/pricing' },
   title: 'Pricing',
   description:
     'Starter assessments, SACCO and fintech compliance assessments and enterprise retainers. Transparent USD pricing with local-currency equivalents.',

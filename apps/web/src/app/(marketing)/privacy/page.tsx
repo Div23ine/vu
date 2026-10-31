@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { LegalDoc, LegalSection, LegalSub } from '../_components/legal-doc';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/privacy' },
   title: 'Privacy Policy',
   description:
     'How VUNVAULT collects, uses and protects personal data under the GDPR, the Australian Privacy Principles, the Kenya Data Protection Act and related laws.',

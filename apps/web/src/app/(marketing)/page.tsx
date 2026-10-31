@@ -12,7 +12,11 @@ import { ZeroDayWidget } from './_components/home/zero-day-widget';
 import { CveTicker } from './_components/cve-ticker';
 import { ComingSoonBanner } from './_components/coming-soon-banner';
 import { PricingPlans } from './_components/pricing-plans';
+import { QaSection } from './_components/home/qa-section';
 import { ScannerCta } from './_components/scanner/scanner-cta';
+import { JsonLd } from '../../lib/json-ld';
+import { faqJsonLd } from '../../lib/seo';
+import { HOME_QA } from './_components/qa-data';
 
 /**
  * The home route — every section assembled in the design's
@@ -29,6 +33,7 @@ import { ScannerCta } from './_components/scanner/scanner-cta';
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/' },
   // `absolute` opts out of the root layout's `%s — VUNVAULT` template, exactly
   // as the spec specifies.
   title: { absolute: 'VUNVAULT — We Find The Cracks Before They Do' },
@@ -39,6 +44,11 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
+      {/* FAQPage graph for the Q&A band below. Emitted only because `QaSection`
+          renders the very same `HOME_QA` entries on this page: structured data
+          that does not match visible content is a spam signal, which is why this
+          line and that component are wired together and not separately. */}
+      <JsonLd data={faqJsonLd(HOME_QA)} />
       <ComingSoonBanner />
       <Hero />
       <span id="get-started" className="anchor-offset" aria-hidden="true" />
@@ -148,6 +158,10 @@ export default function HomePage() {
       </section>
 
       <PricingPlans />
+      {/* "Questions buyers actually ask": the retired /pricing page's buyer FAQ,
+          kept above the plan grid it refers to (`#pricing`). Native <details>,
+          zero JS. The FAQPage markup at the top of this fragment mirrors it. */}
+      <QaSection />
       <PressMedia />
       <Contributors />
       <ContactStrip />

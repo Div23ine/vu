@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ContactCards } from './_components/contact-cards';
 import { ContactForm } from './_components/contact-form';
@@ -11,6 +12,14 @@ import { ContactHero } from './_components/contact-hero';
  * supplies the chrome; the footer's dark `contact` variant is
  * pathname-derived .
  */
+
+export const metadata: Metadata = {
+  title: 'Contact VUNVAULT',
+  description:
+    'Reach the team for scoping calls, assessment scheduling, press or security disclosures. Based in Nairobi, Kenya.',
+  alternates: { canonical: '/contact' },
+};
+
 export default function ContactPage() {
   return (
     <>

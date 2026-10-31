@@ -1,0 +1,360 @@
+/**
+ * Academy + Pricing stylesheet , reproduced from the design's
+ * CSS. Every tokenised value uses `var(--token)` (`--white`, `--r-lg`,
+ * `--r-full`, `--dark-abyss`, `--slate-muted`, `--font-mono`, `--grad-brand`,
+ * `--line`, `--line-soft`, `--brand*`, `--ink*`, `--ease`); one-off literals
+ * without tokens (the thumbnail gradient stop `#060a10`, skill/tag chip grey
+ * `#f5f7fa`, the featured card's slate texts `#9aa8ba` / `#c3ccd8`, the CTA
+ * ink `#04121f`) stay inside this file only — never in TSX.
+ *
+ * AUTHORED additions, marked below:
+ * - `.anchor-offset` — the design pairs the `#services-plans` span with
+ * this class but never embeds the block; it lifts anchor landings clear of
+ * the sticky header.
+ * - `:focus-visible` outlines for the two CTA styles.
+ *
+ * Reduced motion: the design's block below is reproduced verbatim, and the
+ * global fallback in `@vunvault/ui`'s `motion.css` collapses every hover
+ * transition; the cards keep their final layout either way.
+ */
+
+.vv-article-thumb,
+.vv-track-thumb {
+  max-height: 240px;
+}
+.vv-article-thumb svg,
+.vv-track-thumb svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (min-width: 1024px) {
+  .vv-article-grid,
+  .vv-academy-grid {
+    max-width: 76rem;
+    margin-inline: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vv-article-card,
+  .vv-track,
+  .vv-plan,
+  .vv-seg-card,
+  .contributor-card,
+  .glass-card {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .vv-track-thumb {
+    max-height: 260px;
+  }
+  .vv-track-thumb svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* ——— Academy tracks ——— */
+.vv-academy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+.vv-track {
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--line);
+  transition:
+    transform 0.28s var(--ease),
+    border-color 0.28s var(--ease),
+    box-shadow 0.28s var(--ease);
+}
+.vv-track:hover {
+  transform: translateY(-5px);
+  border-color: var(--brand-line);
+  box-shadow: 0 28px 56px -36px rgba(10, 13, 18, 0.5);
+}
+.vv-track-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: linear-gradient(150deg, var(--dark), #060a10);
+}
+.vv-track-thumb svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s var(--ease);
+}
+.vv-track:hover .vv-track-thumb svg {
+  transform: scale(1.05);
+}
+.vv-track-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 5px 11px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-soft);
+  background: rgba(10, 13, 18, 0.6);
+  border: 1px solid rgba(59, 153, 252, 0.35);
+  border-radius: var(--r-full);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.vv-track-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  padding: 20px 22px 24px;
+}
+.vv-track-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.vv-track-text {
+  margin-top: 9px;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--ink-muted);
+}
+.vv-track-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 16px;
+}
+.vv-skill {
+  padding: 5px 10px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: #f5f7fa;
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+}
+.vv-track-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 20px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+  color: var(--brand-strong);
+}
+.vv-track-cta svg {
+  transition: transform 0.22s var(--ease);
+}
+.vv-track:hover .vv-track-cta svg {
+  transform: translateX(4px);
+}
+@media (max-width: 980px) {
+  .vv-academy-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 680px) {
+  .vv-academy-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* ——— Pricing plans ——— */
+.vv-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+.vv-plan {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 24px;
+  border-radius: var(--r-lg);
+  background: var(--white);
+  border: 1px solid var(--line);
+  transition:
+    transform 0.25s var(--ease),
+    border-color 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+.vv-plan:hover {
+  transform: translateY(-3px);
+  border-color: var(--brand-line);
+  box-shadow: 0 20px 44px -32px rgba(10, 13, 18, 0.45);
+}
+.vv-plan--featured {
+  background: linear-gradient(160deg, var(--dark), var(--dark-abyss));
+  border-color: rgba(59, 153, 252, 0.45);
+}
+.vv-plan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.vv-plan-name {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.vv-plan--featured .vv-plan-name {
+  color: var(--white);
+}
+.vv-plan-tag {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: var(--r-full);
+  color: var(--brand-strong);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  white-space: nowrap;
+}
+.vv-plan--featured .vv-plan-tag {
+  color: var(--brand-soft);
+  background: rgba(59, 153, 252, 0.14);
+  border-color: rgba(59, 153, 252, 0.35);
+}
+.vv-plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.vv-plan-amount {
+  font-family: var(--font-mono);
+  font-size: 2.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--ink);
+}
+.vv-plan--featured .vv-plan-amount {
+  color: var(--white);
+}
+.vv-plan-period {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+.vv-plan--featured .vv-plan-period {
+  color: var(--slate-muted);
+}
+.vv-plan-desc {
+  margin-top: 12px;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--ink-muted);
+}
+.vv-plan--featured .vv-plan-desc {
+  color: #9aa8ba;
+}
+.vv-plan-list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+.vv-plan--featured .vv-plan-list {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+.vv-plan-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.vv-plan--featured .vv-plan-list li {
+  color: #c3ccd8;
+}
+.vv-plan-list svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--brand);
+}
+.vv-plan-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 12px 18px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+  color: var(--white);
+  background: var(--grad-brand);
+  border: 1px solid rgba(59, 153, 252, 0.5);
+  border-radius: var(--r-full);
+  transition:
+    transform 0.22s var(--ease),
+    filter 0.22s var(--ease);
+}
+.vv-plan-cta:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+}
+.vv-plan--featured .vv-plan-cta {
+  color: #04121f;
+  background: linear-gradient(135deg, var(--brand-soft), var(--brand));
+  border-color: transparent;
+}
+.vv-plan-cta svg {
+  transition: transform 0.22s var(--ease);
+}
+.vv-plan-cta:hover svg {
+  transform: translateX(3px);
+}
+@media (max-width: 900px) {
+  .vv-plan-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .vv-plan {
+    padding: 22px 20px;
+  }
+}
+
+/* Authored: anchor offset for the sticky header (see file header). */
+.anchor-offset {
+  display: block;
+  position: relative;
+  top: -5rem;
+  visibility: hidden;
+}
+
+/* Authored: keyboard focus for the two CTAs. */
+.vv-track-cta:focus-visible,
+.vv-plan-cta:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

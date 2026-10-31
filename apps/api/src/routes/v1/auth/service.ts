@@ -62,6 +62,13 @@ export interface RequestMeta {
   ip: string;
   userAgent?: string | null;
   headers?: GeoHeaders;
+  /**
+   * The resolved request id (Revision 2 addendum, A2.2). Carried into the email
+   * provider's log line so one HTTP request, its Resend response id and any
+   * suppression reason can be correlated from a single grep. Optional because
+   * every existing caller and test builds `RequestMeta` without it.
+   */
+  requestId?: string;
 }
 
 export interface IssuedSession {
@@ -551,10 +558,23 @@ export class AuthService {
     // ——— Phase 4: bot signals first — a dropped bot consumes no budget and
     // never reaches the repo, so it cannot probe registration status either.
     // The HTTP answer is the identical generic 200 (the route composes it).
+    //
+    // A2: these drops answer 200 "check your email" while sending NOTHING, which
+    // is indistinguishable from the reported Resend bug at the UI. They are by
+    // design (anti-enumeration), so the response must stay generic — but the drop
+    // is now logged with a greppable reason and the request id, so an operator
+    // can tell "blocked as a bot" apart from "Resend never saw it". The address
+    // itself is NOT logged here; the audit entry already records it as subject.
     if ((input.website ?? '').trim() !== '') {
+      this.warn(
+        `magic-link produced NO EMAIL · reason=bot_dropped(honeypot) · requestId=${meta.requestId ?? 'n/a'} — the hidden "website" field arrived filled in, which autofill and password managers do`,
+      );
       return { sent: 'bot_dropped', email, reason: 'honeypot' };
     }
     if (LoginAbuseGuard.isTooFast(input.formTs, this.now().getTime())) {
+      this.warn(
+        `magic-link produced NO EMAIL · reason=bot_dropped(timing) · requestId=${meta.requestId ?? 'n/a'} — formTs was too close to submit; browser/server clock skew fails EVERY request this way`,
+      );
       return { sent: 'bot_dropped', email, reason: 'timing' };
     }
 
@@ -580,6 +600,9 @@ export class AuthService {
     if (abuse !== undefined) {
       const window = await abuse.emailWindowClaim(email);
       if (!window.allowed) {
+        this.warn(
+          `magic-link produced NO EMAIL · reason=window_suppressed · requestId=${meta.requestId ?? 'n/a'} · retryAfterSeconds=${window.retryAfterSeconds} — the per-address issuance window is still open`,
+        );
         return {
           sent: 'window_suppressed',
           email,
@@ -592,6 +615,10 @@ export class AuthService {
       // Phase 3: the invitation is the ONLY signal, and it goes to the address
       // itself — never to the HTTP response.
       if (!(await this.deps.invites.claim(email))) {
+        // A2: this path was not even audited — a 200 ack, no email, no trace.
+        this.warn(
+          `magic-link produced NO EMAIL · reason=invite_cooldown · requestId=${meta.requestId ?? 'n/a'} — an unregistered address already received its signup invitation inside the cooldown window`,
+        );
         return { sent: 'suppressed', email };
       }
       const signupLink = `${primaryWebOrigin(this.deps.webOrigin)}/signup`;
@@ -604,7 +631,7 @@ export class AuthService {
         subject: 'No VUNVAULT account found for this email',
         html: `<p>We received a sign-in request for <strong>${email}</strong>, but no VUNVAULT account is registered for this address.</p><p>If you would like an account, sign up here: <a href="${signupLink}">${signupLink}</a></p><p>If you did not request this, you can safely ignore this email.</p>`,
         text: `We received a sign-in request for ${email}, but no VUNVAULT account is registered for this address.\n\nIf you would like an account, sign up here: ${signupLink}\n\nIf you did not request this, you can safely ignore this email.`,
-      });
+      }, { requestId: meta.requestId, purpose: 'signup_invite' });
       void meta;
       return { sent: 'invite', email };
     }
@@ -621,7 +648,7 @@ export class AuthService {
         subject: 'Your VUNVAULT sign-in link',
         html: `<p>Click the link below to sign in to VUNVAULT:</p><p><a href="${link}">${link}</a></p><p>The link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.</p>`,
         text: `Click the link below to sign in to VUNVAULT:\n\n${link}\n\nThe link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.`,
-      });
+      }, { requestId: meta.requestId, purpose: 'magic_link' });
     } else {
       this.warn('magic link requested but no email provider is configured');
     }

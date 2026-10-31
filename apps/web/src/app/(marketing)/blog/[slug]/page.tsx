@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
 import { fetchArticle } from './article-fetch';
 import { ArticleReader } from '../_components/article-reader';
+import { JsonLd } from '../../../../lib/json-ld';
+import { SITE_NAME, articleJsonLd, breadcrumbJsonLd, siteUrl } from '../../../../lib/seo';
+
+/** Breadcrumb trail shared by this route's markup and its `Article` graph. */
+const ARTICLE_CRUMBS = [
+  { name: SITE_NAME, path: '/' },
+  { name: 'Blog & Advisories', path: '/blog' },
+];
 
 /**
  * `/blog/[slug]` — the article reader route.
@@ -26,12 +34,46 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
   return {
     title: item.title,
     description: item.excerpt ?? undefined,
-    openGraph: item.featuredImageUrl === null ? undefined : { images: [item.featuredImageUrl] },
+    // Overrides the `/blog` canonical inherited from `blog/layout.tsx`; without
+    // this every article would canonicalise to the newsroom index.
+    alternates: { canonical: `/blog/${slug}` },
+    openGraph: {
+      type: 'article',
+      url: siteUrl(`/blog/${slug}`),
+      title: item.title,
+      description: item.excerpt ?? undefined,
+      publishedTime: item.publishedAt,
+      authors: [item.author.fullName],
+      ...(item.featuredImageUrl === null ? {} : { images: [item.featuredImageUrl] }),
+    },
+    twitter: {
+      card: item.featuredImageUrl === null ? 'summary' : 'summary_large_image',
+      title: item.title,
+      description: item.excerpt ?? undefined,
+    },
   };
 }
 
 export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
   const { slug } = await params;
   const item = await fetchArticle(slug);
-  return <ArticleReader item={item} />;
+  return (
+    <>
+      {/* Article + breadcrumb graph: hands an answer engine the publication date,
+          the author display name and the canonical URL explicitly instead of
+          leaving it to infer them from the prose. */}
+      <JsonLd
+        data={articleJsonLd({
+          title: item.title,
+          slug,
+          publishedAt: item.publishedAt,
+          excerpt: item.excerpt,
+          authorName: item.author.fullName,
+          featuredImageUrl: item.featuredImageUrl,
+        })}
+      />
+      <JsonLd data={breadcrumbJsonLd(ARTICLE_CRUMBS)} />
+      <ArticleReader item={item} />
+    </>
+  );
 }

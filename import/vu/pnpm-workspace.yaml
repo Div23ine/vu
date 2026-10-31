@@ -1,0 +1,63 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+catalog:
+  typescript: ~5.5.4
+  zod: ^3.25.76
+  react: ^19.3.0
+  react-dom: ^19.3.0
+  next: ^15.5.27
+  tailwindcss: ^4.3.3
+  vitest: ^3.2.7
+  eslint: ^9.39.5
+  fastify: ^5.12.5
+  # Pinned, not `latest`: a floating spec re-resolves to whatever is newest on
+  # every fresh install, and both packages are 0.x, where a minor bump is a
+  # breaking change. ^0.45.4 admits 0.45.x patches only. These are the versions
+  # `latest` resolved to when the pin was made, so nothing changes today — the
+  # point is that it cannot change by accident tomorrow.
+  drizzle-orm: ^0.45.4
+  drizzle-kit: ^0.31.11
+
+# Dependency build scripts.
+#
+# pnpm 10 stopped running dependencies' build scripts by default; pnpm 11
+# replaced `onlyBuiltDependencies` / `ignoredBuiltDependencies` with `allowBuilds`
+# (the old keys are SILENTLY IGNORED, so a workspace migrated from pnpm 10 can
+# look configured and not be); pnpm 12 fails the install outright with
+# ERR_PNPM_IGNORED_BUILDS while any build script is left undecided. So every
+# package in this tree that ships one is listed here explicitly, allowed or
+# denied — nothing is left to a default.
+#
+# `pnpm approve-builds` maintains this map interactively; `pnpm permissions`
+# lists what is granted, denied and still awaiting a decision.
+allowBuilds:
+  # Allowed: the install produces a binary the toolchain cannot work without.
+
+  # Links its platform binary. tsx (the API's dev runner), vitest and drizzle-kit
+  # all shell out to it; four versions are in the tree, all need it.
+  esbuild: true
+  # Cloudflare's runtime. `wrangler dev`, `opennextjs-cloudflare preview` and
+  # miniflare cannot start without it.
+  workerd: true
+  # Fetches its libvips prebuilds. Next and wrangler pull it in; nothing under
+  # apps/ imports it directly and `images.unoptimized` is set, so it is not on a
+  # hot path — but a half-installed sharp throws the moment anything touches it.
+  sharp: true
+  # bullmq's native msgpack accelerator. Its install script links the
+  # @msgpackr-extract/<platform> prebuild rather than compiling, so no C
+  # toolchain is required; without it msgpackr silently falls back to pure JS.
+  msgpackr-extract: true
+
+  # Denied, deliberately.
+
+  # msw's postinstall copies mockServiceWorker.js into apps/web/public/ (via the
+  # `msw.workerDirectory` config). That directory is copied wholesale into
+  # .open-next/assets, and src/middleware.ts excludes the script from its matcher
+  # — so an auto-created worker script would be published on the production
+  # origin with no CSP, and next.config.ts refuses a production build when the
+  # file is present. Regenerating it on every install would therefore break CI's
+  # `cf:build`. Creating it stays an explicit act:
+  #   pnpm --filter web exec msw init public --save
+  msw: false

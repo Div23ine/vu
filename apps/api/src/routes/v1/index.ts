@@ -24,6 +24,7 @@ import newsletterRoutes from './newsletter/index.js';
 import contactAdminRoutes from './contact-admin/index.js';
 import internalScansRoutes from './internal-scans/index.js';
 import scanStreamRoutes from './scan-stream/index.js';
+import diagnosticsRoutes from './diagnostics/index.js';
 
 /**
  * `/api/v1` aggregator.
@@ -57,6 +58,7 @@ const v1Routes: FastifyPluginAsync = async (app) => {
   await app.register(contactAdminRoutes); // Task 40f
   await app.register(internalScansRoutes); // Task 40g
   await app.register(scanStreamRoutes); // Task 95
+  await app.register(diagnosticsRoutes); // Revision 2 addendum A2.4
 };
 
 export default v1Routes;

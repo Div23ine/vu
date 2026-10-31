@@ -1,5 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import type { KvStore } from './challenge.js';
+import type { KvStore, StoreLogger } from './challenge.js';
 
 /**
  * Magic-link tokens (Phase 1).
@@ -60,7 +60,35 @@ export class MagicLinkTokenStore {
     private readonly secret: string,
     private readonly ttlSeconds: number = MAGIC_LINK_TTL_SECONDS,
     private readonly now: () => number = () => Date.now(),
+    private readonly log?: StoreLogger,
   ) {}
+
+  /**
+   * Run one store interaction, failing CLOSED (Revision 3, A6).
+   *
+   * This is the opposite policy from the abuse counters on purpose. A counter that
+   * cannot be read only loses an abuse signal, so it fails open and stays
+   * available. A token store that cannot be read or written loses the ability to
+   * PROVE single-use — and guessing there would silently discard replay
+   * protection, which is the one property this module exists to provide. So the
+   * error is logged with a distinctive, greppable scope and then rethrown: the
+   * caller answers a generic 500, and an operator can see immediately that Redis,
+   * not Resend, is why no link went out.
+   */
+  private async guard<T>(scope: string, work: () => Promise<T>): Promise<T> {
+    try {
+      return await work();
+    } catch (error) {
+      this.log?.warn(
+        // Scope is prefixed to match the abuse guard's `magic_link_*` names, so one
+        // grep for `scope=magic_link_` finds every Redis fault on this surface.
+        { err: error, scope: `magic_link_${scope}`, store: 'unavailable' },
+        `magic-link ${scope} FAILED: token store unreachable — refusing to continue ` +
+          '(fail closed, single-use cannot be proven; this is NOT a Resend failure)',
+      );
+      throw error;
+    }
+  }
 
   static emailKey(email: string): string {
     return email.trim().toLowerCase();
@@ -101,13 +129,14 @@ export class MagicLinkTokenStore {
     const token = `${payloadB64}.${this.sign(payloadB64)}`;
 
     // Invalidate the previous link for this address first.
-    const previousJti = await this.store.get(`${MAGIC_POINTER_PREFIX}${normalized}`);
-    if (previousJti !== null) {
-      await this.store.del(`${MAGIC_TOKEN_PREFIX}${previousJti}`);
-    }
-
-    await this.store.set(`${MAGIC_TOKEN_PREFIX}${jti}`, token, 'EX', this.ttlSeconds);
-    await this.store.set(`${MAGIC_POINTER_PREFIX}${normalized}`, jti, 'EX', this.ttlSeconds);
+    await this.guard('issue', async () => {
+      const previousJti = await this.store.get(`${MAGIC_POINTER_PREFIX}${normalized}`);
+      if (previousJti !== null) {
+        await this.store.del(`${MAGIC_TOKEN_PREFIX}${previousJti}`);
+      }
+      await this.store.set(`${MAGIC_TOKEN_PREFIX}${jti}`, token, 'EX', this.ttlSeconds);
+      await this.store.set(`${MAGIC_POINTER_PREFIX}${normalized}`, jti, 'EX', this.ttlSeconds);
+    });
     return { token, expiresInSeconds: this.ttlSeconds };
   }
 
@@ -123,17 +152,19 @@ export class MagicLinkTokenStore {
 
     // Read-and-delete: the record is gone whether the checks below pass or fail,
     // so a replay can never find a live token again.
-    const stored = await this.store.get(`${MAGIC_TOKEN_PREFIX}${payload.jti}`);
-    await this.store.del(`${MAGIC_TOKEN_PREFIX}${payload.jti}`);
-    if (stored === null) return { status: 'used' };
-    if (!safeEqualHex(stored, token)) return { status: 'used' };
+    return this.guard('consume', async () => {
+      const stored = await this.store.get(`${MAGIC_TOKEN_PREFIX}${payload.jti}`);
+      await this.store.del(`${MAGIC_TOKEN_PREFIX}${payload.jti}`);
+      if (stored === null) return { status: 'used' } as const;
+      if (!safeEqualHex(stored, token)) return { status: 'used' } as const;
 
-    // Email binding: a token minted for one address cannot sign anyone else in,
-    // and a superseded link (pointer moved to a newer jti) is dead.
-    const pointer = await this.store.get(`${MAGIC_POINTER_PREFIX}${payload.email}`);
-    if (pointer !== null && pointer !== payload.jti) return { status: 'used' };
+      // Email binding: a token minted for one address cannot sign anyone else in,
+      // and a superseded link (pointer moved to a newer jti) is dead.
+      const pointer = await this.store.get(`${MAGIC_POINTER_PREFIX}${payload.email}`);
+      if (pointer !== null && pointer !== payload.jti) return { status: 'used' } as const;
 
-    return { status: 'valid', payload };
+      return { status: 'valid', payload } as const;
+    });
   }
 
   /** Drop the live pointer for an address (used by tests / revocation paths). */
@@ -168,6 +199,7 @@ export class SignupInviteCooldown {
   constructor(
     private readonly store: KvStore,
     private readonly ttlSeconds: number = SIGNUP_INVITE_COOLDOWN_SECONDS,
+    private readonly log?: StoreLogger,
   ) {}
 
   /** Only the digest is stored: the KV must not become a directory of probed addresses. */
@@ -176,15 +208,31 @@ export class SignupInviteCooldown {
     return `${SIGNUP_INVITE_PREFIX}${createHash('sha256').update(normalized).digest('hex')}`;
   }
 
-  /** `true` when this caller may send the invitation (first claim inside the window). */
+  /**
+   * `true` when this caller may send the invitation (first claim inside the window).
+   *
+   * Revision 3, A6 — fails CLOSED, which here means "do not send". This gate
+   * suppresses an OUTBOUND email, so failing open would turn a Redis outage into an
+   * email bomb: every request would clear the cooldown and mail the address again.
+   * It cannot lock anyone out of signing in, because this leg runs only for
+   * addresses that have no account. The suppression is logged, never silent.
+   */
   async claim(email: string): Promise<boolean> {
-    const result = await this.store.set(
-      SignupInviteCooldown.keyFor(email),
-      '1',
-      'EX',
-      this.ttlSeconds,
-      'NX',
-    );
-    return result === 'OK';
+    try {
+      const result = await this.store.set(
+        SignupInviteCooldown.keyFor(email),
+        '1',
+        'EX',
+        this.ttlSeconds,
+        'NX',
+      );
+      return result === 'OK';
+    } catch (error) {
+      this.log?.warn(
+        { err: error, scope: 'signup_invite_cooldown', store: 'unavailable' },
+        'signup-invite cooldown unreadable — FAILING CLOSED, the invitation is suppressed for this request',
+      );
+      return false;
+    }
   }
 }

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "service",
+    "severity": "INFO",
+    "finding": "HTTP Service"
+  },
+  {
+    "id": "SSLv2",
+    "severity": "CRITICAL",
+    "finding": "SSLv2 offered"
+  },
+  {
+    "id": "TLS1",
+    "severity": "MEDIUM",
+    "finding": "TLS 1.0 offered, deprecated by RFC 8996"
+  },
+  {
+    "id": "certificate_expiration",
+    "severity": "HIGH",
+    "finding": "Certificate expired 12 days ago"
+  },
+  {
+    "id": "cipher_order",
+    "severity": "LOW",
+    "finding": "Server does not honour the client cipher order"
+  },
+  {
+    "id": "HSTS",
+    "severity": "MEDIUM",
+    "finding": "HSTS is not offered"
+  }
+]

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: vv-scan-controller
+description: The scan controller on the isolated k3s cluster (Task 100), with the Task 86 scan-namespace guard rails (RBAC without pods/exec, default-deny, limit-range, quota) as chart templates — helm upgrade is the only delivery vehicle.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+dependencies:
+  - name: vv-lib
+    version: 1.0.0
+    repository: file://../vv-lib

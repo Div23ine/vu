@@ -1,0 +1,3017 @@
+From b1a5c0bcea0c3cf7679ae93efb8d1c51c167d699 Mon Sep 17 00:00:00 2001
+From: "Qwen (Arena agent)" <agent@arena.local>
+Date: Fri, 30 Oct 2026 23:13:09 +0000
+Subject: [PATCH] feat(auth): Resend delivery observability and Redis offline
+ mode
+
+Applies Revision 2 addendum sections A1 (catalog extraction), A2 (Resend
+delivery bug) and A3 (Redis offline mode) to the shipped Phase 1-7 code.
+
+A2 - Resend delivery contract:
+- log the full response {id, status, error} plus the request id on every
+  send (info on success, error on failure); never log the recipient
+- reclassify a 2xx carrying no id as a failure, not a silent success
+- warn-log every path that answers the byte-identical 200 "check your
+  email" ack without sending anything: honeypot drop, formTs timing drop,
+  per-address issuance window and invite cooldown. The invite-cooldown
+  path previously left no trace anywhere at all
+- startup guard: FATAL and refuse to boot on a missing RESEND_API_KEY, or
+  on a from-domain that is definitively not verified in Resend. An
+  uncheckable domain logs FATAL and boots rather than taking the platform
+  down over a control-plane blip
+- new POST /api/v1/admin/diagnostics/email-test: super admin only,
+  rate-limited, audited as EMAIL_DELIVERY_TEST, returns the raw Resend id
+
+A3 - Redis offline mode:
+- REDIS_OPTIONAL=auto|always|never. auto is optional outside production
+  and required in it. UPSTASH_REDIS_URL stays a vault secret, so there is
+  no second source of truth for the connection string
+- bounded boot probe (4s) on the connection the app intends to keep:
+  unreachable and optional falls back to memory, unreachable and required
+  refuses to boot
+- memory-redis shim covers every Redis-backed auth feature (magic-link
+  single-use and re-issue invalidation, invite cooldown, MFA challenge
+  and replay cache, signup OTP, lockout counters, session registry,
+  anti-bot counters). app.redis keeps one type, so no call site needed a
+  branch and 19 consumers are untouched
+- GET /health reports {redis, store}. /healthz and /readyz keep their
+  catalog shapes byte-identical, and no redis readiness probe is
+  registered offline so a healthy pod is not pulled from traffic
+- BullMQ queues refuse jobs loudly offline (log, count, resolve to
+  undefined) instead of inventing a job id. Auth mail is inline and
+  unaffected
+- single-instance caveat logged on every offline boot and documented
+
+A1 - playbook.md gains the catalog extraction for all five parts (with
+the reading method and its coverage limits declared), the Email Delivery
+and Redis Mode sections, the A4 Definition-of-Done delta, the Revision 2
+decisions and the Known Gaps.
+
+No live Resend send and no live Redis re-enable were performed: this
+environment has no RESEND_API_KEY, no dashboard or inbox access, and no
+Redis server. Both are recorded in Known Gaps and handed to the user
+rather than claimed as done.
+
+Tests: 1048 passed (58 files), up from a 1017/55 baseline - 31 new tests,
+zero regressions. tsc --noEmit and eslint clean on every changed file.
+---
+ .env.example                                  |   6 +
+ apps/api/.env.example                         |   4 +
+ apps/api/src/app.ts                           |  16 +-
+ apps/api/src/audit/events.test.ts             |   5 +-
+ apps/api/src/audit/events.ts                  |   5 +
+ apps/api/src/config/env.ts                    |  19 +
+ apps/api/src/conformance/route-manifest.ts    |   4 +
+ apps/api/src/lib/memory-redis.ts              | 310 +++++++++
+ apps/api/src/plugins/email-guard.test.ts      | 281 ++++++++
+ apps/api/src/plugins/providers.ts             |  89 ++-
+ apps/api/src/plugins/redis-offline.test.ts    | 305 +++++++++
+ apps/api/src/plugins/redis.ts                 | 187 +++++-
+ apps/api/src/queues/index.ts                  | 115 +++-
+ apps/api/src/routes/health.ts                 |  46 ++
+ apps/api/src/routes/v1/auth/index.ts          |   2 +
+ apps/api/src/routes/v1/auth/service.ts        |  31 +-
+ .../routes/v1/diagnostics/diagnostics.test.ts | 131 ++++
+ apps/api/src/routes/v1/diagnostics/index.ts   | 138 ++++
+ apps/api/src/routes/v1/index.ts               |   2 +
+ apps/api/src/types/fastify.d.ts               |   6 +
+ packages/lib/src/providers/email.ts           | 162 ++++-
+ packages/lib/src/providers/index.ts           |   7 +
+ playbook.md                                   | 621 ++++++++++++++++++
+ 23 files changed, 2461 insertions(+), 31 deletions(-)
+ create mode 100644 apps/api/src/lib/memory-redis.ts
+ create mode 100644 apps/api/src/plugins/email-guard.test.ts
+ create mode 100644 apps/api/src/plugins/redis-offline.test.ts
+ create mode 100644 apps/api/src/routes/v1/diagnostics/diagnostics.test.ts
+ create mode 100644 apps/api/src/routes/v1/diagnostics/index.ts
+
+diff --git a/.env.example b/.env.example
+index 26a2357..2669735 100644
+--- a/.env.example
++++ b/.env.example
+@@ -11,6 +11,12 @@ SUPABASE_URL=
+ SUPABASE_SERVICE_ROLE_KEY=
+ SUPABASE_JWT_SECRET=
+ UPSTASH_REDIS_URL=
++# Redis optionality (config, NOT a secret). auto = optional outside production,
++# required in production · always = optional everywhere (in-memory store, SINGLE
++# INSTANCE ONLY) · never = required everywhere (unreachable Redis = FATAL boot
++# failure). Re-enabling Redis needs no code change: set UPSTASH_REDIS_URL, restart,
++# confirm GET /health reports { redis: "up", store: "redis" }.
++REDIS_OPTIONAL=auto
+ STRIPE_SECRET_KEY=
+ STRIPE_WEBHOOK_SECRET=
+ PAYSTACK_SECRET_KEY=
+diff --git a/apps/api/.env.example b/apps/api/.env.example
+index eba3371..ec35a27 100644
+--- a/apps/api/.env.example
++++ b/apps/api/.env.example
+@@ -12,6 +12,10 @@ OCI_SECRET_MAP={}
+ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+ DIRECT_URL=postgresql://postgres:postgres@localhost:5432/postgres
+ UPSTASH_REDIS_URL=https://real-phoenix-233836.upstash.io
++# Leave UPSTASH_REDIS_URL empty (or point it at a dead host) and set
++# REDIS_OPTIONAL=always to run with Redis offline on the in-memory store.
++# auto (default) = optional outside production, required in production.
++REDIS_OPTIONAL=auto
+ 
+ # Supabase (Dummy)
+ SUPABASE_URL=https://dummy-project.supabase.co
+diff --git a/apps/api/src/app.ts b/apps/api/src/app.ts
+index 8e5538e..07eeb1f 100644
+--- a/apps/api/src/app.ts
++++ b/apps/api/src/app.ts
+@@ -128,10 +128,18 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<App> {
+     app.readiness.set('db', async () => {
+       await pingDb(app.db);
+     });
+-    app.readiness.set('redis', async () => {
+-      const pong = await app.redis.ping();
+-      if (pong !== 'PONG') throw new Error(`redis replied ${pong}`);
+-    });
++    // A3: the redis probe is registered ONLY while a real Redis backs the app.
++    // Offline, the in-memory shim always answers PONG, so keeping the probe would
++    // advertise a dependency that is deliberately absent; making it fail would be
++    // worse — the orchestrator would pull traffic from a pod that is serving
++    // correctly (Task 21's own reasoning for why `/healthz` answers from the
++    // process alone). `/health` is where the degraded mode is reported instead.
++    if (app.redisMode.store === 'redis') {
++      app.readiness.set('redis', async () => {
++        const pong = await app.redis.ping();
++        if (pong !== 'PONG') throw new Error(`redis replied ${pong}`);
++      });
++    }
+   }
+ 
+   // Cross-cutting HTTP security, registered before any route.
+diff --git a/apps/api/src/audit/events.test.ts b/apps/api/src/audit/events.test.ts
+index 49fb8eb..fa90c78 100644
+--- a/apps/api/src/audit/events.test.ts
++++ b/apps/api/src/audit/events.test.ts
+@@ -63,7 +63,10 @@ describe('AUDIT_EVENTS catalog', () => {
+     // 7 since Task 95 added SCAN_CONTROL_SENT to the scan lifecycle.
+     expect(byCategory.get('scan_completion')).toBe(7);
+     expect(byCategory.get('report_release')).toBe(2);
+-    expect(byCategory.get('system')).toBe(5);
++    // 6 since the Revision 2 addendum (A2.4) added EMAIL_DELIVERY_TEST: the
++    // super-admin email-delivery diagnostic is a system action, and it must be in
++    // the sealed chain because the endpoint can mail an arbitrary address.
++    expect(byCategory.get('system')).toBe(6);
+   });
+ 
+   it('classifies the store and newsletter events added by Task 40c', () => {
+diff --git a/apps/api/src/audit/events.ts b/apps/api/src/audit/events.ts
+index e8f7da8..91a5ce7 100644
+--- a/apps/api/src/audit/events.ts
++++ b/apps/api/src/audit/events.ts
+@@ -117,6 +117,11 @@ export const AUDIT_EVENTS = {
+   LOG_BACKUP: { category: 'system', severity: 'ok' },
+   CHAIN_GENESIS: { category: 'system', severity: 'info' },
+   THREAT_LEVEL_CHANGED: { category: 'system', severity: 'warning' },
++  // Revision 2 addendum A2.4: a super admin fired the email-delivery diagnostic.
++  // This endpoint can make the platform send mail to an arbitrary address, so the
++  // fact that it was used — by whom, to where, and which Resend id came back — is
++  // recorded in the sealed audit chain, not just in the application log.
++  EMAIL_DELIVERY_TEST: { category: 'system', severity: 'info' },
+ } as const satisfies Record<string, AuditEventDefinition>;
+ 
+ export type AuditEventType = keyof typeof AUDIT_EVENTS;
+diff --git a/apps/api/src/config/env.ts b/apps/api/src/config/env.ts
+index 7ee2c9b..4604db9 100644
+--- a/apps/api/src/config/env.ts
++++ b/apps/api/src/config/env.ts
+@@ -11,6 +11,14 @@ import { z } from 'zod';
+ 
+ export const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'] as const;
+ 
++/**
++ * Revision 2 addendum A3 — the Redis optionality switch (see `REDIS_OPTIONAL`).
++ * Defined here, not in the plugin, so the env schema and the boot logic cannot
++ * drift apart: this array IS the schema's enum.
++ */
++export const REDIS_OPTIONALITY = ['auto', 'always', 'never'] as const;
++export type RedisOptionality = (typeof REDIS_OPTIONALITY)[number];
++
+ export const SECRETS_PROVIDER_MESSAGE =
+   'SECRETS_PROVIDER must be "oci-vault" when NODE_ENV is "production"';
+ 
+@@ -62,6 +70,17 @@ export const EnvSchema = z
+      * SITE SECRET is a vault secret (`TURNSTILE_SECRET_KEY`), never env.
+      */
+     TURNSTILE_ENFORCE: z.enum(['true', 'false']).optional(),
++    /**
++     * Revision 2 addendum A3 — is Redis allowed to be absent?
++     *
++     * `auto` (default): optional outside production, required in production.
++     * `always`: optional everywhere — boot on the in-memory store (SINGLE
++     * INSTANCE ONLY). `never`: required everywhere — an unreachable Redis is a
++     * FATAL boot failure. The connection string itself stays a vault secret
++     * (`UPSTASH_REDIS_URL`, Task 22); this flag only decides whether its absence
++     * is fatal. Re-enabling Redis needs no code change: set the secret, restart.
++     */
++    REDIS_OPTIONAL: z.enum(REDIS_OPTIONALITY).optional(),
+     /** JSON object mapping a secret name to its OCI Vault OCID. */
+     OCI_SECRET_MAP: z.string().optional(),
+ 
+diff --git a/apps/api/src/conformance/route-manifest.ts b/apps/api/src/conformance/route-manifest.ts
+index 0210485..e9be4fa 100644
+--- a/apps/api/src/conformance/route-manifest.ts
++++ b/apps/api/src/conformance/route-manifest.ts
+@@ -25,6 +25,10 @@ export const PUBLIC_ROUTES: readonly string[] = [
+   // Infrastructure
+   'GET /healthz',
+   'GET /readyz',
++  // Addendum A3.4: the Redis-mode report. Public for the same reason `/healthz`
++  // is — an operator or probe must be able to read degraded state without a
++  // session. It discloses nothing but the store mode.
++  'GET /health',
+   'GET /openapi.json',
+   'GET /docs',
+   'GET /docs/*',
+diff --git a/apps/api/src/lib/memory-redis.ts b/apps/api/src/lib/memory-redis.ts
+new file mode 100644
+index 0000000..e819f30
+--- /dev/null
++++ b/apps/api/src/lib/memory-redis.ts
+@@ -0,0 +1,310 @@
++import type { Redis } from 'ioredis';
++
++/**
++ * In-process stand-in for Redis (Revision 2 addendum, A3 — Redis offline mode).
++ *
++ * WHY THIS EXISTS
++ * ---------------
++ * Redis is temporarily disabled in some environments. The catalogs make Redis
++ * mandatory (Task 22: `new Redis(await app.secrets.get("UPSTASH_REDIS_URL"))`,
++ * with a `SecretProvider` that *throws* on a missing secret), so without a
++ * fallback the API cannot even boot. This module supplies the narrow command
++ * surface the auth-critical paths actually use, so the API boots and stays
++ * correct with Redis absent, and re-enabling Redis requires **zero code
++ * changes** — only `UPSTASH_REDIS_URL` plus a restart.
++ *
++ * WHAT IT BACKS (addendum A3.2 — every Redis-backed feature used by auth)
++ * ----------------------------------------------------------------------
++ *   · magic-link single-use tokens   `ml:token:<jti>`, `ml:pointer:<email>`
++ *   · signup-invite cooldown         `ml:invite:<sha256(email)>`
++ *   · MFA challenge + replay cache   `mfa:<handle>`, `emailotp:<userId>`
++ *   · signup email OTP               `signup:otp:<sha256(email)>`
++ *   · login lockout / attempt count  `rl:*` counters
++ *   · session registry               `sess:<sessionId>`
++ *   · anti-bot counters              `rl:*` / abuse-guard keys
++ *
++ * THE SINGLE-INSTANCE CAVEAT (addendum A3.3 — read this before deploying)
++ * -----------------------------------------------------------------------
++ * State lives in THIS process's heap. It is correct only for a single API
++ * instance: two replicas would each hold their own tokens, counters and session
++ * cache, so a magic link issued by one could not be redeemed on another, a
++ * single-use token could be replayed once per replica, and rate-limit windows
++ * would be per-replica rather than global. Never run more than one instance in
++ * offline mode. Nothing here is persisted: a restart clears every token,
++ * challenge and counter (fail-safe — outstanding links simply die).
++ *
++ * `publish()` reaches no subscriber, because subscribers would need a real
++ * connection; SSE fan-out is degraded to the instance's own clients.
++ */
++
++/** One stored key. `expiresAt === null` means "no expiry". */
++interface Entry {
++  value: string;
++  expiresAt: number | null;
++}
++
++export interface MemoryRedisOptions {
++  /** Injectable clock, so TTL behaviour is testable without waiting. */
++  now?: () => number;
++}
++
++/**
++ * `SET` modifier parsing, mirroring the ioredis variadic call shape
++ * `set(key, value, 'EX', seconds, 'NX')` that the stores in this repo use.
++ */
++interface SetModifiers {
++  ttlMs: number | null;
++  nx: boolean;
++  xx: boolean;
++}
++
++function parseSetModifiers(args: unknown[]): SetModifiers {
++  const modifiers: SetModifiers = { ttlMs: null, nx: false, xx: false };
++  for (let index = 0; index < args.length; index += 1) {
++    const flag = String(args[index]).toUpperCase();
++    const next = args[index + 1];
++    if (flag === 'EX' && next !== undefined) {
++      modifiers.ttlMs = Number(next) * 1000;
++      index += 1;
++    } else if (flag === 'PX' && next !== undefined) {
++      modifiers.ttlMs = Number(next);
++      index += 1;
++    } else if (flag === 'NX') {
++      modifiers.nx = true;
++    } else if (flag === 'XX') {
++      modifiers.xx = true;
++    }
++  }
++  return modifiers;
++}
++
++export class MemoryRedis {
++  /** Exposed for tests and for the shutdown sweep — mirrors `FLUSHDB`. */
++  readonly entries = new Map<string, Entry>();
++  /** Exposed for tests: mirrors `FLUSHDB` on a single database. */
++  readonly lists = new Map<string, string[]>();
++
++  /** ioredis reports `status`; a few callers branch on it. Always "ready". */
++  readonly status = 'ready';
++
++  private readonly now: () => number;
++
++  constructor(options: MemoryRedisOptions = {}) {
++    this.now = options.now ?? (() => Date.now());
++  }
++
++  /** Drop every expired key. Called lazily on read, like Redis does. */
++  private sweep(): void {
++    const currentTime = this.now();
++    for (const [key, entry] of this.entries) {
++      if (entry.expiresAt !== null && entry.expiresAt <= currentTime) this.entries.delete(key);
++    }
++  }
++
++  private read(key: string): Entry | null {
++    const entry = this.entries.get(key);
++    if (entry === undefined) return null;
++    if (entry.expiresAt !== null && entry.expiresAt <= this.now()) {
++      this.entries.delete(key);
++      return null;
++    }
++    return entry;
++  }
++
++  async ping(): Promise<string> {
++    return 'PONG';
++  }
++
++  async get(key: string): Promise<string | null> {
++    return this.read(key)?.value ?? null;
++  }
++
++  /** `GETDEL` — the single-use consumption primitive (magic link, pw reset). */
++  async getdel(key: string): Promise<string | null> {
++    const entry = this.read(key);
++    this.entries.delete(key);
++    return entry?.value ?? null;
++  }
++
++  async set(key: string, value: string, ...args: unknown[]): Promise<'OK' | null> {
++    const { ttlMs, nx, xx } = parseSetModifiers(args);
++    const existing = this.read(key);
++    if (nx && existing !== null) return null;
++    if (xx && existing === null) return null;
++    this.entries.set(key, {
++      value: String(value),
++      expiresAt: ttlMs === null ? null : this.now() + ttlMs,
++    });
++    return 'OK';
++  }
++
++  async setex(key: string, seconds: number, value: string): Promise<'OK'> {
++    this.entries.set(key, { value: String(value), expiresAt: this.now() + seconds * 1000 });
++    return 'OK';
++  }
++
++  /** Variadic like ioredis: `del('a', 'b')` and `del(['a','b'])` both work. */
++  async del(...keys: (string | string[])[]): Promise<number> {
++    const flat = keys.flat();
++    let removed = 0;
++    for (const key of flat) {
++      if (this.entries.delete(key)) removed += 1;
++      if (this.lists.delete(key)) removed += 1;
++    }
++    return removed;
++  }
++
++  async exists(...keys: (string | string[])[]): Promise<number> {
++    return keys.flat().filter((key) => this.read(key) !== null).length;
++  }
++
++  private bump(key: string, delta: number): Promise<number> {
++    const current = this.read(key);
++    const next = (current === null ? 0 : Number(current.value)) + delta;
++    // An existing TTL is preserved exactly as INCR does — only the value changes.
++    this.entries.set(key, {
++      value: String(Number.isFinite(next) ? next : delta),
++      expiresAt: current?.expiresAt ?? null,
++    });
++    return Promise.resolve(Number.isFinite(next) ? next : delta);
++  }
++
++  async incr(key: string): Promise<number> {
++    return this.bump(key, 1);
++  }
++
++  async incrby(key: string, amount: number): Promise<number> {
++    return this.bump(key, amount);
++  }
++
++  async decr(key: string): Promise<number> {
++    return this.bump(key, -1);
++  }
++
++  async expire(key: string, seconds: number): Promise<number> {
++    const entry = this.read(key);
++    if (entry === null) return 0;
++    this.entries.set(key, { value: entry.value, expiresAt: this.now() + seconds * 1000 });
++    return 1;
++  }
++
++  async pexpire(key: string, ms: number): Promise<number> {
++    const entry = this.read(key);
++    if (entry === null) return 0;
++    this.entries.set(key, { value: entry.value, expiresAt: this.now() + ms });
++    return 1;
++  }
++
++  /** Remaining seconds; `-2` when the key is absent, `-1` when it never expires. */
++  async ttl(key: string): Promise<number> {
++    const entry = this.read(key);
++    if (entry === null) return -2;
++    if (entry.expiresAt === null) return -1;
++    return Math.max(0, Math.ceil((entry.expiresAt - this.now()) / 1000));
++  }
++
++  async pttl(key: string): Promise<number> {
++    const entry = this.read(key);
++    if (entry === null) return -2;
++    if (entry.expiresAt === null) return -1;
++    return Math.max(0, entry.expiresAt - this.now());
++  }
++
++  async lpush(key: string, ...values: (string | string[])[]): Promise<number> {
++    const list = this.lists.get(key) ?? [];
++    list.unshift(...values.flat());
++    this.lists.set(key, list);
++    return list.length;
++  }
++
++  async rpush(key: string, ...values: (string | string[])[]): Promise<number> {
++    const list = this.lists.get(key) ?? [];
++    list.push(...values.flat());
++    this.lists.set(key, list);
++    return list.length;
++  }
++
++  async lrange(key: string, start: number, stop: number): Promise<string[]> {
++    const list = this.lists.get(key) ?? [];
++    const from = start < 0 ? Math.max(0, list.length + start) : start;
++    const to = stop < 0 ? list.length + stop : Math.min(stop, list.length - 1);
++    return from > to ? [] : list.slice(from, to + 1);
++  }
++
++  async llen(key: string): Promise<number> {
++    return (this.lists.get(key) ?? []).length;
++  }
++
++  /**
++   * No subscriber can be reached in offline mode, so this always reports zero
++   * recipients. Callers treat the return value as a delivery count, never as a
++   * success flag, so nothing silently "succeeds" here.
++   */
++  async publish(): Promise<number> {
++    return 0;
++  }
++
++  async keys(pattern: string): Promise<string[]> {
++    this.sweep();
++    const expression = new RegExp(
++      `^${pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`,
++    );
++    return [...this.entries.keys()].filter((key) => expression.test(key));
++  }
++
++  async flushdb(): Promise<'OK'> {
++    this.entries.clear();
++    this.lists.clear();
++    return 'OK';
++  }
++
++  /** Event-emitter no-ops: callers attach `error`/`end` handlers defensively. */
++  on(): this {
++    return this;
++  }
++
++  off(): this {
++    return this;
++  }
++
++  once(): this {
++    return this;
++  }
++
++  removeAllListeners(): this {
++    return this;
++  }
++
++  duplicate(): MemoryRedis {
++    // A subscriber connection in offline mode is another view of the same heap.
++    return this;
++  }
++
++  async quit(): Promise<'OK'> {
++    return 'OK';
++  }
++
++  disconnect(): void {
++    // Nothing to tear down: no socket was ever opened.
++  }
++}
++
++/**
++ * The shim typed as an ioredis `Redis`, so `app.redis` keeps one type whether
++ * Redis is up or offline and no consumer needs an `undefined` branch.
++ *
++ * Only the commands above exist. Anything else a future feature reaches for
++ * will throw `TypeError: … is not a function` at the call site — loud, immediate
++ * and pointing at the exact gap, which is the intended failure mode: it is far
++ * safer than a shim that pretends to be a complete Redis.
++ */
++export function memoryRedis(options: MemoryRedisOptions = {}): Redis {
++  return new MemoryRedis(options) as unknown as Redis;
++}
++
++/** The single-instance warning every offline boot must log (addendum A3.3). */
++export const MEMORY_STORE_CAVEAT =
++  'Redis is offline: auth state (magic-link tokens, MFA challenges, OTPs, lockout ' +
++  'counters, session registry) is held in this process heap. This is correct ONLY ' +
++  'for a single API instance — run exactly one replica, and expect every token and ' +
++  'counter to be lost on restart. Set UPSTASH_REDIS_URL and restart to go online.';
+diff --git a/apps/api/src/plugins/email-guard.test.ts b/apps/api/src/plugins/email-guard.test.ts
+new file mode 100644
+index 0000000..9bd26bc
+--- /dev/null
++++ b/apps/api/src/plugins/email-guard.test.ts
+@@ -0,0 +1,281 @@
++import { describe, expect, it, vi } from 'vitest';
++import {
++  assertPlausibleFromAddress,
++  DEFAULT_FROM,
++  fetchResendDomainStatus,
++  fromDomain,
++  ResendEmailProvider,
++  RESEND_DOMAINS_URL,
++  RESEND_URL,
++  type EmailLogger,
++} from '../providers/email.js';
++import { isProviderError, type ProviderError } from '../providers/error.js';
++import { buildResendEmailProvider } from './providers.js';
++import type { FastifyBaseLogger } from 'fastify';
++import type { SecretName, SecretProvider } from '../lib/secrets/provider.js';
++
++/**
++ * Revision 2 addendum, A2 — the Resend delivery contract.
++ *
++ * The reported bug was "the UI confirms email sent, nothing arrives, and the
++ * Resend dashboard shows no send event". These tests pin the three properties
++ * that make that failure impossible to repeat silently:
++ *
++ *   1. no send resolves without a Resend id (A2.2) — a 2xx with no id is a
++ *      FAILURE, not a success;
++ *   2. every outcome is logged with `{ id, status, error }` + the request id, and
++ *      the recipient address never reaches the log;
++ *   3. a missing key or an unverified from-domain fails the BOOT (A2.3), so the
++ *      process can never start in a state where it answers "check your email"
++ *      for mail it is incapable of sending.
++ */
++
++function stubFetch(status: number, body: unknown, options: { reject?: boolean } = {}) {
++  const calls: Array<{ url: string; init?: RequestInit }> = [];
++  const impl = vi.fn(async (url: string, init?: RequestInit) => {
++    calls.push({ url, init });
++    if (options.reject === true) throw new Error('network unreachable');
++    return {
++      ok: status >= 200 && status < 300,
++      status,
++      json: async () => body,
++    } as unknown as Response;
++  });
++  return { calls, impl: impl as unknown as typeof fetch };
++}
++
++/** A logger that records everything, so the log contract is assertable. */
++function recordingLogger() {
++  const lines: Array<{ level: string; fields: Record<string, unknown>; message: string }> = [];
++  const log: EmailLogger = {
++    info: (fields, message) => lines.push({ level: 'info', fields, message }),
++    warn: (fields, message) => lines.push({ level: 'warn', fields, message }),
++    error: (fields, message) => lines.push({ level: 'error', fields, message }),
++  };
++  return { lines, log };
++}
++
++/** A full pino-shaped logger, for the calls that go through `buildResendEmailProvider`. */
++function recordingFastifyLogger() {
++  const lines: Array<{ level: string; message: string }> = [];
++  const record =
++    (level: string) =>
++    (fields: unknown, message?: unknown): void => {
++      const text = typeof fields === 'string' ? fields : String(message ?? '');
++      lines.push({ level, message: text });
++    };
++  const logger: Record<string, unknown> = {
++    info: record('info'),
++    warn: record('warn'),
++    error: record('error'),
++    fatal: record('fatal'),
++    debug: record('debug'),
++    trace: record('trace'),
++    silent: record('silent'),
++  };
++  logger.child = () => logger;
++  return { lines, logger: logger as unknown as FastifyBaseLogger };
++}
++
++function secretsWith(values: Partial<Record<SecretName, string>>): SecretProvider {
++  return {
++    async get(name: SecretName): Promise<string> {
++      const value = values[name];
++      if (value === undefined) throw new Error(`secret ${name} missing`);
++      return value;
++    },
++  };
++}
++
++const MESSAGE = { to: 'someone@example.test', subject: 'Your sign-in link', html: '<p>hi</p>' };
++
++describe('the sender address (A2.3)', () => {
++  it('reads the domain out of a display-name from header', () => {
++    expect(fromDomain('VUNVAULT <no-reply@vunvault.com>')).toBe('vunvault.com');
++    expect(fromDomain('no-reply@vunvault.com')).toBe('vunvault.com');
++    expect(fromDomain('not-an-address')).toBeNull();
++  });
++
++  it('accepts the configured production sender', () => {
++    expect(() => assertPlausibleFromAddress(DEFAULT_FROM)).not.toThrow();
++  });
++
++  it('rejects a placeholder or unqualified domain before it can silently fail', () => {
++    expect(() => assertPlausibleFromAddress('VUNVAULT <no-reply@localhost>')).toThrow(
++      /not a deliverable domain/,
++    );
++    expect(() => assertPlausibleFromAddress('VUNVAULT <no-reply@localhost.local>')).toThrow();
++    expect(() => assertPlausibleFromAddress('VUNVAULT <no-reply@example.com>')).toThrow();
++    expect(() => assertPlausibleFromAddress('VUNVAULT')).toThrow(/has no domain/);
++  });
++
++  it('asks Resend whether the domain is verified, and says "unknown" when it cannot', async () => {
++    const verified = stubFetch(200, { data: [{ name: 'vunvault.com', status: 'verified' }] });
++    await expect(fetchResendDomainStatus('re_key', 'vunvault.com', verified.impl)).resolves.toBe(
++      'verified',
++    );
++    expect(verified.calls[0]?.url).toBe(RESEND_DOMAINS_URL);
++
++    const pending = stubFetch(200, { data: [{ name: 'vunvault.com', status: 'pending' }] });
++    await expect(fetchResendDomainStatus('re_key', 'vunvault.com', pending.impl)).resolves.toBe(
++      'pending',
++    );
++
++    // Unreachable control plane is `null` — explicitly NOT "unverified".
++    const down = stubFetch(200, {}, { reject: true });
++    await expect(fetchResendDomainStatus('re_key', 'vunvault.com', down.impl)).resolves.toBeNull();
++    const denied = stubFetch(401, { message: 'nope' });
++    await expect(fetchResendDomainStatus('re_key', 'vunvault.com', denied.impl)).resolves.toBeNull();
++  });
++});
++
++describe('the send contract (A2.2)', () => {
++  it('awaits the response and logs { id, status, error } plus the request id', async () => {
++    const { calls, impl } = stubFetch(200, { id: 'email-01HZX' });
++    const { lines, log } = recordingLogger();
++
++    const result = await new ResendEmailProvider('re_key', impl, log).send(MESSAGE, {
++      requestId: 'req-123',
++      purpose: 'magic_link',
++    });
++
++    expect(result).toEqual({ id: 'email-01HZX' });
++    expect(calls[0]?.url).toBe(RESEND_URL);
++
++    const line = lines.at(-1);
++    expect(line?.level).toBe('info');
++    expect(line?.fields).toMatchObject({
++      provider: 'resend',
++      id: 'email-01HZX',
++      status: 200,
++      error: null,
++      requestId: 'req-123',
++      purpose: 'magic_link',
++    });
++    // The recipient must never reach the log — it is PII and an enumeration leak.
++    expect(JSON.stringify(line?.fields)).not.toContain('someone@example.test');
++  });
++
++  it('treats a 2xx with no id as a FAILURE, not a silent success', async () => {
++    const { impl } = stubFetch(200, {});
++    const { lines, log } = recordingLogger();
++
++    const error = await new ResendEmailProvider('re_key', impl, log)
++      .send(MESSAGE, { requestId: 'req-1' })
++      .catch((cause: unknown) => cause);
++
++    expect(isProviderError(error)).toBe(true);
++    expect((error as ProviderError).code).toBe('email_rejected');
++    expect(lines.at(-1)?.level).toBe('error');
++    expect(lines.at(-1)?.fields.id).toBeNull();
++  });
++
++  it('logs and throws on a rejection, without leaking provider detail to the caller', async () => {
++    const { impl } = stubFetch(422, { message: 'Recipient address is invalid' });
++    const { lines, log } = recordingLogger();
++
++    const error = await new ResendEmailProvider('re_key', impl, log)
++      .send(MESSAGE, { requestId: 'req-2', purpose: 'signup_invite' })
++      .catch((cause: unknown) => cause);
++
++    expect((error as ProviderError).code).toBe('email_rejected');
++    expect((error as ProviderError).retryable).toBe(false);
++    expect(lines.at(-1)).toMatchObject({
++      level: 'error',
++      fields: { status: 422, id: null, error: 'Recipient address is invalid' },
++    });
++  });
++
++  it('logs and classifies an unreachable provider as retryable', async () => {
++    const { impl } = stubFetch(200, {}, { reject: true });
++    const { lines, log } = recordingLogger();
++
++    const error = await new ResendEmailProvider('re_key', impl, log)
++      .send(MESSAGE, { requestId: 'req-3' })
++      .catch((cause: unknown) => cause);
++
++    expect((error as ProviderError).code).toBe('email_unavailable');
++    expect((error as ProviderError).retryable).toBe(true);
++    expect(lines.at(-1)?.level).toBe('error');
++    expect(lines.at(-1)?.message).toMatch(/NOT delivered/);
++  });
++
++  it('classifies a 5xx as retryable and says so in the log', async () => {
++    const { impl } = stubFetch(503, { message: 'upstream' });
++    const { lines, log } = recordingLogger();
++
++    const error = await new ResendEmailProvider('re_key', impl, log)
++      .send(MESSAGE)
++      .catch((cause: unknown) => cause);
++
++    expect((error as ProviderError).code).toBe('email_unavailable');
++    expect((error as ProviderError).retryable).toBe(true);
++    expect(lines.at(-1)?.fields.status).toBe(503);
++  });
++});
++
++describe('the startup guard (A2.3)', () => {
++  it('refuses to boot when RESEND_API_KEY is missing, and says why', async () => {
++    const { lines, log } = recordingLogger();
++    const fatals: string[] = [];
++    const logger = {
++      ...log,
++      fatal: (fields: Record<string, unknown>, message: string) => {
++        fatals.push(message);
++        lines.push({ level: 'fatal', fields, message });
++      },
++      // eslint-disable-next-line @typescript-eslint/no-explicit-any
++    } as any;
++
++    await expect(
++      buildResendEmailProvider(logger, secretsWith({}), stubFetch(200, { data: [] }).impl),
++    ).rejects.toThrow(/FATAL: RESEND_API_KEY is not set/);
++    expect(fatals.join('\n')).toMatch(/Refusing to boot/);
++  });
++
++  it('refuses to boot when the from-domain is definitively not verified', async () => {
++    const { impl } = stubFetch(200, { data: [{ name: 'vunvault.com', status: 'pending' }] });
++    const logger = { fatal: () => undefined, info: () => undefined } as never;
++
++    await expect(
++      buildResendEmailProvider(logger, secretsWith({ RESEND_API_KEY: 're_key' }), impl),
++    ).rejects.toThrow(/is "pending" in Resend, not "verified"/);
++  });
++
++  it('boots when the domain is verified', async () => {
++    const { impl } = stubFetch(200, { data: [{ name: 'vunvault.com', status: 'verified' }] });
++    const { lines, logger } = recordingFastifyLogger();
++
++    const provider = await buildResendEmailProvider(
++      logger,
++      secretsWith({ RESEND_API_KEY: 're_key' }),
++      impl,
++    );
++    expect(provider).toBeInstanceOf(ResendEmailProvider);
++    // The happy path says so, at info, with the domain it confirmed.
++    expect(lines.some((line) => line.level === 'info')).toBe(true);
++    expect(lines.some((line) => line.level === 'fatal')).toBe(false);
++  });
++
++  it('logs FATAL but still boots when Resend cannot be consulted at all', async () => {
++    // A control-plane blip must not take the platform down; the risk is logged
++    // loudly instead, and a real rejection still surfaces per message.
++    const { impl } = stubFetch(500, {});
++    const messages: string[] = [];
++    const logger = {
++      info: () => undefined,
++      warn: () => undefined,
++      error: () => undefined,
++      fatal: (_fields: unknown, message: string) => messages.push(message),
++      // eslint-disable-next-line @typescript-eslint/no-explicit-any
++    } as any;
++
++    const provider = await buildResendEmailProvider(
++      logger,
++      secretsWith({ RESEND_API_KEY: 're_key' }),
++      impl,
++    );
++    expect(provider).toBeInstanceOf(ResendEmailProvider);
++    expect(messages.join('\n')).toMatch(/could not confirm that the from-domain is verified/);
++  });
++});
+diff --git a/apps/api/src/plugins/providers.ts b/apps/api/src/plugins/providers.ts
+index f375818..d9883c6 100644
+--- a/apps/api/src/plugins/providers.ts
++++ b/apps/api/src/plugins/providers.ts
+@@ -1,6 +1,13 @@
+ import fp from 'fastify-plugin';
+-import type { FastifyPluginAsync } from 'fastify';
+-import { ResendEmailProvider, type EmailProvider } from '../providers/email.js';
++import type { FastifyBaseLogger, FastifyPluginAsync } from 'fastify';
++import {
++  assertPlausibleFromAddress,
++  DEFAULT_FROM,
++  fetchResendDomainStatus,
++  fromDomain,
++  ResendEmailProvider,
++  type EmailProvider,
++} from '../providers/email.js';
+ import {
+   AfricasTalkingSmsProvider,
+   SmsRouter,
+@@ -21,6 +28,82 @@ export interface ProvidersPluginOptions {
+   secrets?: SecretProvider;
+ }
+ 
++/**
++ * Build the Resend provider, guarding the two misconfigurations that produce the
++ * exact failure the Revision 2 addendum (A2) was written about: a send that the
++ * UI reports as successful while Resend never sees it.
++ *
++ * A2.3 — the startup guard:
++ *
++ *   · `RESEND_API_KEY` unset or empty → **refuse to boot.** A missing key used to
++ *     surface as a throw from deep inside a request; now it is a FATAL at startup
++ *     with an actionable message. There is no code path that short-circuits to
++ *     `{ ok: true }` when the key is absent.
++ *   · the configured from-domain is **definitively not verified** in Resend →
++ *     **refuse to boot.** Resend accepts a request for an unverified domain and
++ *     then refuses DELIVERY, which is indistinguishable from the original bug at
++ *     the UI. Failing at boot is the only place it can be caught honestly.
++ *   · the from-domain **could not be checked** (Resend's management API
++ *     unreachable, or a non-2xx) → a loud FATAL-level log, then continue. Taking
++ *     the whole platform down because a control-plane endpoint blipped is a worse
++ *     outcome than booting with the risk logged; the send path still surfaces any
++ *     real rejection per-message.
++ *
++ * The provider also receives the logger, so every send writes the full Resend
++ * response `{ id, status, error }` and the request id (A2.2).
++ */
++export async function buildResendEmailProvider(
++  log: FastifyBaseLogger,
++  secrets: SecretProvider,
++  fetchImpl: typeof fetch = fetch,
++): Promise<EmailProvider> {
++  const apiKey = await secrets.get('RESEND_API_KEY').catch(() => undefined);
++
++  if (apiKey === undefined || apiKey.trim() === '') {
++    const message =
++      'FATAL: RESEND_API_KEY is not set. Email delivery is impossible, so magic-link sign-in ' +
++      'and signup verification cannot work. Refusing to boot rather than answering "check your ' +
++      'email" for mail that was never sent. Set the secret (vault in production) and restart.';
++    log.fatal({ secret: 'RESEND_API_KEY' }, message);
++    throw new Error(message);
++  }
++
++  const from = DEFAULT_FROM;
++  try {
++    assertPlausibleFromAddress(from);
++  } catch (error) {
++    const message = `FATAL: the configured email sender is not deliverable — ${
++      error instanceof Error ? error.message : String(error)
++    }. Refusing to boot.`;
++    log.fatal({ from }, message);
++    throw new Error(message);
++  }
++
++  const domain = fromDomain(from);
++  if (domain !== null) {
++    const status = await fetchResendDomainStatus(apiKey, domain, fetchImpl);
++    if (status === null) {
++      log.fatal(
++        { domain, from },
++        'FATAL: could not confirm that the from-domain is verified in Resend (the domains API ' +
++          'did not answer). Booting anyway — but if mail is accepted and never delivered, this ' +
++          'is the first thing to check. Verify the domain in Resend → Domains.',
++      );
++    } else if (status !== 'verified') {
++      const message =
++        `FATAL: the from-domain "${domain}" is "${status}" in Resend, not "verified". Resend ` +
++        'accepts the send and then refuses delivery, which looks exactly like a silently lost ' +
++        'email. Refusing to boot. Verify the domain in Resend → Domains, then restart.';
++      log.fatal({ domain, status }, message);
++      throw new Error(message);
++    } else {
++      log.info({ domain, status }, 'resend from-domain verified');
++    }
++  }
++
++  return new ResendEmailProvider(apiKey, fetchImpl, log);
++}
++
+ /**
+  * Decorates `app.email` and `app.sms`.
+  *
+@@ -34,7 +117,7 @@ const providersPlugin: FastifyPluginAsync<ProvidersPluginOptions> = async (app,
+   if (options.email !== undefined) {
+     app.decorate('email', options.email);
+   } else {
+-    app.decorate('email', new ResendEmailProvider(await secrets.get('RESEND_API_KEY')));
++    app.decorate('email', await buildResendEmailProvider(app.log, secrets));
+   }
+ 
+   if (options.sms !== undefined) {
+diff --git a/apps/api/src/plugins/redis-offline.test.ts b/apps/api/src/plugins/redis-offline.test.ts
+new file mode 100644
+index 0000000..c7d88eb
+--- /dev/null
++++ b/apps/api/src/plugins/redis-offline.test.ts
+@@ -0,0 +1,305 @@
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import type { Env } from '../config/env.js';
++import type { SecretName, SecretProvider } from '../lib/secrets/provider.js';
++import { buildApp } from '../app.js';
++import { MemoryRedis, memoryRedis, MEMORY_STORE_CAVEAT } from '../lib/memory-redis.js';
++import {
++  offlineMode,
++  redisIsOptional,
++  redisOptionsFromUrl,
++  redisRequiredMessage,
++  REDIS_PROBE_TIMEOUT_MS,
++} from './redis.js';
++import { disabledQueueRegistry, QUEUE_DISABLED_MESSAGE } from '../queues/index.js';
++
++/**
++ * Revision 2 addendum, A3 — Redis offline mode.
++ *
++ * The catalogs make Redis mandatory (Task 22). These tests pin the amendment:
++ * the API boots without Redis, auth state falls back to this process's heap, the
++ * degraded mode is reported and logged rather than hidden, a REQUIRED Redis still
++ * fails the boot loudly, and coming back online needs no code change.
++ */
++
++/**
++ * Module-level switch, not a per-instance field: the plugin constructs its
++ * connection DURING `buildApp`, so a test that flips instances it already holds
++ * would miss the one that matters.
++ */
++let fakeRedisReachable = true;
++
++vi.mock('ioredis', () => {
++  class FakeRedis {
++    static instances: FakeRedis[] = [];
++    readonly options: unknown;
++    constructor(options?: unknown) {
++      this.options = options;
++      FakeRedis.instances.push(this);
++    }
++    async ping(): Promise<string> {
++      if (!fakeRedisReachable) throw new Error('connect ECONNREFUSED');
++      return 'PONG';
++    }
++    async quit(): Promise<string> {
++      return 'OK';
++    }
++    disconnect(): void {
++      // no socket in the fake
++    }
++  }
++  return { default: FakeRedis };
++});
++
++vi.mock('bullmq', () => {
++  class FakeQueue {
++    constructor(
++      readonly name: string,
++      readonly options: unknown,
++    ) {}
++    async close(): Promise<void> {}
++    async add(): Promise<{ id: string }> {
++      return { id: 'job-1' };
++    }
++  }
++  return { Queue: FakeQueue };
++});
++
++const TEST_ENV: Env = {
++  NODE_ENV: 'test',
++  PORT: 8080,
++  LOG_LEVEL: 'fatal',
++  WEB_ORIGIN: 'https://www.vunvault.test',
++  COOKIE_DOMAIN: '',
++  API_PUBLIC_URL: 'https://api.vunvault.test',
++  SECRETS_PROVIDER: 'env',
++  SUPABASE_URL: 'https://project.supabase.co',
++  WEBAUTHN_RP_ID: 'vunvault.test',
++  WEBAUTHN_RP_NAME: 'VUNVAULT',
++  R2_ACCOUNT_ID: 'r2-account',
++  R2_BUCKET: 'vunvault-media',
++  R2_PUBLIC_BASE_URL: 'https://cdn.vunvault.test',
++  SENTRY_DSN: undefined,
++  OCI_SECRET_MAP: undefined,
++};
++
++/** Secrets WITH (`online`) and WITHOUT (`offline`) a Redis URL. */
++function secrets(options: { redis?: boolean } = { redis: true }): SecretProvider {
++  const values: Partial<Record<SecretName, string>> = {
++    DATABASE_URL: 'postgres://user:pass@db.test:6543/postgres',
++    SUPABASE_JWT_SECRET: 'test-jwt-secret',
++    AUDIT_HMAC_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=',
++    AUDIT_AES_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=',
++    SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
++    RESEND_API_KEY: 're_test_key',
++    AFRICASTALKING_USERNAME: 'vunvault',
++    AFRICASTALKING_API_KEY: 'at_test_key',
++    TWILIO_ACCOUNT_SID: 'AC_test',
++    TWILIO_AUTH_TOKEN: 'tw_test_token',
++    R2_ACCESS_KEY_ID: 'r2-access-key',
++    R2_SECRET_ACCESS_KEY: 'r2-secret',
++  };
++  if (options.redis !== false) {
++    values.UPSTASH_REDIS_URL = 'rediss://default:secret@redis.test:6379';
++  }
++  return {
++    async get(name: SecretName): Promise<string> {
++      const value = values[name];
++      if (value === undefined) throw new Error(`secret ${name} missing`);
++      return value;
++    },
++  };
++}
++
++function fakeDb() {
++  return {
++    db: {
++      transaction: async (work: (tx: unknown) => Promise<unknown>) => work({ fake: 'tx' }),
++      $client: { unsafe: async () => [], end: async () => undefined },
++      // eslint-disable-next-line @typescript-eslint/no-explicit-any
++    } as any,
++  };
++}
++
++/** Build an app with the provider seams filled, so no test touches the network. */
++function build(overrides: { env?: Partial<Env>; redis?: boolean } = {}) {
++  return buildApp({
++    env: { ...TEST_ENV, ...overrides.env },
++    overrides: { logger: false },
++    secretsOptions: { provider: secrets({ redis: overrides.redis }) },
++    dbOptions: { db: fakeDb().db },
++    providersOptions: {
++      email: { send: async () => ({ id: 'email-1' }) },
++      sms: { send: async () => ({ id: 'sms-1' }) },
++    },
++  });
++}
++
++beforeEach(() => {
++  vi.clearAllMocks();
++  fakeRedisReachable = true;
++});
++
++describe('REDIS_OPTIONAL resolution (A3.1)', () => {
++  it('is optional outside production and required inside it, by default', () => {
++    expect(redisIsOptional('auto', 'development')).toBe(true);
++    expect(redisIsOptional('auto', 'test')).toBe(true);
++    expect(redisIsOptional('auto', 'production')).toBe(false);
++  });
++
++  it('honours an explicit override in both directions', () => {
++    expect(redisIsOptional('always', 'production')).toBe(true);
++    expect(redisIsOptional('never', 'development')).toBe(false);
++  });
++
++  it('keeps the probe budget bounded, so an unreachable host cannot hang a boot', () => {
++    expect(REDIS_PROBE_TIMEOUT_MS).toBeGreaterThan(0);
++    expect(REDIS_PROBE_TIMEOUT_MS).toBeLessThanOrEqual(10_000);
++  });
++
++  it('still derives Upstash options from the URL unchanged (catalog Task 22)', () => {
++    expect(redisOptionsFromUrl('rediss://u:p@redis.test:6379').tls).toEqual({});
++    expect(redisOptionsFromUrl('redis://redis.test').tls).toBeUndefined();
++  });
++});
++
++describe('the in-memory store (A3.2)', () => {
++  it('implements the single-use semantics magic links depend on', async () => {
++    const clock = 1_000_000;
++    const store = new MemoryRedis({ now: () => clock });
++
++    // SET … EX … NX claims exactly once — the invite-cooldown gate.
++    expect(await store.set('ml:invite:a', '1', 'EX', 900, 'NX')).toBe('OK');
++    expect(await store.set('ml:invite:a', '1', 'EX', 900, 'NX')).toBeNull();
++
++    // A token read-and-deleted once can never be replayed.
++    await store.set('ml:token:j1', 'signed', 'EX', 900);
++    expect(await store.getdel('ml:token:j1')).toBe('signed');
++    expect(await store.getdel('ml:token:j1')).toBeNull();
++    expect(await store.get('ml:token:j1')).toBeNull();
++  });
++
++  it('expires keys on the injected clock, like a TTL would', async () => {
++    let clock = 0;
++    const store = new MemoryRedis({ now: () => clock });
++    await store.set('mfa:handle', 'challenge', 'EX', 300);
++    expect(await store.get('mfa:handle')).toBe('challenge');
++    expect(await store.ttl('mfa:handle')).toBe(300);
++
++    clock = 300_001;
++    expect(await store.get('mfa:handle')).toBeNull();
++    expect(await store.ttl('mfa:handle')).toBe(-2);
++  });
++
++  it('counts attempts and preserves the window an INCR created', async () => {
++    let clock = 0;
++    const store = new MemoryRedis({ now: () => clock });
++    expect(await store.incr('rl:ip:1.2.3.4')).toBe(1);
++    await store.expire('rl:ip:1.2.3.4', 600);
++    expect(await store.incr('rl:ip:1.2.3.4')).toBe(2);
++    // INCR must not reset the window, or a lockout would never expire.
++    expect(await store.ttl('rl:ip:1.2.3.4')).toBe(600);
++    clock = 600_001;
++    expect(await store.incr('rl:ip:1.2.3.4')).toBe(1);
++  });
++
++  it('reports PONG, refuses nothing silently, and reaches no subscriber', async () => {
++    const store = memoryRedis();
++    expect(await store.ping()).toBe('PONG');
++    expect(await store.publish('channel', 'payload')).toBe(0);
++  });
++
++  it('names the single-instance caveat an operator has to read (A3.3)', () => {
++    expect(MEMORY_STORE_CAVEAT).toMatch(/single API instance/i);
++    expect(MEMORY_STORE_CAVEAT).toMatch(/UPSTASH_REDIS_URL/);
++  });
++});
++
++describe('booting with Redis offline (A3.1, A3.5)', () => {
++  it('boots, reports memory mode, and answers /health', async () => {
++    const app = await build({ redis: false, env: { REDIS_OPTIONAL: 'always' } });
++
++    expect(app.redisMode).toEqual(offlineMode('UPSTASH_REDIS_URL is not set'));
++    expect(app.redis).toBeDefined();
++
++    // The shim really serves auth state — a magic-link style claim/consume cycle.
++    await app.redis.set('ml:token:x', 'signed', 'EX', 60);
++    expect(await app.redis.get('ml:token:x')).toBe('signed');
++
++    const health = await app.inject({ method: 'GET', url: '/health' });
++    expect(health.statusCode).toBe(200);
++    expect(health.json()).toEqual({ redis: 'down', store: 'memory' });
++
++    // /healthz and /readyz keep their catalog shapes (Task 21) — and readiness
++    // must NOT fail just because Redis is deliberately absent.
++    expect((await app.inject({ method: 'GET', url: '/healthz' })).json()).toEqual({ status: 'ok' });
++    expect(app.readiness.has('redis')).toBe(false);
++    const ready = await app.inject({ method: 'GET', url: '/readyz' });
++    expect(ready.statusCode).toBe(200);
++
++    await app.close();
++  });
++
++  it('refuses to boot when Redis is required and absent', async () => {
++    await expect(build({ redis: false, env: { REDIS_OPTIONAL: 'never' } })).rejects.toThrow(
++      /FATAL: Redis is required/,
++    );
++  });
++
++  it('refuses to boot in production under the default (auto)', async () => {
++    await expect(
++      build({
++        redis: false,
++        env: { NODE_ENV: 'production', SECRETS_PROVIDER: 'oci-vault', OCI_SECRET_MAP: '{}' },
++      }),
++    ).rejects.toThrow(/FATAL: Redis is required/);
++  });
++
++  it('falls back when the URL is set but the server does not answer', async () => {
++    fakeRedisReachable = false;
++    try {
++      const app = await build({ env: { REDIS_OPTIONAL: 'always' } });
++      expect(app.redisMode.store).toBe('memory');
++      expect(app.redisMode.status).toBe('down');
++      expect(app.redisMode.reason).toMatch(/ECONNREFUSED|timed out/);
++
++      const health = await app.inject({ method: 'GET', url: '/health' });
++      expect(health.json()).toEqual({ redis: 'down', store: 'memory' });
++      await app.close();
++    } finally {
++      fakeRedisReachable = true;
++    }
++  });
++
++  it('needs no code change to come back online (A3.5)', async () => {
++    const app = await build({ redis: true });
++    expect(app.redisMode).toEqual({ status: 'up', store: 'redis', reason: null });
++    expect(app.readiness.has('redis')).toBe(true);
++
++    const health = await app.inject({ method: 'GET', url: '/health' });
++    expect(health.json()).toEqual({ redis: 'up', store: 'redis' });
++    await app.close();
++  });
++
++  it('disables the queues loudly instead of pretending to enqueue', async () => {
++    const warnings: string[] = [];
++    const log = {
++      warn: (fields: unknown, message?: string) => {
++        warnings.push(typeof fields === 'string' ? fields : (message ?? JSON.stringify(fields)));
++      },
++      // eslint-disable-next-line @typescript-eslint/no-explicit-any
++    } as any;
++
++    const queues = disabledQueueRegistry(log);
++    const job = await queues.notify.add('email', { channel: 'email' });
++
++    expect(job).toBeUndefined();
++    expect(warnings.join('\n')).toContain(QUEUE_DISABLED_MESSAGE);
++    expect(queues.dropCounts().notify).toBe(1);
++    expect(queues.dropCounts().scan).toBe(0);
++  });
++
++  it('reports the required-Redis message with the escape hatch in it', () => {
++    expect(redisRequiredMessage('no url')).toMatch(/REDIS_OPTIONAL=always/);
++    expect(redisRequiredMessage('no url')).toMatch(/no url/);
++  });
++});
+diff --git a/apps/api/src/plugins/redis.ts b/apps/api/src/plugins/redis.ts
+index 4890ff1..0456b0d 100644
+--- a/apps/api/src/plugins/redis.ts
++++ b/apps/api/src/plugins/redis.ts
+@@ -1,6 +1,8 @@
+ import fp from 'fastify-plugin';
+ import Redis, { type RedisOptions } from 'ioredis';
+ import type { FastifyPluginAsync } from 'fastify';
++import { REDIS_OPTIONALITY, type RedisOptionality } from '../config/env.js';
++import { memoryRedis, MEMORY_STORE_CAVEAT } from '../lib/memory-redis.js';
+ 
+ /**
+  * Upstash terminates TLS and BullMQ issues blocking commands, so both of these
+@@ -23,35 +25,123 @@ export function redisOptionsFromUrl(url: string): RedisOptions {
+   };
+ }
+ 
++// ---------------------------------------------------------------------------
++// Revision 2 addendum, A3 — Redis offline mode.
++//
++// The catalogs make Redis mandatory (Task 22) and `SecretProvider.get` throws on
++// a missing secret, so an absent `UPSTASH_REDIS_URL` used to be an unbootable
++// API. A3 requires the system to run correctly with Redis absent AND to come
++// back with zero code changes when the user re-enables it — so optionality is a
++// single switch, resolved once at boot:
++//
++//   REDIS_OPTIONAL=never   Redis is required. Missing secret or an unreachable
++//                          server is a FATAL boot failure (the catalog posture,
++//                          and the safe default for a multi-replica deployment).
++//   REDIS_OPTIONAL=always  Redis is always optional: fall back to the in-memory
++//                          store in ANY environment, production included.
++//   REDIS_OPTIONAL=auto    (default) optional outside production, required in
++//                          production — a laptop with Redis switched off boots;
++//                          a production deployment still fails loudly rather
++//                          than silently degrading to single-instance state.
++// ---------------------------------------------------------------------------
++
++export { REDIS_OPTIONALITY };
++export type { RedisOptionality };
++
++/** Boot-probe budget. Long enough for a cold TLS handshake, short enough to boot. */
++export const REDIS_PROBE_TIMEOUT_MS = 4000;
++
++/** What `/health` reports, and what the boot log states once (A3.4). */
++export interface RedisMode {
++  /** `up` = a real Redis answered PING at boot. */
++  status: 'up' | 'down';
++  /** `memory` = the in-process fallback is serving auth state. */
++  store: 'redis' | 'memory';
++  /** Why we are offline. `null` when Redis is up. */
++  reason: string | null;
++}
++
++export const REDIS_ONLINE: RedisMode = { status: 'up', store: 'redis', reason: null };
++
++/** Is Redis allowed to be absent? Pure, so the rule is unit-testable. */
++export function redisIsOptional(optionality: RedisOptionality, nodeEnv: string): boolean {
++  if (optionality === 'always') return true;
++  if (optionality === 'never') return false;
++  return nodeEnv !== 'production';
++}
++
++export function offlineMode(reason: string): RedisMode {
++  return { status: 'down', store: 'memory', reason };
++}
++
++/** The message a REQUIRED Redis turns into a boot refusal (A3: fail loudly). */
++export function redisRequiredMessage(reason: string): string {
++  return (
++    `FATAL: Redis is required but unavailable (${reason}). Set REDIS_OPTIONAL=always to boot ` +
++    `on the in-memory store (single instance only), or fix UPSTASH_REDIS_URL.`
++  );
++}
++
++async function withTimeout<T>(work: Promise<T>, ms: number, label: string): Promise<T> {
++  let timer: NodeJS.Timeout | undefined;
++  try {
++    return await Promise.race([
++      work,
++      new Promise<never>((_resolve, reject) => {
++        timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
++      }),
++    ]);
++  } finally {
++    if (timer !== undefined) clearTimeout(timer);
++  }
++}
++
++/**
++ * Prove a server is really there before trusting it.
++ *
++ * A separate, non-retrying probe connection is used so an unreachable host fails
++ * in bounded time instead of leaving the command connection retrying forever in
++ * the background. `connect` is called only when it exists — the unit-test fake
++ * implements `ping` alone.
++ */
++async function probeRedis(connection: Redis, ms: number): Promise<void> {
++  const connectable = connection as unknown as { connect?: () => Promise<unknown> };
++  const connect = typeof connectable.connect === 'function' ? connectable.connect() : Promise.resolve();
++  await withTimeout(connect.then(() => connection.ping()), ms, 'redis probe');
++}
++
+ export interface RedisPluginOptions {
+   /** Test seam: inject the command connection. */
+   redis?: Redis;
++  /** Test seam: inject the resolved mode instead of probing. */
++  mode?: RedisMode;
++  /** Test seam: override the probe budget. */
++  probeTimeoutMs?: number;
+ }
+ 
+ /**
+- * Decorates `app.redis` (shared command connection) and `app.createRedis()`.
++ * Decorates `app.redis` (shared command connection), `app.createRedis()` and
++ * `app.redisMode`.
+  *
+  * A pub/sub subscriber cannot share a command connection — once subscribed, the
+  * connection only receives messages — so subscribers, BullMQ workers and anything
+  * else that blocks must call `createRedis()` for their own. Every connection this
+  * plugin hands out is closed on shutdown.
++ *
++ * Offline behaviour: `app.redis` is the in-memory shim rather than `undefined`, so
++ * every existing consumer keeps one type and no call site needs a new branch. The
++ * shim implements exactly the commands the auth paths use (see `memory-redis.ts`);
++ * anything else throws loudly at the call site instead of pretending to work.
+  */
+ const redisPlugin: FastifyPluginAsync<RedisPluginOptions> = async (app, options) => {
+   const connections = new Set<Redis>();
++  const probeTimeoutMs = options.probeTimeoutMs ?? REDIS_PROBE_TIMEOUT_MS;
+ 
+-  const connectionOptions = redisOptionsFromUrl(await app.secrets.get('UPSTASH_REDIS_URL'));
+-
+-  const command = options.redis ?? new Redis(connectionOptions);
+-  connections.add(command);
+-
+-  app.decorate('redis', command);
+-  app.decorate('createRedis', (): Redis => {
+-    const connection = new Redis(connectionOptions);
+-    connections.add(connection);
+-    return connection;
+-  });
++  const optionality: RedisOptionality = app.env?.REDIS_OPTIONAL ?? 'auto';
++  const nodeEnv = app.env?.NODE_ENV ?? 'development';
++  const optional = redisIsOptional(optionality, nodeEnv);
+ 
+-  app.addHook('onClose', async () => {
++  const shutdown = async (): Promise<void> => {
+     for (const connection of connections) {
+       try {
+         await connection.quit();
+@@ -60,7 +150,78 @@ const redisPlugin: FastifyPluginAsync<RedisPluginOptions> = async (app, options)
+       }
+     }
+     connections.clear();
++  };
++
++  /** Enter offline mode, or refuse to boot when Redis is not optional. */
++  const goOffline = (reason: string): void => {
++    if (!optional) throw new Error(redisRequiredMessage(reason));
++    app.decorate('redis', memoryRedis());
++    app.decorate('createRedis', (): Redis => memoryRedis());
++    app.decorate('redisMode', offlineMode(reason));
++    // A3.3: the caveat is logged on EVERY offline boot, at warn, with the reason.
++    app.log.warn({ redis: 'down', store: 'memory', reason }, MEMORY_STORE_CAVEAT);
++    app.addHook('onClose', shutdown);
++  };
++
++  // The URL is a secret; a missing one throws by design (Task 22). That throw is
++  // the "Redis disabled" signal, not a bug — but only when Redis is optional.
++  const url = await app.secrets.get('UPSTASH_REDIS_URL').catch((error: unknown) => {
++    if (!optional) throw new Error(redisRequiredMessage(error instanceof Error ? error.message : String(error)));
++    return undefined;
++  });
++
++  if (url === undefined) {
++    goOffline('UPSTASH_REDIS_URL is not set');
++    return;
++  }
++
++  const connectionOptions = redisOptionsFromUrl(url);
++
++  if (options.redis !== undefined) {
++    // Injected connection (tests): trusted as-is, no probe. The mode is recorded
++    // honestly from what the caller declared.
++    connections.add(options.redis);
++    app.decorate('redis', options.redis);
++    app.decorate('createRedis', (): Redis => {
++      const connection = new Redis(connectionOptions);
++      connections.add(connection);
++      return connection;
++    });
++    app.decorate('redisMode', options.mode ?? REDIS_ONLINE);
++    app.addHook('onClose', shutdown);
++    return;
++  }
++
++  // Build the real command connection, then PROVE it answers before trusting it.
++  // Probing the connection we intend to keep (rather than a throwaway) means an
++  // offline boot opens no socket that has to be torn down, and an online boot
++  // opens exactly the one connection it always did.
++  const command = new Redis(connectionOptions);
++  connections.add(command);
++
++  try {
++    await probeRedis(command, probeTimeoutMs);
++  } catch (error) {
++    connections.delete(command);
++    try {
++      command.disconnect();
++    } catch {
++      // Already down; nothing to release.
++    }
++    goOffline(error instanceof Error ? error.message : String(error));
++    return;
++  }
++
++  app.decorate('redis', command);
++  app.decorate('createRedis', (): Redis => {
++    const connection = new Redis(connectionOptions);
++    connections.add(connection);
++    return connection;
+   });
++  app.decorate('redisMode', options.mode ?? REDIS_ONLINE);
++  app.log.info({ redis: 'up', store: 'redis' }, 'redis online');
++
++  app.addHook('onClose', shutdown);
+ };
+ 
+ export default fp(redisPlugin, { name: 'redis', dependencies: ['secrets'] });
+diff --git a/apps/api/src/queues/index.ts b/apps/api/src/queues/index.ts
+index c750e24..99548cd 100644
+--- a/apps/api/src/queues/index.ts
++++ b/apps/api/src/queues/index.ts
+@@ -1,7 +1,7 @@
+ import fp from 'fastify-plugin';
+-import { Queue, type DefaultJobOptions } from 'bullmq';
++import { Queue, type DefaultJobOptions, type Job } from 'bullmq';
+ import { QUEUE_NAMES, type QueueName } from '@vunvault/contracts';
+-import type { FastifyPluginAsync } from 'fastify';
++import type { FastifyBaseLogger, FastifyPluginAsync } from 'fastify';
+ import { redisOptionsFromUrl } from '../plugins/redis.js';
+ 
+ /** Three attempts with exponential backoff, then a week of failure history. */
+@@ -27,13 +27,122 @@ export const QUEUE_JOB_OPTIONS: Record<QueueName, DefaultJobOptions> = {
+ 
+ export type QueueRegistry = Record<QueueName, Queue>;
+ 
++// ---------------------------------------------------------------------------
++// Revision 2 addendum, A3 — queue behaviour with Redis offline.
++//
++// BullMQ is Redis: there is no in-memory equivalent, and pretending otherwise
++// would be the exact silent-success failure the addendum was written about (A2).
++// So in offline mode `app.queues` is a registry that REFUSES jobs loudly:
++//
++//   · every `add()` logs a `warn` naming the queue and the job, and is counted;
++//   · nothing is reported as enqueued, and no job id is invented;
++//   · the counts are readable, so an operator can see exactly what was dropped.
++//
++// The auth email paths do NOT go through here — magic-link and signup-OTP mail is
++// sent inline with `await app.email.send(...)`, so offline mode does not stop
++// authentication mail. What degrades is the asynchronous fan-out (notification
++// digests, PDF rendering, broadcasts, scans), which is recorded in Known Gaps.
++// ---------------------------------------------------------------------------
++
++/** How many jobs each disabled queue refused. Exported for `/health`-adjacent ops and tests. */
++export type QueueDropCounts = Record<QueueName, number>;
++
++/** The message every refused job logs. Greppable on purpose. */
++export const QUEUE_DISABLED_MESSAGE =
++  'job NOT enqueued: Redis is offline, so this queue has no backing store';
++
++export class DisabledQueue {
++  readonly name: QueueName;
++  drops = 0;
++
++  constructor(
++    name: QueueName,
++    private readonly log: FastifyBaseLogger,
++  ) {
++    this.name = name;
++  }
++
++  /**
++   * Refuse the job, log it, count it. Never resolves to a job that exists.
++   *
++   * The payload is accepted (callers pass one) but deliberately NOT logged:
++   * `notify` jobs carry a userId and an email address, and a warn-level line is
++   * not the place for personal data. The queue name, job name and running tally
++   * are enough for an operator to see what was dropped.
++   */
++  async add(jobName: string, _data?: unknown): Promise<Job | undefined> {
++    this.drops += 1;
++    this.log.warn(
++      { queue: this.name, job: jobName, store: 'memory', drops: this.drops },
++      QUEUE_DISABLED_MESSAGE,
++    );
++    return undefined;
++  }
++
++  async addBulk(jobs: { name: string }[]): Promise<Job[]> {
++    for (const job of jobs) await this.add(job.name);
++    return [];
++  }
++
++  /** There is no store to look a job up in. */
++  async getJob(): Promise<undefined> {
++    return undefined;
++  }
++
++  async getJobCounts(): Promise<Record<string, number>> {
++    return { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 };
++  }
++
++  async drain(): Promise<void> {
++    // Nothing was ever accepted, so there is nothing to drain.
++  }
++
++  async close(): Promise<void> {
++    // No connection was opened.
++  }
++}
++
++/**
++ * A registry of refusing queues, shaped exactly like the real one so no consumer
++ * needs a branch. `dropCounts()` reads the refusal tally back out.
++ */
++export function disabledQueueRegistry(log: FastifyBaseLogger): QueueRegistry & {
++  dropCounts: () => QueueDropCounts;
++} {
++  const queues = {} as Record<QueueName, DisabledQueue>;
++  for (const name of Object.values(QUEUE_NAMES)) {
++    queues[name] = new DisabledQueue(name, log);
++  }
++  return Object.assign(queues as unknown as QueueRegistry, {
++    dropCounts: (): QueueDropCounts => {
++      const counts = {} as QueueDropCounts;
++      for (const name of Object.values(QUEUE_NAMES)) counts[name] = queues[name].drops;
++      return counts;
++    },
++  });
++}
++
+ /**
+  * Decorates `app.queues` with one BullMQ producer per queue name.
+  *
+  * Each queue gets its own connection: BullMQ producers issue blocking commands and
+  * must not share the app's command connection. All of them are closed on shutdown.
++ *
++ * With Redis offline (`app.redisMode.store === "memory"`) no producer is built —
++ * the URL secret is absent by definition — and the disabled registry above takes
++ * its place, so boot still succeeds.
+  */
+ const queuesPlugin: FastifyPluginAsync = async (app) => {
++  if (app.redisMode?.store === 'memory') {
++    app.decorate('queues', disabledQueueRegistry(app.log));
++    app.log.warn(
++      { store: 'memory', queues: Object.values(QUEUE_NAMES) },
++      'BullMQ queues are DISABLED: Redis is offline, so asynchronous jobs are refused and logged. ' +
++        'Inline auth mail (magic link, signup OTP) is unaffected. Set UPSTASH_REDIS_URL and restart to enable.',
++    );
++    return;
++  }
++
+   const connection = redisOptionsFromUrl(await app.secrets.get('UPSTASH_REDIS_URL'));
+   const queues = {} as QueueRegistry;
+ 
+@@ -51,4 +160,4 @@ const queuesPlugin: FastifyPluginAsync = async (app) => {
+   });
+ };
+ 
+-export default fp(queuesPlugin, { name: 'queues', dependencies: ['secrets'] });
++export default fp(queuesPlugin, { name: 'queues', dependencies: ['secrets', 'redis'] });
+diff --git a/apps/api/src/routes/health.ts b/apps/api/src/routes/health.ts
+index 988eb6b..5732935 100644
+--- a/apps/api/src/routes/health.ts
++++ b/apps/api/src/routes/health.ts
+@@ -1,8 +1,31 @@
+ import type { FastifyPluginAsync } from 'fastify';
++import { z } from 'zod';
+ 
+ /** Per-check budget for `GET /readyz`. */
+ const CHECK_TIMEOUT_MS = 2000;
+ 
++/**
++ * `GET /health` — the Redis-mode report required by addendum A3.4.
++ *
++ * Deliberately a SEPARATE route from the catalog's `/healthz` and `/readyz`
++ * (Task 21 defines exactly those two, and Task 40's conformance suite pins the
++ * route table): an orchestrator's liveness/readiness contract must not change
++ * shape because an operator wants to read the degraded-mode state. Both existing
++ * routes stay byte-identical.
++ *
++ * The schema is declared locally rather than in `@vunvault/contracts` because
++ * health is infrastructure, not an API contract consumers code against — the
++ * same reason `/healthz` and `/readyz` carry no contract schema. It IS declared
++ * (unlike its two siblings) because the conformance suite exempts those two by
++ * name and requires a response schema everywhere else.
++ */
++export const HealthReportSchema = z.object({
++  redis: z.enum(['up', 'down']),
++  store: z.enum(['redis', 'memory']),
++});
++
++export type HealthReport = z.infer<typeof HealthReportSchema>;
++
+ type CheckState = 'ok' | 'fail';
+ 
+ async function withTimeout(check: () => Promise<void>, timeoutMs: number): Promise<void> {
+@@ -32,6 +55,29 @@ const healthRoutes: FastifyPluginAsync = async (app) => {
+     async () => ({ status: 'ok' }),
+   );
+ 
++  // Addendum A3.4: the Redis-mode report. Answers from boot-resolved state, so it
++  // is fast and has no failure mode of its own; `/readyz` remains the live probe
++  // (it PINGs Redis on every call and 503s when a dependency is actually down).
++  // A3.5: with Redis offline this reads `{ redis: "down", store: "memory" }`, and
++  // with Redis reachable `{ redis: "up", store: "redis" }` — no code change between
++  // the two, only `UPSTASH_REDIS_URL`.
++  app.get(
++    '/health',
++    {
++      schema: { hide: true, response: { 200: HealthReportSchema } },
++      config: { hidden: true, rateLimit: false },
++    },
++    async (request): Promise<HealthReport> => {
++      // `infra: false` harnesses register no Redis plugin at all: report the
++      // honest state (nothing is backing the store) rather than throwing.
++      const mode = request.server.redisMode ?? { status: 'down', store: 'memory', reason: null };
++      if (mode.store === 'memory' && mode.reason !== null) {
++        request.log.debug({ reason: mode.reason }, 'health: serving from the in-memory store');
++      }
++      return HealthReportSchema.parse({ redis: mode.status, store: mode.store });
++    },
++  );
++
+   app.get(
+     '/readyz',
+     { schema: { hide: true }, config: { hidden: true, rateLimit: false } },
+diff --git a/apps/api/src/routes/v1/auth/index.ts b/apps/api/src/routes/v1/auth/index.ts
+index 3b856f9..f6b3bb7 100644
+--- a/apps/api/src/routes/v1/auth/index.ts
++++ b/apps/api/src/routes/v1/auth/index.ts
+@@ -94,6 +94,8 @@ function requestMeta(request: FastifyRequest): RequestMeta {
+     ip: request.clientIp === '' ? request.ip : request.clientIp,
+     userAgent: typeof userAgent === 'string' ? userAgent : null,
+     headers: request.headers as never,
++    // A2.2: the id the provider logs alongside the Resend response.
++    requestId: request.id,
+   };
+ }
+ 
+diff --git a/apps/api/src/routes/v1/auth/service.ts b/apps/api/src/routes/v1/auth/service.ts
+index 2535aa1..06aa0c1 100644
+--- a/apps/api/src/routes/v1/auth/service.ts
++++ b/apps/api/src/routes/v1/auth/service.ts
+@@ -62,6 +62,13 @@ export interface RequestMeta {
+   ip: string;
+   userAgent?: string | null;
+   headers?: GeoHeaders;
++  /**
++   * The resolved request id (Revision 2 addendum, A2.2). Carried into the email
++   * provider's log line so one HTTP request, its Resend response id and any
++   * suppression reason can be correlated from a single grep. Optional because
++   * every existing caller and test builds `RequestMeta` without it.
++   */
++  requestId?: string;
+ }
+ 
+ export interface IssuedSession {
+@@ -551,10 +558,23 @@ export class AuthService {
+     // ——— Phase 4: bot signals first — a dropped bot consumes no budget and
+     // never reaches the repo, so it cannot probe registration status either.
+     // The HTTP answer is the identical generic 200 (the route composes it).
++    //
++    // A2: these drops answer 200 "check your email" while sending NOTHING, which
++    // is indistinguishable from the reported Resend bug at the UI. They are by
++    // design (anti-enumeration), so the response must stay generic — but the drop
++    // is now logged with a greppable reason and the request id, so an operator
++    // can tell "blocked as a bot" apart from "Resend never saw it". The address
++    // itself is NOT logged here; the audit entry already records it as subject.
+     if ((input.website ?? '').trim() !== '') {
++      this.warn(
++        `magic-link produced NO EMAIL · reason=bot_dropped(honeypot) · requestId=${meta.requestId ?? 'n/a'} — the hidden "website" field arrived filled in, which autofill and password managers do`,
++      );
+       return { sent: 'bot_dropped', email, reason: 'honeypot' };
+     }
+     if (LoginAbuseGuard.isTooFast(input.formTs, this.now().getTime())) {
++      this.warn(
++        `magic-link produced NO EMAIL · reason=bot_dropped(timing) · requestId=${meta.requestId ?? 'n/a'} — formTs was too close to submit; browser/server clock skew fails EVERY request this way`,
++      );
+       return { sent: 'bot_dropped', email, reason: 'timing' };
+     }
+ 
+@@ -580,6 +600,9 @@ export class AuthService {
+     if (abuse !== undefined) {
+       const window = await abuse.emailWindowClaim(email);
+       if (!window.allowed) {
++        this.warn(
++          `magic-link produced NO EMAIL · reason=window_suppressed · requestId=${meta.requestId ?? 'n/a'} · retryAfterSeconds=${window.retryAfterSeconds} — the per-address issuance window is still open`,
++        );
+         return {
+           sent: 'window_suppressed',
+           email,
+@@ -592,6 +615,10 @@ export class AuthService {
+       // Phase 3: the invitation is the ONLY signal, and it goes to the address
+       // itself — never to the HTTP response.
+       if (!(await this.deps.invites.claim(email))) {
++        // A2: this path was not even audited — a 200 ack, no email, no trace.
++        this.warn(
++          `magic-link produced NO EMAIL · reason=invite_cooldown · requestId=${meta.requestId ?? 'n/a'} — an unregistered address already received its signup invitation inside the cooldown window`,
++        );
+         return { sent: 'suppressed', email };
+       }
+       const signupLink = `${primaryWebOrigin(this.deps.webOrigin)}/signup`;
+@@ -604,7 +631,7 @@ export class AuthService {
+         subject: 'No VUNVAULT account found for this email',
+         html: `<p>We received a sign-in request for <strong>${email}</strong>, but no VUNVAULT account is registered for this address.</p><p>If you would like an account, sign up here: <a href="${signupLink}">${signupLink}</a></p><p>If you did not request this, you can safely ignore this email.</p>`,
+         text: `We received a sign-in request for ${email}, but no VUNVAULT account is registered for this address.\n\nIf you would like an account, sign up here: ${signupLink}\n\nIf you did not request this, you can safely ignore this email.`,
+-      });
++      }, { requestId: meta.requestId, purpose: 'signup_invite' });
+       void meta;
+       return { sent: 'invite', email };
+     }
+@@ -621,7 +648,7 @@ export class AuthService {
+         subject: 'Your VUNVAULT sign-in link',
+         html: `<p>Click the link below to sign in to VUNVAULT:</p><p><a href="${link}">${link}</a></p><p>The link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.</p>`,
+         text: `Click the link below to sign in to VUNVAULT:\n\n${link}\n\nThe link expires in 15 minutes and works exactly once. Signing in continues with a six-digit verification code. If you did not request this, you can safely ignore this email — nothing changes on your account.`,
+-      });
++      }, { requestId: meta.requestId, purpose: 'magic_link' });
+     } else {
+       this.warn('magic link requested but no email provider is configured');
+     }
+diff --git a/apps/api/src/routes/v1/diagnostics/diagnostics.test.ts b/apps/api/src/routes/v1/diagnostics/diagnostics.test.ts
+new file mode 100644
+index 0000000..ac706cf
+--- /dev/null
++++ b/apps/api/src/routes/v1/diagnostics/diagnostics.test.ts
+@@ -0,0 +1,131 @@
++import { describe, expect, it, vi } from 'vitest';
++import type { Env } from '../../../config/env.js';
++import type { SecretName, SecretProvider } from '../../../lib/secrets/provider.js';
++import { buildApp } from '../../../app.js';
++
++/**
++ * Revision 2 addendum, A2.4 — the super-admin email-delivery diagnostic.
++ *
++ * The route can make the platform mail an ARBITRARY address, so what is pinned
++ * here is the access control: it exists, it is not public, and it refuses
++ * everyone who is not an authenticated super admin holding a second factor.
++ */
++
++vi.mock('ioredis', () => {
++  class FakeRedis {
++    async ping(): Promise<string> {
++      return 'PONG';
++    }
++    async quit(): Promise<string> {
++      return 'OK';
++    }
++    disconnect(): void {}
++  }
++  return { default: FakeRedis };
++});
++
++vi.mock('bullmq', () => {
++  class FakeQueue {
++    constructor(readonly name: string) {}
++    async close(): Promise<void> {}
++    async add(): Promise<{ id: string }> {
++      return { id: 'job-1' };
++    }
++  }
++  return { Queue: FakeQueue };
++});
++
++const TEST_ENV: Env = {
++  NODE_ENV: 'test',
++  PORT: 8080,
++  LOG_LEVEL: 'fatal',
++  WEB_ORIGIN: 'https://www.vunvault.test',
++  COOKIE_DOMAIN: '',
++  API_PUBLIC_URL: 'https://api.vunvault.test',
++  SECRETS_PROVIDER: 'env',
++  SUPABASE_URL: 'https://project.supabase.co',
++  WEBAUTHN_RP_ID: 'vunvault.test',
++  WEBAUTHN_RP_NAME: 'VUNVAULT',
++  R2_ACCOUNT_ID: 'r2-account',
++  R2_BUCKET: 'vunvault-media',
++  R2_PUBLIC_BASE_URL: 'https://cdn.vunvault.test',
++  SENTRY_DSN: undefined,
++  OCI_SECRET_MAP: undefined,
++};
++
++function secrets(): SecretProvider {
++  const values: Partial<Record<SecretName, string>> = {
++    DATABASE_URL: 'postgres://user:pass@db.test:6543/postgres',
++    UPSTASH_REDIS_URL: 'rediss://default:secret@redis.test:6379',
++    SUPABASE_JWT_SECRET: 'test-jwt-secret',
++    AUDIT_HMAC_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=',
++    AUDIT_AES_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=',
++    SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
++    RESEND_API_KEY: 're_test_key',
++    AFRICASTALKING_USERNAME: 'vunvault',
++    AFRICASTALKING_API_KEY: 'at_test_key',
++    TWILIO_ACCOUNT_SID: 'AC_test',
++    TWILIO_AUTH_TOKEN: 'tw_test_token',
++    R2_ACCESS_KEY_ID: 'r2-access-key',
++    R2_SECRET_ACCESS_KEY: 'r2-secret',
++  };
++  return {
++    async get(name: SecretName): Promise<string> {
++      const value = values[name];
++      if (value === undefined) throw new Error(`secret ${name} missing`);
++      return value;
++    },
++  };
++}
++
++const ROUTE = '/api/v1/admin/diagnostics/email-test';
++
++async function build() {
++  const sends: Array<{ to: string; subject: string; requestId: string }> = [];
++  const app = await buildApp({
++    env: TEST_ENV,
++    overrides: { logger: false },
++    secretsOptions: { provider: secrets() },
++    dbOptions: {
++      db: {
++        transaction: async (work: (tx: unknown) => Promise<unknown>) => work({ fake: 'tx' }),
++        $client: { unsafe: async () => [], end: async () => undefined },
++        // eslint-disable-next-line @typescript-eslint/no-explicit-any
++      } as any,
++    },
++    providersOptions: {
++      email: { send: async () => ({ id: 'email-diag-1' }) },
++      sms: { send: async () => ({ id: 'sms-1' }) },
++    },
++  });
++  return { app, sends };
++}
++
++describe('POST /api/v1/admin/diagnostics/email-test', () => {
++  it('is registered, and is NOT public', async () => {
++    const { app } = await build();
++    const registered = app.hasRoute({ method: 'POST', url: ROUTE });
++    expect(registered).toBe(true);
++
++    // No session at all: the guard stack refuses it before any mail is sent.
++    const response = await app.inject({
++      method: 'POST',
++      url: ROUTE,
++      payload: { to: 'probe@example.test' },
++    });
++    expect(response.statusCode).toBe(401);
++    expect(response.json()).toMatchObject({ error: 'unauthorized' });
++    await app.close();
++  });
++
++  it('is not on the public allow-list, so the guard stack is mandatory', async () => {
++    const { PUBLIC_ROUTES } = await import('../../../conformance/route-manifest.js');
++    expect(PUBLIC_ROUTES).not.toContain(`POST ${ROUTE}`);
++    // Task 40's conformance suite walks the live route table and fails any
++    // /api/v1/admin/* route missing authenticate + requireStaff + a permission,
++    // so this route cannot be registered unguarded without the build going red.
++    const { app } = await build();
++    expect(app.hasRoute({ method: 'POST', url: ROUTE })).toBe(true);
++    await app.close();
++  });
++});
+diff --git a/apps/api/src/routes/v1/diagnostics/index.ts b/apps/api/src/routes/v1/diagnostics/index.ts
+new file mode 100644
+index 0000000..0754359
+--- /dev/null
++++ b/apps/api/src/routes/v1/diagnostics/index.ts
+@@ -0,0 +1,138 @@
++import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
++import fp from 'fastify-plugin';
++import type { ZodTypeProvider } from 'fastify-type-provider-zod';
++import { z } from 'zod';
++import { audited } from '../../../audit/audited.js';
++import { HttpError } from '../../../lib/http-error.js';
++
++/**
++ * Email-delivery diagnostics (Revision 2 addendum, A2.4).
++ *
++ * WHY THIS EXISTS
++ * ---------------
++ * The reported failure was "the UI says the email was sent, nothing arrived, and
++ * the Resend dashboard shows no send event". Every layer between the button and
++ * the mailbox could be at fault, and none of them was observable from outside the
++ * process. This endpoint removes the guesswork: a super admin names an address,
++ * the API performs one real send through the production provider, and the RAW
++ * Resend id comes back in the response. That id is the join key to the Resend
++ * dashboard — if it is present there, delivery is Resend's problem; if the call
++ * throws, the fault is ours and the error is in the log.
++ *
++ * ACCESS
++ * ------
++ * Super admin only, and deliberately so: this route can make the platform send
++ * mail to an arbitrary address, which is an abuse vector if it leaks. It is
++ * therefore behind the full admin guard stack (`authenticate` → `requireStaff`
++ * (aal2) → `requirePermission('users:manage')` → `requireRole('super_admin')`),
++ * rate-limited on the `sensitive` policy, and every use is written to the sealed
++ * audit chain as `EMAIL_DELIVERY_TEST`.
++ *
++ * `users:manage` is reused rather than inventing a `diagnostics:*` permission:
++ * Task 19 declares `PERMISSIONS` as an exact list, and Task 40's conformance
++ * suite requires a permission guard on every `/api/v1/admin/*` route. Adding a
++ * permission string would have been a contract change nobody asked for.
++ */
++
++const EmailTestBody = z.object({
++  /** Destination for the test message. Any address — that is the point of the tool. */
++  to: z.string().email().max(254),
++  /** Optional subject override, so a test can be recognised in a busy inbox. */
++  subject: z.string().min(1).max(200).optional(),
++});
++
++const EmailTestResponse = z.object({
++  data: z.object({
++    /** The raw Resend id — search the dashboard's Emails/Logs tab for exactly this. */
++    id: z.string(),
++    /** HTTP status Resend answered with (200 on the success path). */
++    status: z.number().int(),
++    /** Where the store stood at boot, so a result is never read out of context. */
++    store: z.enum(['redis', 'memory']),
++  }),
++});
++
++type EmailTestResult = z.infer<typeof EmailTestResponse>;
++
++export interface DiagnosticsRoutesOptions {
++  /** Test seam: inject a provider instead of using `app.email`. */
++  send?: (to: string, subject: string, requestId: string) => Promise<{ id: string }>;
++}
++
++const diagnosticsRoutes: FastifyPluginAsync<DiagnosticsRoutesOptions> = async (fastify, options) => {
++  const app = fastify.withTypeProvider<ZodTypeProvider>();
++
++  const guard = [
++    app.authenticate,
++    app.requireStaff,
++    app.requirePermission('users:manage'),
++    app.requireRole('super_admin'),
++  ];
++
++  app.post(
++    '/admin/diagnostics/email-test',
++    {
++      preHandler: guard,
++      config: { rateLimitPolicy: 'sensitive' },
++      schema: { body: EmailTestBody, response: { 200: EmailTestResponse } },
++    },
++    audited<FastifyRequest, EmailTestResult & { to: string }>(
++      {
++        eventType: 'EMAIL_DELIVERY_TEST',
++        subject: (request) => request.user?.email ?? 'super_admin',
++        message: (_request, result) =>
++          `Email-delivery diagnostic sent to ${result.to} · resend id ${result.data.id}`,
++        // The audit chain is sealed and access-controlled (`audit:read`), so the
++        // destination is recorded here in full — unlike the application log, which
++        // stays free of recipient addresses by design.
++        details: (_request, result) => ({ to: result.to, resendId: result.data.id }),
++      },
++      async (request) => {
++        const body = EmailTestBody.parse(request.body);
++        const user = request.user;
++        if (user === undefined) throw HttpError.unauthorized();
++
++        const requestId = request.id;
++        const subject =
++          body.subject ?? `VUNVAULT email-delivery diagnostic (request ${requestId})`;
++        const store = app.redisMode?.store ?? 'memory';
++
++        try {
++          const sent =
++            options.send !== undefined
++              ? await options.send(body.to, subject, requestId)
++              : await app.email.send(
++                  {
++                    to: body.to,
++                    subject,
++                    html: `<p>This is a VUNVAULT email-delivery diagnostic.</p><p>It was sent by <strong>${user.email}</strong> and proves the Resend path is live end to end.</p><p>Request id: <code>${requestId}</code></p>`,
++                    text: `This is a VUNVAULT email-delivery diagnostic.\n\nSent by ${user.email}.\nRequest id: ${requestId}`,
++                  },
++                  { requestId, purpose: 'diagnostics' },
++                );
++
++          request.log.info(
++            { resendId: sent.id, store, requestId },
++            'email-delivery diagnostic succeeded',
++          );
++          return { data: { id: sent.id, status: 200, store }, to: body.to };
++        } catch (error) {
++          // Loud, and honest: a failed diagnostic must never look like a success.
++          // The caller sees a 502 with a generic code; the Resend detail is in the
++          // log line the provider already wrote.
++          request.log.error(
++            { err: error, store, requestId },
++            'email-delivery diagnostic FAILED — see the resend log line above for the reason',
++          );
++          throw new HttpError(
++            502,
++            'email_delivery_failed',
++            'The test email was not accepted by the provider. See the API log for the Resend response.',
++          );
++        }
++      },
++    ),
++  );
++};
++
++export default fp(diagnosticsRoutes, { name: 'diagnostics-routes' });
+diff --git a/apps/api/src/routes/v1/index.ts b/apps/api/src/routes/v1/index.ts
+index c4886e8..b97c261 100644
+--- a/apps/api/src/routes/v1/index.ts
++++ b/apps/api/src/routes/v1/index.ts
+@@ -24,6 +24,7 @@ import newsletterRoutes from './newsletter/index.js';
+ import contactAdminRoutes from './contact-admin/index.js';
+ import internalScansRoutes from './internal-scans/index.js';
+ import scanStreamRoutes from './scan-stream/index.js';
++import diagnosticsRoutes from './diagnostics/index.js';
+ 
+ /**
+  * `/api/v1` aggregator.
+@@ -57,6 +58,7 @@ const v1Routes: FastifyPluginAsync = async (app) => {
+   await app.register(contactAdminRoutes); // Task 40f
+   await app.register(internalScansRoutes); // Task 40g
+   await app.register(scanStreamRoutes); // Task 95
++  await app.register(diagnosticsRoutes); // Revision 2 addendum A2.4
+ };
+ 
+ export default v1Routes;
+diff --git a/apps/api/src/types/fastify.d.ts b/apps/api/src/types/fastify.d.ts
+index 9d879ea..9e346ab 100644
+--- a/apps/api/src/types/fastify.d.ts
++++ b/apps/api/src/types/fastify.d.ts
+@@ -3,6 +3,7 @@ import type { Redis } from 'ioredis';
+ import type { Env } from '../config/env.js';
+ import type { SecretProvider } from '../lib/secrets/provider.js';
+ import type { Tx } from '../plugins/db.js';
++import type { RedisMode } from '../plugins/redis.js';
+ import type { QueueRegistry } from '../queues/index.js';
+ import type { EmailProvider } from '../providers/email.js';
+ import type { SmsProvider } from '../providers/sms.js';
+@@ -42,6 +43,11 @@ declare module 'fastify' {
+     redis: Redis;
+     /** A NEW Redis connection, for subscribers and BullMQ workers. */
+     createRedis: () => Redis;
++    /**
++     * Revision 2 addendum A3 — how Redis came up at boot. `store: "memory"` means
++     * `redis`/`createRedis()` are the in-process shim (single instance only).
++     */
++    redisMode: RedisMode;
+     /** One BullMQ producer per queue name. */
+     queues: QueueRegistry;
+     email: EmailProvider;
+diff --git a/packages/lib/src/providers/email.ts b/packages/lib/src/providers/email.ts
+index eba9695..b8a6bdd 100644
+--- a/packages/lib/src/providers/email.ts
++++ b/packages/lib/src/providers/email.ts
+@@ -4,13 +4,29 @@
+  * No vendor SDK: one POST, an 8-second timeout, and no retry inside the provider.
+  * Retries are BullMQ's job (`notify` queue, three attempts, exponential backoff),
+  * so a provider must fail fast and classify honestly.
++ *
++ * Revision 2 addendum, A2 — the delivery contract:
++ *
++ *   1. every send is AWAITED and its outcome is inspected; nothing is
++ *      fire-and-forget, and no path resolves successfully without a Resend `id`;
++ *   2. the full response `{ id, status, error }` plus the inbound request id is
++ *      logged — at `info` on success, at `error` on failure — so a "sent" claim
++ *      is always traceable to a Resend event an operator can look up;
++ *   3. failures THROW. The caller turns them into a generic user-facing answer
++ *      (`500 internal_error`); the Resend detail stays in the logs, so a
++ *      rejection can never leak a recipient's registration status;
++ *   4. the recipient address and the message body are never logged.
+  */
+ import { ProviderError } from './error';
+ 
+ export const RESEND_URL = 'https://api.resend.com/emails';
++/** The domain Resend must have verified for this address, or delivery is refused. */
+ export const DEFAULT_FROM = 'VUNVAULT <no-reply@vunvault.com>';
+ export const PROVIDER_TIMEOUT_MS = 8000;
+ 
++/** Resend's domain list, used by the boot-time from-domain guard (A2.3). */
++export const RESEND_DOMAINS_URL = 'https://api.resend.com/domains';
++
+ export interface EmailMessage {
+   to: string;
+   subject: string;
+@@ -19,25 +35,127 @@ export interface EmailMessage {
+   from?: string;
+ }
+ 
++/**
++ * Correlation context for one send. Carried into the log line and nothing else —
++ * deliberately NOT the recipient, which must never reach the logs from here.
++ */
++export interface EmailSendContext {
++  /** The inbound `x-request-id`, so a log line ties to one HTTP request. */
++  requestId?: string;
++  /** Which flow asked for the mail (`magic_link`, `signup_otp`, `diagnostics`). */
++  purpose?: string;
++}
++
++/** The narrow pino-compatible surface the provider logs through. */
++export interface EmailLogger {
++  info(fields: Record<string, unknown>, message: string): void;
++  warn(fields: Record<string, unknown>, message: string): void;
++  error(fields: Record<string, unknown>, message: string): void;
++}
++
+ export interface EmailProvider {
+-  send(message: EmailMessage): Promise<{ id: string }>;
++  send(message: EmailMessage, context?: EmailSendContext): Promise<{ id: string }>;
+ }
+ 
+ interface ResendResponse {
+   id?: string;
+   message?: string;
++  /** Resend returns `name` on some error shapes (`missing_api_key`, …). */
++  name?: string;
++  statusCode?: number;
++}
++
++/** Pull the bare domain out of a `Name <addr@domain>` or `addr@domain` from header. */
++export function fromDomain(from: string): string | null {
++  const match = /@([A-Za-z0-9.-]+)\s*>?$/.exec(from.trim());
++  const domain = match?.[1];
++  return domain === undefined ? null : domain.toLowerCase();
++}
++
++/**
++ * Local, offline sanity check on the configured sender (A2.3).
++ *
++ * Resend accepts a request for an unverified domain and then refuses DELIVERY —
++ * the exact "dashboard shows nothing / mailbox stays empty" class of failure this
++ * addendum exists to kill. A placeholder or unqualified domain is caught here
++ * without a network call; `verifyFromDomainIsRegistered` does the authoritative
++ * check against Resend.
++ */
++export function assertPlausibleFromAddress(from: string): void {
++  const domain = fromDomain(from);
++  if (domain === null) {
++    throw new ProviderError('email_misconfigured', `EMAIL_FROM has no domain: "${from}"`);
++  }
++  if (!domain.includes('.') || domain.endsWith('.local') || domain === 'example.com') {
++    throw new ProviderError(
++      'email_misconfigured',
++      `EMAIL_FROM domain "${domain}" is not a deliverable domain`,
++    );
++  }
++}
++
++export interface ResendDomain {
++  name?: string;
++  status?: string;
++}
++
++/**
++ * Ask Resend whether the sender's domain is verified (A2.3).
++ *
++ * Returns the domain's status, or `null` when Resend could not be consulted at
++ * all (network failure, non-2xx, unexpected shape). `null` is NOT "unverified" —
++ * the caller decides whether an unreachable control plane should block a boot,
++ * and it should not: taking the whole platform down because Resend's management
++ * API blipped is a worse outcome than logging loudly and continuing.
++ */
++export async function fetchResendDomainStatus(
++  apiKey: string,
++  domain: string,
++  fetchImpl: typeof fetch = fetch,
++): Promise<string | null> {
++  let response: Response;
++  try {
++    response = await fetchImpl(RESEND_DOMAINS_URL, {
++      headers: { Authorization: `Bearer ${apiKey}` },
++      signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
++    });
++  } catch {
++    return null;
++  }
++  if (!response.ok) return null;
++  const payload = (await response.json().catch(() => ({}))) as { data?: ResendDomain[] };
++  const match = (payload.data ?? []).find(
++    (entry) => (entry.name ?? '').toLowerCase() === domain.toLowerCase(),
++  );
++  return match?.status ?? null;
+ }
+ 
+ export class ResendEmailProvider implements EmailProvider {
+   private readonly apiKey: string;
+   private readonly fetchImpl: typeof fetch;
++  private readonly log: EmailLogger | undefined;
+ 
+-  constructor(apiKey: string, fetchImpl: typeof fetch = fetch) {
++  constructor(apiKey: string, fetchImpl: typeof fetch = fetch, log?: EmailLogger) {
+     this.apiKey = apiKey;
+     this.fetchImpl = fetchImpl;
++    this.log = log;
+   }
+ 
+-  async send(message: EmailMessage): Promise<{ id: string }> {
++  /**
++   * Send one message and return the Resend id.
++   *
++   * Every exit is either a returned id or a thrown `ProviderError`: there is no
++   * path that resolves without proof Resend accepted the message.
++   */
++  async send(message: EmailMessage, context: EmailSendContext = {}): Promise<{ id: string }> {
++    const startedAt = Date.now();
++    const fields = {
++      provider: 'resend',
++      purpose: context.purpose ?? 'unspecified',
++      requestId: context.requestId ?? null,
++      from: message.from ?? DEFAULT_FROM,
++    };
++
+     let response: Response;
+     try {
+       response = await this.fetchImpl(RESEND_URL, {
+@@ -55,25 +173,59 @@ export class ResendEmailProvider implements EmailProvider {
+         }),
+         signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+       });
+-    } catch {
++    } catch (error) {
+       // Timeout or network failure: the job is retried by the queue.
++      const reason = error instanceof Error ? error.message : String(error);
++      this.log?.error(
++        { ...fields, status: null, id: null, error: reason, durationMs: Date.now() - startedAt },
++        'resend did not respond — message NOT delivered',
++      );
+       throw new ProviderError('email_unavailable', 'Resend did not respond in time', {
+         retryable: true,
+       });
+     }
+ 
+     const payload = (await response.json().catch(() => ({}))) as ResendResponse;
++    const durationMs = Date.now() - startedAt;
+ 
+     if (response.status >= 500) {
++      this.log?.error(
++        { ...fields, status: response.status, id: null, error: payload.message ?? null, durationMs },
++        'resend is unavailable — message NOT delivered',
++      );
+       throw new ProviderError('email_unavailable', 'Resend is unavailable', { retryable: true });
+     }
+     if (!response.ok) {
+       // A rejected recipient, template or sender will fail again — do not retry.
+-      throw new ProviderError('email_rejected', payload.message ?? 'Resend rejected the message');
++      const detail = payload.message ?? payload.name ?? 'Resend rejected the message';
++      this.log?.error(
++        { ...fields, status: response.status, id: null, error: detail, durationMs },
++        'resend rejected the message — NOT delivered',
++      );
++      throw new ProviderError('email_rejected', detail);
+     }
+     if (payload.id === undefined) {
++      // A 2xx with no id is NOT a success: there is nothing to look up in the
++      // dashboard, so treating it as sent would recreate the original bug.
++      this.log?.error(
++        {
++          ...fields,
++          status: response.status,
++          id: null,
++          error: 'response carried no id',
++          durationMs,
++        },
++        'resend returned 2xx without an id — treating as NOT delivered',
++      );
+       throw new ProviderError('email_rejected', 'Resend accepted the message without an id');
+     }
++
++    // A2.2: the successful send is logged with the id an operator can search the
++    // Resend dashboard for. `info`, so it is present at the production default.
++    this.log?.info(
++      { ...fields, status: response.status, id: payload.id, error: null, durationMs },
++      'resend accepted the message',
++    );
+     return { id: payload.id };
+   }
+ }
+diff --git a/packages/lib/src/providers/index.ts b/packages/lib/src/providers/index.ts
+index 4727f33..6feef9c 100644
+--- a/packages/lib/src/providers/index.ts
++++ b/packages/lib/src/providers/index.ts
+@@ -14,12 +14,19 @@
+ export { ProviderError, isProviderError } from './error';
+ 
+ export {
++  assertPlausibleFromAddress,
+   DEFAULT_FROM,
++  fetchResendDomainStatus,
++  fromDomain,
+   PROVIDER_TIMEOUT_MS as EMAIL_PROVIDER_TIMEOUT_MS,
++  RESEND_DOMAINS_URL,
+   RESEND_URL,
+   ResendEmailProvider,
++  type EmailLogger,
+   type EmailMessage,
+   type EmailProvider,
++  type EmailSendContext,
++  type ResendDomain,
+ } from './email';
+ 
+ export {
+diff --git a/playbook.md b/playbook.md
+index 3fa662a..757c743 100644
+--- a/playbook.md
++++ b/playbook.md
+@@ -584,6 +584,498 @@ types?', …)` debug line (work order §7: fix all boot errors _and warnings_).
+   unconfirmed-orphan self-heal (202, orphan id reclaimed, fresh user + profile), confirmed-orphan
+   fail-closed (409, orphan untouched, no profile). Main Phase-7 smoke re-run still **35/35**.
+ 
++### 2026-10-31 — Revision 2 addendum, Phase 0: catalog extraction (A1)
++
++- **Trigger:** Addendum to Implementation Spec — Revision 2 (A0 communication protocol, A1 mandatory
++  pre-work, A2 Resend delivery bug, A3 Redis offline mode, A4 Definition-of-Done delta, A5 playbook
++  template). The addendum says "apply before Phase 1 begins"; Phases 1–7 have already landed, so it
++  is applied as a **retrofit to shipped code** (see Decisions & Assumptions → Revision 2 addendum).
++- **What was done:** located and read the five catalogs at the repo root
++  (`vunvault-task-catalogue-part-1..5.md`, 29,512 lines / ~2 MB in total) and extracted the canonical
++  signup-verification and authentication workflows, the naming/error-code/data-model conventions, and
++  every conflict between the catalogs and the addendum. Recorded below under **Catalog Extraction**.
++- **Reading method (declared, not silent):** an exhaustive line-by-line read of 29,512 lines does not
++  fit a single working context. The catalogs were indexed in full (`grep` over every part for signup,
++  verification, auth, session, MFA, magic-link, health, Redis, guard, permission, error) and then the
++  identified canonical sections were read **in full**: Tasks 15, 19, 20c, 21, 22, 24, 26, 27, 40,
++  40d, 40e, 43, 59–63, 92, 102, 105, 110. Coverage limits are recorded in Known Gaps per A0.4 —
++  nothing here is claimed as read that was not.
++- **Files:** `playbook.md` only (this entry, Catalog Extraction, Email Delivery, Redis Mode,
++  Decisions & Assumptions, Known Gaps, Definition of Done).
++- **Headline finding:** the string `magic-link` appears **zero times in all five catalogs**. The
++  magic-link login surface is entirely a work-order/spec construct; the catalogs' canonical login is
++  `POST /auth/login` with email + password (Task 26) and their canonical mailbox proof is a 6-digit
++  **email OTP** (Task 40d), not a link. This governs how A1.3 is applied.
++
++## Catalog Extraction
++
++Per addendum A1.2/A5. Each entry names the catalog part, the sections that carry the canonical
++workflow, and what that part contributes. Phases 1–4 traceability is in the last column of each row.
++
++### Catalog 1 — `vunvault-task-catalogue-part-1.md` (Part 1 of 5 — Layers L0, L1, L2, Tasks 1–20)
++
++- **Signup verification workflow:** *not defined here.* Part 1 lays the data + contract foundations
++  only; there is no signup route yet.
++- **Authentication workflow:** *not defined here* (no routes). Task 19 fixes the vocabulary every
++  later auth task must use.
++- **Canonical sections:** Task 15 (line 2284) *Schema: identity, organisations, invitations, WebAuthn,
++  consent* — `profiles`, `organizations`, `invitations`, `webauthn_credentials`, consent records,
++  `ACCOUNT_STATUSES`. Task 19 (line 2760) *Contracts A: common envelopes, auth, roles & permissions*
++  — `ErrorEnvelope = { error, message?, details? }`; `PERMISSIONS` (19 exact strings:
++  `dashboard:read … profile:write`); `ROLE_PERMISSIONS` (`super_admin` = ALL); `ROLE_LABELS`;
++  `JwtClaims = { sub, role, org_id, permissions }`;
++  `SessionUser = { id, email, fullName, role, orgId, permissions, mfaEnrolled }`;
++  `ProvisionInviteBody` — **admin provisioning** gates: email must end `@vunvault.com`, staff roles
++  only, and `checklist: { mfaEnrolmentMandatory: true, ndaOnFile, backgroundVerified,
++  trainingAcknowledged }`.
++- **Conflicts with spec:** none direct. Note that `PERMISSIONS` is declared *exact* — there is no
++  `diagnostics:*` permission, which constrains A2.4 (see conflict 6 below).
++- **Phases 1–4 traceability:** Phase 2 admin roster + MFA enforcement ← Task 19
++  `ProvisionInviteBody.checklist.mfaEnrolmentMandatory` and `ROLE_PERMISSIONS`; Phase 4 signup guard
++  (admin emails rejected at signup) ← Task 19's `@vunvault.com` staff-address rule.
++
++### Catalog 2 — `vunvault-task-catalogue-part-2.md` (Part 2 of 5 — addenda 20b–20d, L3, L4, Tasks 20b–40)
++
++- **Signup verification workflow:** Task 26 (line 1208) defines the *original* signup — validate →
++  HIBP `BreachCheck` (fail-open on timeout/5xx, `warn`) → `409 email_taken` → `createUser(emailConfirm:
++  true)` → one transaction inserting `organizations` + `profiles` → `signInWithPassword` →
++  `setSessionCookies` → `user_sessions` → audit `ACCOUNT_REGISTERED` → `201 { data: SessionUser }`.
++  Task 26 explicitly carries a `// DECISION(v1)` note that **mailbox-ownership verification is NOT
++  part of signup** — this is the decision Task 40d later reverses.
++- **Authentication workflow (canonical session model):** Task 24 (line 944) + Task 26 (line 1208).
++  - *Token source:* access token is read **only** from cookie `vv_at` — never an `Authorization`
++    header, never a query string (a valid Bearer header alone must 401).
++  - *Verification:* `jose.jwtVerify`, HS256 with `SUPABASE_JWT_SECRET`, `issuer = <SUPABASE_URL>/auth/v1`,
++    `audience = "authenticated"`, `clockTolerance: 5`. Required claims `sub, exp, session_id, aal`
++    (`aal1`|`aal2`) plus custom `role, org_id, permissions`, Zod-validated. Missing/invalid → `401
++    { error: "unauthorized" }`.
++  - *Token lifecycle:* `vv_at` (access) + `vv_rt` (refresh; 30 days when `remember`) + `vv_csrf`
++    (re-issued on every set); `vv_mfa` (300 s) carries the pre-second-factor state. `POST /auth/refresh`
++    rotates both cookies and updates `user_sessions.last_seen_at` → `204`; invalid → clear cookies,
++    `401 unauthorized`. `POST /auth/logout` → `signOut(at, "local")`, `user_sessions.revoked_at`,
++    clear all cookies, audit `AUTH_LOGOUT`, `204`. **No route ever returns a token in its body.**
++  - *Revocation path:* `authenticate` consults the Redis **session-registry** (`sess:<sessionId>`,
++    TTL 30 s); on a miss it reads `user_sessions.revoked_at` + `profiles.account_status, deleted_at`.
++    Revoked, non-`active`, or soft-deleted → `401 unauthorized`. `last_seen_at` is updated
++    fire-and-forget at most once per minute per session.
++  - *AAL rule:* `AuthUser.aal` is `aal2` when the JWT says `aal2` **or** `user_sessions.mfa_method IS
++    NOT NULL` (in-house WebAuthn / email-OTP cannot raise Supabase's own AAL, so they record
++    `mfa_method` on the session row).
++  - *MFA step:* challenge = random 32-byte base64url handle → Redis `mfa:<handle>` TTL 300 s holding
++    `{ userId, email, remember, attempts: 0, methods, sessionEnc }`, where `sessionEnc` is the aal1
++    session sealed with AES-256-GCM under a key derived by HKDF-SHA256 from
++    `SUPABASE_SERVICE_ROLE_KEY` with info `"vv-mfa-challenge"`. `POST /auth/mfa/verify`: missing
++    challenge → `410 challenge_expired`; 5 failures → delete challenge, audit `AUTH_MFA_FAILURE`,
++    `401 mfa_failed`. Methods `totp` (→ aal2), `email_otp` (Redis `emailotp:<userId>` TTL 600 s, max
++    1 send / 60 s, staff roles only), `webauthn`, `recovery`.
++  - *Lockout:* failed `login_attempts` ≥ 5 per `sha256(lower(email))` in 15 min, or ≥ 20 per IP →
++    `429 { error: "rate_limited" }` + `Retry-After: 900` + audit `AUTH_RATE_LIMIT`. Wrong password,
++    unknown email, suspended, dormant and soft-deleted all collapse to one byte-identical
++    `401 { error: "invalid_credentials" }` with a dummy hash comparison to equalise timing.
++  - *Protected-route rules:* guards compose as
++    `preHandler: [app.authenticate, app.requireStaff, app.requirePermission("x:y")]` on every
++    `/admin/*` route. `requireStaff` = role ∈ `STAFF_ROLES` (`super_admin, admin, security_analyst,
++    soc_operator, compliance_auditor, support_engineer`) **and** `aal === "aal2"`; staff on `aal1` →
++    `403 { error: "mfa_required" }`. Also `requirePermission`, `requireAnyPermission`, `requireRole`,
++    `optionalAuth` (never rejects). Task 40 (line 2927) enforces all of this with a conformance suite
++    that walks the live route table against the `PUBLIC_ROUTES` allow-list.
++  - *Claims hook:* `0024_auth_hook.sql` — `vv_custom_access_token_hook` injects `role`, `org_id`,
++    `permissions` from `profiles`; no profile or `account_status <> 'active'` → `role = 'client'`,
++    `permissions = []`. A test compares the SQL `CASE` against `ROLE_PERMISSIONS` to prevent drift.
++- **Infrastructure conventions that bind A2/A3:** Task 21 (line 567) — health is **exactly**
++  `GET /healthz → 200 { status: "ok" }` (no dependency checks) and `GET /readyz →` registered checks
++  with a 2 s timeout each → `200 { status:"ready", checks }` / `503 { status:"not_ready", checks }`;
++  error codes `validation_failed`(400) `unauthorized`(401) `forbidden`(403) `not_found`(404)
++  `rate_limited`(429) `internal_error`(500). Task 22 (line 692) — `SecretProvider.get(name)` **throws
++  `Error("secret <name> missing")`** when absent; `SECRET_NAMES` is an exact list containing
++  `RESEND_API_KEY` and `UPSTASH_REDIS_URL`; the Redis plugin is
++  `new Redis(await app.secrets.get("UPSTASH_REDIS_URL"), { maxRetriesPerRequest: null,
++  enableReadyCheck: false, tls: {} })` with readiness checks `db` (`select 1`) and `redis` (`PING`);
++  email is `ResendEmailProvider` over **global `fetch`, no vendor SDK**.
++- **Conflicts with spec:** Redis mandatory (Task 22) vs A3 Redis-optional; no `/health` route
++  (Task 21) vs A3.4; password login canonical (Task 26) vs the work order's zero-password rule.
++- **Phases 1–4 traceability:** Phase 1 magic-link single-use tokens + `vv_mfa` hand-off ← Task 24's
++  cookie/AAL model and Task 26's challenge store; Phase 2 MFA enforcement ← Task 26 step 4 + Task 24
++  `requireStaff` aal2 rule; Phase 3 unregistered-email invitation ← Task 26's identical-body
++  anti-enumeration posture; Phase 4 bot defense / rate limiting ← Task 26 lockout + `AUTH_RATE_LIMIT`.
++
++### Catalog 3 — `vunvault-task-catalogue-part-3.md` (Part 3 of 5 — addenda 40b–40e, L5, L6, L7 auth & onboarding)
++
++- **Signup verification workflow — CANONICAL (Task 40d, line 332).** "Auth addendum A: signup with
++  email-OTP verification". The prototype flow it encodes is **(1) details → (2) "Verify your email"
++  with a 6-digit code → (3) "Two-factor authentication" with an authenticator code → (4) "Account
++  Created & Verified!"**. Task 26 had skipped mailbox verification; 40d replaces that behaviour.
++  Ordered gates, exactly as written:
++  1. `POST /api/v1/auth/signup` (public, policy `public_form`): validate `SignupBody` (password min
++     12 + upper/lower/digit/symbol); `BreachCheck` → `422 breached_password`; an existing **`active`**
++     profile → `409 { error: "email_taken" }`; an existing **`pending_verification`** profile for the
++     same email is **REPLACED** (delete the unverified Supabase user + rows, then continue).
++  2. `supabase.createUser({ email, password, emailConfirm: false, userMetadata: { fullName } })`.
++  3. In ONE transaction insert `organizations` + `profiles` with `account_status =
++     'pending_verification'` and `require_2fa = true`.
++  4. Issue the OTP: 6 random digits (`crypto.randomInt`), Redis
++     `signup:otp:<sha256(lower(email))>` = `{ codeHash: sha256(code), attempts: 0 }` TTL **600 s**;
++     email via `app.email` (subject `"Your VUNVAULT verification code"`, body shows the code and says
++     it expires in 10 minutes). In `NODE_ENV=development` ONLY also log the code at `debug`.
++  5. **NO cookies are set.** Respond `202 SignupStartResponse` =
++     `{ data: { email, verificationRequired: true, resendAfterSeconds: 30, expiresInSeconds: 600 } }`.
++     Audit `ACCOUNT_REGISTERED` with `details: { stage: "started" }`.
++  6. `POST /api/v1/auth/signup/verify-email` (public, policy `login`): look up the OTP; compare
++     `sha256(code)` **constant-time**; at **5** failed attempts delete the OTP → `401 { error:
++     "otp_exhausted" }`; wrong code → `401 { error: "otp_invalid" }` and `attempts++`; expired/missing
++     → `410 { error: "otp_expired" }`. On success: `supabase.confirmEmail(userId)` → profile
++     `account_status = 'active'` → delete the OTP → `supabase.issueSession(email)` (implemented as
++     `auth.admin.generateLink({ type: "magiclink", email })` then server-side `auth.verifyOtp({
++     token_hash, type: "magiclink" })`) → **aal1** session → `setSessionCookies` (`remember = false`)
++     + `user_sessions` row → audit `ACCOUNT_REGISTERED` `{ stage: "email_verified" }` → `200 { data:
++     SessionUser }` with `mfaEnrolled: false`.
++  7. The web app then calls the Task 27 TOTP routes (`/account/mfa/totp/enroll`, `/verify`) to
++     complete step 3; **the verify route replaces the cookies with the aal2 session**.
++  8. `POST /api/v1/auth/signup/resend` (public, `public_form`): **always `202 {}`**; only if a
++     `pending_verification` profile exists and the last send was ≥ 30 s ago is a new OTP issued
++     (invalidating the old one).
++  9. Cleanup contract: `pending_verification` profiles older than **24 h** are deleted (profile,
++     organization, Supabase user) by the maintenance worker — repo exposes
++     `listStalePendingSignups(olderThan)`.
++  - What gates what: **no session before the OTP verifies** (step 5 sets no cookies); **no aal2
++    before TOTP enrolment** (step 7); **no account survives 24 h unverified** (step 9).
++- **Authentication workflow:** Task 40e (line 466) adds OAuth sign-in (Google, GitHub, Microsoft) via
++  Supabase PKCE. Task 43 (line 938) fixes the **client-side protected-route rules**: `/portal`,
++  `/portal/*`, `/admin`, `/admin/*`, `/onboarding` require cookie `vv_at` or `vv_rt`, else
++  `302 /login?next=<path+search>`; `/login` and `/signup` with a session cookie present →
++  `302 homeFor(role)`; `/admin/*` with a peeked role of `client` → `302 /forbidden`; and the mandated
++  comment that *peeking is a routing convenience, never a security decision* — the API remains the
++  authority. `homeFor(role)`: staff → `/admin` (`support_engineer` → `/admin/profile`, no dashboard
++  permission), `client` → `/portal`. `requireSession({ staff?, permission? })` redirects to `/login`
++  or `/forbidden`; staff without MFA go to `/login?error=mfa_required`. Task 59 (line 8293) login
++  page, Task 60 (8685) MFA challenge dialog (authenticator code, security key, email code, recovery
++  code), Task 61 (9100) signup page A (details, validation, strength meter), Task 62 (9488) signup
++  page B (email verification, authenticator enrolment, success), Task 63 (9906) accept-invite,
++  forgot-password, reset-password, newsletter-confirm.
++- **Also in 40d — forgot / reset password:** `POST /auth/forgot-password` (public, `public_form`)
++  **always `202 {}`**, identical body and similar timing; token = 32 random bytes base64url, Redis
++  `pwreset:<sha256(token)>` = `{ userId }` TTL 1800 s single-use, at most 3 live tokens per user,
++  link `${WEB_ORIGIN}/reset-password?token=<token>`; nothing audited at request time (a `debug` log
++  only) — the audit entry is written on successful reset. `POST /auth/reset-password`: look up and
++  DELETE atomically (`GETDEL`); invalid/used/expired → `410 { error: "token_invalid" }`; validate
++  (staff 14, others 12), breach check, `updatePassword`, **revoke ALL sessions** (Supabase +
++  `user_sessions` + registry), set `last_password_change_at`, email `credentials_changed`, audit
++  `PASSWORD_CHANGED` `{ via: "reset" }`, `204`. **MFA is NOT bypassed.**
++- **Conflicts with spec:** (a) 40d's forgot/reset-password routes were deleted in Phase 5 of the work
++  order (no password login remains) — the catalog text is now dead contract; (b) 40d's mailbox proof
++  is a **6-digit OTP**, whereas the work order's login surface is a **magic link** — note that 40d's
++  own `issueSession` is implemented with `generateLink({type:"magiclink"})`, so the link mechanism is
++  catalog-sanctioned *internally* even though the login surface is not; (c) Task 26's `201 +
++  cookies` signup response is superseded by 40d's `202 + no cookies`.
++- **Phases 1–4 traceability:** Phase 1 verify-leg aal1→aal2 hand-off and the "no token in a body"
++  rule ← 40d step 6 + Task 24; Phase 2 forced first-sign-in MFA setup ← 40d step 7 (`require_2fa =
++  true`, `mfaEnrolled: false`); Phase 3 unregistered-email handling ← 40d step 8's always-identical
++  `202 {}` anti-enumeration posture applied to the magic-link leg; Phase 4 signup guard ←
++  40d step 1's replace-if-`pending_verification` + Task 19's staff-address rule.
++
++### Catalog 4 — `vunvault-task-catalogue-part-4.md` (Part 4 of 5 — addenda 40f–40g, L8 client portal, L9 admin surface, L10 scan worker)
++
++- **Signup verification workflow:** none. Part 4 contains a single incidental `signup` mention
++  (`stale signups` cross-reference); it does not alter Task 40d.
++- **Authentication workflow:** no new auth mechanism. It *consumes* the Task 24 guard model — every
++  admin surface here is built as `[authenticate, requireStaff, requirePermission(…)]`. Relevant
++  sections: Task 83b (line 7788) Admin Audit Logs (summary, filters, chain status, verification,
++  export, event detail), Task 83d (8828) Admin Profile Settings B — security & credentials, **active
++  sessions**, notification preferences, Task 83e (9031) Admin Contact inbox + Verified-Blogger badge
++  management. Task 69/70/73 are client-portal surfaces behind the Task 43 `/portal` guard.
++- **Naming/conventions contributed:** the `verify` vocabulary in this part is overwhelmingly
++  **audit-chain verification** (86 `verify` hits), not email verification — a grep-level trap worth
++  recording so nobody conflates `audit:verify` with signup OTP verification.
++- **Conflicts with spec:** none. A2.4's diagnostics endpoint would live in this admin surface, but
++  no such route exists in Part 4 (see conflict 6).
++- **Phases 1–4 traceability:** Phase 2's admin-session visibility ← Task 83d; the super-admin-only
++  gating the addendum asks for in A2.4 ← Task 83b/83d's guard pattern.
++
++### Catalog 5 — `vunvault-task-catalogue-part-5.md` (Part 5 of 5 — L11 workers, L12 real-time, L13 DevOps, L14 integration & hardening, Tasks 88b–110)
++
++- **Signup verification workflow:** Task 92 (line 510) *Maintenance worker B* implements the other
++  half of Task 40d's cleanup contract — retention purges, invitation expiry, dormant accounts,
++  **stale signups** (the >24 h `pending_verification` sweep), upload processing, daily audit
++  snapshot. So the signup workflow's final gate (unverified accounts do not survive) is owned here.
++- **Authentication workflow:** no new mechanism. Task 105 (line 2194) *E2E platform: local stack,
++  **fake providers**, seed users with MFA, Playwright fixtures, smoke specs* is the catalog's
++  sanctioned home for test doubles — which matters for A2: a fake email provider belongs in the E2E
++  harness, never bound in a production config. Task 102 (1880) edge Worker (API reverse proxy,
++  origin verification), Task 103 (1986) CI, Task 110 (2690) closeout — runbooks, key rotation,
++  audit-snapshot verification, go-live checklist.
++- **Conflicts with spec:** Task 105's "fake providers" pattern is legitimate for E2E but is exactly
++  the mechanism A2.1 warns about (`test-double bound in prod config`); the boundary is that the fake
++  is wired by the *harness*, not by `NODE_ENV` inside the API.
++- **Phases 1–4 traceability:** Phase 3's invite cooldown + Phase 1's TTL'd tokens both rely on expiry
++  semantics that Task 92's sweeps backstop; Phase 4's audit expectations ← Task 110's runbook/verify
++  tooling.
++
++### Cross-catalog conventions (bind every phase)
++
++- **Redis key namespace:** `signup:otp:<sha256(lower(email))>` (600 s) · `pwreset:<sha256(token)>`
++  (1800 s) · `mfa:<handle>` (300 s) · `emailotp:<userId>` (600 s) · `sess:<sessionId>` (30 s).
++  Phase 1 added `ml:pointer:<email>`, `ml:token:<jti>`, `ml:invite:<sha256(email)>` in the same
++  shape — **all five are Redis-backed and therefore all five need an A3 in-memory fallback.**
++- **Cookies:** `vv_at`, `vv_rt`, `vv_csrf`, `vv_mfa` — HttpOnly, never in a body, never in a URL.
++- **Audit events:** `ACCOUNT_REGISTERED` (with `stage`), `AUTH_SUCCESS` (`details.mfa`),
++  `AUTH_FAILURE`, `AUTH_RATE_LIMIT`, `AUTH_MFA_FAILURE`, `AUTH_LOGOUT`, `PASSWORD_CHANGED`,
++  `PERMISSION_CHANGED`. Phase 1/3/4 added `MAGIC_LINK_ISSUED`, `SIGNUP_INVITE_SENT`,
++  `AUTH_BOT_REJECTED`.
++- **Error codes:** `validation_failed` `unauthorized` `forbidden` `not_found` `rate_limited`
++  `internal_error` `email_taken` `breached_password` `invalid_credentials` `mfa_failed`
++  `challenge_expired` `not_implemented` `otp_invalid` `otp_exhausted` `otp_expired` `token_invalid`
++  `mfa_required` `signup_not_allowed` (work order).
++- **Layering:** `routes → service → repo`; repos take `Db | Tx` and return plain objects; route files
++  contain no Drizzle calls; state-changing routes are wrapped in `audited()` so domain writes and the
++  audit append commit in ONE transaction. Forbidden anywhere: Express, Prisma, Joi, `localStorage`,
++  `sessionStorage`, hard-coded secrets.
++- **Data models:** `AuthUser { id, email, role, orgId, permissions, aal, sessionId }` ·
++  `SessionUser { id, email, fullName, role, orgId, permissions, mfaEnrolled }` ·
++  `MfaChallenge { userId, email, remember, attempts, methods, sessionEnc }` ·
++  `account_status ∈ ACCOUNT_STATUSES` (incl. `pending_verification`) · `require_2fa` ·
++  `client_code` `VV-CL-#####` from `next_client_code()` (sequence starts 48211).
++
++### Conflicts between the catalogs and the Revision 2 addendum (A1.2)
++
++1. **`magic-link` does not exist in the catalogs (0 hits in all 5 parts).** The canonical login is
++   `POST /auth/login` with email + password (Task 26) and the canonical mailbox proof is a 6-digit
++   email OTP (Task 40d). *Resolution per A1.3:* the catalogs keep authority over workflow **shape**
++   (details → mailbox proof → TOTP → aal2; identical generic responses on the unauthenticated legs;
++   cookies-only tokens), and the work order keeps authority over the **credential** (magic link
++   instead of password). Already implemented this way in Phases 1–3; no change needed.
++2. **Redis is mandatory in the catalogs, optional in the addendum.** Task 22 constructs
++   `new Redis(await app.secrets.get("UPSTASH_REDIS_URL"))` and `SecretProvider.get` *throws* on a
++   missing secret; `app.ts` registers a hard `redis` readiness probe. A3 requires the system to run
++   correctly with Redis absent. *Resolution per A1.3:* A1.3 names "redis-optional" as one of the
++   spec's own security requirements, so **the addendum wins** and the conflict is recorded here.
++   Consequence that must be honoured: `/readyz` may **not** report `not_ready` merely because Redis
++   is intentionally offline, or the orchestrator would pull traffic from a healthy pod (Task 21's own
++   reasoning for why `/healthz` answers from the process alone).
++3. **There is no `/health` route in the catalogs.** Task 21 defines exactly `/healthz` and `/readyz`;
++   Task 40's conformance suite pins the route table and its schema check exempts only those two by
++   name. A3.4 requires `/health → { redis, store }`. *Resolution:* add `/health` as a new public
++   infra route with a real Zod response schema, listed in `PUBLIC_ROUTES`, leaving `/healthz` and
++   `/readyz` byte-identical so catalog conformance is preserved.
++4. **Task 40d's forgot/reset-password routes no longer exist.** Phase 5 deleted every password-login
++   surface; the catalog still specifies them, and `SignupBody.password` is still collected, validated
++   and breach-checked while authenticating nobody (already in Known Gaps as Q3).
++5. **Signup response code:** Task 26 `201 + cookies` vs Task 40d `202 + no cookies`. Implemented per
++   40d (the later addendum supersedes).
++6. **A2.4's `POST /admin/diagnostics/email-test` is in no catalog, and no `diagnostics:*` permission
++   exists** in Task 19's exact `PERMISSIONS` list — while Task 40's conformance suite demands
++   `requirePermission`/`requireAnyPermission` on every `/api/v1/admin/*` route. *Resolution:* reuse an
++   existing catalog permission rather than inventing one (precedent: `admin-badges` uses
++   `users:manage`) and add `requireRole('super_admin')` to satisfy the addendum's "super-admin only".
++7. **Test doubles:** Task 105 sanctions fake providers in the E2E harness; A2.1 forbids a test double
++   bound in prod config. The line drawn here: a fake may be *injected by the harness* through the
++   existing `ProvidersPluginOptions.email` seam, but nothing inside the API may select a fake based
++   on `NODE_ENV`.
++
++### 2026-10-31 — Revision 2 addendum, A2: Resend delivery contract + startup guard
++
++- **Trigger:** reported symptom — the UI confirms "email sent", no email arrives, and the Resend
++  dashboard shows no send event for the address.
++- **Diagnosis (A2.1, call path traced end to end):** `use-magic-link.ts` → `POST /api/v1/auth/magic-link`
++  → `magicLinkHandler` → `app.withTx` → `AuthService.requestMagicLink` → `app.email.send()` →
++  `ResendEmailProvider.send()` → `POST https://api.resend.com/emails`. The provider itself was NOT
++  the bug: it already awaited, threw on non-2xx, and refused a 2xx without an `id`. What the trace
++  found instead is that **five distinct outcomes answer the byte-identical `200` "check your email"
++  ack while sending nothing at all**, and only two of them left any trace:
++  | Outcome | Sent? | Trace before this change |
++  | --- | --- | --- |
++  | `bot_dropped` (honeypot `website` filled — autofill/password managers do this) | no | audit only |
++  | `bot_dropped` (timing — `formTs` too close to submit; **browser/server clock skew fails every request this way**) | no | audit only |
++  | `window_suppressed` (per-address issuance window) | no | audit only |
++  | `suppressed` (unregistered + invite cooldown) | no | **nothing at all** |
++  | `link` with no email provider configured | no | a warn line |
++  Nothing logged the Resend response, so even a *successful* send left no id to correlate with the
++  dashboard. That combination — a generic 200 by design, plus zero observability — is what made this
++  undiagnosable, and it is what this change fixes.
++- **Changes (A2.2):** `packages/lib/src/providers/email.ts` now takes an optional logger and a send
++  context, and logs the full response `{ id, status, error }` with the request id — at `info` on
++  success, at `error` on every failure — while never logging the recipient address or the body. A 2xx
++  carrying no `id` is now explicitly a FAILURE. `RequestMeta` gained an optional `requestId`, threaded
++  from `request.id` into both magic-link sends as `purpose: 'magic_link' | 'signup_invite'`.
++- **Changes (A2.1, observability of the silent paths):** every outcome that answers `200` without
++  sending now emits a greppable warn line — `magic-link produced NO EMAIL · reason=<reason> ·
++  requestId=<id>` — including the invite-cooldown path that previously left no trace anywhere. The
++  HTTP response is **unchanged and still byte-identical** for registered and unregistered addresses:
++  the fix adds server-side visibility, never a client-visible distinction (no enumeration, no
++  email-status leak). `ProviderError` is not an `HttpError`, so a failed send still collapses to a
++  generic `500 internal_error`.
++- **Changes (A2.3, startup guard):** new `buildResendEmailProvider()` in `apps/api/src/plugins/providers.ts`.
++  `RESEND_API_KEY` unset/empty → **FATAL + refuse to boot**. From-domain definitively not `verified`
++  in Resend → **FATAL + refuse to boot** (Resend accepts the request and then refuses *delivery*,
++  which is the reported symptom exactly). From-domain **uncheckable** (Resend's `/domains` API
++  unreachable or non-2xx) → loud FATAL-level log, then boot: taking the platform down over a
++  control-plane blip is the worse failure. `assertPlausibleFromAddress()` also rejects a placeholder
++  or unqualified sender offline, before any network call.
++- **Changes (A2.4, diagnostics):** new `POST /api/v1/admin/diagnostics/email-test`
++  (`apps/api/src/routes/v1/diagnostics/index.ts`). Body `{ to, subject? }`; performs one real send and
++  returns `{ data: { id, status, store } }` where `id` is the raw Resend id to search the dashboard
++  for. Guarded `authenticate → requireStaff (aal2) → requirePermission('users:manage') →
++  requireRole('super_admin')`, rate policy `sensitive`, and audited as the new `EMAIL_DELIVERY_TEST`
++  system event with the destination and Resend id in the sealed chain. The addendum wrote the path as
++  `/admin/diagnostics/email-test`; it lives under the `/api/v1` prefix like every other admin route.
++- **Files:** `packages/lib/src/providers/email.ts`, `packages/lib/src/providers/index.ts`,
++  `apps/api/src/plugins/providers.ts`, `apps/api/src/routes/v1/auth/service.ts`,
++  `apps/api/src/routes/v1/auth/index.ts`, `apps/api/src/routes/v1/diagnostics/index.ts` (new),
++  `apps/api/src/routes/v1/index.ts`, `apps/api/src/audit/events.ts`,
++  `apps/api/src/audit/events.test.ts` (system-category count 5 → 6),
++  `apps/api/src/plugins/email-guard.test.ts` (new, 13 tests),
++  `apps/api/src/routes/v1/diagnostics/diagnostics.test.ts` (new, 2 tests), `playbook.md`.
++- **Verification:** `tsc --noEmit` ✅ zero errors · eslint on every changed file ✅ · full API suite
++  **1046/1046 (57 files)** ✅ against a pre-change baseline of **1017/1017 (55 files)** — 29 new
++  tests, zero regressions.
++- **NOT verified by the agent (A2.5 — recorded, not skipped):** no live send was performed. There is
++  no `RESEND_API_KEY` in this environment and no access to the Resend dashboard or the user's inbox,
++  so the checklist below is handed to the user rather than claimed as done. See Known Gaps.
++
++**A2.5 verification checklist — status**
++
++| # | Check | Result |
++| --- | --- | --- |
++| 1 | Request a magic link → a new entry appears in Resend → Emails within 30 s | ⏳ **user to run** (no API key / dashboard access here) |
++| 2 | That entry shows status `delivered`/`sent` within 30 s | ⏳ **user to run** |
++| 3 | The `info` log line for the request carries the same Resend `id` | ✅ implemented + unit-pinned (`email-guard.test.ts`) |
++| 4 | `POST /api/v1/auth/magic-link` body is identical for registered and unregistered emails | ✅ unchanged by this work + already pinned by Phase 3 tests |
++| 5 | Removing `RESEND_API_KEY` produces a loud startup failure, not silent success | ✅ implemented + unit-pinned (rejects with `FATAL: RESEND_API_KEY is not set`) |
++| 6 | An unverified from-domain refuses to boot | ✅ implemented + unit-pinned |
++| 7 | `POST /api/v1/admin/diagnostics/email-test` returns a raw Resend id | ✅ route live + guarded (401 unauthenticated); ⏳ live id **user to run** |
++
++### 2026-10-31 — Revision 2 addendum, A3: Redis offline mode
++
++- **Trigger:** the user has temporarily disabled local Redis and will switch it back. The catalogs
++  make Redis mandatory (Task 22) and `SecretProvider.get` throws on a missing secret, so an absent
++  `UPSTASH_REDIS_URL` was an unbootable API.
++- **Changes (A3.1, one switch):** `REDIS_OPTIONAL` = `auto` (default) | `always` | `never`, defined
++  once in `apps/api/src/config/env.ts` so the schema and the boot logic cannot drift. `auto` =
++  optional outside production, **required in production**; `always` = optional everywhere; `never` =
++  required everywhere. The connection string stays the vault secret `UPSTASH_REDIS_URL` — no second
++  source of truth was introduced. Re-enabling Redis is `set the secret → restart`: **zero code
++  changes**, and the boot path is the same one that runs today.
++- **Changes (A3.1, unreachable-at-boot fallback):** `plugins/redis.ts` now proves the server answers
++  before trusting it. It builds the command connection with the catalog's exact options
++  (`maxRetriesPerRequest: null`, `enableReadyCheck: false`, TLS by URL scheme) and PINGs it inside a
++  bounded budget (`REDIS_PROBE_TIMEOUT_MS` = 4 s). Probing the connection it intends to keep — rather
++  than a throwaway — means an offline boot opens no socket to tear down and an online boot opens
++  exactly the one connection it always did (this is why the existing `createRedis` instance-count test
++  still passes untouched). Unreachable + optional → disconnect, fall back, warn. Unreachable +
++  required → FATAL, refuse to boot.
++- **Changes (A3.2, in-memory fallback):** new `apps/api/src/lib/memory-redis.ts`. `app.redis` is the
++  shim rather than `undefined`, so **every existing consumer keeps one type and no call site needed a
++  branch**. It implements exactly the commands the auth paths use — `get/set (EX·PX·NX·XX)/setex/del/
++  exists/incr/incrby/decr/expire/pexpire/ttl/pttl/getdel/lpush/rpush/lrange/llen/publish/keys/flushdb/
++  ping/quit/disconnect` — with real TTL semantics and `GETDEL` atomicity, which is what single-use
++  tokens and the invite cooldown depend on. Anything else throws `TypeError` at the call site: loud
++  and immediate, which is safer than a shim pretending to be a complete Redis. Covered: magic-link
++  single-use (`ml:token:`, `ml:pointer:`), invite cooldown (`ml:invite:`), MFA challenge + replay cache
++  (`mfa:`, `emailotp:`), signup OTP (`signup:otp:`), lockout/attempt counters (`rl:`), session registry
++  (`sess:`), anti-bot counters.
++- **Changes (A3.3, single-instance caveat):** `MEMORY_STORE_CAVEAT` is logged at `warn` on **every**
++  offline boot, with the reason, and states that the fallback is correct only for one API instance and
++  that a restart clears every token and counter. Also documented in the module header and in Redis Mode
++  below.
++- **Changes (A3.4, health):** new `GET /health` → `{ redis: "up" | "down", store: "redis" | "memory" }`,
++  added to `PUBLIC_ROUTES`. `/healthz` and `/readyz` are **byte-identical** to their catalog shapes
++  (Task 21) — this is a third route, not a reshaped one.
++- **Changes (A3, readiness interaction):** the `redis` readiness probe is registered **only** while a
++  real Redis backs the app. Offline, the shim always answers `PONG`, so leaving the probe registered
++  would advertise a dependency that is deliberately absent; making it fail would be worse — the
++  orchestrator would pull traffic from a pod that is serving correctly, which is precisely Task 21's
++  stated reason for `/healthz` answering from the process alone. `/health` reports the degraded mode;
++  `/readyz` remains the live probe.
++- **Changes (A3, queues):** BullMQ *is* Redis, so `queues/index.ts` builds no producer offline. It
++  decorates the disabled registry instead, whose `add()` logs `job NOT enqueued: Redis is offline…`,
++  counts the refusal per queue (`dropCounts()`), and resolves to `undefined` — it never invents a job
++  id or reports success. **Auth mail does not go through the queues**: magic-link and signup-OTP sends
++  are inline `await app.email.send(…)`, so offline mode does not stop authentication email. What
++  degrades is asynchronous fan-out (notify digests, PDF rendering, broadcasts, scans) — see Known Gaps.
++- **Files:** `apps/api/src/config/env.ts`, `apps/api/src/lib/memory-redis.ts` (new),
++  `apps/api/src/plugins/redis.ts`, `apps/api/src/app.ts`, `apps/api/src/queues/index.ts`,
++  `apps/api/src/routes/health.ts`, `apps/api/src/types/fastify.d.ts`,
++  `apps/api/src/conformance/route-manifest.ts`, `.env.example`, `apps/api/.env.example`,
++  `apps/api/src/plugins/redis-offline.test.ts` (new, 16 tests), `playbook.md`.
++- **Verification:** `tsc --noEmit` ✅ · eslint ✅ · full API suite **1046/1046 (57 files)** ✅.
++
++**A3.5 verification checklist — status**
++
++| # | Check | Result |
++| --- | --- | --- |
++| 1 | With Redis offline (`UPSTASH_REDIS_URL` unset, `REDIS_OPTIONAL=always`): API boots, `/health` → `{redis:"down",store:"memory"}`, magic-link issue + consume works on the shim | ✅ unit-pinned (`redis-offline.test.ts`) — no live Redis exists in this sandbox to switch off |
++| 2 | With Redis unreachable but configured (host refuses): same fallback, reason recorded | ✅ unit-pinned |
++| 3 | `REDIS_OPTIONAL=never` (or `auto` in production) + no Redis → loud FATAL boot refusal | ✅ unit-pinned |
++| 4 | Re-enabling Redis: set `UPSTASH_REDIS_URL`, restart, `/health` → `{redis:"up",store:"redis"}`, **no code change** | ✅ unit-pinned (same binary, both modes) — ⏳ live re-enable against the user's Redis is **user to run** |
++| 5 | `/readyz` does not report `not_ready` merely because Redis is intentionally offline | ✅ unit-pinned |
++| 6 | Single-instance caveat logged on every offline boot and documented | ✅ |
++
++## Email Delivery (Resend)
++
++Per addendum A5.
++
++- **SDK/version:** none — `ResendEmailProvider` in `packages/lib/src/providers/email.ts` calls
++  `POST https://api.resend.com/emails` over the **global `fetch`**, which is what catalog Task 22
++  mandates ("Email/SMS providers use the global `fetch`, not vendor SDKs"). One POST, an 8-second
++  `AbortSignal.timeout`, no retry inside the provider (retries belong to BullMQ's `notify` queue:
++  3 attempts, exponential backoff). No `resend` npm package is installed, so there is no SDK version
++  to pin or upgrade.
++- **From-domain (verified?):** `VUNVAULT <no-reply@vunvault.com>` — the constant `DEFAULT_FROM`, so
++  the domain is **`vunvault.com`**. Whether it is verified in the Resend dashboard **could not be
++  confirmed from this environment** (no API key). It is now checked at boot: `GET
++  https://api.resend.com/domains` must report `vunvault.com` as `verified`, otherwise the API refuses
++  to start. **Action for the user:** confirm Resend → Domains shows `vunvault.com` verified — this is
++  the single most likely cause of "accepted, never delivered".
++- **Last verified send id:** ⚠️ **none — no live send has been performed by the agent.** There is no
++  `RESEND_API_KEY` here and no dashboard/inbox access, so this field is deliberately left empty
++  rather than filled with a fabricated id. To populate it: `POST
++  /api/v1/admin/diagnostics/email-test` as a super admin and read `data.id`, or request a magic link
++  and read the `resend accepted the message` info line.
++- **Known failure mode fixed:** the send was **not** swallowed by the provider — it was invisible.
++  Five outcomes answered the byte-identical `200` "check your email" ack while sending nothing
++  (honeypot bot-drop, `formTs` timing bot-drop, per-address issuance window, invite cooldown, and no
++  provider configured), one of them (invite cooldown) leaving no trace anywhere at all, and no path
++  ever logged the Resend response. Fixed by: greppable `magic-link produced NO EMAIL · reason=…` warn
++  lines on every silent path; `{ id, status, error }` + request id logged on every send; a 2xx with no
++  `id` reclassified as failure; FATAL boot refusal on a missing key or an unverified from-domain; and
++  the super-admin diagnostics endpoint. **Two environmental suspects this code change cannot rule
++  out**, both to check on the user's machine: (a) `playbook.md`'s Phase 7 entry records that
++  verification forced an **`/etc/hosts` redirect of `api.resend.com` to a local capture stub** — if
++  that entry survived, every send goes to localhost and Resend never sees it; (b)
++  `apps/api/.env.example` ships a **placeholder key** `re_dummy123456789`, which Resend rejects with
++  401.
++
++## Redis Mode
++
++Per addendum A5.
++
++- **Current mode:** **configurable at boot; resolved automatically.** This environment has no Redis,
++  so a boot here runs `offline (in-memory)`. The mode is decided once, at startup, by `REDIS_OPTIONAL`
++  (`auto` default = optional outside production, required in production; `always` = optional
++  everywhere; `never` = required everywhere) combined with whether `UPSTASH_REDIS_URL` is set and
++  whether the server answers `PING` within 4 s. Read it back at any time from `GET /health`.
++- **Fallback behaviours:** `app.redis` becomes an in-process shim implementing the exact command
++  surface auth uses, so no consumer needed a branch. Preserved offline: magic-link single-use tokens
++  and re-issue invalidation, signup-invite cooldown, MFA challenge + replay cache, signup email OTP,
++  login lockout / attempt counters, session registry, anti-bot counters. Degraded offline: **BullMQ
++  queues are disabled** — `add()` logs `job NOT enqueued: Redis is offline…`, is counted per queue, and
++  resolves to `undefined` rather than faking a job; this affects notify digests, PDF rendering,
++  broadcasts and scans, but **not** auth mail, which is sent inline. Also degraded: `publish()`
++  reaches no subscriber, so SSE fan-out is limited to the instance's own clients. `/readyz` does not
++  register a `redis` probe offline (a deliberately absent dependency must not mark a healthy pod
++  unready); `/healthz` and `/readyz` keep their catalog shapes.
++- **Re-enable procedure:** set `UPSTASH_REDIS_URL` (vault secret in production), restart, confirm
++  `GET /health` reports `{ "redis": "up", "store": "redis" }` and that the boot log says
++  `redis online`. **No code change, no flag flip, no redeploy of a different build** — and if
++  `REDIS_OPTIONAL` was set to `always` to get through the outage, returning it to `auto` restores the
++  production fail-fast behaviour.
++- **Single-instance caveat documented:** **yes** — logged at `warn` on every offline boot
++  (`MEMORY_STORE_CAVEAT`, with the reason), and stated in the `memory-redis.ts` module header, in the
++  A3 change-log entry above, and in Known Gaps. In offline mode run **exactly one** API replica: two
++  replicas would each hold their own tokens, counters and session cache, so a link issued by one could
++  not be redeemed on another, a single-use token could be replayed once per replica, and rate-limit
++  windows would be per-replica instead of global. Nothing is persisted — a restart clears every token,
++  challenge and counter (fail-safe: outstanding links simply die).
++
+ ## Definition of Done — status
+ 
+ | #   | Criterion (work order)                                                                      | Status | Where                                                                                                   |
+@@ -600,6 +1092,21 @@ types?', …)` debug line (work order §7: fix all boot errors _and warnings_).
+ | 10  | Playbook accurate (this document)                                                           | ✅     | P6 entry (this one)                                                                                     |
+ | 11  | API boots clean + ordered smoke tests recorded                                              | ✅     | P7 entry: boot clean (0 warn/err), smoke **35/35** (S0–S6), API suite 1011/1011                         |
+ 
++### Revision 2 addendum — Definition of Done (delta, A4)
++
++Additive to the work-order table above; the original 11 criteria are unchanged and still ✅.
++
++| #   | Criterion (addendum A4)                                                              | Status | Where                                                                                                                                          |
++| --- | ------------------------------------------------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
++| A4.1 | vunvault catalogs 1–5 read; extraction recorded                                      | ✅     | Phase 0 entry + **Catalog Extraction** section (all five parts, with the reading method declared)                                                |
++| A4.2 | Signup-verification + auth workflows match the catalogs                               | ✅     | Catalog Extraction: canonical flow is Task 40d (details → email OTP → TOTP → aal2) + Task 24/26 session model; conflicts 1–7 recorded and resolved |
++| A4.3 | Magic-link email provably delivered via Resend (dashboard id logged)                  | ⚠️ **partial** | The `id` is now logged at `info` on every send and returned by the diagnostics endpoint (implemented + unit-pinned). **No live send was performed** — no API key, dashboard or inbox access here. Handed to the user; see Known Gaps |
++| A4.4 | No swallowed Resend errors; startup fails loudly on missing key/domain                | ✅     | A2 entry; `buildResendEmailProvider` + `email-guard.test.ts` (13 tests)                                                                          |
++| A4.5 | System boots and fully functions with Redis offline (in-memory fallback)              | ✅*    | A3 entry; `redis-offline.test.ts` (16 tests). \*Auth functions fully; **BullMQ queues cannot exist without Redis** and refuse jobs loudly — Known Gaps |
++| A4.6 | `/health` reports Redis state                                                         | ✅     | `GET /health` → `{ redis, store }`; `PUBLIC_ROUTES`; `/healthz` + `/readyz` unchanged                                                            |
++| A4.7 | Re-enabling Redis requires zero code changes                                          | ✅     | Same binary resolves both modes at boot; `redis-offline.test.ts` pins the online path; live re-enable is the user's to run                          |
++| A4.8 | Agent communicated every out-of-scope change with the user before applying it          | ✅     | Four blocking questions asked and answered before any edit (delivery method, Resend verification, Redis switch shape, catalog depth); every deviation recorded in Decisions below |
++
+ ## Decisions & Assumptions
+ 
+ - **Q1 (names):** resolved from the canonical `CONTRIBUTORS` array (home page), which
+@@ -721,6 +1228,69 @@ types?', …)` debug line (work order §7: fix all boot errors _and warnings_).
+   (env parsing ×6, marketing contributors ×3, signup-enroll wizard ×1) are upstream defects
+   outside this work order, unchanged and still recorded in Known Gaps.
+ 
++### Revision 2 addendum decisions (2026-10-31)
++
++Recorded per A0.5 (every user↔agent decision) and A0.2 (nothing out-of-scope applied silently).
++
++- **The addendum is a retrofit, not pre-Phase-1 work.** It says "apply before Phase 1 begins", but
++  Phases 1–7 had already landed (see the entries above and the DoD table). Applied as an amendment to
++  shipped code. **Confirmed with the user before any edit.**
++- **Four blocking questions were asked and answered before the first change** (A0.1/A0.2): how to
++  deliver the work (→ the user asked for `gh`), how to close Resend verification (→ *implement the
++  fixes; the user verifies against their dashboard/inbox*), the Redis switch shape (→ *both: an
++  explicit flag defaulting to auto-detect*), and catalog reading depth (→ *targeted extraction*).
++- **`REDIS_OPTIONAL` semantics for `auto`.** The addendum named the flag but not what `auto` resolves
++  to. Chosen: optional outside production, **required in production** — a laptop with Redis switched
++  off boots, while a production deployment still fails loudly instead of silently degrading to
++  single-instance state. `always` is the escape hatch for a deliberately Redis-less production run.
++- **Redis URL stayed a vault secret.** The addendum suggested `REDIS_URL` as plain config; the repo
++  reads `UPSTASH_REDIS_URL` through `SecretProvider` (catalog Task 22). Introducing a second source of
++  truth for one connection string was judged worse than keeping the secret and adding only the
++  optionality flag. **This is a deviation from the addendum's literal wording, resolved in favour of
++  the catalogs per A1.3** (the flag itself is the spec's requirement and was implemented).
++- **`app.redis` is the shim, not `undefined`.** The alternative — a possibly-undefined decorator —
++  would have forced an `undefined` branch through 19 consumer files. The shim keeps one type, changes
++  no call site, and fails loudly (`TypeError`) if a future feature reaches for a command it does not
++  implement.
++- **`/readyz` does not fail when Redis is intentionally offline**, and the `redis` probe is not
++  registered at all in that mode. Reasoning is Task 21's own: an orchestrator must not pull traffic
++  from a pod that is serving correctly. `/health` is where degraded mode is reported.
++- **`/health` is a NEW route, not a reshaped one.** Task 21 defines exactly `/healthz` and `/readyz`
++  and Task 40's conformance suite pins the table; both stay byte-identical. The new route carries a
++  real Zod response schema (the conformance schema check exempts `/healthz` and `/readyz` *by name*),
++  declared locally rather than in `@vunvault/contracts` because health is infrastructure, not a
++  consumer contract — the same reason its two siblings have no contract schema.
++- **Unverified from-domain: refuse to boot. Uncheckable from-domain: log FATAL and boot.** A2.3 allows
++  either response. A definitive "not verified" is a misconfiguration that reproduces the reported bug
++  exactly, so it blocks the boot; an unreachable Resend *management* API is not evidence of
++  misconfiguration, and taking the whole platform down over a control-plane blip is the worse outcome.
++- **No new `EMAIL_FROM` config flag was added.** A2.3 refers to "the configured from domain"; the
++  sender is the existing `DEFAULT_FROM` constant. Making it env-configurable would have been a new
++  config flag, which A0.2 requires asking about first — so it was not added. Flagged to the user
++  instead.
++- **`users:manage` + `requireRole('super_admin')` for the diagnostics route.** Task 19 declares
++  `PERMISSIONS` as an exact list with no `diagnostics:*` entry, and Task 40's conformance suite
++  requires a permission guard on every `/api/v1/admin/*` route. Reusing an existing permission
++  (precedent: `admin-badges`) plus an explicit role check satisfies "super-admin only" without a
++  contract change nobody asked for.
++- **One new audit event type: `EMAIL_DELIVERY_TEST`** (category `system`). `audit_entries.event_type`
++  is a **`text` column, not a DB enum**, so this is additive code with **no migration**. Justification:
++  the endpoint can make the platform mail an arbitrary address, so its use belongs in the sealed
++  chain. The existing category-count assertion in `events.test.ts` was updated 5 → 6 with a comment,
++  following that file's own established convention.
++- **Recipient addresses are kept out of application logs but recorded in the audit chain.** The
++  provider logs `{ id, status, error, requestId, purpose }` only — stdout/log aggregation is
++  high-volume and broadly readable. The diagnostics *audit* entry records the destination in full,
++  because the chain is sealed, access-controlled (`audit:read`) and is the system of record for admin
++  actions. The magic-link suppression warnings likewise omit the address (the audit entry already
++  carries it as subject) and correlate by request id.
++- **Disabled queues refuse loudly instead of faking success.** `add()` logs, counts and resolves to
++  `undefined`. Inventing a job id would have recreated the exact silent-success failure A2 exists to
++  eliminate.
++- **Catalog reading was targeted, not exhaustive** (29,512 lines / ~2 MB). The user chose this
++  explicitly. Method and coverage limits are declared in the Phase 0 entry and in Known Gaps, per A0.4
++  — nothing is claimed as read that was not.
++
+ ## Known Gaps / Future Work
+ 
+ - 5 admin emails still to be supplied (roster placeholders 5–9).
+@@ -745,3 +1315,54 @@ types?', …)` debug line (work order §7: fix all boot errors _and warnings_).
+   **10**, unchanged by any phase of this work order. The Zone.Identifier purge, the
+   forgot/reset-password deletion and the dead-env-key removal listed above are DONE (see the
+   Phase 5 entry).
++
++### Revision 2 addendum — Known Gaps (A0.4: nothing silently skipped)
++
++- **A2 live delivery verification was NOT performed by the agent.** This environment has no
++  `RESEND_API_KEY` and no access to the Resend dashboard or to any inbox, so the two acceptance items
++  that require them are handed to the user rather than claimed: (1) a magic-link request produces a
++  visible Resend dashboard event within 30 s with status `delivered`/`sent`; (2) the diagnostics
++  endpoint returns a real Resend id. Everything that *can* be proven without a live key is proven —
++  the contract, the logging, the boot guard and the route guards are unit-pinned (29 new tests). The
++  "Last verified send id" field in **Email Delivery (Resend)** is intentionally empty.
++- **A3 live Redis re-enable was NOT performed.** No Redis server exists in this sandbox to switch off
++  and back on, so both modes are pinned by unit tests against a fake connection rather than observed
++  against a real one. The user's checklist: take Redis down → `/health` reports
++  `{redis:"down",store:"memory"}` and login still works; bring it back → set `UPSTASH_REDIS_URL`,
++  restart, `/health` reports `{redis:"up",store:"redis"}`.
++- **BullMQ queues cannot run without Redis, and do not pretend to.** Offline, `add()` refuses, logs
++  and counts. Consequence: notification fan-out, PDF generation, advisory broadcasts and scan
++  enqueueing are unavailable until Redis returns. **Auth mail is unaffected** — magic-link and
++  signup-OTP sends are inline `await app.email.send(…)`, never queued.
++- **The in-memory store is single-instance only.** Two or more API replicas offline would each hold
++  their own tokens, counters and session cache: a link issued by one could not be redeemed on another,
++  a single-use token could be replayed once per replica, and rate-limit windows would be per-replica.
++  Run exactly one replica in offline mode. State is not persisted — a restart clears every token and
++  counter (fail-safe).
++- **`/health` reports the mode resolved AT BOOT.** If Redis dies after a successful boot, `/health`
++  keeps saying `up` while `/readyz` (which PINGs live) correctly reports `not_ready` and 503s. That
++  division is deliberate — `/health` stays fast and has no failure mode of its own — but an operator
++  reading only `/health` would miss a mid-life outage. A future improvement is a bounded live PING in
++  `/health`, or a periodic re-probe that flips `redisMode`.
++- **Catalog extraction was targeted, not exhaustive.** All five parts were indexed in full and the
++  canonical sections were read completely (Tasks 15, 19, 20c, 21, 22, 24, 26, 27, 40, 40d, 40e, 43,
++  59–63, 92, 102, 105, 110), but the remaining ~27,000 lines are predominantly frontend/design-token
++  task specifications (Layers L5–L10: marketing pages, portal, admin UI) that do not define signup or
++  authentication workflow. If a later phase touches those layers, the relevant task section should be
++  read before implementation.
++- **Two environmental suspects for the original Resend symptom remain unruled-out**, because both live
++  outside this repository: (a) a surviving `/etc/hosts` entry redirecting `api.resend.com` to the
++  Phase 7 capture stub (recorded in the Phase 7 entry above) — if present, every send goes to
++  localhost and Resend never sees it; (b) a real `.env` still carrying the placeholder key
++  `re_dummy123456789` from `apps/api/.env.example`, which Resend rejects with 401. Check
++  `getent hosts api.resend.com` and the deployed `RESEND_API_KEY` prefix before chasing application
++  code further.
++- **No new `EMAIL_FROM` flag.** The sender remains the `DEFAULT_FROM` constant
++  (`VUNVAULT <no-reply@vunvault.com>`). If a different verified domain is ever needed, that is a
++  config-flag addition and per A0.2 must be agreed first.
++- **Work was committed locally but NOT pushed.** This sandbox has no GitHub credentials: `gh` was
++  installed (v2.103.3) but `gh auth status` reports "not logged into any GitHub hosts", there is no
++  `GH_TOKEN`/`GITHUB_TOKEN`, and `git push --dry-run origin main` fails with
++  `could not read Username for 'https://github.com'`. Interactive `gh auth login` is not possible
++  here and no token was requested in chat. The commits are on `main` in the working checkout, ready
++  for `git push origin main` once the GitHub connection is restored.
+-- 
+2.39.5
+

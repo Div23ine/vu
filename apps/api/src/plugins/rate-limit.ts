@@ -192,7 +192,29 @@ const rateLimitPlugin: FastifyPluginAsync<RateLimitPluginOptions> = async (app, 
     }
 
     for (const { key, window } of windows) {
-      const hit = await store.increment(key, window.windowSeconds);
+      let hit: CounterHit;
+      try {
+        hit = await store.increment(key, window.windowSeconds);
+      } catch (error) {
+        // Revision 3, A6 — hybrid failure policy, counters side.
+        //
+        // This hook used to call Redis with no error handling, so a Redis fault
+        // threw out of `preHandler` and 500'd EVERY rate-limited route before the
+        // handler ran — which is how a managed provider's throughput limit turned
+        // into "magic link says sent, nothing arrives": the request died here, long
+        // before the Resend call, and surfaced only as a generic internal_error.
+        //
+        // A rate limit is an abuse *counter*, not an authorisation decision, so it
+        // fails OPEN: a Redis blip must not lock every user out of signing in. The
+        // failure is logged loudly, never silently — an operator can see exactly
+        // which window was unenforced and why. Single-use token stores take the
+        // opposite policy and fail CLOSED (see `magic-link.ts`).
+        request.log.warn(
+          { err: error, policy: policyName, key, windowSeconds: window.windowSeconds },
+          'rate-limit counter unavailable — FAILING OPEN for this request (Redis error, not a limit)',
+        );
+        continue;
+      }
       if (hit.count > window.max) {
         reply.header('retry-after', String(hit.resetSeconds));
         return reply.status(429).send({

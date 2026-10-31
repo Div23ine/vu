@@ -1,0 +1,227 @@
+/**
+ * Preloader component styles.
+ *
+ * The gradient stops in `.vv-preloader` below are the only hex literals permitted
+ * in this component — they are the prototype's literal background. Every other
+ * colour references a token from `styles/tokens.css`.
+ *
+ * The reduced-motion block at the end stops all animation while keeping each
+ * element in its final, fully visible state, so the sequence still reads.
+ */
+.vv-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(59, 153, 252, 0.2), transparent 58%),
+    radial-gradient(circle at 50% 110%, rgba(59, 153, 252, 0.12), transparent 62%),
+    linear-gradient(165deg, #0a0d12 0%, #05070a 55%, #000000 100%);
+  transition:
+    opacity 0.6s var(--ease),
+    visibility 0.6s var(--ease);
+}
+
+.vv-preloader::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background-image:
+    linear-gradient(to right, rgba(59, 153, 252, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(59, 153, 252, 0.1) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: rotateX(62deg) translateZ(-120px) scale(1.6);
+  transform-origin: 50% 60%;
+  -webkit-mask-image: radial-gradient(60% 55% at 50% 50%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(60% 55% at 50% 50%, #000 0%, transparent 78%);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: vv-grid-drift 4s linear infinite;
+}
+
+.vv-preloader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.vv-preloader__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  padding: 0 24px;
+}
+
+.vv-preloader__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 230px;
+  height: 230px;
+  perspective: 900px;
+  transform-style: preserve-3d;
+  animation: vv-mark-float 4s var(--ease) infinite;
+}
+
+.vv-preloader__stage {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.vv-preloader__ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.vv-preloader__ring--1 {
+  width: 210px;
+  height: 210px;
+  margin: -105px 0 0 -105px;
+  border-top-color: rgba(111, 182, 255, 0.85);
+  border-right-color: rgba(59, 153, 252, 0.3);
+  border-bottom-color: rgba(59, 153, 252, 0.08);
+  border-left-color: rgba(59, 153, 252, 0.3);
+  box-shadow: 0 0 22px -6px rgba(59, 153, 252, 0.45);
+  animation: vv-ring-x 4s linear infinite;
+}
+
+.vv-preloader__ring--2 {
+  width: 168px;
+  height: 168px;
+  margin: -84px 0 0 -84px;
+  border-top-color: rgba(59, 153, 252, 0.2);
+  border-right-color: rgba(111, 182, 255, 0.75);
+  border-bottom-color: rgba(59, 153, 252, 0.2);
+  border-left-color: rgba(59, 153, 252, 0.1);
+  box-shadow: 0 0 18px -6px rgba(59, 153, 252, 0.4);
+  animation: vv-ring-y 3.2s linear infinite;
+}
+
+.vv-preloader__ring--3 {
+  width: 126px;
+  height: 126px;
+  margin: -63px 0 0 -63px;
+  border-top-color: rgba(59, 153, 252, 0.55);
+  border-right-color: rgba(59, 153, 252, 0.12);
+  border-bottom-color: rgba(111, 182, 255, 0.8);
+  border-left-color: rgba(59, 153, 252, 0.12);
+  box-shadow: 0 0 16px -4px rgba(59, 153, 252, 0.5);
+  animation: vv-ring-z 2.6s linear infinite;
+}
+
+.vv-preloader__halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(59, 153, 252, 0.42), transparent 72%);
+  filter: blur(18px);
+  pointer-events: none;
+  animation: vv-halo 2s ease-in-out infinite;
+}
+
+.vv-preloader__logo {
+  position: relative;
+  z-index: 2;
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  will-change: filter, transform;
+  animation: vv-logo-stroke 2s var(--ease) infinite;
+}
+
+.vv-preloader__wordmark {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  color: var(--brand-bright);
+  text-transform: uppercase;
+  opacity: 0;
+  text-shadow: 0 0 24px rgba(59, 153, 252, 0.55);
+  animation: vv-fade-up 0.8s var(--ease) 0.35s forwards;
+}
+
+.vv-preloader__caption {
+  margin-top: -8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brand-bright);
+  opacity: 0;
+  animation: vv-fade-up 0.8s var(--ease) 0.6s forwards;
+}
+
+.vv-preloader__bar {
+  position: relative;
+  width: 240px;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(59, 153, 252, 0.12);
+  overflow: hidden;
+}
+
+.vv-preloader__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 1;
+  display: block;
+  width: 0;
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--brand-strong), var(--brand-soft));
+  box-shadow: 0 0 14px var(--brand-glow);
+  overflow: hidden;
+  animation: vv-progress 4s linear forwards;
+}
+
+.vv-preloader__fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: vv-shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vv-preloader::before,
+  .vv-preloader__mark,
+  .vv-preloader__ring,
+  .vv-preloader__halo,
+  .vv-preloader__logo,
+  .vv-preloader__fill::after {
+    animation: none;
+  }
+
+  .vv-preloader__halo {
+    opacity: 0.7;
+  }
+
+  .vv-preloader__wordmark,
+  .vv-preloader__caption {
+    animation: none;
+    opacity: 1;
+  }
+
+  .vv-preloader__fill {
+    animation: none;
+    width: 100%;
+  }
+}

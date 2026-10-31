@@ -10,6 +10,9 @@ import { ProductsHero } from './_components/products-hero';
 
 // The root layout's template renders this as "Products — VUNVAULT".
 export const metadata: Metadata = {
+  alternates: { canonical: '/products' },
+  description:
+    'The VUNVAULT platform: attack-surface monitoring, vulnerability scanning, advisory intelligence and the client portal every engagement is delivered through.',
   title: 'Products',
 };
 

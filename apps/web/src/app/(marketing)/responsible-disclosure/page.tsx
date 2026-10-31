@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { LegalDoc, LegalSection } from '../_components/legal-doc';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/responsible-disclosure' },
   title: 'Responsible Disclosure',
   description:
     'VUNVAULT’s coordinated vulnerability disclosure policy: scope, safe harbour, timelines and the PGP channel, aligned with ISO/IEC 29147 and 30111.',

@@ -128,10 +128,18 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<App> {
     app.readiness.set('db', async () => {
       await pingDb(app.db);
     });
-    app.readiness.set('redis', async () => {
-      const pong = await app.redis.ping();
-      if (pong !== 'PONG') throw new Error(`redis replied ${pong}`);
-    });
+    // A3: the redis probe is registered ONLY while a real Redis backs the app.
+    // Offline, the in-memory shim always answers PONG, so keeping the probe would
+    // advertise a dependency that is deliberately absent; making it fail would be
+    // worse — the orchestrator would pull traffic from a pod that is serving
+    // correctly (Task 21's own reasoning for why `/healthz` answers from the
+    // process alone). `/health` is where the degraded mode is reported instead.
+    if (app.redisMode.store === 'redis') {
+      app.readiness.set('redis', async () => {
+        const pong = await app.redis.ping();
+        if (pong !== 'PONG') throw new Error(`redis replied ${pong}`);
+      });
+    }
   }
 
   // Cross-cutting HTTP security, registered before any route.

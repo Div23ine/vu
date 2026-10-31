@@ -1,0 +1,18 @@
+# Wrangler's local-only variables file — the Workers equivalent of `.env`.
+#
+# Copy to `.dev.vars` (gitignored) for local development:
+#
+#   cp apps/web/.dev.vars.example apps/web/.dev.vars
+#
+# `.dev.vars` is read by `wrangler dev` / `opennextjs-cloudflare preview`, i.e.
+# when the app runs in workerd. It is NOT read by `next dev` — use
+# `apps/web/.env.local` for that (see `.env.example`).
+#
+# This Worker needs no runtime secrets: every API call goes from the browser
+# straight to the vv-edge Worker with cookies, and NEXT_PUBLIC_* values are
+# inlined at BUILD time, so they belong in the building shell, never here.
+
+# Selects which Next.js `.env` files the adapter loads. Defaults to
+# "production" when unset — which is what a real deploy wants, and not what a
+# local preview wants.
+NEXTJS_ENV=development

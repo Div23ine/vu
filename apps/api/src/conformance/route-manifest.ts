@@ -25,6 +25,10 @@ export const PUBLIC_ROUTES: readonly string[] = [
   // Infrastructure
   'GET /healthz',
   'GET /readyz',
+  // Addendum A3.4: the Redis-mode report. Public for the same reason `/healthz`
+  // is — an operator or probe must be able to read degraded state without a
+  // session. It discloses nothing but the store mode.
+  'GET /health',
   'GET /openapi.json',
   'GET /docs',
   'GET /docs/*',

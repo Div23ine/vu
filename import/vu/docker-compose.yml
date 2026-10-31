@@ -1,0 +1,36 @@
+   services:
+     db:
+       image: postgres:15-alpine
+       environment:
+         POSTGRES_USER: vunvault
+         POSTGRES_PASSWORD: vunvault_password
+         POSTGRES_DB: vunvault_db
+       ports:
+         - "5432:5432"
+       volumes:
+         - postgres_data:/var/lib/postgresql/data
+
+   volumes:
+     postgres_data:
+  recon:
+    # Unprivileged scanner backend: loopback-only, non-root, no capabilities,
+    # read-only rootfs. When this service is absent the site honestly reports
+    # "scanner not active".
+    image: node:22-alpine
+    working_dir: /srv
+    volumes:
+      - ./apps/recon:/srv:ro
+      - ./node_modules:/srv/node_modules:ro
+    command: ["npx", "tsx", "src/index.ts"]
+    environment:
+      PORT: "8090"
+    ports:
+      - "127.0.0.1:8090:8090"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    user: "1000:1000"
+    tmpfs:
+      - /tmp

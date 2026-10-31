@@ -14,12 +14,19 @@
 export { ProviderError, isProviderError } from './error';
 
 export {
+  assertPlausibleFromAddress,
   DEFAULT_FROM,
+  fetchResendDomainStatus,
+  fromDomain,
   PROVIDER_TIMEOUT_MS as EMAIL_PROVIDER_TIMEOUT_MS,
+  RESEND_DOMAINS_URL,
   RESEND_URL,
   ResendEmailProvider,
+  type EmailLogger,
   type EmailMessage,
   type EmailProvider,
+  type EmailSendContext,
+  type ResendDomain,
 } from './email';
 
 export {

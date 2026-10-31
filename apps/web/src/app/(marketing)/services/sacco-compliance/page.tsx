@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import { JsonLd } from '../../../../lib/json-ld';
+import { SITE_NAME, breadcrumbJsonLd, serviceJsonLd } from '../../../../lib/seo';
 import { ServicePage, type ServicePageContent } from '../_components/service-page';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/services/sacco-compliance' },
   title: 'SACCO & Fintech Compliance Assessment',
   description:
     'Control mapping and gap assessment for SACCOs and fintechs against CBK and SASRA cyber risk guidance and the Kenya Data Protection Act 2019.',
@@ -57,5 +60,18 @@ const CONTENT: ServicePageContent = {
 };
 
 export default function SaccoCompliancePage() {
-  return <ServicePage content={CONTENT} />;
+  return (
+    <>
+      {/* `Service` + `BreadcrumbList`: the page is the offer, the graph is what
+          an answer engine reads to attribute it to this organisation. */}
+      <JsonLd data={serviceJsonLd('/services/sacco-compliance')} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: SITE_NAME, path: '/' },
+          { name: 'Services', path: '/services' },
+        ])}
+      />
+      <ServicePage content={CONTENT} />
+    </>
+  );
 }

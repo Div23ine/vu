@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { LegalDoc, LegalSection, LegalSub } from '../_components/legal-doc';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/terms' },
   title: 'Terms of Service',
   description:
     'The agreement governing use of the VUNVAULT website, portal and published tooling, with consumer protections under EU, UK, Australian and Kenyan law.',

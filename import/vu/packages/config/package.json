@@ -1,0 +1,33 @@
+{
+  "name": "@vunvault/config",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.react-lib.json": "./tsconfig.react-lib.json",
+    "./tsconfig.next.json": "./tsconfig.next.json",
+    "./tsconfig.node.json": "./tsconfig.node.json",
+    "./eslint.base.mjs": "./eslint.base.mjs",
+    "./eslint.next.mjs": "./eslint.next.mjs",
+    "./eslint.node.mjs": "./eslint.node.mjs",
+    "./prettier.config.mjs": "./prettier.config.mjs"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit --allowJs --checkJs false --target es2023 --module esnext --moduleResolution bundler --skipLibCheck eslint.base.mjs eslint.next.mjs eslint.node.mjs prettier.config.mjs",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@next/eslint-plugin-next": "^15.5.27",
+    "@types/node": "^22.20.5",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^15.15.0",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.71.2"
+  }
+}

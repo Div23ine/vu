@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { KvStore } from './challenge.js';
+import type { KvStore, StoreLogger } from './challenge.js';
 import { MagicLinkTokenStore } from './magic-link.js';
 
 /**
@@ -65,10 +65,17 @@ export interface WindowClaim {
   retryAfterSeconds: number;
 }
 
+/** Re-exported for callers that import it from here. */
+export type { StoreLogger };
+
+/** What a failed claim is called in the logs, so an operator can tell them apart. */
+export type AbuseScope = 'magic_link_email_window' | 'magic_link_soft_limit';
+
 export class LoginAbuseGuard {
   constructor(
     private readonly store: KvStore,
     private readonly now: () => number = () => Date.now(),
+    private readonly log?: StoreLogger,
   ) {}
 
   static emailKeyFor(email: string): string {
@@ -95,6 +102,7 @@ export class LoginAbuseGuard {
       LoginAbuseGuard.emailKeyFor(email),
       MAGIC_LINK_EMAIL_MAX,
       MAGIC_LINK_EMAIL_WINDOW_SECONDS,
+      'magic_link_email_window',
     );
   }
 
@@ -104,13 +112,39 @@ export class LoginAbuseGuard {
       LoginAbuseGuard.ipKeyFor(ip),
       SOFT_LIMIT_MAX,
       SOFT_LIMIT_WINDOW_SECONDS,
+      'magic_link_soft_limit',
     );
     return !claim.allowed;
   }
 
-  private async claim(key: string, max: number, windowSeconds: number): Promise<WindowClaim> {
+  /**
+   * Read-modify-write one window, failing OPEN when the store is unreachable.
+   *
+   * The read and the write are guarded separately, and that distinction matters:
+   * a failed READ means we have no information at all, so the request is allowed
+   * and logged. A failed WRITE after a successful read still leaves us the count we
+   * just read, so the decision for THIS request stays enforced — only the
+   * persistence is lost, and that is logged too.
+   */
+  private async claim(
+    key: string,
+    max: number,
+    windowSeconds: number,
+    scope: AbuseScope,
+  ): Promise<WindowClaim> {
     const nowMs = this.now();
-    const raw = await this.store.get(key);
+
+    let raw: string | null;
+    try {
+      raw = await this.store.get(key);
+    } catch (error) {
+      this.log?.warn(
+        { err: error, scope, store: 'unavailable' },
+        'abuse counter unreadable — FAILING OPEN, this window is unenforced for this request',
+      );
+      return { allowed: true, retryAfterSeconds: windowSeconds };
+    }
+
     let record: WindowRecord | null = null;
     if (raw !== null) {
       try {
@@ -131,7 +165,17 @@ export class LoginAbuseGuard {
         ? { count: 1, resetAtEpochMs: nowMs + windowSeconds * 1000 }
         : { count: record.count + 1, resetAtEpochMs: record.resetAtEpochMs };
     const retryAfterSeconds = Math.max(1, Math.ceil((next.resetAtEpochMs - nowMs) / 1000));
-    await this.store.set(key, JSON.stringify(next), 'EX', retryAfterSeconds);
+
+    try {
+      await this.store.set(key, JSON.stringify(next), 'EX', retryAfterSeconds);
+    } catch (error) {
+      // The count is known even though it could not be persisted, so the decision
+      // still stands; only the window may reset early once the store recovers.
+      this.log?.warn(
+        { err: error, scope, count: next.count, store: 'unavailable' },
+        'abuse counter unwritable — decision enforced from the read value, but the window is not persisted',
+      );
+    }
     return { allowed: next.count <= max, retryAfterSeconds };
   }
 }

@@ -33,6 +33,10 @@ const EXPECTED_H1_H2_SEQUENCE = [
   'How Can VUNVAULT Help You?',
   'Proactive Security Ecosystem',
   'Accessible security pricing for African & global tech',
+  // Rev 3 SEO/AEO: the buyer Q&A band, mounted after the plan grid it refers to
+  // (`#pricing`). The `FAQPage` markup on the page mirrors exactly this section,
+  // so its heading belongs in the designed order.
+  'Questions buyers actually ask',
   'For journalists and partners',
   'The people behind the defense',
   'Get in Touch with VUNVAULT',

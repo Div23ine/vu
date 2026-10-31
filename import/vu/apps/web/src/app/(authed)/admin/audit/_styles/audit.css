@@ -1,0 +1,1238 @@
+/**
+ * System Audit Logs stylesheet .
+ *
+ * ONLY the rules specific to this page — the shared admin classes live in
+ * `admin-shared.css` (an earlier iteration, imported via `AdminPageHead`). Token
+ * substitutions follow every other feature sheet: `#ffffff` → `--white`,
+ * `18px`/`12px` radii → `--r-lg`/`--r-field`, `9999px` → `--r-full`, `0.2s` →
+ * `--dur`, the mono stack → `--font-mono`, `#070b11` → `--dark-deep`,
+ * `#10151d` → `--dark-2`, `rgba(59,153,252,0.12)` → `--brand-tint`,
+ * `rgba(59,153,252,0.28)` → `--brand-line`, `#93a2b5` → `--slate-muted`.
+ *
+ * Literals with NO token stay in this file only, per the feature-stylesheet
+ * exception: the terminal palette (`#05080d`, `#04070b`, `#151b25`, `#8d9aab`,
+ * `#55637a`, `#cbd5e1`, `#7dd3fc`, `#34d399`, `#fbbf24`), the traffic-light dots
+ * (`#ff5f57`, `#febc2e`, `#28c840`), `#d4d4d4`, `#f8fafc` and the rgba() stops
+ * the reference family itself carries.
+ *
+ * AUTHORED (marked inline): the reference block arrives truncated mid-rule at
+ * `.al-row`, so the trail table, severity chips, mismatch banner, empty state,
+ * chain-panel furniture, distribution bars, alert feed and the whole event
+ * dialog family are completed here from the console palette the given rules
+ * establish. The console is dark, so the table inherits the reference's
+ * `adm-card--dark` table treatment rather than the light `adm-table` one.
+ */
+
+/* ——— Page layout ——— */
+.al-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+@media (max-width: 1180px) {
+  .al-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.al-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* ——— Toolbar ——— */
+.al-toolbar {
+  /* `.al-col` already gaps 20px, so the reference's 18px margin is zeroed
+   (the `um-toolbar` precedent). */
+  margin-bottom: 0;
+  padding: 20px 22px;
+  border-radius: var(--r-lg);
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 40px -36px rgba(10, 13, 18, 0.6);
+}
+.al-toolbar-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.al-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+.al-toolbar-title svg {
+  color: var(--brand);
+}
+.al-results {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+.al-results strong {
+  color: var(--brand-strong);
+}
+.al-toolbar-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 2.2fr) repeat(4, minmax(130px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+}
+@media (max-width: 1320px) {
+  .al-toolbar-grid {
+    grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(130px, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .al-toolbar-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.al-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.al-field-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.al-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.al-input-icon {
+  position: absolute;
+  left: 13px;
+  color: var(--ink-faint);
+  pointer-events: none;
+  display: inline-flex;
+}
+.al-input,
+.al-select {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--r-field);
+  outline: none;
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.al-input {
+  padding-left: 38px;
+}
+.al-input::placeholder {
+  color: var(--ink-faint);
+}
+.al-input:hover,
+.al-select:hover {
+  border-color: #d4d4d4;
+}
+.al-input:focus,
+.al-select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+.al-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%233B99FC' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+.al-toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+.al-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 18px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--brand-strong);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-field);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--dur) var(--ease);
+}
+.al-clear-btn:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--white);
+}
+.al-clear-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+
+/* ——— Console shell ——— */
+.al-console {
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(59, 153, 252, 0.1), transparent 60%),
+    linear-gradient(165deg, #05080d 0%, var(--dark-deep) 55%, #04070b 100%);
+  border: 1px solid var(--brand-line);
+  box-shadow:
+    0 34px 80px -40px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+}
+.al-console-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #151b25, var(--dark-2));
+  border-bottom: 1px solid rgba(59, 153, 252, 0.18);
+}
+.al-chrome-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.al-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+.al-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+.al-dot--close {
+  background: #ff5f57;
+}
+.al-dot--min {
+  background: #febc2e;
+}
+.al-dot--max {
+  background: #28c840;
+}
+.al-chrome-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8d9aab;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.al-chrome-title svg {
+  flex: 0 0 auto;
+  color: var(--brand-soft);
+}
+.al-chrome-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.al-chrome-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: var(--r-full);
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.al-chrome-pill--live {
+  color: #7dd3fc;
+  background: var(--brand-tint);
+  border-color: rgba(59, 153, 252, 0.42);
+}
+.al-chrome-pill--live .al-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* The pulse belongs to the connected state only — a pill that blinks while
+  the socket is down would be lying . */
+.al-chrome-pill--live.is-live .al-live-dot {
+  animation: alPulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.al-chrome-pill--live.is-paused,
+.al-chrome-pill--live.is-connecting,
+.al-chrome-pill--live.is-reconnecting {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.42);
+}
+.al-chrome-pill--live.is-offline {
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+.al-pause-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #7dd3fc;
+  background: transparent;
+  border: 1px solid rgba(59, 153, 252, 0.42);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  transition:
+    color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.al-pause-btn:hover:not(:disabled) {
+  background: var(--brand-tint);
+  border-color: rgba(59, 153, 252, 0.6);
+}
+.al-pause-btn:disabled {
+  color: #64748b;
+  border-color: rgba(100, 116, 139, 0.35);
+  cursor: not-allowed;
+}
+.al-pause-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 153, 252, 0.35);
+}
+.al-pause-count {
+  padding: 1px 7px;
+  font-size: 9.5px;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  border-radius: var(--r-full);
+}
+.al-chrome-pill--chain {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.42);
+}
+.al-chrome-pill--chain.is-warn {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.42);
+}
+.al-console-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(59, 153, 252, 0.14);
+}
+@media (max-width: 860px) {
+  .al-console-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .al-console-meta {
+    grid-template-columns: 1fr;
+  }
+}
+.al-meta-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 16px;
+  background: rgba(5, 8, 13, 0.6);
+}
+.al-meta-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #55637a;
+}
+.al-meta-value {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  word-break: break-all;
+}
+.al-console-body {
+  max-height: 680px;
+  overflow-y: auto;
+  padding: 14px 0 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 153, 252, 0.35) transparent;
+  scroll-behavior: smooth;
+}
+.al-console-body::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+.al-console-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.al-console-body::-webkit-scrollbar-thumb {
+  background: rgba(59, 153, 252, 0.28);
+  border-radius: var(--r-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.al-console-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 153, 252, 0.6);
+  background-clip: padding-box;
+}
+.al-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 18px 12px;
+}
+
+/* AUTHORED — the trail table. The reference truncates at `.al-row`, and the
+  spec's Data section names seven tabular columns, so the console body carries
+  a real table styled for the dark shell (the `adm-card--dark` treatment). */
+.al-table-wrap {
+  overflow-x: auto;
+  padding: 0 6px;
+}
+.al-table {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+.al-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 9px 12px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+  color: #8d9aab;
+  background: #10151d;
+  border-bottom: 1px solid rgba(59, 153, 252, 0.22);
+}
+.al-table tbody td {
+  padding: 11px 12px;
+  vertical-align: top;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.al-row {
+  transition: background-color var(--dur) var(--ease);
+}
+.al-row:hover {
+  background: rgba(59, 153, 252, 0.08);
+}
+/* A freshly polled entry: a two-second wash, no movement (the spec's rule). */
+.al-row--new {
+  animation: alRowArrive 2s var(--ease-out) 1;
+}
+.al-row--critical {
+  box-shadow: inset 3px 0 0 var(--critical);
+}
+.al-row--warning {
+  box-shadow: inset 3px 0 0 var(--high);
+}
+.al-ts {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--slate-muted);
+}
+.al-ts strong {
+  color: var(--slate-text);
+  font-weight: 800;
+}
+.al-type {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+  color: #7dd3fc;
+  background: var(--brand-tint);
+  border-color: rgba(59, 153, 252, 0.42);
+}
+.al-type--security_event {
+  color: #fb7185;
+  background: rgba(244, 63, 94, 0.14);
+  border-color: rgba(244, 63, 94, 0.42);
+}
+.al-type--scan_completion {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.42);
+}
+.al-type--report_release {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.42);
+}
+.al-type--administrative {
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+.al-type--system {
+  color: var(--slate-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.al-event {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--slate-text);
+  white-space: nowrap;
+}
+.al-actor {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #7dd3fc;
+  white-space: nowrap;
+}
+.al-msg {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--slate-muted);
+  max-width: 62ch;
+}
+.al-hash {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #34d399;
+  white-space: nowrap;
+}
+.al-open {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 11px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--slate-text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.al-open:hover {
+  color: var(--white);
+  background: var(--brand-tint);
+  border-color: rgba(59, 153, 252, 0.5);
+}
+.al-open:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 153, 252, 0.35);
+}
+.al-table tfoot td {
+  padding: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--slate-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba(59, 153, 252, 0.22);
+}
+
+/* AUTHORED — the severity chip: ok green, info blue, warning amber,
+  critical red, exactly as the spec names them. */
+.al-sev {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+}
+.al-sev--ok {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.42);
+}
+.al-sev--info {
+  color: #7dd3fc;
+  background: var(--brand-tint);
+  border-color: rgba(59, 153, 252, 0.42);
+}
+.al-sev--warning {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.42);
+}
+.al-sev--critical {
+  color: #fb7185;
+  background: rgba(244, 63, 94, 0.14);
+  border-color: rgba(244, 63, 94, 0.42);
+}
+.al-sev-level {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding-left: 6px;
+  border-left: 1px solid currentColor;
+}
+
+/* AUTHORED — the persistent mismatch banner above the trail. */
+.al-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.5;
+  color: #fecdd3;
+  background: rgba(244, 63, 94, 0.16);
+  border: 1px solid rgba(244, 63, 94, 0.5);
+  border-radius: var(--r-field);
+}
+.al-banner svg {
+  flex: 0 0 auto;
+}
+
+/* AUTHORED — the console's empty state. */
+.al-empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 54px 22px;
+  text-align: center;
+}
+.al-empty.is-visible {
+  display: flex;
+}
+.al-empty-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-soft);
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+}
+.al-empty-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--white);
+}
+.al-empty-text {
+  font-size: 0.8rem;
+  color: var(--slate-muted);
+  max-width: 46ch;
+  line-height: 1.65;
+}
+
+/* ——— Aside panels ——— */
+.al-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.al-panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.al-panel-section + .al-panel-section {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.al-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #7d8b9e;
+}
+.al-panel-title svg {
+  color: var(--brand);
+  flex: 0 0 auto;
+}
+.al-panel-empty {
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--slate-muted);
+}
+.al-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--slate-muted);
+}
+.al-status-row strong {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--white);
+  word-break: break-all;
+  text-align: right;
+}
+.al-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.al-actions-stack .adm-btn {
+  width: 100%;
+}
+.al-action-note {
+  font-size: 10px;
+  line-height: 1.6;
+  color: #64748b;
+  text-align: center;
+}
+
+/* AUTHORED — the Latest Blocks list. */
+.al-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.al-block {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  padding: 9px 11px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-field);
+}
+.al-block-seq {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--white);
+}
+.al-block-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--slate-muted);
+  text-align: right;
+}
+.al-block-hash {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #34d399;
+  word-break: break-all;
+}
+
+/* AUTHORED — the event-distribution bars. */
+.al-dist {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.al-dist-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px auto;
+  align-items: center;
+  gap: 10px;
+}
+.al-dist-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--slate-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.al-dist-bar {
+  width: 100%;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.08);
+  border: 0;
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.al-dist-bar::-webkit-progress-bar {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-full);
+}
+.al-dist-bar::-webkit-progress-value {
+  background: var(--grad-brand);
+  border-radius: var(--r-full);
+}
+.al-dist-bar::-moz-progress-bar {
+  background: var(--grad-brand);
+  border-radius: var(--r-full);
+}
+.al-dist-count {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--white);
+}
+
+/* AUTHORED — the active-alerts feed. */
+.al-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.al-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.32);
+  border-radius: var(--r-field);
+}
+.al-alert-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--critical);
+}
+.al-alert-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.al-alert-title {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fecdd3;
+}
+.al-alert-text {
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--slate-muted);
+}
+
+/* ————————————————————————————————————————————————————————————————
+  Event detail dialog. Reference CSS, token-substituted as above.
+  AUTHORED: `.al-modal-content` (the DialogContent override — Radix owns the
+  positioning the reference's `.al-modal` wrapper did), the header chip row,
+  the hash list with its copy buttons and the chain-link line.
+  ———————————————————————————————————————————————————————————————— */
+.al-modal-content {
+  padding: 0;
+  gap: 0;
+  width: min(760px, 100%);
+  max-height: 90vh;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.9);
+}
+.al-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px 16px;
+  background:
+    radial-gradient(90% 140% at 100% 0%, rgba(59, 153, 252, 0.22), transparent 62%),
+    linear-gradient(160deg, var(--dark), var(--dark-deep));
+  color: var(--white);
+}
+.al-modal-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.al-modal-title {
+  margin-top: 8px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--white);
+  line-height: 1.4;
+  font-family: var(--font-mono);
+}
+.al-modal-sub {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--slate-muted);
+  word-break: break-all;
+}
+.al-modal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 11px;
+}
+.al-type-chip,
+.al-seq-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(59, 153, 252, 0.42);
+  color: #7dd3fc;
+  background: var(--brand-tint);
+}
+.al-seq-chip {
+  font-family: var(--font-mono);
+  color: var(--slate-text);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.al-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--slate-muted);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: all var(--dur) var(--ease);
+  flex: 0 0 auto;
+}
+.al-modal-close:hover {
+  color: var(--white);
+  background: rgba(244, 63, 94, 0.3);
+  border-color: rgba(244, 63, 94, 0.5);
+}
+.al-modal-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+.al-modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 153, 252, 0.35) transparent;
+}
+.al-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+.al-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(59, 153, 252, 0.3);
+  border-radius: var(--r-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.al-modal-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 12px;
+}
+.al-modal-section-title svg {
+  color: var(--brand);
+  flex: 0 0 auto;
+}
+.al-modal-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 560px) {
+  .al-modal-summary {
+    grid-template-columns: 1fr;
+  }
+}
+.al-modal-summary-item {
+  padding: 13px 15px;
+  border-radius: var(--r-field);
+  background: #f8fafc;
+  border: 1px solid var(--line-soft);
+}
+.al-modal-summary-label {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.al-modal-summary-value {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--ink);
+  word-break: break-word;
+}
+.al-modal-message {
+  margin: 0;
+  padding: 15px 17px;
+  font-size: 0.82rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  background: #f8fafc;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+.al-modal-verified {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 11px 13px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ok-ink);
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-line);
+  border-radius: var(--r-field);
+}
+
+/* AUTHORED — the two digests and their copy buttons. */
+.al-hashes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+.al-hash-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-field);
+}
+.al-hash-row dt {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.al-hash-row dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+.al-hash-value {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink);
+  word-break: break-all;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.al-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 6px 11px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--brand-strong);
+  background: var(--white);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  transition:
+    color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.al-copy:hover {
+  color: var(--white);
+  background: var(--brand);
+  border-color: var(--brand);
+}
+.al-copy:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+.al-chain-link {
+  margin: 12px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+.al-modal-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 22px;
+  background: #f8fafc;
+  border-top: 1px solid var(--line-soft);
+}
+.al-modal-foot-note {
+  font-size: 10.5px;
+  color: var(--ink-muted);
+  max-width: 52ch;
+  line-height: 1.6;
+}
+.al-modal-foot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ——— Motion ——— */
+@keyframes alPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes alRowArrive {
+  from {
+    background-color: rgba(59, 153, 252, 0.26);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .al-chrome-pill--live .al-live-dot {
+    animation: none !important;
+  }
+  .al-row--new {
+    /* The spec's rule: no highlight under reduced motion. */
+    animation: none !important;
+    background-color: transparent !important;
+  }
+  .al-console-body {
+    scroll-behavior: auto;
+  }
+  .al-row,
+  .al-open,
+  .al-copy,
+  .al-clear-btn,
+  .al-pause-btn,
+  .al-input,
+  .al-select {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    transform: none !important;
+  }
+}
+
+@media print {
+  .al-toolbar,
+  .al-actions-stack,
+  .al-open,
+  .al-modal-content {
+    display: none !important;
+  }
+  .al-console {
+    background: var(--white);
+    border-color: #cccccc;
+  }
+  .al-table tbody td,
+  .al-msg,
+  .al-ts {
+    color: var(--ink);
+  }
+}

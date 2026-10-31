@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import { JsonLd } from '../../../../lib/json-ld';
+import { SITE_NAME, breadcrumbJsonLd, serviceJsonLd } from '../../../../lib/seo';
 import { ServicePage, type ServicePageContent } from '../_components/service-page';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/services/penetration-testing' },
   title: 'Penetration Testing',
   description:
     'Scoped penetration testing of web applications, APIs and network perimeters, mapped to OWASP ASVS and NIST SP 800-115, with a redacted sample report.',
@@ -58,5 +61,18 @@ const CONTENT: ServicePageContent = {
 };
 
 export default function PenetrationTestingPage() {
-  return <ServicePage content={CONTENT} />;
+  return (
+    <>
+      {/* `Service` + `BreadcrumbList`: the page is the offer, the graph is what
+          an answer engine reads to attribute it to this organisation. */}
+      <JsonLd data={serviceJsonLd('/services/penetration-testing')} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: SITE_NAME, path: '/' },
+          { name: 'Services', path: '/services' },
+        ])}
+      />
+      <ServicePage content={CONTENT} />
+    </>
+  );
 }

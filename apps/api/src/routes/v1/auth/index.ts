@@ -94,6 +94,8 @@ function requestMeta(request: FastifyRequest): RequestMeta {
     ip: request.clientIp === '' ? request.ip : request.clientIp,
     userAgent: typeof userAgent === 'string' ? userAgent : null,
     headers: request.headers as never,
+    // A2.2: the id the provider logs alongside the Resend response.
+    requestId: request.id,
   };
 }
 
@@ -123,11 +125,21 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
   const setups = new MfaSetupStore(kv);
   const signupOtp = new SignupOtpStore(kv);
   // Phase 1: single-use HMAC magic-link tokens + the Phase 3 invitation cooldown.
-  const magicLinks = new MagicLinkTokenStore(kv, deriveMagicLinkSecret(secretMaterial));
-  const invites = new SignupInviteCooldown(kv);
+  // Revision 3, A6 — every Redis-backed auth store gets the logger, so a store
+  // fault is always attributable in the logs instead of surfacing as a bare 500.
+  // `app.log` is pino-shaped (`warn(obj, msg)`), which satisfies `StoreLogger`.
+  const storeLog = app.log;
+  const magicLinks = new MagicLinkTokenStore(
+    kv,
+    deriveMagicLinkSecret(secretMaterial),
+    undefined,
+    undefined,
+    storeLog,
+  );
+  const invites = new SignupInviteCooldown(kv, undefined, storeLog);
   // Phase 4: login-surface abuse controls — the per-address issuance window
   // and the per-IP soft limit that demands a Turnstile token.
-  const abuse = new LoginAbuseGuard(kv);
+  const abuse = new LoginAbuseGuard(kv, undefined, storeLog);
   // Phase 4: same switch and secret as the public contact form; when
   // enforcement is off the captcha leg is inert (dev/test posture).
   const captchaEnforced = options.turnstileEnforced ?? turnstileEnforced();

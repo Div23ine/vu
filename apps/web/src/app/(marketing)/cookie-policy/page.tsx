@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { LegalDoc, LegalSection } from '../_components/legal-doc';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/cookie-policy' },
   title: 'Cookie Policy',
   description:
     'Every cookie VUNVAULT sets, why it exists, how long it lives, and how to change or withdraw your choice under the ePrivacy Directive, GDPR and APPs.',

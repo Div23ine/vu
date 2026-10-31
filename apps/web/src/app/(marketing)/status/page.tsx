@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { env } from '../../../env';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/status' },
   title: 'Status',
   description: 'Live availability of the VUNVAULT API, database and exchange-rate feed.',
 };

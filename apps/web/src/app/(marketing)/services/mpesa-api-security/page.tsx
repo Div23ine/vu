@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import { JsonLd } from '../../../../lib/json-ld';
+import { SITE_NAME, breadcrumbJsonLd, serviceJsonLd } from '../../../../lib/seo';
 import { ServicePage, type ServicePageContent } from '../_components/service-page';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/services/mpesa-api-security' },
   title: 'M-Pesa & API Security',
   description:
     'Security review of M-Pesa Daraja integrations and payment APIs: callbacks, credentials, personal data in payment payloads, and telco-side fraud controls.',
@@ -56,5 +59,18 @@ const CONTENT: ServicePageContent = {
 };
 
 export default function MpesaApiSecurityPage() {
-  return <ServicePage content={CONTENT} />;
+  return (
+    <>
+      {/* `Service` + `BreadcrumbList`: the page is the offer, the graph is what
+          an answer engine reads to attribute it to this organisation. */}
+      <JsonLd data={serviceJsonLd('/services/mpesa-api-security')} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: SITE_NAME, path: '/' },
+          { name: 'Services', path: '/services' },
+        ])}
+      />
+      <ServicePage content={CONTENT} />
+    </>
+  );
 }

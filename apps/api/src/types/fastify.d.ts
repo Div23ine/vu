@@ -3,6 +3,7 @@ import type { Redis } from 'ioredis';
 import type { Env } from '../config/env.js';
 import type { SecretProvider } from '../lib/secrets/provider.js';
 import type { Tx } from '../plugins/db.js';
+import type { RedisMode } from '../plugins/redis.js';
 import type { QueueRegistry } from '../queues/index.js';
 import type { EmailProvider } from '../providers/email.js';
 import type { SmsProvider } from '../providers/sms.js';
@@ -42,6 +43,11 @@ declare module 'fastify' {
     redis: Redis;
     /** A NEW Redis connection, for subscribers and BullMQ workers. */
     createRedis: () => Redis;
+    /**
+     * Revision 2 addendum A3 — how Redis came up at boot. `store: "memory"` means
+     * `redis`/`createRedis()` are the in-process shim (single instance only).
+     */
+    redisMode: RedisMode;
     /** One BullMQ producer per queue name. */
     queues: QueueRegistry;
     email: EmailProvider;

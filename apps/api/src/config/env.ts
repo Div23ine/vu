@@ -11,6 +11,14 @@ import { z } from 'zod';
 
 export const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'] as const;
 
+/**
+ * Revision 2 addendum A3 — the Redis optionality switch (see `REDIS_OPTIONAL`).
+ * Defined here, not in the plugin, so the env schema and the boot logic cannot
+ * drift apart: this array IS the schema's enum.
+ */
+export const REDIS_OPTIONALITY = ['auto', 'always', 'never'] as const;
+export type RedisOptionality = (typeof REDIS_OPTIONALITY)[number];
+
 export const SECRETS_PROVIDER_MESSAGE =
   'SECRETS_PROVIDER must be "oci-vault" when NODE_ENV is "production"';
 
@@ -62,6 +70,17 @@ export const EnvSchema = z
      * SITE SECRET is a vault secret (`TURNSTILE_SECRET_KEY`), never env.
      */
     TURNSTILE_ENFORCE: z.enum(['true', 'false']).optional(),
+    /**
+     * Revision 2 addendum A3 — is Redis allowed to be absent?
+     *
+     * `auto` (default): optional outside production, required in production.
+     * `always`: optional everywhere — boot on the in-memory store (SINGLE
+     * INSTANCE ONLY). `never`: required everywhere — an unreachable Redis is a
+     * FATAL boot failure. The connection string itself stays a vault secret
+     * (`UPSTASH_REDIS_URL`, Task 22); this flag only decides whether its absence
+     * is fatal. Re-enabling Redis needs no code change: set the secret, restart.
+     */
+    REDIS_OPTIONAL: z.enum(REDIS_OPTIONALITY).optional(),
     /** JSON object mapping a secret name to its OCI Vault OCID. */
     OCI_SECRET_MAP: z.string().optional(),
 

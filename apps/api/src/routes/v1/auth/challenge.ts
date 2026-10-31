@@ -86,6 +86,17 @@ export interface KvStore {
   del(key: string): Promise<unknown>;
 }
 
+/**
+ * Minimal pino-shaped logger seam for the Redis-backed auth stores.
+ *
+ * Revision 3, A6 — the hybrid failure policy needs every store fault to be LOUD.
+ * Defined here (the module both `login-abuse.ts` and `magic-link.ts` already
+ * import) so neither has to import the other and create a cycle.
+ */
+export interface StoreLogger {
+  warn(fields: Record<string, unknown>, message: string): void;
+}
+
 export interface MemoryKvStore extends KvStore {
   entries: Map<string, { value: string; expiresAt: number }>;
 }

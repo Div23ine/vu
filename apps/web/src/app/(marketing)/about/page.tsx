@@ -15,6 +15,9 @@ import { AboutTelemetry } from './_components/telemetry';
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/about' },
+  description:
+    'Who VUNVAULT is, how the team works, and the research and detection stack behind every engagement.',
   title: { absolute: 'About VUNVAULT — Africa-Rooted. Worldwide Defense.' },
 };
 

@@ -1,0 +1,36 @@
+/**
+ * Command Center page stylesheet .
+ *
+ * ONLY the rules specific to this page — every shared class (`adm-card`,
+ * `adm-kpi*`, `adm-table*`, `adm-badge*`, `adm-btn*`, `adm-tag*`,
+ * `adm-node*`, `adm-bars`, `adm-threat*`, `adm-progress*`, `adm-figure`…)
+ * lives in `admin-shared.css` , imported by `AdminPageHead`. No
+ * hard-coded colours, radii or easings here; the two layout literals are
+ * grid metrics only.
+ */
+
+/* ——— Running-scans progress cell: bar + percent on one line ——— */
+.dash-scan-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 150px;
+}
+.dash-scan-progress .adm-progress-value {
+  min-width: 38px;
+}
+
+/* ——— Threat card: the current-level stack + the dark dl spacing ——— */
+.dash-current {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dash-threat-dl {
+  margin-top: 18px;
+}
+
+/* ——— Figures: give the bar charts breathing room inside card bodies ——— */
+.dash-figure {
+  margin-top: 18px;
+}

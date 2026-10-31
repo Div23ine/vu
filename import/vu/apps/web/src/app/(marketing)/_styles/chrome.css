@@ -1,0 +1,218 @@
+/**
+ * Marketing chrome stylesheet — hamburger, mobile drawer and the
+ * session profile chip, reproduced from the design's CSS. Every value that
+ * has a design token uses `var(--token)`; the few literals that remain
+ * (one-off dark-gradient border tints, the drawer's link colour) have no token
+ * and are allowed inside this file only — never in TSX.
+ *
+ * The `.nav-profile` block is authored here: the spec's reference block
+ * for the chip is empty, so the styling follows the chip's description
+ * (circular initial avatar + label, pill container) using tokens only.
+ *
+ * Reduced motion: the global fallback in `@vunvault/ui`'s `motion.css`
+ * collapses every transition to 0.01ms. The open/close states here are
+ * class-driven (`is-open` / `is-active`), so the drawer remains fully
+ * functional — and fully laid-out — with motion disabled.
+ */
+
+/* Scrollable desktop nav without a visible scrollbar (used by site-header). */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-field);
+  border: 1px solid var(--line);
+  background: var(--white);
+  transition:
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.hamburger:hover {
+  border-color: var(--brand-line);
+  box-shadow: 0 6px 18px -12px var(--brand-glow);
+}
+.hamburger:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.hamburger-bar {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+  transition:
+    transform 0.28s var(--ease),
+    opacity 0.2s var(--ease),
+    background-color var(--dur) var(--ease),
+    width 0.28s var(--ease);
+}
+.hamburger.is-active {
+  background: var(--dark);
+  border-color: rgba(59, 153, 252, 0.4);
+}
+.hamburger.is-active .hamburger-bar {
+  background: var(--brand);
+}
+.hamburger.is-active .hamburger-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.hamburger.is-active .hamburger-bar:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+.hamburger.is-active .hamburger-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, var(--dark) 0%, var(--dark-abyss) 100%);
+  border-top: 1px solid rgba(59, 153, 252, 0.18);
+  border-bottom: 1px solid rgba(59, 153, 252, 0.18);
+  box-shadow: 0 30px 60px -25px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition:
+    max-height 0.42s var(--ease),
+    opacity 0.3s var(--ease),
+    transform 0.35s var(--ease),
+    visibility 0.42s var(--ease);
+}
+.mobile-menu.is-open {
+  max-height: 520px;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.mobile-menu-list {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 20px 22px;
+}
+.mobile-menu-list li + li {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.mobile-menu-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #d6dde8;
+  transition:
+    color var(--dur) var(--ease),
+    padding-left var(--dur) var(--ease);
+}
+.mobile-menu-list a::after {
+  content: '→';
+  font-size: 0.85rem;
+  color: var(--brand);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+.mobile-menu-list a:hover,
+.mobile-menu-list a:focus-visible {
+  color: var(--brand);
+  padding-left: 12px;
+  outline: none;
+}
+.mobile-menu-list a:hover::after,
+.mobile-menu-list a:focus-visible::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+.mobile-menu-login {
+  margin-top: 14px;
+  justify-content: center !important;
+  padding: 14px 18px !important;
+  border-radius: var(--r-full);
+  background: var(--grad-brand);
+  color: var(--white) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 12px 28px -14px var(--brand-glow);
+}
+.mobile-menu-login::after {
+  display: none;
+}
+.mobile-menu-login:hover {
+  padding-left: 18px !important;
+  color: var(--white) !important;
+  filter: brightness(1.08);
+}
+
+@media (max-width: 768px) {
+  .hamburger {
+    display: flex;
+  }
+}
+@media (min-width: 768px) {
+  .hamburger {
+    display: none;
+  }
+}
+
+/* Session chip — replaces the Login link while a session exists. */
+.nav-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+  border-radius: var(--r-full);
+  border: 1px solid var(--line);
+  background: var(--white);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.nav-profile:hover {
+  border-color: var(--brand-line);
+  box-shadow: var(--sh-ghost);
+}
+.nav-profile:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.nav-profile-avatar {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--r-full);
+  background: var(--grad-brand);
+  color: var(--white);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.nav-profile-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}

@@ -117,6 +117,11 @@ export const AUDIT_EVENTS = {
   LOG_BACKUP: { category: 'system', severity: 'ok' },
   CHAIN_GENESIS: { category: 'system', severity: 'info' },
   THREAT_LEVEL_CHANGED: { category: 'system', severity: 'warning' },
+  // Revision 2 addendum A2.4: a super admin fired the email-delivery diagnostic.
+  // This endpoint can make the platform send mail to an arbitrary address, so the
+  // fact that it was used — by whom, to where, and which Resend id came back — is
+  // recorded in the sealed audit chain, not just in the application log.
+  EMAIL_DELIVERY_TEST: { category: 'system', severity: 'info' },
 } as const satisfies Record<string, AuditEventDefinition>;
 
 export type AuditEventType = keyof typeof AUDIT_EVENTS;

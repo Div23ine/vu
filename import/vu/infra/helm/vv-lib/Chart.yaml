@@ -1,0 +1,5 @@
+apiVersion: v2
+name: vv-lib
+description: Shared workload/security templates for the VUNVAULT charts (Task 100). Library only — nothing here renders on its own.
+type: library
+version: 1.0.0

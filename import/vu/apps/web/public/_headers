@@ -1,0 +1,22 @@
+# Cloudflare Workers static-asset headers.
+#
+# Applies to files served straight from the `ASSETS` binding (`.open-next/assets`)
+# — i.e. requests that never reach the Worker, and therefore never reach
+# `src/middleware.ts` or the `headers()` block in `next.config.ts`. Anything that
+# must carry the per-request CSP nonce is an SSR route and is NOT served from here.
+#
+# Next fingerprints every file under /_next/static/ with a content hash, so the
+# URL changes whenever the content does: immutable + one year is safe, and it is
+# what the OpenNext Cloudflare guide requires.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Operator-supplied brand assets (see public/brand/.gitkeep). Versioned by the
+# operator, so cache but require revalidation rather than pinning for a year.
+/brand/*
+  Cache-Control: public, max-age=3600, must-revalidate
+
+# The MSW service worker is regenerated per clone and must never be cached stale,
+# or a browser keeps intercepting requests with yesterday's mocks.
+/mockServiceWorker.js
+  Cache-Control: no-cache

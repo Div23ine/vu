@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { JsonLd } from '../../../lib/json-ld';
+import { serviceJsonLd } from '../../../lib/seo';
 import { CoreServices } from './_components/core-services';
 import { InlineCli } from './_components/inline-cli';
 import { RequestBand } from './_components/request-band';
@@ -16,12 +18,17 @@ import { ServicesPricing } from './_components/services-pricing';
 
 // The root layout's template renders this as "Services — VUNVAULT".
 export const metadata: Metadata = {
+  alternates: { canonical: '/services' },
+  description:
+    'Scoped penetration testing, vulnerability assessment, SACCO and fintech compliance, M-Pesa and API security review, and continuous monitoring retainers.',
   title: 'Services',
 };
 
 export default function ServicesPage() {
   return (
     <>
+      {/* `Service` graph for the catalogue index itself. */}
+      <JsonLd data={serviceJsonLd('/services')} />
       <ServicesHero />
       <ServiceTabs />
       <InlineCli />

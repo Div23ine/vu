@@ -2,6 +2,16 @@ import type { Metadata, Viewport } from 'next';
 import { tokens } from '@vunvault/ui';
 import { env } from '../env';
 import { inter } from '../lib/fonts';
+import { JsonLd } from '../lib/json-ld';
+import {
+  BRAND_ASSETS,
+  SITE_DESCRIPTION,
+  SITE_LOCALE,
+  SITE_NAME,
+  SITE_TAGLINE,
+  organisationJsonLd,
+  webSiteJsonLd,
+} from '../lib/seo';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -39,16 +49,79 @@ import './globals.css';
  * without breaking the layout.
  */
 
+/**
+ * Site-wide metadata defaults.
+ *
+ * `metadataBase` is what makes every relative `openGraph.url`, image path and
+ * canonical resolve to the real origin; it is built from the one validated
+ * `NEXT_PUBLIC_SITE_URL` rather than a literal, so staging and production cannot
+ * disagree with their own sitemap.
+ *
+ * Two things are deliberately NOT set here:
+ *
+ * - **No `alternates.canonical`.** Metadata inherits down the tree, so a canonical
+ *   on the root layout would be inherited by every route and canonicalise the
+ *   entire site to `/`. Each page declares its own (see `lib/seo.ts`).
+ * - **No `openGraph.url`.** Next derives it from `metadataBase` plus the current
+ *   pathname, which is correct per page; a literal here would be inherited too.
+ *
+ * `robots` defaults to indexable, and the private groups (`(auth)`, `(authed)`,
+ * `(marketing)/checkout`) opt out at their layout level.
+ */
 export const metadata: Metadata = {
   metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
   title: {
-    default: 'VUNVAULT — We Find The Cracks Before They Do',
-    template: '%s — VUNVAULT',
+    default: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    template: `%s — ${SITE_NAME}`,
   },
-  description:
-    'Africa-rooted, worldwide penetration testing, vulnerability assessments and cybersecurity education.',
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    'vunvault',
+    'penetration testing',
+    'vulnerability assessment',
+    'attack surface management',
+    'cybersecurity Kenya',
+    'SACCO cyber risk',
+    'M-Pesa API security',
+    'security compliance assessment',
+  ],
+  category: 'cybersecurity',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
+  icons: { icon: '/favicon.ico' },
   openGraph: {
-    siteName: 'VUNVAULT',
+    type: 'website',
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+    locale: SITE_LOCALE,
+    images: [
+      {
+        url: BRAND_ASSETS.ogImage,
+        width: BRAND_ASSETS.ogWidth,
+        height: BRAND_ASSETS.ogHeight,
+        alt: BRAND_ASSETS.ogAlt,
+      },
+    ],
+  },
+  // No `site`/`creator` handle: the repository publishes no social profiles, and
+  // a wrong handle is worse than none. Add both once profiles exist
+  // (`docs/seo-runbook.md`).
+  twitter: {
+    card: 'summary_large_image',
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+    images: [BRAND_ASSETS.ogImage],
   },
 };
 
@@ -65,6 +138,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.className}>
       <body className="min-h-screen bg-paper text-neutral-900 antialiased">
+        {/*
+          Entity graph: one Organization node and one WebSite node referencing it,
+          emitted on every page so any URL an answer engine lands on carries the
+          same "what is vunvault" facts. Rendered as data blocks — see
+          `lib/json-ld.tsx` for why they are not nonced under this site's CSP.
+        */}
+        <JsonLd data={organisationJsonLd()} />
+        <JsonLd data={webSiteJsonLd()} />
         <Providers>{children}</Providers>
       </body>
     </html>

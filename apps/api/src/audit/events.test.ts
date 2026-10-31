@@ -63,7 +63,10 @@ describe('AUDIT_EVENTS catalog', () => {
     // 7 since Task 95 added SCAN_CONTROL_SENT to the scan lifecycle.
     expect(byCategory.get('scan_completion')).toBe(7);
     expect(byCategory.get('report_release')).toBe(2);
-    expect(byCategory.get('system')).toBe(5);
+    // 6 since the Revision 2 addendum (A2.4) added EMAIL_DELIVERY_TEST: the
+    // super-admin email-delivery diagnostic is a system action, and it must be in
+    // the sealed chain because the endpoint can mail an arbitrary address.
+    expect(byCategory.get('system')).toBe(6);
   });
 
   it('classifies the store and newsletter events added by Task 40c', () => {
