@@ -54,7 +54,7 @@ describe('ResendEmailProvider', () => {
       html: message.html,
       text: message.text,
     });
-    expect(DEFAULT_FROM).toBe('VUNVAULT <no-reply@vunvault.com>');
+    expect(DEFAULT_FROM).toBe('VUNVAULT <no-reply@info.vunvault.com>');
   });
 
   it('honours an explicit sender and sends an abort timeout', async () => {

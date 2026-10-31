@@ -18,7 +18,12 @@ import {
   type MfaChallenge,
   type MfaSetupRecord,
 } from './challenge.js';
-import { ADMINISTRATOR_ROLES } from '../../../lib/staff.js';
+import {
+  ADMINISTRATOR_ROLES,
+  STAFF_DOMAIN,
+  isStaffDomainEmail,
+  normalizeEmailDomain,
+} from '../../../lib/staff.js';
 import {
   ADMIN_MFA_SETUP_WINDOW_SECONDS,
   isAdminEmail,
@@ -83,6 +88,11 @@ export type MagicLinkRequestOutcome =
   | { sent: 'link'; email: string } // registered: a single-use verify link went out
   | { sent: 'invite'; email: string } // unregistered: a signup invitation went out (Phase 3)
   | { sent: 'suppressed'; email: string } // unregistered, inside the invite cooldown: nothing sent
+  // Work order Q3: an UNREGISTERED staff-domain address is never emailed —
+  // no link (no account), no signup invitation (the staff domain is
+  // signup-ineligible and staff accounts are provisioned, never
+  // self-registered). The HTTP answer stays the identical generic 200.
+  | { sent: 'staff_domain_suppressed'; email: string }
   // Phase 4 anti-abuse outcomes — all still answer the identical generic 200:
   | { sent: 'bot_dropped'; email: string; reason: 'honeypot' | 'timing' }
   | { sent: 'window_suppressed'; email: string; retryAfterSeconds: number }
@@ -345,13 +355,21 @@ export class AuthService {
    * cookies. The session opens only when the mailbox proves itself.
    */
   async signup(input: SignupInput): Promise<{ email: string }> {
-    // Phase 4 guard: the admin roster is provisioned by super admins (work
-    // order §1.4), never self-registered. All populated roster slots are
-    // refused with the spec's exact copy BEFORE any other signup work — no
-    // breach check, no repo read — so the guard cannot be probed as an
-    // oracle for the other validation rules either. Placeholder slots carry
-    // no email and can never match; filling one extends the guard for free.
-    if (isAdminEmail(input.email)) {
+    // Phase 4 guard (work order Task 1): the WHOLE staff domain is ineligible
+    // for public signup — administrators are materialised from the roster by
+    // `provision:admins`, other staff arrive by invitation, and nobody on the
+    // staff domain ever self-registers. The check is normalisation-proof
+    // (trim + NFKC + lowercase + trailing-dot strip + IDN→punycode) and FAILS
+    // CLOSED: an address whose domain cannot be parsed is refused with the
+    // same generic 422, so the guard cannot be bypassed by unicode
+    // look-alikes of the staff domain and leaks nothing about which addresses
+    // are provisioned. A look-alike that punycodes to a DIFFERENT domain
+    // (double-n, digit swaps, Cyrillic confusables) is an ordinary external
+    // address and signs up normally. The roster check stays as defence in
+    // depth. All refusals fire BEFORE any other signup work — no breach
+    // check, no repo read — so the guard cannot be probed as an oracle.
+    const signupDomain = normalizeEmailDomain(input.email);
+    if (signupDomain === null || signupDomain === STAFF_DOMAIN || isAdminEmail(input.email)) {
       throw HttpError.unprocessable('signup_not_allowed', 'This email is not eligible for signup.');
     }
 
@@ -541,8 +559,11 @@ export class AuthService {
    * account or not — enumeration is impossible. What differs is only the email:
    * a registered, live profile receives a single-use verify link (any previous
    * link for the address dies when the new one is minted); an unregistered
-   * address receives a signup invitation instead (Phase 3), at most one per
-   * cooldown window so the endpoint cannot be weaponised as an email bomb.
+   * EXTERNAL address receives a signup invitation instead (Phase 3), at most
+   * one per cooldown window so the endpoint cannot be weaponised as an email
+   * bomb; an unregistered STAFF-DOMAIN address receives nothing at all (work
+   * order Q3) — the staff domain is signup-ineligible, so an invitation could
+   * only leak provisioning state and promise a signup that must fail.
    *
    * A missing email provider is a warning, not a failure — the posture the
    * login surface has always had (a provider outage must never change the
@@ -594,6 +615,22 @@ export class AuthService {
 
     const profile = await this.deps.repo.findProfileByEmail(email);
     const registered = profile !== null && profile.deletedAt === null;
+
+    // ——— Work order Q3 (§2): an UNREGISTERED staff-domain address gets
+    // NOTHING — no sign-in link (there is no account), and no signup
+    // invitation either (the whole staff domain is signup-ineligible and its
+    // accounts are provisioned from the roster or by staff invitation, never
+    // self-registered; an invite would both leak provisioning state and offer
+    // a signup that can only fail). The HTTP answer is the identical generic
+    // 200, so whether an @vunvault.com address is provisioned can never be
+    // read from the response. The drop consumes no issuance-window or invite
+    // cooldown budget, and the warning carries only the MASKED address.
+    if (!registered && isStaffDomainEmail(email)) {
+      this.warn(
+        `magic-link produced NO EMAIL · reason=staff_domain_unprovisioned · requestId=${meta.requestId ?? 'n/a'} · to=${maskEmailForRedirect(email)} — staff-domain address with no live profile; generic 200 answered, nothing sent (Q3)`,
+      );
+      return { sent: 'staff_domain_suppressed', email };
+    }
 
     // ——— Phase 4: per-address issuance window — beyond it the request is
     // suppressed with the identical 200; no link, no invite, no enumeration.

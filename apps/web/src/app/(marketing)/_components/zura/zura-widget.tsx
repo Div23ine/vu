@@ -32,7 +32,7 @@ interface ZuraMessage {
 }
 
 const GREETING =
-  'I’m Zura, VUNVAULT’s assistant. I answer from VUNVAULT’s published information — plans, billing, engagements, the scanner. What would you like to know?';
+  'I’m Zura, VUNVAULT’s security assistant. I answer from VUNVAULT’s published information — plans, billing, engagements, the scanner. What would you like to know?';
 
 const FALLBACK =
   'I don’t have a published answer for that yet — I answer from VUNVAULT’s own information, never guesses. Try plans, pricing, billing or the scanner, or reach a human via the contact form.';
@@ -162,12 +162,40 @@ export function ZuraWidget() {
         onClick={() => setOpen((value) => !value)}
         className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-cyan-700 px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-cyan-800"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+          data-testid="zura-headset-avatar"
+        >
+          {/* Cyber-security operator headset + shield motif — neutral,
+              in-repo placeholder artwork (work order §7 / Q4); swap freely
+              for a designer asset without touching behaviour. */}
+          {/* headband */}
           <path
-            d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"
+            d="M4.8 12v-1.6a7.2 7.2 0 0 1 14.4 0V12"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+          {/* ear cups */}
+          <rect x="3" y="10.8" width="3.6" height="6.4" rx="1.8" fill="currentColor" />
+          <rect x="17.4" y="10.8" width="3.6" height="6.4" rx="1.8" fill="currentColor" />
+          {/* microphone boom */}
+          <path
+            d="M19.2 17.4v1a3.2 3.2 0 0 1-3.2 3.2h-2.2"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+          <circle cx="12.9" cy="21.6" r="1.05" fill="currentColor" />
+          {/* shield — the security in the headset */}
+          <path
+            d="M12 10.9l2.9 1v2.2c0 1.8-1.2 3.1-2.9 3.8-1.7-.7-2.9-2-2.9-3.8v-2.2l2.9-1z"
             fill="currentColor"
           />
-          <circle cx="19" cy="19" r="2" fill="currentColor" />
         </svg>
         Zura
       </button>
@@ -176,7 +204,7 @@ export function ZuraWidget() {
         <div
           id="zura-panel"
           role="dialog"
-          aria-label="Zura, the VUNVAULT assistant"
+          aria-label="Zura, the VUNVAULT security assistant"
           className="fixed bottom-24 right-5 z-40 flex w-[min(22rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl"
         >
           <header className="flex items-start justify-between gap-3 border-b border-neutral-200 bg-cyan-50/60 px-4 py-3">

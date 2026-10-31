@@ -712,7 +712,7 @@ describe('POST /api/v1/auth/magic-link', () => {
   it('answers registered and unregistered addresses with byte-identical bodies', async () => {
     await seedProfile();
     const registered = await requestLink('e.reed@vunvault.com');
-    const unregistered = await requestLink('nobody@vunvault.com');
+    const unregistered = await requestLink('nobody@vunvault.test');
 
     expect(registered.statusCode).toBe(200);
     expect(unregistered.statusCode).toBe(200);
@@ -721,11 +721,11 @@ describe('POST /api/v1/auth/magic-link', () => {
   });
 
   it('sends exactly one signup invitation per cooldown window to an unregistered address', async () => {
-    const first = await requestLink('nobody@vunvault.com');
+    const first = await requestLink('nobody@vunvault.test');
     expect(first.statusCode).toBe(200);
     expect(harness.emails).toHaveLength(1);
     expect(harness.emails[0]).toMatchObject({
-      to: 'nobody@vunvault.com',
+      to: 'nobody@vunvault.test',
       subject: 'No VUNVAULT account found for this email',
     });
     const text = harness.emails[0]?.text ?? '';
@@ -734,10 +734,46 @@ describe('POST /api/v1/auth/magic-link', () => {
     expect(harness.audits.map((e) => e.eventType)).toContain('SIGNUP_INVITE_SENT');
 
     // Inside the window: identical 200, but the mailbox is NOT bombed again.
-    const second = await requestLink('nobody@vunvault.com');
+    const second = await requestLink('nobody@vunvault.test');
     expect(second.statusCode).toBe(200);
     expect(second.body).toBe(first.body);
     expect(harness.emails).toHaveLength(1);
+  });
+
+  it('never emails an UNPROVISIONED staff-domain address — identical 200, no link, no invite (work order Q3)', async () => {
+    await seedProfile(); // a REGISTERED staff-domain user, for the body comparison
+    const registered = await requestLink('e.reed@vunvault.com');
+    const probe = await requestLink('evil@vunvault.com');
+
+    expect(probe.statusCode).toBe(200);
+    // The whole point: byte-identical to a served request — provisioning
+    // status cannot be read from the response.
+    expect(probe.body).toBe(registered.body);
+    // Exactly ONE email went out — the registered user's sign-in link. The
+    // staff-domain probe produced nothing: no link, and no signup invitation.
+    expect(harness.emails).toHaveLength(1);
+    expect(harness.emails[0]?.to).toBe('e.reed@vunvault.com');
+    expect(harness.audits.some((e) => e.eventType === 'SIGNUP_INVITE_SENT')).toBe(false);
+    // No magic-link token was minted for the probe address either.
+    expect(
+      [...harness.kv.entries.keys()].filter((key) => key.startsWith('ml:token:')),
+    ).toHaveLength(1);
+  });
+
+  it('staff-domain suppression is case-proof and consumes no cooldown budget', async () => {
+    const first = await requestLink('EVIL@VunVault.COM');
+    const second = await requestLink('other.probe@vunvault.com');
+    expect(first.statusCode).toBe(200);
+    expect(second.statusCode).toBe(200);
+    expect(first.body).toBe(second.body);
+    expect(harness.emails).toHaveLength(0);
+    // A genuinely unregistered EXTERNAL address afterwards still gets the
+    // ordinary signup invitation — the staff-domain drops consumed no
+    // per-address window or invite-cooldown state.
+    const external = await requestLink('nobody@vunvault.test');
+    expect(external.statusCode).toBe(200);
+    expect(harness.emails).toHaveLength(1);
+    expect(harness.emails[0]?.subject).toBe('No VUNVAULT account found for this email');
   });
 
   it('rejects a password field outright — no login endpoint accepts one', async () => {
@@ -1034,17 +1070,32 @@ describe('GET /api/v1/auth/magic-link/verify', () => {
   });
 
   it('treats a soft-deleted account as unregistered — an invite, never a link', async () => {
-    seedProfile('client', { deletedAt: '2026-09-01T00:00:00Z' });
+    seedProfile('client', {
+      email: 'e.reed@vunvault.test',
+      deletedAt: '2026-09-01T00:00:00Z',
+    });
     const response = await harness.app.inject({
       method: 'POST',
       url: '/api/v1/auth/magic-link',
-      payload: { email: 'e.reed@vunvault.com' },
+      payload: { email: 'e.reed@vunvault.test' },
     });
     // Identical acknowledgement, but the mailbox gets the signup invitation and
     // no verify token exists to replay.
     expect(response.statusCode).toBe(200);
     expect(harness.emails.at(-1)?.subject).toBe('No VUNVAULT account found for this email');
     expect(harness.emails.at(-1)?.text).not.toContain('token=');
+  });
+
+  it('a soft-deleted STAFF-DOMAIN account is never emailed at all (work order Q3)', async () => {
+    seedProfile('client', { deletedAt: '2026-09-01T00:00:00Z' });
+    const response = await harness.app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/magic-link',
+      payload: { email: 'e.reed@vunvault.com' },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(harness.emails).toHaveLength(0);
+    expect(harness.audits.some((e) => e.eventType === 'SIGNUP_INVITE_SENT')).toBe(false);
   });
 
   it('refuses a pending_verification account with account_inactive', async () => {
@@ -1878,6 +1929,58 @@ describe('Phase 4 — signup refuses admin-roster emails', () => {
     });
     expect(response.statusCode).toBe(202);
     expect(harness.supabase.createdUsers).toHaveLength(1);
+  });
+
+  it('refuses the WHOLE staff domain, not only populated roster slots (work order Task 1)', async () => {
+    for (const email of ['evil@vunvault.com', 'Evil@VunVault.COM', 'not.on.roster@vunvault.com']) {
+      const response = await harness.app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/signup',
+        payload: { ...SIGNUP_BODY, email },
+      });
+      expect(response.statusCode, email).toBe(422);
+      expect(response.json(), email).toMatchObject({
+        error: 'signup_not_allowed',
+        message: 'This email is not eligible for signup.',
+      });
+    }
+    // The guard fires before any signup work: no users, no emails, no rows.
+    expect(harness.supabase.createdUsers).toHaveLength(0);
+    expect(harness.emails).toHaveLength(0);
+    expect(harness.repo.profiles).toHaveLength(0);
+  });
+
+  it('lets look-alike domains through to the ordinary signup flow (they are not the staff domain)', async () => {
+    for (const email of ['user@vunnvault.com', 'user@vunvau1t.com']) {
+      const response = await harness.app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/signup',
+        payload: { ...SIGNUP_BODY, email },
+      });
+      expect(response.statusCode, email).toBe(202);
+    }
+    expect(harness.supabase.createdUsers).toHaveLength(2);
+  });
+
+  it('refuses trailing-dot and non-ASCII staff-domain variants at the schema or the guard — never a signup', async () => {
+    // zod's email schema rejects the trailing dot outright (400-class); the
+    // service guard is defence in depth for anything that still parses.
+    const dotted = await harness.app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/signup',
+      payload: { ...SIGNUP_BODY, email: 'evil@vunvault.com.' },
+    });
+    expect(dotted.statusCode).toBe(400);
+    // A Cyrillic-look-alike domain is rejected by the schema too — it can
+    // neither sign up nor impersonate the staff domain (unit-tested in
+    // lib/staff.test.ts at the guard level).
+    const cyrillic = await harness.app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/signup',
+      payload: { ...SIGNUP_BODY, email: 'evil@vunvаult.com' },
+    });
+    expect(cyrillic.statusCode).toBe(400);
+    expect(harness.supabase.createdUsers).toHaveLength(0);
   });
 });
 

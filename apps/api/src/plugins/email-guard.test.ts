@@ -236,7 +236,7 @@ describe('the startup guard (A2.3)', () => {
   });
 
   it('refuses to boot when the from-domain is definitively not verified', async () => {
-    const { impl } = stubFetch(200, { data: [{ name: 'vunvault.com', status: 'pending' }] });
+    const { impl } = stubFetch(200, { data: [{ name: 'info.vunvault.com', status: 'pending' }] });
     const logger = { fatal: () => undefined, info: () => undefined } as never;
 
     await expect(
@@ -245,7 +245,7 @@ describe('the startup guard (A2.3)', () => {
   });
 
   it('boots when the domain is verified', async () => {
-    const { impl } = stubFetch(200, { data: [{ name: 'vunvault.com', status: 'verified' }] });
+    const { impl } = stubFetch(200, { data: [{ name: 'info.vunvault.com', status: 'verified' }] });
     const { lines, logger } = recordingFastifyLogger();
 
     const provider = await buildResendEmailProvider(

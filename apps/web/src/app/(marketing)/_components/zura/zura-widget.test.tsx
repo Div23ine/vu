@@ -16,12 +16,12 @@ import { ZuraWidget } from './zura-widget';
  * same honest fallback.
  */
 
-const GREETING_FRAGMENT = 'I’m Zura, VUNVAULT’s assistant.';
+const GREETING_FRAGMENT = 'I’m Zura, VUNVAULT’s security assistant.';
 const FALLBACK_FRAGMENT = 'I don’t have a published answer for that yet';
 
 async function openZura(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Zura' }));
-  return screen.getByRole('dialog', { name: /Zura, the VUNVAULT assistant/ });
+  return screen.getByRole('dialog', { name: /Zura, the VUNVAULT security assistant/ });
 }
 
 afterEach(() => {
@@ -39,7 +39,7 @@ describe('Zura — knowledge-base mode', () => {
     expect(launcher).toHaveAttribute('aria-expanded', 'false');
 
     await user.click(launcher);
-    const dialog = screen.getByRole('dialog', { name: /Zura, the VUNVAULT assistant/ });
+    const dialog = screen.getByRole('dialog', { name: /Zura, the VUNVAULT security assistant/ });
     expect(within(dialog).getByText(new RegExp(GREETING_FRAGMENT))).toBeInTheDocument();
     expect(launcher).toHaveAttribute('aria-expanded', 'true');
   });
@@ -160,5 +160,22 @@ describe('Zura — optional LLM endpoint', () => {
       await within(dialog).findByText(/You receive a receipt immediately/),
     ).toBeInTheDocument();
     expect(llm).not.toHaveBeenCalled();
+  });
+});
+
+describe('Zura — branding (work order §7)', () => {
+  it('renders the cyber-security operator headset avatar and no third-party AI branding', async () => {
+    const { container } = render(<ZuraWidget />);
+    const user = userEvent.setup();
+
+    // The launcher carries the in-repo headset+shield placeholder artwork (Q4).
+    expect(screen.getByTestId('zura-headset-avatar')).toBeInTheDocument();
+
+    // Open the panel so the full rendered tree exists, then assert that no
+    // other AI provider's branding appears anywhere in the DOM.
+    await openZura(user);
+    expect(container.innerHTML.toLowerCase()).not.toContain('gemini');
+    expect(container.innerHTML.toLowerCase()).not.toContain('powered by google');
+    expect(screen.getByRole('dialog', { name: /security assistant/ })).toBeInTheDocument();
   });
 });

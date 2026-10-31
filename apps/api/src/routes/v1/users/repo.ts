@@ -439,11 +439,11 @@ export class SqlUsersRepo implements UsersRepo {
   ): Promise<InvitationRow> {
     const assignments: string[] = [];
     const values: unknown[] = [];
-    const add = (column: string, value: unknown): void => {
+    const add = (column: string, value: unknown, cast = ''): void => {
       values.push(value);
-      assignments.push(`${column} = $${values.length}`);
+      assignments.push(`${column} = $${values.length}${cast}`);
     };
-    if (patch.status !== undefined) add('status', `${patch.status}::staff_invitation_status`);
+    if (patch.status !== undefined) add('status', patch.status, '::staff_invitation_status');
     if (patch.tokenHash !== undefined) add('token_hash', patch.tokenHash);
     if (patch.expiresAt !== undefined) add('expires_at', patch.expiresAt);
     if (patch.resendCount !== undefined) add('resend_count', patch.resendCount);
@@ -508,13 +508,13 @@ export class SqlUsersRepo implements UsersRepo {
   ): Promise<void> {
     const assignments: string[] = [];
     const values: unknown[] = [];
-    const add = (column: string, value: unknown): void => {
+    const add = (column: string, value: unknown, cast = ''): void => {
       values.push(value);
-      assignments.push(`${column} = $${values.length}`);
+      assignments.push(`${column} = $${values.length}${cast}`);
     };
-    if (patch.role !== undefined) add('role', `${patch.role}::user_role`);
+    if (patch.role !== undefined) add('role', patch.role, '::user_role');
     if (patch.accountStatus !== undefined)
-      add('account_status', `${patch.accountStatus}::account_status`);
+      add('account_status', patch.accountStatus, '::account_status');
     if (patch.require2fa !== undefined) add('require_2fa', patch.require2fa);
     if (patch.suspendedAt !== undefined) add('suspended_at', patch.suspendedAt);
     if (patch.suspendedReason !== undefined) add('suspended_reason', patch.suspendedReason);

@@ -607,6 +607,121 @@ types?', …)` debug line (work order §7: fix all boot errors _and warnings_).
   `POST /auth/login` with email + password (Task 26) and their canonical mailbox proof is a 6-digit
   **email OTP** (Task 40d), not a link. This governs how A1.3 is applied.
 
+### 2026-11-01 — Security, Admin & Chatbot work order (Tasks 1–8) + enum-cast fix
+
+- **Trigger:** the user work order "VunVault — Security, Admin & Chatbot Implementation &
+  Verification Order" (9 tasks), with two explicit corrections: the staff domain is
+  **`@vunvault.com`** (single-n, never `@vunnvault.com`), and the migration command is
+  **`pnpm db:migrate`** (`@vunvault/db` → `tsx src/migrate.ts`), not `vu migrate`. Run approved on
+  the **local stack** (GoTrue v2.197 + Postgres + Redis + `supabase-proxy` :54321) under the
+  standing constraint that every file edit stays **production-ready against Supabase** — no
+  local-only hacks in committed code. No deployment (G1); `pnpm dev` only — never `next build`
+  (1 GiB sandbox, G2).
+- **User decisions (asked before coding):** **Q1** Divine (`divine@vunvault.com`, Divine Gospel,
+  `super_admin`) stays **exempt** from the 5-minute first-login MFA setup window
+  (`mfaSetupWindowSeconds: null`). **Q3** magic links for **unprovisioned staff-domain** addresses
+  answer the generic 200 and send **no email at all**. **Q4** Zura's sparkle launcher icon is
+  replaced by a **headset + shield** SVG placeholder. Resend: the user **rotated** the compromised
+  API key; the new key lives only in `apps/api/.env`, is never printed, and is masked `re_****…`
+  in every log and document (G6).
+- **Changed:**
+  - `apps/api/src/lib/staff.ts` (+ new `staff.test.ts`, 5 tests) — email normalisation helpers;
+    the signup guard blocks the **whole `@vunvault.com` domain**, fail-closed (Task 1). Live:
+    staff-domain signup → 422, no account, no email.
+  - `apps/api/src/routes/v1/auth/service.ts` — Q3 suppression in the magic-link leg:
+    `staff_domain_suppressed` outcome for a staff-domain address with no live profile →
+    byte-identical generic 200, **masked** warn (no full address in the log), nothing sent, no
+    window/invite consumed, **no audit row** (nothing happened worth auditing). Live:
+    `ev••@vunvault.com` → generic 200, `reason=staff_domain_unprovisioned`, Resend never called.
+  - `apps/api/src/routes/v1/auth/auth.test.ts` — 2 new Q3 tests + a staff-domain soft-delete
+    variant; identical-response/cooldown fixtures moved to `@vunvault.test` so the domain block
+    cannot mask the byte-identity assertions.
+  - `apps/web/src/app/(marketing)/_components/zura/zura-widget.tsx` (+ test) — Q4: hand-drawn
+    monochrome **headset + shield** launcher SVG (`data-testid="zura-headset-avatar"`,
+    `aria-hidden`, `currentColor`); dialog `aria-label="Zura, the VUNVAULT security assistant"`;
+    greeting now "VUNVAULT's security assistant". New branding describe asserts the headset
+    renders and **no `gemini` / "powered by google" strings exist in the DOM** (Task 7 sweep:
+    zero Gemini branding repo-wide). Zura suite 13/13.
+  - `apps/api/src/routes/v1/users/repo.ts` — **bug fix (found by this run):** `updateMember` /
+    `updateInvitation` built enum assignments as ``add('col', `${value}::enum_name`)`` — the
+    `::cast` was bound **inside the parameter string**, so every enum patch died with Postgres
+    `22P02 invalid input value for enum account_status: "active::account_status"`. Affected
+    `unblock-mfa`, role changes, invitation status updates and the soft-delete `accountStatus`
+    leg. Fix: `add(column, value, cast)` puts the cast in the **SQL text** (`col = $n::enum`);
+    values stay bind parameters. Live-proven: unblock → 200, soft-deletes → 204 ×2.
+  - `apps/api/src/providers/providers.test.ts`, `apps/api/src/plugins/email-guard.test.ts` —
+    **pre-existing failures at the base commit** (red before this run's edits): tests pinned the
+    legacy `no-reply@vunvault.com` / `vunvault.com` fixtures while `DEFAULT_FROM` is
+    `VUNVAULT <no-reply@info.vunvault.com>` — the only verified Resend sending domain (the boot
+    guard confirms `info.vunvault.com verified` on every start). Pins aligned; no product code
+    touched.
+- **DB-side changes (local stack only, G7):** no new repo migrations. Bootstrap/repairs:
+  extensions + `auth` schema pre-created before the drizzle baseline; 20 missing
+  `auth.schema_migrations` rows backfilled; GoTrue DSN needs `&search_path=auth`;
+  **`public.vv_custom_access_token_hook_v2197` adapter replaced (v2)** — GoTrue v2.197 validates
+  hook **output** against the full JWT-claims schema, and the previous adapter returned only
+  `{role, org_id, permissions}` → `/verify` failed with "output claims do not conform". Adapter
+  v2 merges the incoming `event->'claims'` with the computed authority and wraps the result in
+  `{"claims": …}`. **Deploy-critical:** re-verify the production GoTrue hook contract (carried
+  in Known Gaps).
+- **Provisioning (Tasks 3–5):** `admin-roster.ts` remains the single source of truth — exactly
+  **9 slots**: 4 filled (daniel@ admin, divine@ super_admin + exempt, tshepiso@ admin, bukenya@
+  admin) + 5 `null` standby. `pnpm provision:admins` idempotent: re-run → **created 0 /
+  roleCorrected 0 / skipped 4**. Task 5d drill: slot 5 filled with `standby.test@vunvault.com`
+  (data-only edit) → re-run created exactly 1 (active admins 5), zero code change; then
+  **reverted** — the file is back at its committed state.
+- **Verification (live, real Resend key, real GoTrue):**
+  - First login (daniel@): verify → 302 `/login/mfa/setup?to=da••••@vunvault.com&deadline=…`
+    (300 s exactly, HttpOnly `vv_mfa` only); `setup/options` → valid `otpauth://totp` URI
+    (SHA1/6/30, 32-char Base32 secret) + QR SVG + deadline echo; RFC 4226/6238 test-vector TOTP
+    accepted → 200 `mfaEnrolled:true` with the full **aal2** session rotated into place
+    (`amr=[totp,otp]`, role=admin, 19 permissions) — the repo's re-auth-after-enrol pattern.
+  - Authorisation battery: daniel(admin) `GET /admin/users` 200; super-admin-only diagnostics
+    403; self role-escalation 403; client user 403 on every admin route; divine → diagnostics 200.
+  - Second login (daniel@): 302 `/login/mfa?methods=totp,email_otp`; wrong code → 401
+    `mfa_failed`; correct TOTP → 200 session.
+  - Divine exempt: verify → 302 straight to `/admin`, full session at verify, `mfa_enrolled=f`,
+    0 factors — exactly the Q1 design.
+  - Task 6c block drill (standby slot): window lapsed → `setup/options` **410
+    `challenge_expired`** while the account still reads `active` (the block is **lazy** by
+    design); next magic-link verify → **302 `/login?error=account_blocked`**, DB
+    `account_status='blocked_mfa_setup'`, audit `MFA_SETUP_BLOCKED … (window_expired)`.
+    Unblock: admin → **403** (`users:manage` is super-admin-only), divine → **200**, DB back to
+    `active`, audit `MFA_SETUP_UNBLOCKED`; the following sign-in → **302 `/login/mfa/setup` with
+    a fresh deadline** — the window restarts, as the audit message promises.
+  - Task 8: `pnpm dev` boots clean (`Swagger /docs`, `redis online`, `resend from-domain
+verified`, :8080); `/healthz` `/health` `/readyz` all 200; tokens redacted in request logs
+    (`token=%5BRedacted%5D`). **Error inventory for the whole run — exactly three non-info
+    lines:** (1) the Q3 masked suppression warn (by design), (2) a `magic-link session issuance
+failed` warn from the pre-adapter-v2 hook bug (fixed, never recurred), (3) the enum-cast 500
+    (fixed above, never recurred). **After the fixes: zero warn/error through shutdown.**
+    Graceful SIGTERM: four clean `{"signal":"SIGTERM","msg":"shutting down"}` exits (three
+    tsx-watch reloads + one controlled final stop); restarted healthy in the final state.
+  - Final suites: **API 1069 passed / 9 skipped / 0 failed (1078)**; web zura 13/13; tsc clean;
+    eslint + prettier clean on every touched file.
+- **Test-identity cleanup (local only):** `standby.test@vunvault.com` + `someone@gmail.com`
+  retired through the product's own audited admin soft-delete (`DELETE /api/v1/admin/users/:id`
+  → 204, sessions revoked, `ACCOUNT_DELETED` audited). A hard delete was **deliberately not
+  performed**: `audit_entries` is append-only (`vv_reject_audit_mutation` trigger) and its
+  `actor_id` FK must keep resolving — profile rows are never removed in this design. Final live
+  roster: the 4 work-order admins, all `active`.
+- **Resend ledger (dashboard-verifiable):** `01a19408-d8a3` signup OTP (someone@),
+  `01a19409-9fd3` daniel v1 (verify failed on the old hook bug), `01a1940d-64f3` daniel v2
+  (verify OK), `01a19412-63bb` daniel second login, `01a19413-51be` divine, `01a19413-a619`
+  divine diagnostics email-test, `01a19414-09fb` OTP resend, `01a19416-1602` standby v1,
+  `01a1941b-5408` standby post-block, `01a19423-743a` standby post-unblock. Note: both test
+  addresses sit on Resend's **suppression list** (`last_event` `suppressed`/`bounced`) — sends
+  were accepted (200 + id) but delivery was withheld by Resend; contents were retrieved through
+  the Resend GET API to extract tokens. Not a code fault.
+- **Files:** `apps/api/src/lib/staff.ts` (M), `apps/api/src/lib/staff.test.ts` (new),
+  `apps/api/src/routes/v1/auth/service.ts` (M), `apps/api/src/routes/v1/auth/auth.test.ts` (M),
+  `apps/api/src/routes/v1/users/repo.ts` (M), `apps/api/src/providers/providers.test.ts` (M),
+  `apps/api/src/plugins/email-guard.test.ts` (M),
+  `apps/web/src/app/(marketing)/_components/zura/zura-widget.tsx` (M),
+  `apps/web/src/app/(marketing)/_components/zura/zura-widget.test.tsx` (M), `playbook.md`
+  (this entry + Decisions + Known Gaps). `apps/api/src/lib/admin-roster.ts` is **unchanged**
+  from its committed state (the Task 5d drill edit was reverted).
+
 ## Catalog Extraction
 
 Per addendum A1.2/A5. Each entry names the catalog part, the sections that carry the canonical
@@ -1540,6 +1655,38 @@ built speculatively.
   magic-link live test was **not** added because its harness lives inside `auth.test.ts` and is not
   exported; extracting it would be an unlisted refactor of an existing test file (A0.2).
 
+### Security/Admin work-order decisions (2026-11-01)
+
+All blocking questions were put to the user **before** implementation (standing rule: talk
+before any change the work order does not already specify).
+
+- **Q1 → Divine is exempt (user-confirmed).** `divine@vunvault.com` keeps
+  `mfaSetupWindowSeconds: null` — no 5-minute setup window; the session issues at verify.
+- **Q3 → suppress, do not invite (user-chosen).** An unprovisioned `@vunvault.com` address
+  asking for a magic link gets the byte-identical generic 200 and **no email**; one masked warn,
+  no audit row, no window/invite consumption. Staff-domain links are meaningful only for
+  provisioned profiles — forgery-proof by construction.
+- **Q4 → headset + shield placeholder (user-chosen).** Zura's sparkle icon replaced by a
+  hand-drawn monochrome SVG; the dialog aria-label reads "Zura, the VUNVAULT security
+  assistant"; no Gemini/Google branding exists anywhere in the repo (verified by sweep + test).
+- **Domain correction (user).** `@vunvault.com`, single-n. No `@vunnvault.com` anywhere.
+- **Migration-command correction (user).** `pnpm db:migrate` (package `@vunvault/db`,
+  `tsx src/migrate.ts`); `vu migrate` does not exist.
+- **Local stack for this run, production-ready edits (user).** Verification ran against local
+  GoTrue/Postgres/Redis/proxy, but every committed file must work unchanged against Supabase.
+  Local-only repairs (hook adapter v2, `auth.schema_migrations` backfill, DSN `search_path`)
+  are DB-state, catalogued in the Change Log, **not** repo code.
+- **Key hygiene (user, G6).** The compromised Resend key was rotated by the user; the new key
+  lives only in `apps/api/.env` (gitignored), is never printed, and every reference is masked
+  `re_****…`.
+- **In-run bug-fix policy.** The `repo.ts` enum-cast fix and the two stale email-domain test
+  pins were required to meet Task 8's zero-errors acceptance bar; both are logged with root
+  cause in the Change Log. Nothing beyond the work order + those fixes was touched.
+- **Hard deletion of test identities declined by design.** The append-only audit trigger
+  (`vv_reject_audit_mutation`) and the `audit_entries.actor_id` FK mean profile rows are never
+  removed; the two local test identities were retired via the product's own audited soft-delete
+  instead (correction-forward of the run plan's "delete test identities" note).
+
 ## Known Gaps / Future Work
 
 - 5 admin emails still to be supplied (roster placeholders 5–9).
@@ -1701,4 +1848,32 @@ logo-512.png` (square, transparent) satisfies schema.org's raster-≥112×112 ru
   (1 GiB cgroup, no swap): `pnpm dev` (turbopack + webpack) and `next build` (heap 850/512) were
   all SIGKILLed mid-compile; `oom_kill` counter 9→11; exact errors in `VERIFICATION-REPORT.md`.
 - **Resend key rotation:** the API key used for verification was shared in chat (full access) —
-  rotate it before any deployment.
+  rotate it before any deployment. **Closed 2026-11-01:** the user rotated the key; the new key
+  lives only in `apps/api/.env` (gitignored) and was used for the whole work-order run (G6).
+
+### Security/Admin work-order run (2026-11-01) — Known Gaps / documented limitations
+
+- **The MFA-setup block is lazy.** Between window expiry and the next sign-in the account still
+  reads `active` and `setup/options` answers 410 `challenge_expired`; `blocked_mfa_setup` + the
+  audit row land only at the next verify. By design (no background job), but a roster view can
+  briefly show a lapsed admin as active.
+- **GoTrue hook adapter is local DB state.** `vv_custom_access_token_hook_v2197` (v2,
+  claims-merging, `{"claims": …}`-wrapped) exists only in the local database. Production
+  Supabase needs the equivalent for **its** GoTrue version's hook-output contract — still the
+  single most deploy-critical item (carried from the 2026-10-31 run).
+- **Resend suppression list.** `someone@gmail.com` and `standby.test@vunvault.com` are
+  suppressed on the Resend account (bounce → withheld). Sends are accepted (200 + id) but not
+  delivered; check the dashboard before diagnosing a delivery bug.
+- **Soft-deleted test identities remain in the local DB** (`standby.test@`, `someone@gmail.com`,
+  `deleted_at` set, sessions revoked). Hard deletion is impossible by design (append-only
+  audit); a production database would never contain them.
+- **Local bootstrap steps are not in migrations.** Extension pre-creation, `auth`-schema
+  ordering, the 20-row `auth.schema_migrations` backfill and the GoTrue DSN `search_path=auth`
+  were applied directly to the local DB (procedure in the Change Log). A managed production
+  Supabase needs none of them; a fresh **local** stack needs all of them.
+- **F3 (204 without aal2 cookie rotation), the aal1 first-token window, and plaintext TOTP
+  secrets at rest** (2026-10-31 run) — unchanged, still open.
+- **Web app never compiled in this run** (1 GiB sandbox; G2 bars `next build`). The Zura change
+  is verified by vitest (13/13) + tsc/eslint only.
+- **Five standby slots are still `null`.** Task 5d proved activation is a data edit +
+  `provision:admins` re-run only; the drill slot was reverted, so slots 5–9 remain reserved.
