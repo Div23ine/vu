@@ -8,9 +8,9 @@ import { configureApi, getApiConfig, queryKeys } from '@vunvault/lib';
 import { cn, isApiError } from '@vunvault/lib';
 import { toast } from '@vunvault/ui';
 import { OtpInput, OTP_LENGTH } from '../../login/_components/otp-input';
+import { TotpQr } from '../../../../components/totp-qr';
 import {
   groupSecret,
-  qrCodeSrc,
   useResendSignupCode,
   useTotpEnroll,
   useTotpVerify,
@@ -499,8 +499,7 @@ export function SignupVerifyDialog() {
             ) : (
               <form id="vvVerifyTotpForm" autoComplete="off" onSubmit={submitTotp}>
                 <div className="vv-verify-qr">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- data-URI SVG, not an optimisable asset */}
-                  <img alt="Authenticator QR code" src={qrCodeSrc(enrolment.qrCodeSvg)} />
+                  <TotpQr svg={enrolment.qrCodeSvg} uri={enrolment.uri} />
                 </div>
                 <div className="vv-verify-secret">
                   <span className="vv-verify-secret-label" id="vvSecretLabel">

@@ -66,6 +66,7 @@ describe('identity tables', () => {
       'scope_summary',
       'scope_notes',
       'mfa_enrolled',
+      'mfa_setup_deadline',
       'mfa_methods',
       'joined_at',
       'last_active_at',
@@ -106,6 +107,7 @@ describe('identity tables', () => {
       'profiles_account_status_idx',
       'profiles_org_id_idx',
       'profiles_last_active_at_idx',
+      'profiles_mfa_setup_deadline_idx',
     ]);
   });
 

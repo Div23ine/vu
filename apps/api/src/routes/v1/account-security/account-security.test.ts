@@ -126,6 +126,14 @@ class FakeSecurityRepo implements AccountSecurityRepo {
   async setLastFactorChangeAt(_userId: string, at: Date) {
     this.factorChanges.push(at);
   }
+  sessionMethods: Array<{ sessionId: string; method: string }> = [];
+  clearedDeadlines: string[] = [];
+  async setSessionMfaMethod(sessionId: string, method: MfaMethod) {
+    this.sessionMethods.push({ sessionId, method });
+  }
+  async clearMfaSetupDeadline(userId: string) {
+    this.clearedDeadlines.push(userId);
+  }
   async setMfaState(_userId: string, enrolled: boolean, methods: MfaMethod[]) {
     this.mfaState.push({ enrolled, methods });
     this.profile.mfaEnrolled = enrolled;

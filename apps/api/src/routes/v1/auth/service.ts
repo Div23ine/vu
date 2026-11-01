@@ -9,6 +9,7 @@ import { HttpError } from '../../../lib/http-error.js';
 import { SupabaseError } from '../../../lib/supabase-admin.js';
 import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
 import type { EmailProvider } from '../../../providers/email.js';
+import { enrollTotp } from '../../../lib/totp.js';
 import type { MfaSetupStore } from './challenge.js';
 import {
   EmailOtpStore,
@@ -61,6 +62,12 @@ export interface SessionUserView {
   orgId: string | null;
   permissions: Permission[];
   mfaEnrolled: boolean;
+  /**
+   * ISO deadline of the open first-login MFA enrolment window, or `null`.
+   * Read from `profiles.mfa_setup_deadline` — the authoritative copy — so the
+   * web popup renders a countdown the browser cannot restart by reloading.
+   */
+  mfaSetupDeadline: string | null;
 }
 
 export interface RequestMeta {
@@ -121,6 +128,22 @@ export type MagicLinkVerifyResult =
       userId: string;
       /** Absolute `${WEB_ORIGIN}` URL the route 302s to (the MFA step). */
       redirectTo: string;
+      /**
+       * Task 2b: an administrator on their FIRST login is landed on the site
+       * homepage rather than on a setup screen, so the verify leg opens a real
+       * (aal1) session for them at the same time as it seals the `vv_mfa`
+       * challenge. Both cookies are set; the session is what lets the homepage
+       * render as a signed-in admin and what the popup reads its server-side
+       * deadline from, and the challenge is what the enrolment ceremony behind
+       * the popup still needs.
+       *
+       * Absent for every other challenge leg — a normal user's magic link
+       * continues to hand over ONLY the challenge, so no protected route is
+       * reachable before their six-digit code.
+       */
+      issued?: IssuedSession;
+      /** True when this challenge opened a first-login MFA setup window. */
+      setup?: boolean;
     }
   | {
       /**
@@ -211,13 +234,25 @@ export function primaryWebOrigin(webOrigin: string): string {
 // ——— Phase 2: forced-setup policy helpers ———
 
 /**
- * Who faces a forced first-sign-in setup gate when unenrolled: administrators
- * (timed 5:00 window, blockable) and clients (untimed enrolment routing — the
- * work order's "blocked + routed to enrolment": they cannot reach a session
- * without enrolling, but they are never `blocked_mfa_setup`).
+ * Who faces the forced first-sign-in MFA SETUP gate when unenrolled.
+ *
+ * Administrators only, and only the timed kind: an unenrolled admin gets a
+ * 5-minute window, a server-side deadline and — if they let it lapse —
+ * `blocked_mfa_setup`.
+ *
+ * CHANGED (work order Task 2d): `client` used to be in this set, which routed a
+ * normal user's magic link to the dedicated setup screen. That is what produced
+ * the reported "link expired"/"unauthenticated" experience: the setup screen is
+ * gated on the HttpOnly `vv_mfa` challenge cookie, so anything that dropped or
+ * failed to carry it rendered a dead "No active sign-in" card instead of a code
+ * box. A normal user now always lands on the MFA VERIFY screen, which is what
+ * the work order specifies ("magic link → immediately route to MFA verification
+ * screen (6-digit code)"). It is not a dead end for a legacy unenrolled client
+ * either: `availableMethods` always includes `email_otp`, so there is a six-digit
+ * code to enter, and signup enrols TOTP for every new account anyway.
  */
 export function needsForcedSetup(role: UserRole): boolean {
-  return (ADMINISTRATOR_ROLES as readonly string[]).includes(role) || role === 'client';
+  return (ADMINISTRATOR_ROLES as readonly string[]).includes(role);
 }
 
 /**
@@ -346,6 +381,7 @@ export class AuthService {
       orgId: profile.orgId,
       permissions: permissionsFor(profile.role),
       mfaEnrolled,
+      mfaSetupDeadline: profile.mfaSetupDeadline ?? null,
     };
   }
 
@@ -815,8 +851,26 @@ export class AuthService {
       }
 
       const windowSeconds = setupWindowSecondsFor(profile);
-      const deadlineEpochMs =
-        windowSeconds !== null ? this.now().getTime() + windowSeconds * 1000 : null;
+
+      // ——— Task 2e: the deadline is a property of the ACCOUNT, not of this
+      // request. `armMfaSetupDeadline` is one UPDATE with a CASE inside it, so
+      // an unexpired window already on the row wins: clicking a second magic
+      // link (or two links racing) cannot buy another five minutes, and a
+      // reload re-reads the same value from `GET /auth/session`.
+      //
+      // The exempt super admin never reaches this line — the branch above
+      // returns a full session for them — so no deadline is ever written to
+      // Divine's row and the enforcement branch has nothing to find.
+      let deadlineEpochMs: number | null = null;
+      if (windowSeconds !== null) {
+        const armed = await this.deps.repo.armMfaSetupDeadline(
+          profile.id,
+          new Date(this.now().getTime() + windowSeconds * 1000),
+        );
+        deadlineEpochMs = armed === null ? null : new Date(armed).getTime();
+        profile.mfaSetupDeadline = armed;
+      }
+
       const setupHandle = (
         await this.deps.challenges.create({
           userId: profile.id,
@@ -829,7 +883,9 @@ export class AuthService {
       ).handle;
       if (deadlineEpochMs !== null) {
         // Only TIMED windows are ledgered: the record outlives the challenge
-        // so a missed window is detected lazily and turns into a block.
+        // so a missed window is detected lazily and turns into a block. The
+        // profile column is the authority; this is the copy that survives a
+        // lost cookie.
         await this.deps.setups.open({
           handle: setupHandle,
           userId: profile.id,
@@ -838,16 +894,40 @@ export class AuthService {
           createdAtEpochMs: this.now().getTime(),
         });
       }
-      const setupParams = new URLSearchParams({ to: maskEmailForRedirect(profile.email) });
-      if (deadlineEpochMs !== null) setupParams.set('deadline', String(deadlineEpochMs));
-      if (next !== null) setupParams.set('next', next);
+
+      // ——— Task 2b: land on the HOMEPAGE, not on a login or setup screen.
+      // The administrator gets a real (aal1) session so the site renders as
+      // signed-in, plus the `vv_mfa` challenge the enrolment ceremony behind
+      // the mandatory popup still needs. The popup itself is driven by
+      // `mfaSetupDeadline` on the session view, so it reappears on reload with
+      // the SAME remaining time.
+      //
+      // Note what this deliberately does NOT do: it does not grant aal2, so
+      // `requireStaff` still answers 403 `mfa_required` on every admin data
+      // route until the authenticator is enrolled. The five minutes buy a
+      // countdown and an enrolment ceremony, not access to the console.
+      const issued = await this.issueSession(supabaseSession, profile, {
+        meta,
+        mfaMethod: null,
+      });
+
+      // Nothing rides in the redirect URL any more. The popup reads the
+      // deadline off the session view (`mfaSetupDeadline`, straight from
+      // `profiles.mfa_setup_deadline`) and builds its own link to
+      // `/login/mfa/setup?deadline=…`, so the value it renders is the server's
+      // and not one a browser could have edited into a query string.
       return {
         kind: 'challenge',
         handle: setupHandle,
         methods,
         email: profile.email,
         userId: profile.id,
-        redirectTo: `${origin}/login/mfa/setup?${setupParams.toString()}`,
+        issued,
+        setup: true,
+        // The site homepage (work order Task 2b: "redirect to homepage", never
+        // a generic login screen). `/login/mfa/setup` stays reachable from the
+        // popup's own control.
+        redirectTo: `${origin}/`,
       };
     }
 
@@ -907,10 +987,7 @@ export class AuthService {
       throw new HttpError(410, 'challenge_expired');
     }
     const session = this.deps.challenges.decryptSession(challenge);
-    const enrollment = await this.deps.supabase.mfa.enrollTotp(
-      session.accessToken,
-      'Authenticator app',
-    );
+    const enrollment = await enrollTotp(this.deps.supabase.mfa, session.accessToken);
     return {
       kind: 'options',
       factorId: enrollment.factorId,
@@ -976,6 +1053,10 @@ export class AuthService {
     }
 
     await this.deps.repo.setMfaEnrolled(challenge.userId, true);
+    // Task 2e: the window is spent. Clearing the profile column is what stops a
+    // stale deadline from tripping the middleware enforcement on every later
+    // request — the account is enrolled, so there is nothing left to enforce.
+    await this.deps.repo.clearMfaSetupDeadline(challenge.userId);
     await this.deps.challenges.delete(safeHandle);
     const record = await this.deps.setups.forUser(challenge.userId);
     if (record !== null) await this.deps.setups.clear(record);
@@ -989,6 +1070,16 @@ export class AuthService {
       mfaMethod: 'totp',
       remember: challenge.remember,
     });
+
+    // Task 2b issued a real (aal1) session at the magic-link leg so the site
+    // could render as signed-in behind the enrolment popup. That row is now
+    // superseded: revoke it, or the admin's session list keeps a phantom
+    // "active" entry whose cookies were just replaced. Only revoke when the id
+    // actually changed — Supabase may reuse it when raising aal1 -> aal2.
+    if (aal1.sessionId !== '' && aal1.sessionId !== issued.sessionId) {
+      await this.deps.repo.revokeSession(aal1.sessionId, this.now());
+    }
+
     return { kind: 'session', issued };
   }
 

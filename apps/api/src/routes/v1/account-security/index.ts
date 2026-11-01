@@ -14,7 +14,11 @@ import { audited, auditFailure } from '../../../audit/audited.js';
 import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 import { HttpError } from '../../../lib/http-error.js';
 import { NO_BREACH_CHECK, type BreachCheck } from '../../../lib/breach.js';
-import { readSessionCookies } from '../../../lib/session-cookies.js';
+import {
+  cookieContext,
+  readSessionCookies,
+  setSessionCookies,
+} from '../../../lib/session-cookies.js';
 import type { SupabaseAdmin } from '../../../lib/supabase-admin.js';
 import { COOKIE_NAMES } from '../../../plugins/cookies.js';
 import { memoryKvStore, type KvStore } from '../auth/challenge.js';
@@ -201,16 +205,31 @@ const accountSecurityRoutes: FastifyPluginAsync<AccountSecurityRoutesOptions> = 
       async (request, reply, ctx) => {
         const body = TotpVerifyBody.parse(request.body);
         const user = self(request);
-        await serviceFor(asExecutor(ctx.tx)).verifyTotp(
+        const service = serviceFor(asExecutor(ctx.tx));
+        const elevated = await service.verifyTotp(
           accessToken(request),
           user.id,
           body.factorId,
           body.code,
         );
+        await service.completeTotpEnrollment(user.id, user.sessionId);
 
-        // The verified session is AAL2: replace the cookies so the guard sees it.
-        const { at } = readSessionCookies(request);
-        void at;
+        // The verified session is AAL2: replace the cookies so the guard sees
+        // it. This used to read the old access token and then discard it
+        // (`void at`) — the 204 went out with the aal1 cookies still standing,
+        // so a member who enrolled from the first-login popup stayed at aal1
+        // until an explicit `POST /auth/refresh` and `requireStaff` kept
+        // answering 403 `mfa_required`. It was logged as known gap F3; the
+        // popup flow in Task 2b makes it load-bearing, so it is fixed here.
+        setSessionCookies(
+          reply,
+          {
+            accessToken: elevated.accessToken,
+            refreshToken: elevated.refreshToken,
+            expiresIn: elevated.expiresIn,
+          },
+          { remember: false, ...cookieContext(request) },
+        );
         return reply.status(204).send();
       },
     ),

@@ -26,8 +26,12 @@ import { useLogout } from './use-logout';
  */
 
 const routerReplace = vi.hoisted(() => vi.fn());
+// `Providers` also mounts `MfaSetupNotice` (Task 2b), which reads the current
+// path to build its enrolment link — so the partial mock has to expose
+// `usePathname` too, or rendering the root tree throws.
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: routerReplace }),
+  usePathname: () => '/',
 }));
 
 const originalLocation = window.location;

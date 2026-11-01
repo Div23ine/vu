@@ -42,6 +42,8 @@ export interface AuthPluginOptions {
   supabase?: SupabaseAdmin;
   /** Test seam: registry wiring. */
   cache?: CacheLike;
+  /** Test seam: the clock used to evaluate the MFA setup deadline. */
+  now?: () => number;
   registryOptions?: Partial<Omit<SessionRegistryOptions, 'lookup' | 'cache'>>;
 }
 
@@ -97,6 +99,8 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (app, options) =
         })
       : undefined);
 
+  const now = options.now ?? Date.now;
+
   const supabase =
     options.supabase ??
     (hasSecrets
@@ -124,6 +128,23 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (app, options) =
     if (record.accountStatus !== 'active') throw HttpError.unauthorized();
     if (record.deletedAt !== null) throw HttpError.unauthorized();
     if (record.userId !== payload.sub) throw HttpError.unauthorized();
+
+    // Task 2e: the first-login MFA enrolment window is enforced here, not only
+    // at the next sign-in. An account whose deadline has passed and whose
+    // second factor is still not enrolled holds a session that no longer
+    // entitles it to anything — so it fails closed exactly like a blocked
+    // account, and the next magic-link attempt performs the durable
+    // `blocked_mfa_setup` flip + audit write.
+    //
+    // The roster's exempt super admin has no window and no block.
+    if (
+      record.mfaSetupDeadline !== null &&
+      record.mfaEnrolled === false &&
+      payload.role !== 'super_admin' &&
+      Date.parse(record.mfaSetupDeadline) <= now()
+    ) {
+      throw HttpError.unauthorized();
+    }
 
     // In-house WebAuthn and email-OTP verifications cannot raise Supabase's own
     // AAL, so they are recorded on the session row and honoured here.

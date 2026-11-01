@@ -7,7 +7,7 @@ import { toast } from '@vunvault/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@vunvault/ui';
 import type { TotpEnrollStart } from '@vunvault/contracts';
 import { useDisableTotp, useTotpEnroll, useTotpVerify } from '../_hooks/use-security';
-import { qrCodeSrc } from '../../../../(auth)/signup/_hooks/use-verify-signup';
+import { TotpQr } from '../../../../../components/totp-qr';
 
 /**
  * Authenticator-app (TOTP) panel .
@@ -154,8 +154,7 @@ export function TotpPanel({ enabled, onChanged }: TotpPanelProps) {
       {enrolment !== null ? (
         <div className="vpm-totp">
           <div className="vpm-qr">
-            {/* eslint-disable-next-line @next/next/no-img-element -- data-URI SVG, not an optimisable asset */}
-            <img alt="Authenticator QR code" src={qrCodeSrc(enrolment.qrCodeSvg)} />
+            <TotpQr svg={enrolment.qrCodeSvg} uri={enrolment.uri} />
           </div>
           <div>
             <ol className="vpm-steps">

@@ -54,3 +54,10 @@ test-results
 crash.log
 crash.*.log
 apps/web/core
+
+# Human-in-the-loop auth verification scratch (scripts/verify-auth-hitl.mjs).
+# The cookie jar holds LIVE session tokens (vv_at / vv_rt) and the QR file holds
+# a freshly generated TOTP shared secret — neither may ever be committed.
+.hitl-cookies.json
+.hitl-report.json
+.hitl-totp-qr.svg

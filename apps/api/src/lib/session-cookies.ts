@@ -31,6 +31,22 @@ export interface SessionCookies {
   mfa?: string;
 }
 
+/**
+ * The two cookie attributes every sign-in leg must agree on, derived from the
+ * request's server env rather than passed in per call.
+ *
+ * It lives here — not inside `routes/v1/auth` — because more than one route
+ * module now rotates session cookies: the auth legs, and
+ * `POST /account/mfa/totp/verify`, which upgrades an aal1 session to aal2 when
+ * an authenticator is enrolled. Two copies of this would eventually disagree
+ * about `secure` or `domain`, and a cookie set with different attributes than
+ * the one that clears it simply does not clear.
+ */
+export function cookieContext(request: FastifyRequest): Omit<SessionCookieContext, 'remember'> {
+  const env = request.server.env;
+  return { secure: env.NODE_ENV !== 'development', domain: env.COOKIE_DOMAIN || undefined };
+}
+
 export function generateCsrfToken(): string {
   return randomBytes(32).toString('hex');
 }

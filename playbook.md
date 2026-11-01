@@ -770,6 +770,139 @@ failed` warn from the pre-adapter-v2 hook bug (fixed, never recurred), (3) the e
   `http://127.0.0.1:8080` (local API), so they are not clickable from a user browser by
   design of the local run. Scratch tokens/cookie jars deleted after the run.
 
+### 2026-11-01 — `Auth bug.md` work order (Tasks 1–3, 5): chatbot mount, MFA routing, signup QR
+
+- **Trigger:** the user work order `Auth bug.md` (599 lines) — mount the chatbot widget, fix the
+  three first-login MFA redirect flows, fix the blank signup TOTP QR, smoke-run the stack and log
+  everything here. Guardrails honoured: no deployment (G1), `pnpm dev` only — never `next build`
+  (G2, 1 GiB sandbox), Supabase treated as system-of-record (G3), no destructive DB operations.
+  Domain stays **`vunvault.com`** (single-n): the work order's G6 `vunnvault.com` is a typo, and the
+  user confirmed the roster and the `divine@vunvault.com` exemption are **unchanged** — no data
+  migration.
+- **User decisions (asked before coding):** **Verification env** → the user will supply live
+  Supabase/Resend credentials; implement + unit-test first, live pass after. **Test addresses** →
+  `go****4@gmail.com` and `di****@vunvault.com` (masked here per G6). **Chatbot visibility** →
+  **keep public**: Zura is a marketing assistant, so it is mounted site-wide in the root layout and
+  is explicitly **NOT** gated to authenticated MFA-complete users. The Task 1 defect was that
+  nothing ever rendered it, not that the wrong people could see it.
+
+- **Task 1 — chatbot mount (`apps/web/src/app/providers.tsx`):** `<ZuraWidget />` is now mounted
+  once in the root client tree, beside `<Toaster />`. The widget, its headset-and-shield launcher
+  SVG and the branding sweep all already existed from the 2026-11-01 work order and were
+  green in isolation (13/13) — but no file in the repository imported the component, so the
+  assistant was absent from every page. Added `apps/web/src/app/providers.test.tsx` (5 tests) which
+  renders the real `Providers` tree and asserts the launcher is mounted exactly once, the headset
+  avatar renders, and no `gemini` / "powered by google" string exists in the DOM. A component suite
+  cannot catch "nobody mounts this"; only a test on the tree that mounts it can.
+
+- **Task 3 — blank signup QR (root cause + fix):** `@supabase/auth-js@2.117.3`
+  (`GoTrueClient._enroll`) already wraps GoTrue's raw SVG as
+  `data:image/svg+xml;utf-8,<svg…>`. The old `qrCodeSrc()` wrapped whatever it was given **again**,
+  producing a double-encoded URI whose payload was itself a percent-encoded data URL — so the
+  `<img>` decoded to garbage and rendered blank. Confirmed against GoTrue's source: `enrollTOTPFactor`
+  builds the SVG with `goqrsvg`/`svgo` and returns `buf.String()`, i.e. **raw SVG, not a data URL**
+  (the `pquerna/otp` `Key.QRCode()` data-URL path is _not_ what GoTrue uses). Fix:
+  - `apps/web/src/lib/qr.ts` — rewritten around an **idempotent** `qrCodeSrc()` that accepts raw SVG
+    or an existing data URI and encodes at most once; plus `isQrDataUri()` and `otpauthUri()`.
+    New `qr.test.ts`, 17 tests.
+  - `apps/web/src/components/totp-qr.tsx` — **new** shared `<TotpQr>` with a "cannot render, enter
+    the key manually" fallback so a future encoding regression degrades to a usable secret instead
+    of a blank square. New `totp-qr.test.tsx`, 9 tests. Adopted by all four QR surfaces: signup
+    verify dialog, `signup/enroll`, `login` MFA setup panel, portal security TOTP panel — the bug
+    was duplicated in each, so the fix is one component rather than four patches.
+  - `apps/api/src/lib/supabase-admin.ts` — `enrollTotp()` now accepts an `issuer`. New
+    `apps/api/src/lib/totp.ts` (`TOTP_ISSUER = 'VUNVAULT'`, conflict-retry) + `totp.test.ts`,
+    6 tests. Previously the authenticator entry showed the raw site URL as its issuer.
+
+- **Task 3d — post-onboarding routing (`onboarding-wizard.tsx`):** completion now calls
+  `useLogout().mutate()` → `POST /auth/logout` → clears the query cache → `router.replace('/login')`.
+  It previously dropped a freshly-enrolled user on the homepage still holding a session, which is
+  why the next sign-in looked like it had skipped MFA. `onboarding-b.test.tsx` updated, plus a new
+  test for the logout-failure fallback (still routes to `/login`). 20/20.
+
+- **Task 2 — the three first-login redirect flows.** Reworked around one correction to the earlier
+  Phase-2 design: the deadline belongs to the **account**, not to a redirect URL.
+
+  | Role                      | Enrolled | Landing                                                              |
+  | ------------------------- | -------- | -------------------------------------------------------------------- |
+  | `admin` (non-exempt)      | no       | full aal1 session → **`/`** + mandatory popup, 5-min server deadline |
+  | `admin` (non-exempt)      | yes      | `/login/mfa?methods=…`                                               |
+  | `super_admin` (`divine@`) | any      | full session → `/admin`, no timer, no popup                          |
+  | `client`                  | any      | `/login/mfa?methods=…` — always the verify screen                    |
+  - `apps/api/src/routes/v1/auth/service.ts` — `needsForcedSetup(role)` is now **administrators
+    only** (`client` dropped). Clients always route to `/login/mfa`, which is safe because
+    `availableMethods` includes `email_otp` for every account, so that screen always has a code
+    path. The admin first-login branch arms the deadline via `armMfaSetupDeadline`, issues a **full
+    aal1 session**, sets `setup: true` and redirects to `${origin}/` — the homepage, never a
+    dedicated setup screen. `toSessionUser` now carries `mfaSetupDeadline`.
+  - `packages/db/sql/0097_profiles_mfa_setup_deadline.sql` — **new**, additive only
+    (`ADD COLUMN mfa_setup_deadline timestamptz NULL` + partial index); `verify-migrations.mjs`
+    passes. Mirrored in `packages/db/src/schema/identity.ts` and
+    `packages/contracts/src/auth.ts` (`SessionUser.mfaSetupDeadline`).
+  - `armMfaSetupDeadline` is a single `UPDATE … CASE WHEN mfa_setup_deadline IS NOT NULL AND > now()
+THEN keep ELSE $2 END`. An unexpired window already on the row **wins**, so a second magic link
+    (or two racing links) cannot buy another five minutes, and a reload re-reads the same value.
+    The test fake models that atomicity rather than just storing the value.
+  - `apps/web/src/components/mfa-setup-notice.tsx` — **new** mandatory popup, mounted in root
+    `Providers`. Non-dismissible (`dismissible={false}` + `hideClose`); its only control starts
+    enrolment. The countdown is derived from the **server's** `mfaSetupDeadline` off the session
+    view — never from a query string a browser could edit — and it steps aside on
+    `/login/mfa` and `/login/mfa/setup` where the ceremony is already on screen. At zero it stops
+    pretending the window is open and re-reads the session. New test file, 9 tests.
+  - `apps/web/src/mocks/handlers/auth.ts` — a dev-only opt-in cookie
+    (`vv_mock_mfa_deadline=1`) makes the mock `GET /auth/session` answer with an armed
+    `mfaSetupDeadline`, so the popup can be previewed without a real administrator, a real magic
+    link or a real Supabase. Kept as a SEPARATE cookie rather than a field on `mockStaffSession`
+    because that object is shared with the test suites — an always-armed deadline would put a
+    non-dismissible modal in front of every mocked page. (Added for the Task 4 smoke run; see Known
+    Gaps — the OOM wall meant it was never actually loaded in a browser.)
+  - **Task 2e enforcement** — `apps/api/src/lib/session-registry.ts` now selects
+    `p.mfa_setup_deadline` and `p.mfa_enrolled`; `apps/api/src/plugins/auth.ts` `resolveUser`
+    rejects (401, fail-closed exactly like a blocked account) when the deadline has passed, no
+    factor is enrolled, and the role is not `super_admin`. A `now` clock seam was added for
+    testability. New `session-registry.test.ts` (6 tests) pins the SELECT and the `Date`/string →
+    ISO normalisation; 7 new enforcement tests in `plugins/auth.test.ts` cover open window, closed
+    window, the deadline instant itself, enrolled-with-stale-deadline, the exempt super admin,
+    never-armed accounts, and `optionalAuth` leaking no identity past a closed window.
+    `requireStaff`'s aal2 requirement is **untouched** — the five minutes buy a countdown and an
+    enrolment ceremony, not access to the admin console.
+  - **Deadline cleared on success** in both enrolment paths (`setupVerify` and
+    `completeTotpEnrollment`), so no stale value can trip the middleware later.
+
+- **F3 closed (open since the 2026-10-31 run):** `POST /account/mfa/totp/verify` returned 204
+  without rotating cookies, leaving an enrolled user on an aal1 session. It now calls
+  `verifyTotp` → `completeTotpEnrollment(userId, sessionId)` (which sets the session's MFA method
+  **and** clears the deadline) → `setSessionCookies(reply, elevated.tokens, { remember: false,
+…cookieContext(request) })` → 204. `cookieContext` was promoted from `auth/index.ts` into
+  `apps/api/src/lib/session-cookies.ts` as a shared helper so both routes derive cookie scope the
+  same way. `AccountSecurityRepo` gained `setSessionMfaMethod` + `clearMfaSetupDeadline`.
+
+- **In-run bug fix (found by this run's own tests):** Task 2b made `createSession` reachable
+  **twice for one login** — the magic-link leg issues the aal1 session, `setupVerify` issues again
+  after enrolment. Supabase reuses the same session id when it elevates aal1 → aal2, so the second
+  `INSERT` would hit the `user_sessions` primary key and **500 the enrolment**. `SqlAuthRepo
+.createSession` is now an upsert: `on conflict (id) do update set mfa_method = excluded
+.mfa_method, last_seen_at = now()`. A revoked row is deliberately **not** resurrected — the
+  conflict branch carries only the MFA upgrade. The fake mirrors the upsert so the tests exercise
+  the same semantics; `setupVerify` also revokes the superseded row when the id genuinely differs.
+
+- **Tests rewritten to the new contract** (`apps/api/src/routes/v1/auth/auth.test.ts`): five
+  existing tests pinned the pre-Task-2 routing and were updated, not deleted — an unenrolled
+  **client** now lands on the verify screen with no window and no ledger; an unenrolled **admin**
+  gets a full session, the homepage, and an armed 5:00 window with nothing in the query string;
+  a non-roster admin keeps the same window; enrolment asserts one live session raised in place to
+  `totp` (a second row would mean the upsert regressed to an INSERT) and a cleared deadline; and
+  `setup/abandon` now 403s on a client's ordinary challenge, since a client can never hold a setup
+  challenge to abandon.
+
+- **Status:** API `tsc --noEmit` clean; web `tsc --noEmit` clean; eslint clean on every touched
+  file; prettier clean. API **1079 passed / 9 failed**, web **820 passed / 10 failed** — and every
+  one of those 19 failures reproduces on the **unmodified base commit** (verified by `git stash`):
+  API `infra` ×4, `redis-offline` ×3, `diagnostics` ×2 are environmental (`@supabase/realtime-js`
+  needs a WebSocket impl on this Node); web `env.test.ts` ×6, contributor-photo cards ×3,
+  `signup-enroll` ×1 are pre-existing. `npm run verify` passes every gate except
+  `verify-env-docs` (`REDIS_OPTIONAL` undocumented), which also fails at the base commit.
+
 ## Catalog Extraction
 
 Per addendum A1.2/A5. Each entry names the catalog part, the sections that carry the canonical
@@ -1735,6 +1868,43 @@ before any change the work order does not already specify).
   removed; the two local test identities were retired via the product's own audited soft-delete
   instead (correction-forward of the run plan's "delete test identities" note).
 
+### `Auth bug.md` work-order decisions (2026-11-01)
+
+- **Zura stays public (user-chosen).** The work order asked for the widget to be gated to
+  authenticated, MFA-complete users. The user overrode this: Zura is a **marketing** assistant, so
+  it mounts in the root layout for every visitor. The real Task 1 defect was that no file imported
+  the component at all. Gating it would have removed it from the marketing pages it exists for.
+- **`vunvault.com`, single-n (user-confirmed).** The work order's G6 `vunnvault.com` is a typo. The
+  staff roster, the domain block and the `divine@vunvault.com` exemption are left exactly as they
+  were; **no data migration** was run to "correct" addresses.
+- **The deadline is a column, not a query parameter.** Phase 2 carried the window in
+  `?deadline=<epoch ms>`. That is a value a browser can edit, and it dies with the redirect — a
+  reload lost the countdown. Task 2b moves the authority to `profiles.mfa_setup_deadline`, surfaced
+  on the session view; the URL parameter survives only as display input to the setup panel. The
+  popup builds its own link from the server's value.
+- **Admins get a real session at the magic-link leg.** They land on the homepage signed-in rather
+  than on a dedicated setup screen, per the work order's revision. This is **aal1 only**:
+  `requireStaff` still answers 403 `mfa_required` on every admin data route until the authenticator
+  exists. The five minutes buy a countdown and an enrolment ceremony, not console access — so no
+  aal2 waiver was added anywhere.
+- **Clients are exempt from the timed window entirely.** `needsForcedSetup` dropped `'client'`.
+  A client always routes to `/login/mfa`, which is safe because `email_otp` is in
+  `availableMethods` for every account. An untimed, unblockable enrolment detour was strictly worse
+  for them than the verify screen they were already entitled to.
+- **Enforcement fails closed with 401, not 403.** `resolveUser` already answers 401 for a revoked,
+  suspended, soft-deleted or missing session; an expired window joins that set rather than
+  inventing a second failure mode. This also keeps the web's `apiGetQuiet` contract intact — it
+  swallows 401 on `GET /auth/session`, so a lapsed admin cleanly reads as signed-out and is routed
+  back to `/login`, where the next magic-link attempt performs the durable `blocked_mfa_setup` flip
+  and its audit write.
+- **`createSession` upserts.** Chosen over "revoke the old row and insert a new one" because
+  Supabase reuses the session id when elevating aal1 → aal2: there is one session, raised, not two.
+  The conflict branch updates only `mfa_method` and `last_seen_at` — a revoked row is never
+  resurrected by an enrolment.
+- **In-run fixes were kept minimal.** The `createSession` primary-key collision and the aal1 row
+  left unrevoked by `setupVerify` were both found by this run's own tests and are logged with root
+  cause. Nothing outside the work order plus those two fixes was touched.
+
 ## Known Gaps / Future Work
 
 - 5 admin emails still to be supplied (roster placeholders 5–9).
@@ -1919,9 +2089,87 @@ logo-512.png` (square, transparent) satisfies schema.org's raster-≥112×112 ru
   ordering, the 20-row `auth.schema_migrations` backfill and the GoTrue DSN `search_path=auth`
   were applied directly to the local DB (procedure in the Change Log). A managed production
   Supabase needs none of them; a fresh **local** stack needs all of them.
-- **F3 (204 without aal2 cookie rotation), the aal1 first-token window, and plaintext TOTP
-  secrets at rest** (2026-10-31 run) — unchanged, still open.
+- **The aal1 first-token window and plaintext TOTP secrets at rest** (2026-10-31 run) —
+  unchanged, still open. **F3 (204 without aal2 cookie rotation) is now CLOSED** by the
+  2026-11-01 `Auth bug.md` run: `/account/mfa/totp/verify` rotates the cookies to aal2.
 - **Web app never compiled in this run** (1 GiB sandbox; G2 bars `next build`). The Zura change
   is verified by vitest (13/13) + tsc/eslint only.
 - **Five standby slots are still `null`.** Task 5d proved activation is a data edit +
   `provision:admins` re-run only; the drill slot was reverted, so slots 5–9 remain reserved.
+
+### `Auth bug.md` work-order run (2026-11-01) — Known Gaps / documented limitations
+
+- **Task 4 (`pnpm dev` smoke run) is NOT done — blocked two ways, and the first is a hard wall.**
+  - **The web app cannot be served in this sandbox at all.** `next dev` boots and reports
+    `✓ Ready in 5.2s`, but compiling a _single_ route is killed by the kernel: `Out of memory:
+Killed process … (next-server) … anon-rss:504340kB` against a 1 GiB cgroup limit
+    (`memory.max = 1073741824`). Reproduced with **both** compilers — Turbopack hung on
+    `○ Compiling / …` until the listener disappeared, and webpack (with
+    `--max-old-space-size=512`) got as far as `○ Compiling /login …` before the OOM kill. This is
+    the ceiling G2 exists to describe; it is not a defect in this run's code, and no `next build`
+    was attempted. **Consequence: the new popup and `<TotpQr>` have never rendered in a real
+    browser.** They are verified by vitest + `tsc` only.
+  - **The API needs credentials that are not here.** No `apps/api/.env` exists in this workspace
+    (`.env` is gitignored at `.gitignore:24`, so it was never committed), and the user chose
+    `provide_creds` but has not yet supplied `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+    `JWT_SECRET` or `RESEND_API_KEY`. Nothing was invented or stubbed in their place.
+  - **A credentials paste arrived corrupted and was NOT written to disk.** The values came through
+    interleaved (the `DATABASE_URL` had fragments of other values spliced through it, JWT headers
+    repeated mid-string, and the `SUPABASE_JWT_SECRET` tail repeated seven times — that fragment is
+    the DUMMY secret from `.env.example`). Writing mangled values into `apps/api/.env` would have
+    produced a config that _looks_ configured and fails confusingly mid-verification, so no `.env`
+    was created; the user will re-send them as a file. The one value that survived intact was the
+    Resend key, which is therefore now present in the chat transcript; the user was told and chose
+    to keep it rather than rotate it. It is masked `re_****…` here per G6 and was written to no
+    file.
+  - The human-in-the-loop steps **H0–H7** — real email delivery, real Google Authenticator scans,
+    real code entry — all remain pending on that live pass, and H0.1 (ask for the real address
+    before sending anything) has not been reached.
+  - **Handoff driver: `scripts/verify-auth-hitl.mjs`** (new, 712 lines, eslint-clean, no
+    `no-console` suppressions — output goes through `process.stdout.write` because the repo rule
+    allows only `warn`/`error`). Sub-commands `doctor`, `magic-link`, `verify`, `session`,
+    `setup-options`, `setup-verify`, `totp-enroll`, `totp-verify`, `enforce`, `logout`, `record`,
+    `report`. It performs every AGENT-side step against a running API and prints exactly what the
+    human must paste back: for H2 it writes the QR SVG to a file, prints the `otpauth://` URI
+    verbatim and the Base32 secret on its own line; for Task 2 it prints the required routing matrix
+    next to the ACTUAL `Location` and cookie set so a human compares them; `report` emits the H4
+    markdown table. It is deliberately **not** automated end to end — a script that could mark these
+    rows PASS by itself would defeat the point of H1/H2, so `record` **downgrades any PASS row whose
+    `--user` confirmation is empty to `PENDING-USER`** (H4's own rule), and the vocabulary is
+    restricted to the five H3 statuses. Requests use `redirect: 'manual'` because the 302 `Location`
+    _is_ the assertion, and cookies persist in a jar across invocations so the legs chain.
+  - **Secret hygiene for that driver:** the jar holds LIVE `vv_at`/`vv_rt` tokens and the QR file
+    holds a freshly generated TOTP secret, so `.hitl-cookies.json`, `.hitl-report.json` and
+    `.hitl-totp-qr.svg` were added to `.gitignore` (verified ignored). Credentials are masked on
+    output; the Base32 secret is the one value printed in full, because H2 requires it as the
+    manual-entry fallback.
+  - What _was_ verified statically: API and web `tsc --noEmit` clean, eslint clean on every touched
+    file, prettier clean, `verify-migrations` passes, and both vitest suites at the pre-existing
+    baseline (178/178 on the API files this run touched; 144/144 on the web files it touched).
+- **A mock-only preview hook was added for the popup, and is itself unexercised.**
+  `apps/web/src/mocks/handlers/auth.ts` now answers `GET /auth/session` with an armed
+  `mfaSetupDeadline` when the `vv_mock_mfa_deadline=1` cookie is present, so the Task 2b popup can
+  be seen in dev without a real administrator, a real magic link or a real Supabase. It is a
+  SEPARATE opt-in cookie rather than a field on `mockStaffSession` on purpose — that object is
+  shared with the test suites, and an always-armed deadline would put a non-dismissible modal in
+  front of every mocked page. Because of the OOM wall it has never actually been loaded in a
+  browser; it is reviewed code, not demonstrated behaviour.
+- **The enrolment popup's live rendering is unverified** (see the Task 4 wall above). Its tests pin
+  the countdown, the non-dismissible chrome, the server-derived deadline and the suppression rules;
+  nobody has yet watched it appear on a real homepage behind a real magic-link sign-in.
+- **The middleware deadline check reads the registry's 30-second cache.** A window can therefore
+  close up to ~30 s before the first request that actually refuses it. Deliberate — the cache is
+  what keeps this to one round trip per session per half minute — and the durable
+  `blocked_mfa_setup` flip at the next verify leg is unaffected.
+- **`0097_profiles_mfa_setup_deadline.sql` has not been applied to any database.** It is additive
+  and passes `verify-migrations.mjs`, but no migration was run (G3: no destructive or unrequested
+  Supabase operations). It must be applied with `pnpm db:migrate` during the live pass, before any
+  of Task 2 can be exercised end to end.
+- **19 test failures remain, all pre-existing.** Verified red on the unmodified base commit via
+  `git stash`: API 9 (environmental — `@supabase/realtime-js` wants a WebSocket impl on this Node:
+  `infra` ×4, `redis-offline` ×3, `diagnostics` ×2); web 10 (`env.test.ts` ×6, contributor-photo
+  cards ×3, `signup-enroll` ×1). None are touched by this run; none were fixed by it either.
+- **`verify-env-docs` still fails** on `REDIS_OPTIONAL` missing from `docs/env-reference.md` —
+  pre-existing at the base commit, unrelated to this work order, left alone.
+- **Plaintext TOTP secrets at rest and the aal1 first-token window** (2026-10-31 run) remain open.
+  F3 from that run is now closed (see the Change Log).

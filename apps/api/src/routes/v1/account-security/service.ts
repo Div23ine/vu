@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import type { MfaMethod } from '@vunvault/contracts';
 import { HttpError } from '../../../lib/http-error.js';
 import { isStaff } from '../../../lib/staff.js';
+import { enrollTotp } from '../../../lib/totp.js';
 import type { BreachCheck } from '../../../lib/breach.js';
 import type { EmailProvider } from '../../../providers/email.js';
 import type { SupabaseAdmin, SupabaseSession } from '../../../lib/supabase-admin.js';
@@ -163,9 +164,14 @@ export class AccountSecurityService {
 
   // ----------------------------------------------------------------- TOTP
 
-  /** The friendly name is fixed product copy, shown in the authenticator app. */
+  /**
+   * Start an enrolment. The issuer and the friendly name are fixed product copy
+   * (`lib/totp.ts`), and that helper also retries once under a unique factor
+   * name when GoTrue says a still-unverified earlier attempt already holds it —
+   * otherwise every "Try again" after a blip 422s forever.
+   */
   async enrollTotp(accessToken: string) {
-    return this.deps.supabase.mfa.enrollTotp(accessToken, 'Authenticator app');
+    return enrollTotp(this.deps.supabase.mfa, accessToken);
   }
 
   async verifyTotp(
@@ -188,6 +194,26 @@ export class AccountSecurityService {
     await this.deps.repo.setMfaState(userId, true, methods);
     await this.deps.repo.setLastFactorChangeAt(userId, this.now());
     return session;
+  }
+
+  /**
+   * Post-verify bookkeeping once an authenticator code has raised the session to
+   * aal2.
+   *
+   * Two writes, both of which used to be missing and both of which were the
+   * reason an enrolment could succeed and still leave the member locked out:
+   *
+   *  - `user_sessions.mfa_method` — `plugins/auth.ts` derives the assurance
+   *    level from the token claim OR this column, so recording it makes the
+   *    elevation visible to the very next request rather than at the next
+   *    explicit refresh.
+   *  - `profiles.mfa_setup_deadline` — the first-login window is spent. Leaving
+   *    it set would let the middleware enforcement trip on an account that has
+   *    already done exactly what the window asked for.
+   */
+  async completeTotpEnrollment(userId: string, sessionId: string): Promise<void> {
+    await this.deps.repo.setSessionMfaMethod(sessionId, 'totp');
+    await this.deps.repo.clearMfaSetupDeadline(userId);
   }
 
   async disableTotp(accessToken: string, userId: string): Promise<void> {

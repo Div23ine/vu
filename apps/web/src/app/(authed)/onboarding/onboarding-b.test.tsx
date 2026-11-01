@@ -6,7 +6,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OnboardingSubmitBody, type SessionUser } from '@vunvault/contracts';
-import { createQueryClient } from '@vunvault/lib';
+import { createQueryClient, queryKeys } from '@vunvault/lib';
 import { useToastStore } from '@vunvault/ui';
 import { server } from '../../../mocks/server';
 import { OnboardingWizard } from './_components/onboarding-wizard';
@@ -59,6 +59,7 @@ const SUCCESS_REDIRECT_MS = 2200;
 
 let queryClient: QueryClient;
 let postCalls = 0;
+let logoutCalls = 0;
 let lastBody: unknown = null;
 
 function renderWizard() {
@@ -113,7 +114,12 @@ beforeEach(() => {
   useOnboardingStore.setState({ step: 1 });
   postCalls = 0;
   lastBody = null;
+  logoutCalls = 0;
   server.use(
+    http.post('*/api/v1/auth/logout', () => {
+      logoutCalls += 1;
+      return new HttpResponse(null, { status: 204 });
+    }),
     http.post('*/api/v1/onboarding', async ({ request }) => {
       postCalls += 1;
       lastBody = await request.json().catch(() => null);
@@ -263,7 +269,7 @@ describe('Onboarding B — submit body and success', () => {
     expect((lastBody as { step1: { phone?: unknown } }).step1.phone).toBeUndefined();
   });
 
-  it('shows the success view, clears the answer, toasts and redirects after the bar', async () => {
+  it('shows the success view, clears the answer, toasts and signs out to /login after the bar', async () => {
     renderWizard();
     await flush();
     await advanceToStep3();
@@ -282,11 +288,11 @@ describe('Onboarding B — submit body and success', () => {
     expect(screen.getByText('Jane')).toBeInTheDocument();
     expect(
       screen.getByText(
-        '. Your VUNVAULT profile has been created and verified. Taking you back to the main platform…',
+        '. Your VUNVAULT profile has been created and verified. Sign in with your magic link to continue…',
         { exact: false },
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText('Redirecting to /portal')).toBeInTheDocument();
+    expect(screen.getByText('Redirecting to /login')).toBeInTheDocument();
     expect(useToastStore.getState().toasts[0]).toMatchObject({
       kind: 'ok',
       title: 'Profile complete',
@@ -297,7 +303,34 @@ describe('Onboarding B — submit body and success', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(SUCCESS_REDIRECT_MS);
     });
-    expect(routerReplace).toHaveBeenCalledWith('/portal');
+
+    // Work order Task 3d: onboarding ends at the LOGIN page, not the portal and
+    // not still signed in — the member's first real login is a magic link plus
+    // the authenticator code. `useLogout` POSTs /auth/logout (the API clears the
+    // HttpOnly cookies), wipes the query cache and the session store, and then
+    // replaces the route; the middleware would otherwise bounce a still-sessioned
+    // visitor straight back out of /login.
+    expect(logoutCalls).toBe(1);
+    expect(routerReplace).toHaveBeenCalledWith('/login');
+    expect(routerReplace).not.toHaveBeenCalledWith('/portal');
+    expect(queryClient.getQueryData(queryKeys.session())).toBeUndefined();
+  });
+
+  it('still reaches /login when the logout call itself fails', async () => {
+    server.use(http.post('*/api/v1/auth/logout', () => HttpResponse.error()));
+    renderWizard();
+    await flush();
+    await advanceToStep3();
+    fillStep3();
+    checkAllDeclarations();
+    fireEvent.click(screen.getByRole('button', { name: /Complete Setup/ }));
+    await flush();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(SUCCESS_REDIRECT_MS);
+    });
+    // Not parked on the success view forever.
+    expect(routerReplace).toHaveBeenCalledWith('/login');
   });
 });
 

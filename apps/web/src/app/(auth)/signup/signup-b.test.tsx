@@ -10,7 +10,7 @@ import { createQueryClient, queryKeys } from '@vunvault/lib';
 import { useToastStore } from '@vunvault/ui';
 import { server } from '../../../mocks/server';
 import { firstNameOf, SignupVerifyDialog } from './_components/signup-verify-dialog';
-import { groupSecret } from './_hooks/use-verify-signup';
+import { groupSecret, qrCodeSrc } from './_hooks/use-verify-signup';
 import { useSignupStore } from './_store/signup-store';
 
 /**
@@ -289,16 +289,70 @@ describe('SignupVerifyDialog — step 2 (authenticator enrolment)', () => {
 
     const qr = screen.getByRole('img', { name: 'Authenticator QR code' });
     expect(qr.tagName).toBe('IMG');
-    expect(qr).toHaveAttribute(
-      'src',
-      `data:image/svg+xml;utf8,${encodeURIComponent(TOTP_ENROLL.qrCodeSvg)}`,
-    );
+    // Asserted through the SHARED helper, never against a literal prefix: the
+    // old assertion hard-coded `data:image/svg+xml;utf8,` and so pinned the
+    // exact double-wrap that made the QR blank in a real browser (the SDK
+    // already returns a data URI). What must hold is that the payload the
+    // browser decodes is SVG markup.
+    expect(qr).toHaveAttribute('src', qrCodeSrc(TOTP_ENROLL.qrCodeSvg));
+    const src = (qr as HTMLImageElement).getAttribute('src') ?? '';
+    const payload = decodeURIComponent(src.slice(src.indexOf(',') + 1));
+    expect(payload.trimStart().startsWith('<svg')).toBe(true);
+    expect(src).not.toContain('data%3Aimage'); // never double-wrapped
     // No SVG was injected as markup anywhere in the QR frame.
     expect(document.querySelector('.vv-verify-qr svg')).toBeNull();
     expect(screen.queryByText('Test mode')).not.toBeInTheDocument();
     expect(screen.queryByText(/Your authenticator code is/)).not.toBeInTheDocument();
     // Focus moved to the step heading.
     expect(screen.getByRole('heading', { name: 'Two-factor authentication' })).toHaveFocus();
+  });
+
+  it('renders the REAL @supabase/auth-js payload — a data URI, not raw SVG', async () => {
+    // The shape production actually sends: GoTrueClient._enroll wraps GoTrue's
+    // SVG itself (`data:image/svg+xml;utf-8,${svg}`) before apps/api ever sees
+    // it. Every other fixture in the repo uses raw markup, which is why the
+    // double-wrap that blanked the QR went unnoticed. This test fails against
+    // the old wrapper and passes against the shared idempotent one.
+    const RAW =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="99" height="99"><rect fill="#fff"/></svg>';
+    server.use(
+      http.post('*/api/v1/account/mfa/totp/enroll', () =>
+        HttpResponse.json(
+          { data: { ...TOTP_ENROLL, qrCodeSvg: `data:image/svg+xml;utf-8,${RAW}` } },
+          { status: 201 },
+        ),
+      ),
+    );
+
+    renderDialog();
+    openFlow();
+    await flush();
+    await advanceToTotp();
+
+    const src =
+      (screen.getByRole('img', { name: 'Authenticator QR code' }) as HTMLImageElement).getAttribute(
+        'src',
+      ) ?? '';
+    expect(src.startsWith('data:image/svg+xml')).toBe(true);
+    expect(src).not.toContain('data%3Aimage'); // the double-wrap, spelled out
+    expect(decodeURIComponent(src.slice(src.indexOf(',') + 1))).toBe(RAW);
+  });
+
+  it('falls back to the manual-entry URI instead of a silent blank box', async () => {
+    renderDialog();
+    openFlow();
+    await flush();
+    await advanceToTotp();
+
+    const qr = screen.getByTestId('totp-qr');
+    fireEvent.error(qr);
+
+    // Synchronous: `fireEvent` wraps the state update in act(), and this suite
+    // runs on fake timers, so `findBy*` (which polls on a real timer) would hang.
+    expect(screen.getByTestId('totp-qr-fallback')).toBeInTheDocument();
+    expect(screen.getByTestId('totp-qr-uri')).toHaveTextContent(TOTP_ENROLL.uri);
+    // The secret stays on screen either way — enrolment is still possible.
+    expect(screen.getByText(groupSecret(TOTP_SECRET))).toBeInTheDocument();
   });
 
   it('shows the secret grouped in 4s and Copy toasts', async () => {

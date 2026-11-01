@@ -64,6 +64,19 @@ export interface AccountSecurityRepo {
   setLastFactorChangeAt(userId: string, at: Date): Promise<void>;
   setMfaState(userId: string, enrolled: boolean, methods: MfaMethod[]): Promise<void>;
   revokeOtherSessions(userId: string, keepSessionId: string | null, at: Date): Promise<number>;
+
+  /**
+   * Record the factor that raised a session to aal2.
+   *
+   * `plugins/auth.ts` resolves the assurance level as
+   * `payload.aal === 'aal2' || record.mfaMethod !== null`, so this is what makes
+   * the elevation visible to the very next request even if the provider's token
+   * claim lags. Writing it is the difference between "enrolled" and "enrolled
+   * and actually let in".
+   */
+  setSessionMfaMethod(sessionId: string, method: MfaMethod): Promise<void>;
+  /** Task 2e: the first-login enrolment window is spent — never fire again. */
+  clearMfaSetupDeadline(userId: string): Promise<void>;
 }
 
 interface SqlProfileRow {
@@ -271,6 +284,20 @@ export class SqlAccountSecurityRepo implements AccountSecurityRepo {
     await this.executor.unsafe(
       `update profiles set mfa_enrolled = $2, mfa_methods = $3 where id = $1::uuid`,
       [userId, enrolled, `{${methods.join(',')}}`],
+    );
+  }
+
+  async setSessionMfaMethod(sessionId: string, method: MfaMethod): Promise<void> {
+    await this.executor.unsafe(
+      `update user_sessions set mfa_method = $2::mfa_method where id = $1::uuid`,
+      [sessionId, method],
+    );
+  }
+
+  async clearMfaSetupDeadline(userId: string): Promise<void> {
+    await this.executor.unsafe(
+      'update profiles set mfa_setup_deadline = null where id = $1::uuid',
+      [userId],
     );
   }
 

@@ -26,6 +26,7 @@ import { toast } from '@vunvault/ui';
 import { apiGet } from '../../../../lib/api';
 import { homeFor } from '../../../../lib/permissions';
 import { useSession } from '../../../../lib/session';
+import { useLogout } from '../../../../lib/use-logout';
 import { useOnboardingStore, type WizardStep } from '../_store/onboarding-store';
 import { toSubmitBody, useSubmitOnboarding } from '../_hooks/use-submit-onboarding';
 import '../_styles/onboarding.css';
@@ -56,9 +57,11 @@ import { Stepper } from './stepper';
  * clears the recovery answer (privacy: sent once, never kept), toasts
  * `Profile complete`, invalidates `queryKeys.profile()` + `queryKeys.session()`
  * and shows the reference success view while the redirect bar runs (2.2 s,
- * matching the `obFill` animation; instant under reduced motion) before
- * `router.replace("/portal")`. `409 already_completed` → straight to
- * `/portal`; `422 email_mismatch` → the field error on step 1's email plus a
+ * matching the `obFill` animation; instant under reduced motion) before the
+ * member is SIGNED OUT and lands on `/login` (work order Task 3d — the first
+ * real login is a magic link plus the authenticator code, so the signup
+ * session must not survive onboarding). `409 already_completed` → straight to
+ * `/portal` (that member is already onboarded and already signed in); `422 email_mismatch` → the field error on step 1's email plus a
  * jump back to step 1; `400 validation_failed` → the Zod `details` paths map
  * onto fields and the wizard jumps to the FIRST step containing an error;
  * anything else toasts `Could not save your profile`.
@@ -160,6 +163,7 @@ export function OnboardingWizard() {
   const resetStore = useOnboardingStore((state) => state.reset);
   const shellRef = useRef<HTMLDivElement>(null);
   const submit = useSubmitOnboarding();
+  const logout = useLogout();
   const [succeeded, setSucceeded] = useState(false);
   const [successName, setSuccessName] = useState('friend');
 
@@ -232,15 +236,40 @@ export function OnboardingWizard() {
     }
   }, [step]);
 
-  // Success view: the redirect bar runs, then the router replaces to /portal
-  // (instant under reduced motion — the same rule the bar's CSS follows).
+  /**
+   * Success view: the redirect bar runs, then the member is SIGNED OUT and
+   * lands on `/login` — not on `/portal`, and not still authenticated.
+   *
+   * The work order (Task 3d, "Final — Post-onboarding") is explicit that the
+   * first thing a freshly onboarded user does is a real login: magic link, then
+   * the six-digit authenticator code. That is only true if the aal1 session the
+   * signup flow opened is actually gone, so `useLogout` clears it server-side
+   * (the API drops the HttpOnly cookies) and wipes the query cache + session
+   * store before it replaces the route.
+   *
+   * Signing out is also what makes the redirect *stick*. `src/middleware.ts`
+   * rule 2 steers any visitor holding a session cookie away from `/login` and
+   * back to `homeFor(role)`, so a bare `router.replace('/login')` would bounce
+   * straight to `/portal` and the member would never see a login screen.
+   *
+   * `useLogout`'s own `onSuccess` performs the navigation; the `onError` below
+   * is the fallback so a failed logout still sends the member to `/login`
+   * instead of parking them on the success view forever. The cookies are
+   * HttpOnly and only the API can clear them, so in that case the middleware
+   * may walk them back to `/portal` — a rare, visible, non-silent failure
+   * (logged in Known Gaps).
+   */
   useEffect(() => {
     if (!succeeded) return;
     const reduced =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const timer = setTimeout(() => router.replace('/portal'), reduced ? 0 : SUCCESS_REDIRECT_MS);
+    const timer = setTimeout(
+      () => logout.mutate(undefined, { onError: () => router.replace('/login') }),
+      reduced ? 0 : SUCCESS_REDIRECT_MS,
+    );
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once per success; the mutation identity is unstable
   }, [succeeded, router]);
 
   const goNext = useCallback(async () => {
@@ -352,12 +381,12 @@ export function OnboardingWizard() {
             </h2>
             <p className="ob-success-text">
               Welcome aboard, <strong id="obSuccessName">{successName}</strong>. Your VUNVAULT
-              profile has been created and verified. Taking you back to the main platform…
+              profile has been created and verified. Sign in with your magic link to continue…
             </p>
             <div className="ob-redirect-bar" aria-hidden="true">
               <span />
             </div>
-            <p className="ob-redirect-note">Redirecting to /portal</p>
+            <p className="ob-redirect-note">Redirecting to /login</p>
           </section>
 
           <div className="ob-actions" id="obActions" hidden={succeeded}>

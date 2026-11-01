@@ -233,7 +233,16 @@ describe('TwoFactorCard — TOTP', () => {
     await user.click(toggle);
     const qr = await screen.findByRole('img', { name: 'Authenticator QR code' });
     expect(qr.tagName).toBe('IMG');
-    expect((qr as HTMLImageElement).src.startsWith('data:image/svg+xml;utf8,')).toBe(true);
+    const qrSrc = (qr as HTMLImageElement).getAttribute('src') ?? '';
+    expect(qrSrc.startsWith('data:image/svg+xml')).toBe(true);
+    // The payload the browser decodes must be SVG markup, not a second
+    // `data:` prefix (the double-wrap that blanked the signup QR).
+    expect(qrSrc).not.toContain('data%3Aimage');
+    expect(
+      decodeURIComponent(qrSrc.slice(qrSrc.indexOf(',') + 1))
+        .trimStart()
+        .startsWith('<svg'),
+    ).toBe(true);
     expect(screen.getByText('JBSW Y3DP EHPK 3PXP')).toBeInTheDocument();
     expect(screen.getByText('“Add account”', { exact: false })).toBeInTheDocument();
 

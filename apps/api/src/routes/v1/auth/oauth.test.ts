@@ -164,6 +164,12 @@ class FakeAuthRepo implements AuthRepo {
     const row = this.profiles.find((p) => p.id === profileId);
     if (row !== undefined) row.accountStatus = status;
   }
+  async armMfaSetupDeadline(_profileId: string, deadline: Date) {
+    return deadline.toISOString();
+  }
+  async clearMfaSetupDeadline(_profileId: string) {
+    /* the OAuth flow never opens a first-login MFA window */
+  }
   async setMfaEnrolled(profileId: string, enrolled: boolean) {
     const row = this.profiles.find((p) => p.id === profileId);
     if (row !== undefined) row.mfaEnrolled = enrolled;
@@ -341,6 +347,8 @@ async function makeHarness(): Promise<Harness> {
               mfaMethod: null,
               accountStatus: 'active',
               deletedAt: null,
+              mfaSetupDeadline: null,
+              mfaEnrolled: false,
             }
           : null,
     }),

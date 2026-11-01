@@ -101,6 +101,20 @@ export const profiles = pgTable(
     /** Reviewer-only free text. */
     scopeNotes: text('scope_notes'),
     mfaEnrolled: boolean('mfa_enrolled').notNull().default(false),
+    /**
+     * Server-side deadline for the forced first-login MFA enrolment window
+     * (migration `0097`). Written once at first-login session creation and
+     * never extended by a later magic link; cleared when enrolment completes.
+     *
+     * `NULL` = no window: never opened, already enrolled, or the exempt super
+     * admin (who is excluded from the enforcement branch entirely). Expiry
+     * flips `accountStatus` to `blocked_mfa_setup`.
+     *
+     * This is the authoritative copy. The `?deadline=` the redirect carries and
+     * the challenge-keyed KV ledger are both derived from it and exist only to
+     * render a countdown and to survive a lost cookie.
+     */
+    mfaSetupDeadline: tz('mfa_setup_deadline'),
     mfaMethods: mfaMethodEnum('mfa_methods')
       .array()
       .notNull()
@@ -148,6 +162,12 @@ export const profiles = pgTable(
     index('profiles_account_status_idx').on(table.accountStatus),
     index('profiles_org_id_idx').on(table.orgId),
     index('profiles_last_active_at_idx').on(table.lastActiveAt),
+    /**
+     * Partial in SQL (`WHERE mfa_setup_deadline IS NOT NULL`) — drizzle has no
+     * partial-index expression, so the predicate lives in migration 0097 and
+     * this entry only pins the name.
+     */
+    index('profiles_mfa_setup_deadline_idx').on(table.mfaSetupDeadline),
   ],
 ).enableRLS();
 

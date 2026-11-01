@@ -6,6 +6,8 @@ import { createQueryClient } from '@vunvault/lib';
 import { Toaster, TooltipProvider } from '@vunvault/ui';
 import { API_MOCKING_ENABLED, env } from '../env';
 import { ensureCsrf } from '../lib/csrf';
+import { MfaSetupNotice } from '../components/mfa-setup-notice';
+import { ZuraWidget } from './(marketing)/_components/zura/zura-widget';
 
 /**
  * The client runtime every route renders through .
@@ -48,6 +50,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <TooltipProvider>
         {children}
         <Toaster />
+        {/* Task 2b: the mandatory first-login enrolment popup. It renders only
+            when the session carries an armed `mfaSetupDeadline`, so it stays
+            inert for every other visitor. */}
+        <MfaSetupNotice />
+        <ZuraWidget />
       </TooltipProvider>
     </QueryClientProvider>
   );

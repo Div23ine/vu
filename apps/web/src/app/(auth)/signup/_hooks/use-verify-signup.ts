@@ -63,7 +63,13 @@ export function groupSecret(secret: string): string {
 /**
  * The QR as an `<img>` source — the SVG string from the API is NEVER injected
  * as markup (`dangerouslySetInnerHTML` is banned); it travels as a data URI.
+ *
+ * Re-exported from `lib/qr.ts`, which is now the ONE implementation. This file
+ * used to carry its own copy of the wrapper and the two had drifted into the
+ * same bug (see the header of `lib/qr.ts`): `@supabase/auth-js` already hands
+ * back a `data:image/svg+xml;utf-8,…` URI, so wrapping it again produced a
+ * payload the browser could not parse and the QR rendered blank. Every
+ * enrolment surface — this dialog, `/signup/enroll`, `/login/mfa/setup` and
+ * Portal → Security — now shares the idempotent helper.
  */
-export function qrCodeSrc(qrCodeSvg: string): string {
-  return `data:image/svg+xml;utf8,${encodeURIComponent(qrCodeSvg)}`;
-}
+export { qrCodeSrc, otpauthUri } from '../../../../lib/qr';

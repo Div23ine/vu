@@ -24,6 +24,15 @@ export interface SessionRecord {
   mfaMethod: string | null;
   accountStatus: string;
   deletedAt: string | null;
+  /**
+   * Task 2e: the account's first-login MFA enrolment window, read on every
+   * authenticated request so the deadline is enforced where the request is
+   * rather than only at the next sign-in. ISO string, or `null` when the
+   * account has no open window.
+   */
+  mfaSetupDeadline: string | null;
+  /** Whether the second factor is enrolled — the condition that closes the window. */
+  mfaEnrolled: boolean;
 }
 
 /** The narrow Redis surface the registry needs — trivially fakeable in tests. */
@@ -47,6 +56,8 @@ interface SessionRow {
   mfa_method: string | null;
   account_status: string;
   deleted_at: Date | string | null;
+  mfa_setup_deadline: Date | string | null;
+  mfa_enrolled: boolean;
 }
 
 const LOOKUP_SQL = `
@@ -55,7 +66,9 @@ const LOOKUP_SQL = `
          s.revoked_at,
          s.mfa_method,
          p.account_status,
-         p.deleted_at
+         p.deleted_at,
+         p.mfa_setup_deadline,
+         p.mfa_enrolled
     from user_sessions s
     join profiles p on p.id = s.user_id
    where s.id = $1::uuid
@@ -78,6 +91,9 @@ export function createDbSessionLookup(db: Db): SessionLookup {
       mfaMethod: row.mfa_method,
       accountStatus: row.account_status,
       deletedAt: row.deleted_at === null ? null : new Date(row.deleted_at).toISOString(),
+      mfaSetupDeadline:
+        row.mfa_setup_deadline === null ? null : new Date(row.mfa_setup_deadline).toISOString(),
+      mfaEnrolled: row.mfa_enrolled,
     };
   };
 }

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { isApiError } from '../../../../lib/api';
-import { qrCodeSrc } from '../../../../lib/qr';
+import { TotpQr } from '../../../../components/totp-qr';
 import {
   useTotpEnroll,
   useTotpVerify,
@@ -187,9 +187,9 @@ export default function SignupEnrollPage() {
             {step === 'scan' && (
               <div className="space-y-5 text-left">
                 <div className="flex flex-col items-center gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- data-URI SVG, not an optimisable asset */}
-                  <img
-                    src={qrCodeSrc(enrolment.qrCodeSvg)}
+                  <TotpQr
+                    svg={enrolment.qrCodeSvg}
+                    uri={enrolment.uri}
                     alt="QR code that adds VUNVAULT to your authenticator app"
                     width={192}
                     height={192}

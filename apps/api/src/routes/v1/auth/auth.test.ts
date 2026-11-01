@@ -93,6 +93,7 @@ class FakeAuthRepo implements AuthRepo {
       accountStatus: input.accountStatus ?? 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      mfaSetupDeadline: null,
     });
   }
   async activatePendingSignup(profileId: string) {
@@ -144,7 +145,18 @@ class FakeAuthRepo implements AuthRepo {
   async countRecentFailuresByIp(ip: string) {
     return this.attempts.filter((a) => a.ip === ip && !a.succeeded).length;
   }
+  /**
+   * Mirrors the upsert in `SqlAuthRepo.createSession`: the same session id is
+   * raised in place (aal1 -> aal2) rather than inserted twice. The fake has to
+   * model that, or the tests would pass against an INSERT that 500s in
+   * production on the enrolment leg.
+   */
   async createSession(input: NewSession) {
+    const existing = this.sessions.find((s) => s.id === input.id);
+    if (existing !== undefined) {
+      existing.mfaMethod = input.mfaMethod;
+      return;
+    }
     this.sessions.push({ ...input, revokedAt: null, lastSeenAt: null });
   }
   async revokeSession(sessionId: string, at: Date) {
@@ -158,6 +170,29 @@ class FakeAuthRepo implements AuthRepo {
   async setAccountStatus(profileId: string, status: AuthProfileRow['accountStatus']) {
     const row = this.profiles.find((p) => p.id === profileId);
     if (row !== undefined) row.accountStatus = status;
+  }
+  /**
+   * Mirrors the SQL in `SqlAuthRepo.armMfaSetupDeadline`: an unexpired deadline
+   * already on the row WINS, so a second magic link cannot buy another window.
+   * The fake has to model that, not just store the value, or the tests would
+   * pass against a reset-every-time implementation.
+   */
+  async armMfaSetupDeadline(profileId: string, deadline: Date) {
+    const row = this.profiles.find((p) => p.id === profileId);
+    if (row === undefined) return null;
+    const existing =
+      row.mfaSetupDeadline === undefined || row.mfaSetupDeadline === null
+        ? null
+        : new Date(row.mfaSetupDeadline);
+    if (existing !== null && existing.getTime() > Date.now()) {
+      return existing.toISOString();
+    }
+    row.mfaSetupDeadline = deadline.toISOString();
+    return row.mfaSetupDeadline;
+  }
+  async clearMfaSetupDeadline(profileId: string) {
+    const row = this.profiles.find((p) => p.id === profileId);
+    if (row !== undefined) row.mfaSetupDeadline = null;
   }
   async setMfaEnrolled(profileId: string, enrolled: boolean) {
     const row = this.profiles.find((p) => p.id === profileId);
@@ -383,6 +418,8 @@ async function makeHarness(
               mfaMethod: null,
               accountStatus: 'active',
               deletedAt: null,
+              mfaSetupDeadline: null,
+              mfaEnrolled: false,
             }
           : null,
     }),
@@ -662,6 +699,7 @@ describe('POST /api/v1/auth/magic-link', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      mfaSetupDeadline: null,
       ...overrides,
     });
   }
@@ -969,24 +1007,32 @@ describe('GET /api/v1/auth/magic-link/verify', () => {
     expect(storedChallenge().methods).toEqual(['email_otp']);
   });
 
-  it('routes an UNENROLLED normal user to enrolment — blocked from bypassing, never timed', async () => {
+  it('routes an UNENROLLED normal user straight to the verify screen — never timed, never gated', async () => {
     await seedProfile('client');
     const { token } = await mintToken();
 
     const response = await harness.app.inject({ method: 'GET', url: verifyUrl(token) });
     expect(response.statusCode).toBe(302);
     const location = locationOf(response);
-    expect(`${location.origin}${location.pathname}`).toBe(
-      'https://www.vunvault.test/login/mfa/setup',
-    );
-    // Clients get enrolment routing, not the administrator's timed window.
+    // Task 2c: a client ALWAYS lands on the MFA verify screen. `email_otp` is in
+    // `availableMethods` for every account, so that screen always has a code
+    // path — there is no state in which a client needs the setup screen first,
+    // and therefore no timer and no block to go with it.
+    expect(`${location.origin}${location.pathname}`).toBe('https://www.vunvault.test/login/mfa');
+    expect(location.searchParams.get('methods')).toBe('email_otp');
     expect(location.searchParams.has('deadline')).toBe(false);
+
     expect(cookieNames(response)).toContain('vv_mfa');
+    // A plain challenge, not a setup one — and no session row is issued here.
     const challenge = storedChallenge();
-    expect(challenge.setup).toEqual({ required: true, deadlineEpochMs: null });
-    // No ledger record: only TIMED (administrator) windows are recorded.
+    expect(challenge.setup).toBeUndefined();
+    expect(harness.repo.sessions).toHaveLength(0);
+
+    // No ledger record and no armed deadline: only administrators get a window.
     const ledgered = [...harness.kv.entries.keys()].filter((key) => key.startsWith('mfasetup:'));
     expect(ledgered).toEqual([]);
+    const row = harness.repo.profiles.find((r) => r.id === USER_ID);
+    expect(row?.mfaSetupDeadline ?? null).toBeNull();
   });
 
   it('a replayed token fails', async () => {
@@ -1472,44 +1518,51 @@ describe('Phase 2 — magic-link verify routes unenrolled accounts to setup', ()
     return JSON.parse(entry.value) as never;
   }
 
-  it('an unenrolled ADMINISTRATOR gets the timed setup window (5:00) and a ledger record', async () => {
+  it('an unenrolled ADMINISTRATOR gets a full session, the homepage, and an armed 5:00 window', async () => {
     seedRosterProfile({ email: 'daniel@vunvault.com', role: 'admin', fullName: 'Daniel Okafor' });
     const before = Date.now();
     const response = await mintAndVerify('daniel@vunvault.com', '/admin/users');
     const after = Date.now();
 
     expect(response.statusCode).toBe(302);
-    const location = locationOf(response);
-    expect(`${location.origin}${location.pathname}`).toBe(
-      'https://www.vunvault.test/login/mfa/setup',
-    );
-    expect(location.searchParams.get('to')).toBe('da\u2022\u2022\u2022\u2022@vunvault.com');
-    expect(location.searchParams.get('next')).toBe('/admin/users');
-    const deadline = Number(location.searchParams.get('deadline'));
-    expect(deadline).toBeGreaterThanOrEqual(before + 300_000 - 5_000);
-    expect(deadline).toBeLessThanOrEqual(after + 300_000 + 5_000);
+    // Task 2b: land on the HOMEPAGE. Nothing rides in the query string any more —
+    // the popup reads the deadline off `GET /auth/session`, so the value it
+    // renders is the server's and not one a browser could have edited in.
+    expect(response.headers.location).toBe('https://www.vunvault.test/');
 
-    // Only the pre-MFA cookie: no full session before the factor exists.
+    // BOTH cookie families: a real (aal1) session so the site renders as
+    // signed-in, plus the `vv_mfa` challenge the enrolment ceremony needs.
     const names = cookieNames(response);
+    expect(names).toContain('vv_at');
+    expect(names).toContain('vv_rt');
     expect(names).toContain('vv_mfa');
-    expect(names).not.toContain('vv_at');
-    expect(harness.repo.sessions).toHaveLength(0);
+    expect(harness.repo.sessions).toHaveLength(1);
 
+    // The deadline is armed on the ACCOUNT, ~5 minutes out.
     const record = ledgerRecord(USER_ID);
     expect(record.email).toBe('daniel@vunvault.com');
-    expect(record.deadlineEpochMs).toBe(deadline);
+    expect(record.deadlineEpochMs).toBeGreaterThanOrEqual(before + 300_000 - 5_000);
+    expect(record.deadlineEpochMs).toBeLessThanOrEqual(after + 300_000 + 5_000);
+    const armed = harness.repo.profiles.find((r) => r.id === USER_ID)?.mfaSetupDeadline;
+    expect(armed).not.toBeNull();
+    expect(new Date(armed as string).getTime()).toBe(record.deadlineEpochMs);
+
     const challenge = JSON.parse(harness.kv.entries.get(`mfa:${record.handle}`)?.value ?? '{}') as {
       setup?: { required: true; deadlineEpochMs: number | null };
     };
-    expect(challenge.setup).toEqual({ required: true, deadlineEpochMs: deadline });
+    expect(challenge.setup).toEqual({ required: true, deadlineEpochMs: record.deadlineEpochMs });
   });
 
   it('a NON-ROSTER admin-role account still gets the standard 5:00 window', async () => {
     seedRosterProfile({ email: 'future.admin@vunvault.com', role: 'admin' });
+    const before = Date.now();
     const response = await mintAndVerify('future.admin@vunvault.com');
-    const deadline = Number(locationOf(response).searchParams.get('deadline'));
-    expect(deadline).toBeGreaterThan(Date.now() + 290_000);
-    expect(ledgerRecord(USER_ID).email).toBe('future.admin@vunvault.com');
+
+    expect(response.headers.location).toBe('https://www.vunvault.test/');
+    const record = ledgerRecord(USER_ID);
+    expect(record.email).toBe('future.admin@vunvault.com');
+    expect(record.deadlineEpochMs).toBeGreaterThanOrEqual(before + 300_000 - 5_000);
+    expect(record.deadlineEpochMs).toBeLessThanOrEqual(Date.now() + 300_000 + 5_000);
   });
 
   it('the EXEMPT super admin (divine@) signs straight in — no gate, no timer, no ledger', async () => {
@@ -1690,8 +1743,19 @@ describe('Phase 2 — POST /api/v1/auth/mfa/setup/*', () => {
     expect(names).toContain('vv_at');
     expect(names).toContain('vv_rt');
     expect(profileRow().mfaEnrolled).toBe(true);
+
+    // Task 2b: the magic-link leg already issued an aal1 session so the site
+    // could render behind the enrolment popup. Supabase reuses that session id
+    // when it elevates aal1 -> aal2, so the row is RAISED IN PLACE — one live
+    // session, now carrying the second factor. A second row here would mean the
+    // upsert regressed to an INSERT (a primary-key 500 in production).
     expect(harness.repo.sessions).toHaveLength(1);
-    // The window is closed and the ledger cleaned — no lazy block can fire.
+    expect(harness.repo.sessions[0]?.revokedAt).toBeNull();
+    expect(harness.repo.sessions[0]?.mfaMethod).toBe('totp');
+
+    // The window is spent: profile deadline cleared AND ledger cleaned, so no
+    // lazy block can fire and the middleware enforcement has nothing to find.
+    expect(profileRow().mfaSetupDeadline ?? null).toBeNull();
     expect(harness.kv.entries.get(`mfa:${handle}`)).toBeUndefined();
     expect(harness.kv.entries.get(`mfasetup:u:${USER_ID}`)).toBeUndefined();
     const events = harness.audits.map((e) => e.eventType);
@@ -1786,7 +1850,7 @@ describe('Phase 2 — POST /api/v1/auth/mfa/setup/*', () => {
     expect(verify.headers.location).toBe('https://www.vunvault.test/login?error=account_blocked');
   });
 
-  it('abandon does NOT block an unenrolled client — they simply start over', async () => {
+  it('abandon refuses a non-setup challenge — clients never enter the timed flow', async () => {
     harness.repo.profiles.push({
       id: USER_ID,
       email: 'client@example.com',
@@ -1799,6 +1863,10 @@ describe('Phase 2 — POST /api/v1/auth/mfa/setup/*', () => {
       deletedAt: null,
       mfaEnrolled: false,
     });
+    // Task 2c: `needsForcedSetup('client')` is false, so this handle is an
+    // ORDINARY MFA challenge. There is no setup window for a client to abandon
+    // and no way for one to be blocked through this leg — they simply request a
+    // fresh magic link and land back on the verify screen.
     const handle = await openSetupWindow('client@example.com');
 
     const response = await harness.app.inject({
@@ -1806,15 +1874,12 @@ describe('Phase 2 — POST /api/v1/auth/mfa/setup/*', () => {
       url: '/api/v1/auth/mfa/setup/abandon',
       headers: cookieFor(handle),
     });
-    expect(response.json()).toEqual({ data: { blocked: false } });
+    expect(response.statusCode).toBe(403);
     expect(profileRow().accountStatus).toBe('active');
-
-    const options = await harness.app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/mfa/setup/options',
-      headers: cookieFor(handle),
-    });
-    expect(options.statusCode).toBe(410);
+    // The ordinary challenge survives the refused call — it is not a setup leg.
+    expect(harness.kv.entries.get(`mfa:${handle}`)).toBeDefined();
+    const ledgered = [...harness.kv.entries.keys()].filter((key) => key.startsWith('mfasetup:'));
+    expect(ledgered).toEqual([]);
   });
 
   it('a closed window blocks lazily on the next setup touch (410 setup_expired)', async () => {

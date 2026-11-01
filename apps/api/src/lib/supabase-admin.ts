@@ -42,7 +42,12 @@ export interface OAuthUser {
 }
 
 export interface SupabaseAdminMfa {
-  enrollTotp(accessToken: string, friendlyName: string): Promise<TotpEnrollment>;
+  /**
+   * Start a TOTP enrolment. `issuer` is the label the authenticator app shows
+   * next to the account; omit it and GoTrue falls back to the project's Site URL
+   * host, which is environment-dependent — see `lib/totp.ts`.
+   */
+  enrollTotp(accessToken: string, friendlyName: string, issuer?: string): Promise<TotpEnrollment>;
   challengeAndVerify(accessToken: string, factorId: string, code: string): Promise<SupabaseSession>;
   unenroll(accessToken: string, factorId: string): Promise<void>;
   listFactors(userId: string): Promise<Array<{ id: string; type: 'totp'; verified: boolean }>>;
@@ -110,6 +115,18 @@ export class SupabaseError extends Error {
 }
 
 /**
+ * GoTrue error codes worth surfacing verbatim rather than collapsing into the
+ * generic `supabase_error`. Deliberately a short allowlist, not a passthrough of
+ * everything: an unknown upstream code becoming part of this API's contract by
+ * accident is how two services end up coupled to a version bump.
+ */
+const PASSTHROUGH_CODES: ReadonlySet<string> = new Set([
+  'mfa_factor_name_conflict',
+  'mfa_verified_factor_exists',
+  'mfa_too_many_factors',
+]);
+
+/**
  * CHANGED: recognise "email already registered". The SDK returns
  * `code: "user_already_exists"` on GoTrue 422s, but some versions only
  * populate the message — so we check the code first, then fall back to a
@@ -140,6 +157,11 @@ function fail(
     code = 'email_taken';
   } else if (error?.name === 'AuthApiError' && status === 400) {
     code = 'invalid_credentials';
+  } else if (rawCode !== undefined && PASSTHROUGH_CODES.has(rawCode)) {
+    // GoTrue's own machine-readable codes. Callers branch on these (the TOTP
+    // friendly-name retry in `lib/totp.ts`); flattening them to
+    // `supabase_error` would leave a 422 indistinguishable from a real fault.
+    code = rawCode;
   } else {
     code = 'supabase_error';
   }
@@ -435,10 +457,11 @@ export function createSupabaseAdmin(options: SupabaseAdminOptions): SupabaseAdmi
     },
 
     mfa: {
-      async enrollTotp(accessToken, friendlyName) {
+      async enrollTotp(accessToken, friendlyName, issuer) {
         const { data, error } = await asUser(accessToken).auth.mfa.enroll({
           factorType: 'totp',
           friendlyName,
+          ...(issuer === undefined ? {} : { issuer }),
         });
         if (error !== null || data.totp === undefined) fail(error);
         return {

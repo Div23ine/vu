@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Uuid } from './common';
+import { IsoDateTime, Uuid } from './common';
 import { UserRoleSchema } from './enums';
 import { PERMISSIONS, type Permission } from './permissions';
 import { NewPassword } from './account';
@@ -22,6 +22,21 @@ export const SessionUser = z.object({
   orgId: Uuid.nullable(),
   permissions: z.array(z.enum(PERMISSIONS)),
   mfaEnrolled: z.boolean(),
+  /**
+   * Server-side deadline (ISO 8601) of the forced first-login MFA enrolment
+   * window, or `null` when the account has none.
+   *
+   * It rides on the session view so the client can render the countdown WITHOUT
+   * a second call and, more importantly, without being able to invent one: the
+   * browser re-reads this from `GET /auth/session` on every load, so a reload
+   * cannot restart the five minutes. Enforcement is not here — the API rejects
+   * protected requests past this deadline and flips the account to
+   * `blocked_mfa_setup`; this field is only the clock the UI is allowed to show.
+   *
+   * Optional so the additive change does not invalidate fixtures, callers or
+   * cached payloads minted before it existed.
+   */
+  mfaSetupDeadline: IsoDateTime.nullish(),
 });
 export type SessionUser = z.infer<typeof SessionUser>;
 

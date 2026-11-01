@@ -32,6 +32,25 @@ import { staffMembers } from '@vunvault/contracts/fixtures/users';
 /** Cookie a developer (or a test) sets to make the mock session endpoint answer 200. */
 export const MOCK_SESSION_COOKIE = 'vv_mock_session=1';
 
+/**
+ * Opt-in cookie that arms a first-login MFA window on the mock session, so the
+ * Task 2b enrolment popup can be seen in dev without a real administrator
+ * account, a real magic link or a real Supabase.
+ *
+ * Deliberately a SEPARATE cookie rather than a field on `mockStaffSession`:
+ * that object is shared with the test suites, and an always-armed deadline
+ * would put a non-dismissible modal in front of every mocked page.
+ *
+ * The five minutes start when the request is served, so a reload restarts the
+ * countdown. That is a mock-only convenience — the real API arms the deadline
+ * once per account (`armMfaSetupDeadline` keeps an unexpired window) and the
+ * popup renders whatever the server says.
+ */
+export const MOCK_MFA_DEADLINE_COOKIE = 'vv_mock_mfa_deadline=1';
+
+/** How long the mock enrolment window stays open, in ms. */
+const MOCK_MFA_WINDOW_MS = 5 * 60 * 1000;
+
 const [reed] = staffMembers;
 if (reed === undefined) {
   throw new Error('The auth mock handlers require the staffMembers fixture roster.');
@@ -63,10 +82,14 @@ export const mockClientSession: SessionUser = {
   mfaEnrolled: false,
 };
 
-function hasMockSessionCookie(request: Request): boolean {
+function hasCookie(request: Request, wanted: string): boolean {
   const header = request.headers.get('cookie');
   if (header === null) return false;
-  return header.split(';').some((part) => part.trim() === MOCK_SESSION_COOKIE);
+  return header.split(';').some((part) => part.trim() === wanted);
+}
+
+function hasMockSessionCookie(request: Request): boolean {
+  return hasCookie(request, MOCK_SESSION_COOKIE);
 }
 
 export const authHandlers = [
@@ -81,6 +104,19 @@ export const authHandlers = [
   http.get('*/api/v1/auth/session', ({ request }) => {
     if (!hasMockSessionCookie(request)) {
       return HttpResponse.json({ error: 'unauthorized' }, { status: 401 });
+    }
+    // Opt-in preview of the mandatory enrolment popup (Task 2b).
+    if (hasCookie(request, MOCK_MFA_DEADLINE_COOKIE)) {
+      return HttpResponse.json({
+        data: {
+          ...mockStaffSession,
+          // The popup keys off `mfaSetupDeadline` alone; the role stays as the
+          // fixture has it. The server never arms a window for the exempt
+          // super admin, so this combination is a dev preview, not a real state.
+          mfaEnrolled: false,
+          mfaSetupDeadline: new Date(Date.now() + MOCK_MFA_WINDOW_MS).toISOString(),
+        },
+      });
     }
     return HttpResponse.json({ data: mockStaffSession });
   }),

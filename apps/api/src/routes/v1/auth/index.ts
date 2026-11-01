@@ -25,6 +25,7 @@ import { HttpError } from '../../../lib/http-error.js';
 import { HibpBreachCheck, type BreachCheck } from '../../../lib/breach.js';
 import {
   clearSessionCookies,
+  cookieContext,
   readSessionCookies,
   setSessionCookies,
 } from '../../../lib/session-cookies.js';
@@ -97,12 +98,6 @@ function requestMeta(request: FastifyRequest): RequestMeta {
     // A2.2: the id the provider logs alongside the Resend response.
     requestId: request.id,
   };
-}
-
-function cookieContext(request: FastifyRequest, reply: FastifyReply) {
-  const env = request.server.env;
-  void reply;
-  return { secure: env.NODE_ENV !== 'development', domain: env.COOKIE_DOMAIN || undefined };
 }
 
 const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) => {
@@ -322,7 +317,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
 
     setSessionCookies(reply, issued.tokens, {
       remember: false,
-      ...cookieContext(request, reply),
+      ...cookieContext(request),
     });
     return { data: issued.user };
   };
@@ -500,7 +495,10 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
           message: `${outcome.email} passed the magic link · MFA challenge opened`,
           details: {
             methods: outcome.methods,
-            setup: outcome.redirectTo.includes('/login/mfa/setup'),
+            // Task 2b: an admin's first login now lands on the homepage, so the
+            // redirect target no longer reveals whether this was a setup
+            // challenge. The flag does.
+            setup: outcome.setup === true,
           },
           ip: meta.ip,
         });
@@ -550,7 +548,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
       // Exempt super admin: full session cookies straight from the verify leg.
       setSessionCookies(reply, result.issued.tokens, {
         remember: false,
-        ...cookieContext(request, reply),
+        ...cookieContext(request),
       });
       return reply.redirect(result.redirectTo);
     }
@@ -558,6 +556,19 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
     reply.setCookie(COOKIE_NAMES.mfaChallenge, result.handle, {
       ...app.cookieOptions(COOKIE_NAMES.mfaChallenge),
     });
+    if (result.issued !== undefined) {
+      // Task 2b: an administrator on their FIRST login is landed on the
+      // homepage, which needs a real session to render as signed-in. The
+      // session is aal1 and stays aal1 — `requireStaff` still answers 403
+      // `mfa_required` on every admin data route until the authenticator is
+      // enrolled, so the five minutes buy a countdown and an enrolment
+      // ceremony, not access to the console. The `vv_mfa` challenge set above
+      // is what the ceremony behind the popup uses.
+      setSessionCookies(reply, result.issued.tokens, {
+        remember: false,
+        ...cookieContext(request),
+      });
+    }
     return reply.redirect(result.redirectTo);
   };
   (magicLinkVerifyHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
@@ -619,7 +630,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
     reply.clearCookie(COOKIE_NAMES.mfaChallenge, app.cookieOptions(COOKIE_NAMES.mfaChallenge));
     setSessionCookies(reply, issued.tokens, {
       remember: false,
-      ...cookieContext(request, reply),
+      ...cookieContext(request),
     });
     return { data: issued.user };
   };
@@ -715,7 +726,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
     reply.clearCookie(COOKIE_NAMES.mfaChallenge, app.cookieOptions(COOKIE_NAMES.mfaChallenge));
     setSessionCookies(reply, issued.tokens, {
       remember: false,
-      ...cookieContext(request, reply),
+      ...cookieContext(request),
     });
     return { data: issued.user };
   };
@@ -844,7 +855,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
     reply.clearCookie(COOKIE_NAMES.mfaChallenge, app.cookieOptions(COOKIE_NAMES.mfaChallenge));
     setSessionCookies(reply, result.issued.tokens, {
       remember: false,
-      ...cookieContext(request, reply),
+      ...cookieContext(request),
     });
     return { data: result.issued.user };
   };
@@ -900,7 +911,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
         refreshToken: session.refreshToken,
         expiresIn: session.expiresIn,
       },
-      cookieContext(request, reply),
+      cookieContext(request),
     );
 
     if (session.sessionId !== '') {
@@ -925,7 +936,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
         if (user === undefined) throw HttpError.unauthorized();
 
         await serviceFor(asExecutor(ctx.tx)).logout(at, user.sessionId);
-        clearSessionCookies(reply, cookieContext(request, reply));
+        clearSessionCookies(reply, cookieContext(request));
         return reply.status(204).send();
       },
     ),

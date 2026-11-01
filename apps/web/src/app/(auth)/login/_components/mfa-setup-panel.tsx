@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,7 +9,8 @@ import type { SessionUser } from '@vunvault/contracts';
 import { cn, isApiError, queryKeys } from '@vunvault/lib';
 import { toast } from '@vunvault/ui';
 import { homeFor } from '../../../../lib/permissions';
-import { groupSecret, qrCodeSrc } from '../../signup/_hooks/use-verify-signup';
+import { groupSecret } from '../../signup/_hooks/use-verify-signup';
+import { TotpQr } from '../../../../components/totp-qr';
 import {
   useMfaSetupAbandon,
   useMfaSetupOptions,
@@ -91,10 +92,6 @@ export function MfaSetupPanel({ deadlineEpochMs, to, next }: MfaSetupPanelProps)
 
   const timed = deadlineEpochMs !== null;
   const pending = options.isPending || verify.isPending || abandon.isPending;
-  const qr = useMemo(
-    () => (enrolment === null ? null : qrCodeSrc(enrolment.qrCodeSvg)),
-    [enrolment],
-  );
 
   // ——— open the setup window (POST options on mount) ———
   useEffect(() => {
@@ -328,10 +325,7 @@ export function MfaSetupPanel({ deadlineEpochMs, to, next }: MfaSetupPanelProps)
               {phase === 'form' && enrolment !== null ? (
                 <>
                   <div className="vv-setup-qr">
-                    {qr === null ? null : (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={qr} alt="Authenticator QR code" id="vvSetupQr" />
-                    )}
+                    <TotpQr svg={enrolment.qrCodeSvg} uri={enrolment.uri} id="vvSetupQr" />
                   </div>
 
                   <div className="vv-setup-secret">

@@ -22,6 +22,14 @@ export interface AuthProfileRow {
   accountStatus: AccountStatus;
   deletedAt: string | null;
   mfaEnrolled: boolean;
+  /**
+   * Server-side first-login MFA window (migration 0097). ISO string, or `null`
+   * when the account has no open window. Read on every magic-link verify so a
+   * fresh link can be refused an extension, and by the auth middleware so a
+   * protected request past the deadline is rejected without waiting for the
+   * next sign-in.
+   */
+  mfaSetupDeadline?: string | null;
 }
 
 export interface NewOrganization {
@@ -84,6 +92,18 @@ export interface AuthRepo {
   /** Persist the `mfa_enrolled` flag once a factor has been verified. */
   setMfaEnrolled(profileId: string, enrolled: boolean): Promise<void>;
 
+  // --- first-login MFA window (Task 2e) ------------------------------------
+  /**
+   * Open the enrolment window for a first-login administrator, ATOMICALLY and
+   * IDEMPOTENTLY: an unexpired deadline already on the row wins, so a second
+   * magic-link click cannot buy another five minutes. Returns the deadline that
+   * is now authoritative (the caller renders its countdown from this, never from
+   * a value it computed itself).
+   */
+  armMfaSetupDeadline(profileId: string, deadline: Date): Promise<string | null>;
+  /** Enrolment completed: the window is spent and must never fire again. */
+  clearMfaSetupDeadline(profileId: string): Promise<void>;
+
   // --- pending signups (Task 40d) -------------------------------------------
   /** Flip `pending_verification` → `active`. False when the profile moved on. */
   activatePendingSignup(profileId: string): Promise<boolean>;
@@ -122,7 +142,8 @@ const PROFILE_COLUMNS = `
   p.org_id::text as org_id,
   p.account_status::text as account_status,
   p.deleted_at,
-  p.mfa_enrolled
+  p.mfa_enrolled,
+  p.mfa_setup_deadline
 `;
 
 interface ProfileSqlRow {
@@ -136,6 +157,7 @@ interface ProfileSqlRow {
   account_status: AccountStatus;
   deleted_at: Date | string | null;
   mfa_enrolled: boolean;
+  mfa_setup_deadline: Date | string | null;
 }
 
 function toProfile(row: ProfileSqlRow): AuthProfileRow {
@@ -150,6 +172,8 @@ function toProfile(row: ProfileSqlRow): AuthProfileRow {
     accountStatus: row.account_status,
     deletedAt: row.deleted_at === null ? null : new Date(row.deleted_at).toISOString(),
     mfaEnrolled: row.mfa_enrolled,
+    mfaSetupDeadline:
+      row.mfa_setup_deadline === null ? null : new Date(row.mfa_setup_deadline).toISOString(),
   };
 }
 
@@ -257,11 +281,28 @@ export class SqlAuthRepo implements AuthRepo {
     return Number(rows[0]?.count ?? 0);
   }
 
+  /**
+   * Insert the session row — or, when the id already exists, raise it in place.
+   *
+   * Task 2b made this reachable twice for one login: the magic-link leg now
+   * issues a real aal1 session so the site can render behind the enrolment
+   * popup, and `setupVerify` issues again once the factor exists. Supabase
+   * reuses the same session id when it elevates aal1 -> aal2, so a plain INSERT
+   * would hit the primary key and 500 the enrolment. Upserting turns that
+   * second call into what it actually means: the same session, now with a
+   * second factor recorded.
+   *
+   * A revoked row is deliberately NOT resurrected — the conflict branch only
+   * carries the MFA upgrade.
+   */
   async createSession(input: NewSession): Promise<void> {
     await this.executor.unsafe(
       `insert into user_sessions (
          id, user_id, device_label, user_agent, ip, geo_city, geo_country, mfa_method
-       ) values ($1::uuid, $2::uuid, $3, $4, $5::inet, $6, $7, $8::mfa_method)`,
+       ) values ($1::uuid, $2::uuid, $3, $4, $5::inet, $6, $7, $8::mfa_method)
+       on conflict (id) do update
+          set mfa_method = excluded.mfa_method,
+              last_seen_at = now()`,
       [
         input.id,
         input.userId,
@@ -308,6 +349,34 @@ export class SqlAuthRepo implements AuthRepo {
       profileId,
       enrolled,
     ]);
+  }
+
+  async armMfaSetupDeadline(profileId: string, deadline: Date): Promise<string | null> {
+    // ONE statement, so two concurrent magic links cannot both write. The
+    // `case` keeps an unexpired deadline exactly as it is and only arms a fresh
+    // window when there is none, or when the previous one has already lapsed
+    // (a lapsed window belongs to a blocked account, which the caller handles
+    // separately — re-arming it here is what makes an unblock meaningful).
+    const rows = await this.executor.unsafe<Array<{ deadline: string | Date | null }>>(
+      `update profiles
+          set mfa_setup_deadline = case
+                when mfa_setup_deadline is not null and mfa_setup_deadline > now()
+                  then mfa_setup_deadline
+                else $2::timestamptz
+              end
+        where id = $1::uuid
+        returning mfa_setup_deadline`,
+      [profileId, deadline],
+    );
+    const value = rows[0]?.deadline;
+    return value === undefined || value === null ? null : new Date(value).toISOString();
+  }
+
+  async clearMfaSetupDeadline(profileId: string): Promise<void> {
+    await this.executor.unsafe(
+      'update profiles set mfa_setup_deadline = null where id = $1::uuid',
+      [profileId],
+    );
   }
 
   async activatePendingSignup(profileId: string): Promise<boolean> {

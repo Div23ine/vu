@@ -10,6 +10,7 @@ import { createQueryClient, queryKeys } from '@vunvault/lib';
 import { useToastStore } from '@vunvault/ui';
 import { server } from '../../../mocks/server';
 import { mockStaffSession } from '../../../mocks/handlers/auth';
+import { qrCodeSrc } from '../../../lib/qr';
 import { MfaSetupPanel } from './_components/mfa-setup-panel';
 
 /**
@@ -121,7 +122,11 @@ describe('MfaSetupPanel — untimed (normal-user) enrolment', () => {
 
     expect(optionsCalls).toBe(1);
     const qr = screen.getByRole('img', { name: 'Authenticator QR code' }) as HTMLImageElement;
-    expect(qr.src).toBe(`data:image/svg+xml;utf8,${encodeURIComponent(QR_SVG)}`);
+    // Through the shared helper, not a literal prefix — see lib/qr.ts: the SDK
+    // hands back a data URI already, and a second wrap is what blanked the QR.
+    expect(qr.getAttribute('src')).toBe(qrCodeSrc(QR_SVG));
+    const payload = decodeURIComponent(qr.src.slice(qr.src.indexOf(',') + 1));
+    expect(payload.trimStart().startsWith('<svg')).toBe(true);
     expect(document.getElementById('vvSetupSecret')).toHaveTextContent('JBSW Y3DP EHPK 3PXP');
     // The masked account is echoed, never the full email.
     expect(screen.getByText(/da••••@vunvault\.com/)).toBeInTheDocument();

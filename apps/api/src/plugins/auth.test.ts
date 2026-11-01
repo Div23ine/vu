@@ -87,12 +87,17 @@ function recordFor(overrides: Partial<SessionRecord> = {}): SessionRecord {
     mfaMethod: null,
     accountStatus: 'active',
     deletedAt: null,
+    mfaSetupDeadline: null,
+    mfaEnrolled: false,
     ...overrides,
   };
 }
 
 /** An app with the auth guards on, an injected secret and a scriptable registry. */
-async function makeApp(record: SessionRecord | null = recordFor()): Promise<App> {
+async function makeApp(
+  record: SessionRecord | null = recordFor(),
+  options: { now?: () => number } = {},
+): Promise<App> {
   const lookups: string[] = [];
   const registry = new SessionRegistry({
     lookup: async (sessionId) => {
@@ -106,7 +111,7 @@ async function makeApp(record: SessionRecord | null = recordFor()): Promise<App>
     overrides: { logger: false },
     infra: false,
     auth: true,
-    authOptions: { secret: SECRET, registry },
+    authOptions: { secret: SECRET, registry, now: options.now },
   });
 
   app.get('/__test/me', { preHandler: app.authenticate }, async (request) => ({
@@ -604,5 +609,102 @@ describe('HttpError guards', () => {
     expect(HttpError.unauthorized().code).toBe('unauthorized');
     expect(HttpError.forbidden('mfa_required').code).toBe('mfa_required');
     expect(HttpError.forbidden('mfa_required').status).toBe(403);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 2e — the first-login MFA enrolment window, enforced per request
+// ─────────────────────────────────────────────────────────────────────────────
+describe('MFA setup deadline enforcement (Task 2e)', () => {
+  const NOW = 1_800_000_000_000;
+  const clock = () => NOW;
+  const inWindow = new Date(NOW + 120_000).toISOString(); // 2 minutes left
+  const expired = new Date(NOW - 1_000).toISOString(); // just closed
+
+  async function probe(
+    record: Partial<SessionRecord>,
+    role: UserRole,
+  ): Promise<{ status: number; body: unknown }> {
+    const app = await makeApp(recordFor(record), { now: clock });
+    const token = await signToken(claimsFor(role));
+    const response = await app.inject({
+      method: 'GET',
+      url: '/__test/me',
+      headers: { cookie: cookieFor(token) },
+    });
+    const out = { status: response.statusCode, body: response.json() };
+    await app.close();
+    return out;
+  }
+
+  it('lets an administrator through WHILE the window is open', async () => {
+    const { status } = await probe({ mfaSetupDeadline: inWindow, mfaEnrolled: false }, 'admin');
+    expect(status).toBe(200);
+  });
+
+  it('rejects an administrator once the window has closed with no factor enrolled', async () => {
+    const { status, body } = await probe(
+      { mfaSetupDeadline: expired, mfaEnrolled: false },
+      'admin',
+    );
+    // Fail closed exactly like a blocked account: the session no longer
+    // entitles the holder to anything, and the next magic-link attempt performs
+    // the durable `blocked_mfa_setup` flip plus its audit write.
+    expect(status).toBe(401);
+    expect(body).toMatchObject({ error: 'unauthorized' });
+  });
+
+  it('treats the deadline instant itself as closed', async () => {
+    const { status } = await probe(
+      { mfaSetupDeadline: new Date(NOW).toISOString(), mfaEnrolled: false },
+      'admin',
+    );
+    expect(status).toBe(401);
+  });
+
+  it('ignores a closed window once the factor IS enrolled', async () => {
+    const { status } = await probe({ mfaSetupDeadline: expired, mfaEnrolled: true }, 'admin');
+    expect(status).toBe(200);
+  });
+
+  it('never applies to the exempt super admin — no window, no block', async () => {
+    const app = await makeApp(recordFor({ mfaSetupDeadline: expired, mfaEnrolled: false }), {
+      now: clock,
+    });
+    const token = await signToken(claimsFor('super_admin', { email: 'divine@vunvault.com' }));
+    const me = await app.inject({
+      method: 'GET',
+      url: '/__test/me',
+      headers: { cookie: cookieFor(token) },
+    });
+    expect(me.statusCode).toBe(200);
+    // And the staff routes stay open at aal2 as before.
+    const staff = await app.inject({
+      method: 'GET',
+      url: '/__test/staff',
+      headers: { cookie: cookieFor(token) },
+    });
+    expect(staff.statusCode).toBe(200);
+    await app.close();
+  });
+
+  it('does not disturb an account that never had a window', async () => {
+    const { status } = await probe({ mfaSetupDeadline: null, mfaEnrolled: false }, 'client');
+    expect(status).toBe(200);
+  });
+
+  it('also fails closed on optionalAuth — no identity leaks past a closed window', async () => {
+    const app = await makeApp(recordFor({ mfaSetupDeadline: expired, mfaEnrolled: false }), {
+      now: clock,
+    });
+    const token = await signToken(claimsFor('admin'));
+    const response = await app.inject({
+      method: 'GET',
+      url: '/__test/optional',
+      headers: { cookie: cookieFor(token) },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ data: { user: null } });
+    await app.close();
   });
 });
