@@ -334,10 +334,10 @@ export class SqlUsersRepo implements UsersRepo {
            as operators,
          count(*) filter (where account_status = 'active' and mfa_enrolled)::text as active_with_mfa,
          count(*) filter (where account_status = 'dormant')::text as dormant_accounts,
-         count(*) filter (where joined_at >= $2)::text as onboarded_this_month
+         count(*) filter (where joined_at >= $1)::text as onboarded_this_month
         from profiles
        where role <> 'client' and deleted_at is null`,
-      [null, monthStart],
+      [monthStart],
     );
     const invitations = await this.executor.unsafe<Array<{ count: string }>>(
       `select count(*)::text as count

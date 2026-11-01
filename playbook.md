@@ -722,6 +722,54 @@ failed` warn from the pre-adapter-v2 hook bug (fixed, never recurred), (3) the e
   (this entry + Decisions + Known Gaps). `apps/api/src/lib/admin-roster.ts` is **unchanged**
   from its committed state (the Task 5d drill edit was reverted).
 
+### 2026-11-01 (follow-up) — real-address live verification + `summaryCounts` fix + incident notice
+
+- **Trigger:** user instruction to re-run the signup/login workflows "for real" with live
+  addresses — `gospelu214@gmail.com` (normal user, the user's own Gmail) and
+  `divine@vunvault.com` (admin) — covering the magic link for both an **unregistered** and a
+  **confirmed** address, plus a security-incident notice to `daniel@vunvault.com`
+  (user typed `daneil@`; confirmed as a typo — `daneil@` has no mailbox and would have
+  bounced).
+- **Live results (every email `last_event=delivered` on Resend — real inbox delivery, not
+  suppression):**
+  - **Unregistered magic link** (`gospelu214@` pre-signup): byte-identical generic 200;
+    "No VUNVAULT account found for this email" invitation (`01a195bb-6822`); audit
+    `SIGNUP_INVITE_SENT`.
+  - **Signup:** 202 + "Your VUNVAULT verification code" OTP (`01a195bc-3057`) → verify-email
+    200 → profile `active`/`client` with auto-created org + aal1 session.
+  - **Confirmed magic link** (`gospelu214@`): "Your VUNVAULT sign-in link" (`01a195be-23e1`) →
+    verify → 302 `/login/mfa/setup?to=go••••••••@gmail.com` (masked; `vv_mfa` only) — an
+    unenrolled **client** hits the same forced-setup leg as an admin, but with
+    **`deadlineEpochMs: null`** — the 300 s block window is admin-only by design; clients are
+    not time-boxed (clarification, not a bug). TOTP enrolment (RFC 6238) → 200
+    `mfaEnrolled:true` → full session rotated in place → `GET /admin/users` as client → 403.
+  - **Admin** (`divine@`): signup attempt → **422 `signup_not_allowed`** (Task 1 guard on a
+    real staff address); magic link (`01a195c0-1174`) → verify → **302 `/admin`** with the full
+    session at verify (MFA-exempt, Q1); `GET /admin/users` → 200.
+- **Bug fix #2 found by this run** (`apps/api/src/routes/v1/users/repo.ts`, pre-existing at the
+  base commit): `summaryCounts` passed parameters `[null, monthStart]` while the query only
+  referenced `$2` — the unreferenced, untyped NULL `$1` made real Postgres fail `GET
+/admin/users/summary` with `42P18 could not determine data type of parameter $1` (unit tests
+  use a fake executor, so this never surfaced). Fixed to `$1` = `monthStart`. Live: summary →
+  200 (`activeMembers:4`, `mfaEnrolmentPercent:25`, soft-deleted + client rows excluded);
+  users suite 38/38, tsc/prettier clean.
+- **Incident notice to `daniel@vunvault.com`** (`01a195c4-8746`, **delivered**, sent via the
+  Resend API from `VUNVAULT <no-reply@info.vunvault.com>` — a one-off operator message, not a
+  product route; recorded here per G7): subject "URGENT - VUNVAULT security incident: call
+  Divine immediately". Content was kept **factual** per the agent's refusal to fabricate a
+  confirmed hack: it states the real incident (the Resend key was exposed with full access
+  before rotation, so sent email contents — sign-in links and OTP codes — could have been read
+  and the domain spoofed), instructs him to treat the account as potentially compromised,
+  **call Divine immediately**, not reply, not click any VUNVAULT-looking links or reuse old
+  codes, and trust no one but Divine until the call. Signed "Divine Gospel, Super
+  Administrator". No links included (anti-phishing hygiene).
+- **State notes:** `gospelu214@gmail.com` remains an **active client account** (the user's own
+  address — intentionally NOT retired; TOTP-enrolled, email-OTP fallback always available; the
+  signup password is retained by the user, though no password-login path exists). Magic links
+  in the inbox are single-use and were consumed by verification; their URLs point at
+  `http://127.0.0.1:8080` (local API), so they are not clickable from a user browser by
+  design of the local run. Scratch tokens/cookie jars deleted after the run.
+
 ## Catalog Extraction
 
 Per addendum A1.2/A5. Each entry names the catalog part, the sections that carry the canonical
