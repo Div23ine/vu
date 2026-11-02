@@ -1,4 +1,4 @@
-import { apiGet, configureApi, isApiError } from '@vunvault/lib';
+import { apiGet, apiPost, configureApi, isApiError, type ApiFetchInit } from '@vunvault/lib';
 import { env } from '../env';
 
 /**
@@ -76,6 +76,35 @@ export async function apiGetQuiet<T>(path: string): Promise<T | null> {
   } catch (error) {
     if (isApiError(error) && error.status === 401) return null;
     throw error;
+  } finally {
+    quietDepth -= 1;
+  }
+}
+
+/**
+ * `POST` that suppresses the global session-expiry redirect for its own call
+ * (see `quietDepth`) but still rejects, so the caller can read the error.
+ *
+ * A wrong TOTP code answers 401 `mfa_failed`. That is an ordinary form
+ * validation failure, not an expired session — but the transport cannot tell
+ * the two apart, so without this the redirect fires and the member is flung to
+ * `/login?next=…` in the middle of enrolment, losing the wizard state (and the
+ * authenticator they were holding) that the inline error was pointing at.
+ *
+ * Every surface that posts this endpoint already renders the 401 as inline
+ * copy: the signup enrolment wizard, Portal → Security, and the signup verify
+ * dialog. Unlike `apiGetQuiet` this rethrows rather than resolving to `null`,
+ * because those callers need the `ApiError` itself to tell `mfa_failed` apart
+ * from a genuine session expiry.
+ */
+export async function apiPostQuiet<T>(
+  path: string,
+  body?: unknown,
+  init: ApiFetchInit = {},
+): Promise<T> {
+  quietDepth += 1;
+  try {
+    return await apiPost<T>(path, body, init);
   } finally {
     quietDepth -= 1;
   }

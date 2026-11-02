@@ -148,13 +148,27 @@ function readEmail(request: FastifyRequest): string | undefined {
 const rateLimitPlugin: FastifyPluginAsync<RateLimitPluginOptions> = async (app, options) => {
   const useRedis = app.env.NODE_ENV !== 'test' && app.redis !== undefined;
 
+  // `@fastify/rate-limit` scripts its global counter with a Lua `defineCommand`,
+  // which the offline in-memory shim does not implement — handing it that shim
+  // throws `this.redis.defineCommand is not a function` at boot, so a Redis
+  // outage would take the whole API down instead of degrading. The global
+  // limiter therefore gets a client only when Redis is genuinely up; otherwise
+  // it falls back to its own in-process store, which matches the single-replica
+  // contract `REDIS_OPTIONAL=always` already documents.
+  //
+  // The per-policy counters below are a separate decision: they only use
+  // `incr`/`expire`/`ttl`, all three of which the shim does implement, so they
+  // keep running against it and stay consistent with the rest of the app's
+  // in-memory auth state.
+  const redisIsLive = useRedis && app.redisMode?.status === 'up';
+
   await app.register(rateLimit, {
     global: true,
     max: GLOBAL_RATE_LIMIT.max,
     timeWindow: `${GLOBAL_RATE_LIMIT.windowSeconds} seconds`,
     nameSpace: RATE_LIMIT_KEY_PREFIX,
     keyGenerator: (request) => resolveClientIp(request),
-    ...(useRedis ? { redis: app.redis } : {}),
+    ...(redisIsLive ? { redis: app.redis } : {}),
     errorResponseBuilder: (_request, context) => ({
       error: 'rate_limited',
       message: `Too many requests. Try again in ${context.after}.`,

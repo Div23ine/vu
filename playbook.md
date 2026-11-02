@@ -2173,3 +2173,271 @@ Killed process … (next-server) … anon-rss:504340kB` against a 1 GiB cgroup l
   pre-existing at the base commit, unrelated to this work order, left alone.
 - **Plaintext TOTP secrets at rest and the aal1 first-token window** (2026-10-31 run) remain open.
   F3 from that run is now closed (see the Change Log).
+
+---
+
+## Live verification run (2026-11-02) — real credentials, production Supabase
+
+The first run of this work order could only be unit-tested: no credentials were
+available and the sandbox OOM-killed `next dev`. Credentials were supplied on
+2026-11-02, which made a genuine end-to-end pass possible. Everything below was
+observed against the live project `wwklefixmvtxvmzapjpj`, not a mock.
+
+### Credential validation (before anything was trusted)
+
+| Variable | Result |
+| --- | --- |
+| `SUPABASE_SERVICE_ROLE_KEY` | Valid JWT, 3 segments, `role: service_role`, project `wwklefixmvtxvmzapjpj`, expires 2036. |
+| `SUPABASE_JWT_SECRET` | **Real.** Byte-identical to the dummy in `.env.example`, but it correctly HMAC-SHA256-signs the service-role JWT as raw UTF-8 bytes. A placeholder could not validate, so the match is coincidence, not a stub. |
+| `SUPABASE_ANON_KEY` | Truncated (2 segments) — but `grep` confirms the API never reads it, so it is harmless. |
+| `DATABASE_URL` / `DIRECT_URL` | Complete. Pooler `aws-1-eu-central-1.pooler.supabase.com`, ports 6543/5432. |
+| `RESEND_API_KEY` | Valid (HTTP 200 from `api.resend.com/domains`). Sending domain `info.vunvault.com` verified. |
+
+Supabase **REST** with the service-role key returns `403 permission denied for
+table profiles` — the role lacks `GRANT SELECT` on `public.profiles`. This does
+not block the API, which talks to Postgres directly, but it will block any
+`@supabase/supabase-js` data-plane call, so it is recorded here as a latent
+gap.
+
+Written to `apps/api/.env` (gitignored; `git check-ignore` confirms it is not
+tracked). Sixteen further variables that `apps/api/src/config/env.ts` requires
+unconditionally (`R2_*`, Stripe, Paystack, Twilio, Africa's Talking, Sentry, FX,
+Turnstile) were appended from the dummy values `.env.example` already ships for
+exactly this purpose. None are credentials the auth surface needs.
+
+### Migration 0097 applied — and why it was not optional
+
+`packages/db/sql/0097_profiles_mfa_setup_deadline.sql` had never been applied:
+`profiles.mfa_setup_deadline` did not exist in production.
+
+This was **not** a cosmetic gap. `LOOKUP_SQL` in
+`apps/api/src/lib/session-registry.ts` selects `p.mfa_setup_deadline` and runs
+on *every authenticated request*. Against the un-migrated schema that query
+throws `column p.mfa_setup_deadline does not exist`, so deploying commit
+`2beae56` without the migration would have turned every authenticated API call
+into a 500 — a total auth outage. The migration is a hard prerequisite for the
+commit, not a companion to it.
+
+Applied with the repo's own convergent runner (`pnpm --filter @vunvault/db
+db:migrate`, which connects on `DIRECT_URL` under an advisory lock). It skipped
+the 15 already-recorded files and applied two:
+
+- `0096_profiles_date_of_birth.sql` — pre-existing in the repo since `686b89e`,
+  never applied. One nullable `ADD COLUMN IF NOT EXISTS`, no default.
+- `0097_profiles_mfa_setup_deadline.sql` — this work order.
+
+Post-state verified directly: `mfa_setup_deadline timestamptz` nullable with no
+default; the partial index `profiles_mfa_setup_deadline_idx … WHERE
+(mfa_setup_deadline IS NOT NULL)` created; the 314-character column comment set;
+`_vv_sql_migrations` now tracks 17 files. The exact `LOOKUP_SQL` string was then
+executed against production and returned cleanly.
+
+Rollback, if ever needed: `ALTER TABLE public.profiles DROP COLUMN
+mfa_setup_deadline;` — additive only, nothing else to undo.
+
+### Two boot blockers found and fixed
+
+Neither is in the work order's five tasks; both had to be cleared before the
+API would start at all.
+
+**1. `@fastify/rate-limit` crashed the API whenever Redis was offline** (fixed in
+`apps/api/src/plugins/rate-limit.ts`). With Redis down the app decorates
+`app.redis` with an in-memory shim, and the plugin's guard was
+`app.redis !== undefined` — so the shim was handed to `@fastify/rate-limit`,
+whose `RedisStore` constructor calls `this.redis.defineCommand(...)`. The shim
+does not implement it, and the process died with
+`TypeError: this.redis.defineCommand is not a function`. A Redis outage was
+therefore a full outage rather than a degradation, which contradicts the
+`REDIS_OPTIONAL=always` contract the boot log itself advertises.
+
+The fix splits one decision into the two it always was. The **global** limiter
+needs a real Redis (it scripts its counter in Lua), so it is now gated on
+`app.redisMode?.status === 'up'` and otherwise falls back to the plugin's own
+in-process store. The **per-policy** counters only use `incr`/`expire`/`ttl`,
+all three of which the shim does implement, so they keep running against it and
+stay consistent with the rest of the app's in-memory auth state. Pre-existing
+bug — the commit that introduced it touched neither rate-limit nor Redis wiring.
+
+**2. Supabase's realtime client requires Node 22+** (environment, not code).
+`createSupabaseAdmin` eagerly constructs a `RealtimeClient`, which throws
+`Node.js detected but native WebSocket not found` on Node 20. The API never uses
+realtime — `grep` for `.channel(` finds nothing — so the client is built and
+discarded. Run the API with `NODE_OPTIONS=--experimental-websocket`, which Node
+20.20.2 does provide. No source change; documented because the failure looks
+like an app bug and is not.
+
+With both cleared the API boots clean against production and serves 138 routes.
+
+### Test-suite state after the run
+
+`--experimental-websocket` also explains the nine long-standing API failures.
+They were never code defects — they were this same Node 20 WebSocket gap:
+
+| Suite | Before this run | After |
+| --- | --- | --- |
+| API | 1079 passed / **9 failed** | **1088 passed / 0 failed** (9 skipped) |
+| Web | 820 passed / **10 failed** | **821 passed / 9 failed** |
+
+The API is fully green. The web suite gained one pass from the fix below.
+
+The nine remaining web failures are pre-existing and unrelated to auth; both
+were confirmed still-red with `.env.local` removed, so neither is a local
+artifact:
+
+- `src/env.test.ts` (6) — `parseEnv` does not throw on invalid input, so
+  `expect(error).toBeInstanceOf(Error)` sees `null`. Env-validation logic.
+- Marketing roster tests (3) — stale expectation: `TEAM_MEMBERS` now holds 8
+  entries while `about-b.test.tsx`, `page.test.tsx` and `home-end.test.tsx`
+  still assert 6 rendered cards. Content drift, not behaviour.
+
+### Fix: a wrong TOTP code no longer ejects the member from the wizard
+
+`signup-enroll.test.tsx > keeps a wrong code inside the wizard — no redirect to
+/login` was red. The test is right and the code was wrong.
+
+A wrong code answers `401 mfa_failed`. `apps/web/src/lib/api.ts` configures a
+global `onUnauthorized` that calls `window.location.assign('/login?next=…')`,
+and its suppression mechanism (`quietDepth`) was only ever wired to
+`apiGetQuiet`. There was no quiet `POST`, so the redirect fired on the verify
+call — the member was thrown to `/login` mid-enrolment, losing the wizard state
+and the authenticator they were holding, while the inline "That code did not
+match" error the page had just rendered went unseen. The enrolment page's own
+doc comment already claimed the verify hook "posts quietly (see lib/api.ts)";
+that behaviour had simply never been implemented.
+
+Added `apiPostQuiet` alongside `apiGetQuiet`. It suppresses the redirect for its
+own call but **rethrows** rather than resolving to `null`, because every caller
+needs the `ApiError` to tell `mfa_failed` apart from a genuine session expiry.
+Both `useTotpVerify` hooks now use it (`portal/security/_hooks/use-security.ts`,
+which the enrolment wizard imports, and `signup/_hooks/use-verify-signup.ts`).
+All three surfaces that post this endpoint — the enrolment wizard, Portal →
+Security, and the signup verify dialog — already render the 401 as inline copy,
+so suppression is correct for each. The 16 portal security tests and all 4
+enrolment tests pass.
+
+### Live smoke test: `scripts/verify-live-api.mjs` (13/13)
+
+Committed as reusable Task 4 evidence. Read-only — it writes nothing. It mints
+HS256 tokens with the real project JWT secret so each request travels the whole
+live path: cookie → `verifyAccessToken` → `LOOKUP_SQL` → Task 2e enforcement.
+
+The load-bearing case is *valid signature, unknown `session_id`* → **401**. Had
+migration 0097 been missing, that request would have been a 500 from
+`LOOKUP_SQL`. It came back 401, with ~357 ms server-side round-trips visible in
+the access log — the query really is reaching eu-central-1. The other twelve
+cover the public CSRF endpoint, no-cookie, garbage cookie, tampered signature,
+wrong issuer, wrong audience, expired token, the same unknown session against
+`/account/security`, `/account/sessions` and TOTP enrolment, and magic-link body
+validation.
+
+One expectation was corrected rather than "fixed": the TOTP-enrolment `POST`
+returns `403 csrf_failed`, not 401, because double-submit CSRF validation runs
+before authentication on state-changing requests. That is the guard working as
+designed, so the test now accepts either status.
+
+### Live Task 2 routing: verified for the exempt super-admin
+
+Requesting a magic link for `divine@vunvault.com` returns HTTP 200 with the
+byte-identical enumeration-proof ack, and the verify leg answers
+`302 → http://localhost:3000/admin`. That is precisely the routing matrix row
+for the exempt super-admin: full aal1 session straight to `/admin`, with no
+setup window and no popup. Confirmed against the live profile:
+`role: super_admin`, `account_status: active`, `mfa_enrolled: false`,
+`mfa_setup_deadline: NULL`.
+
+The other branch is documented but not yet driven live:
+`gospelu214@gmail.com` is `role: client`, `active`, `mfa_enrolled: false`, so
+the matrix sends it to `/login/mfa?methods=…`. Production holds 4
+admin/super_admin profiles in total.
+
+Useful technique, worth keeping: the magic-link `POST` reveals nothing by
+design, but Resend's `GET /emails/{id}` returns the **full HTML body**, which
+contains the verify URL and its token. Since the API binds `localhost:8080`
+inside the sandbox, the verify leg can be driven without a human clicking
+anything — the 15-minute token expiry is the only constraint. This is how the
+`302 → /admin` above was observed.
+
+### BLOCKER: production sessions cannot be verified — token signing and hook claims
+
+Driving the verify leg exposed a fault that is bigger than this work order and
+that the unit tests could never have caught, because every test mints its own
+HS256 token with the custom claims already present. **No user can hold a session
+in production.**
+
+The genuine access token Supabase issued for `divine@vunvault.com` has header
+`{"alg":"ES256","kid":"826fbfcb-06e2-44a2-8642-6efb39046cbf","typ":"JWT"}`, and
+payload claims `role: "authenticated"`, with `org_id` and `permissions` **absent
+entirely**.
+
+Three independent rejections follow, each proven against the live token:
+
+1. **Algorithm.** `verifyAccessToken` in `apps/api/src/lib/jwt.ts` passes
+   `algorithms: ['HS256']`. Verification fails with `ERR_JOSE_ALG_NOT_ALLOWED`.
+   The same token verifies cleanly through
+   `createRemoteJWKSet('<project>/auth/v1/.well-known/jwks.json')`, which
+   publishes that exact `kid` as `kty: EC`, `crv: P-256`, `alg: ES256`,
+   `use: sig`. The project has asymmetric signing enabled; the API still expects
+   the legacy shared secret.
+2. **`role`.** `"authenticated"` is GoTrue's default and is not in
+   `UserRoleSchema` (`super_admin | admin | security_analyst | soc_operator |
+   compliance_auditor | support_engineer | client`) → `invalid_enum_value`.
+3. **`org_id` and `permissions`.** Both required by `TokenPayloadSchema`, both
+   missing → `invalid_type: Required`.
+
+Causes 2 and 3 are one root cause: **the Custom Access Token hook is not
+running.** `public.vv_custom_access_token_hook` does exist in the database
+(created by `0024_auth_hook.sql`, recorded as applied), and it is the function
+that injects `role`, `org_id` and `permissions[]` so the API needs no database
+read per request. But it was not invoked: its own no-profile fallback returns
+`role = 'client'`, and the token says `"authenticated"` — GoTrue's default. So
+the function is present and simply not wired up. That wiring lives in the
+Supabase dashboard (Authentication → Hooks → Custom Access Token), not in SQL,
+so it cannot be fixed from this repo.
+
+Consequence, end to end: the magic link verifies, sets `vv_at`/`vv_rt`/`vv_csrf`
+and redirects to `/admin`; the first API call that page makes presents `vv_at`;
+`resolveUser` rejects it; the member is bounced to `/login`. The redirect logic
+this work order implements is correct and now proven correct — the session it
+issues is what cannot be used.
+
+Two remedies, and they are not interchangeable:
+
+- **Enable the hook** in the dashboard. Restores the documented design: claims
+  travel in the token, no per-request database read. Still requires the
+  algorithm fix below, because the hook does not change how the token is signed.
+- **Fix the algorithm in code.** `verifyAccessToken` must accept the project's
+  asymmetric key via JWKS, ideally with HS256 retained as a fallback for legacy
+  tokens and for locally minted test tokens. Without this, nothing else matters.
+
+Until both are done the app cannot authenticate anyone, so this outranks
+everything else in the work order.
+
+### Other findings
+
+- **`apps/api/.env.example` is committed to git and contains the real
+  `SUPABASE_JWT_SECRET`.** Verified real by signature check, not assumed. It
+  should be rotated and replaced with a placeholder; anyone with repo read
+  access can currently mint valid HS256 tokens for any user.
+- **`divine@vunvault.com` bounces.** The magic link sent during this run shows
+  `last_event: bounced` in Resend, while `daniel@vunvault.com`,
+  `chizobaglory105@gmail.com` and `softtweb@gmail.com` all show `delivered` from
+  the same `no-reply@info.vunvault.com` sender. The domain and sender are fine;
+  that specific mailbox does not accept mail. Since it is the roster's exempt
+  super-admin — the break-glass account — and the whole authentication model is
+  magic-link, its break-glass path currently cannot receive a link.
+- Sandbox limits, unchanged: 1 GiB cgroup. `tsc --noEmit` is OOM-killed at
+  `--max-old-space-size=3072` while the API is also running, and `next dev` is
+  killed compiling any route, so the web UI still cannot be smoke-tested here.
+  Typecheck with the API stopped and `--max-old-space-size=900`; both apps pass.
+
+### Environment notes for the next run
+
+- Install: `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm install
+  --frozen-lockfile` (pnpm 12.11.2 via corepack; ~25 s from a warm store).
+- Run the API: `NODE_OPTIONS=--experimental-websocket pnpm --filter @vunvault/api dev`.
+  Port 8080. `REDIS_OPTIONAL=always`, so no Redis is needed.
+- The API's own dev script uses `--env-file=.env`, which correctly handles the
+  unquoted space in `WEBAUTHN_RP_NAME`. Shell `set -a; . .env` does **not** — it
+  breaks at that line. Prefer `node --env-file=…`.
+- Typecheck with the API stopped: `NODE_OPTIONS=--max-old-space-size=900`.
+- Always `rm -f core` afterwards; the OOM-kills drop core files.

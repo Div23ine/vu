@@ -7,7 +7,7 @@ import type {
   TotpEnrollStart,
   TotpVerifyBody,
 } from '@vunvault/contracts';
-import { apiPost } from '../../../../lib/api';
+import { apiPost, apiPostQuiet } from '../../../../lib/api';
 
 /**
  * Signup verification hooks — the four endpoints behind the
@@ -51,7 +51,13 @@ export function useTotpVerify() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/mfa/totp/verify body { factorId; code: string(6) }
     //  → 204 | 401 { error: "mfa_failed" }
-    mutationFn: (body: TotpVerifyBody) => apiPost<void>('/api/v1/account/mfa/totp/verify', body),
+    //
+    // Quiet: the 401 a wrong code produces is a validation failure, not an
+    // expired session, and the verify dialog renders it inline. Without the
+    // suppression the global redirect fires first and throws the member out of
+    // the wizard they were in the middle of completing.
+    mutationFn: (body: TotpVerifyBody) =>
+      apiPostQuiet<void>('/api/v1/account/mfa/totp/verify', body),
   });
 }
 

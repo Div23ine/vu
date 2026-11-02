@@ -10,7 +10,7 @@ import type {
   WebauthnRegisterVerifyBody,
 } from '@vunvault/contracts';
 import { queryKeys } from '@vunvault/lib';
-import { apiDelete, apiGet, apiPost } from '../../../../../lib/api';
+import { apiDelete, apiGet, apiPost, apiPostQuiet } from '../../../../../lib/api';
 
 /**
  * Security hooks — the account-security surface built in an earlier iteration:
@@ -65,7 +65,13 @@ export function useTotpVerify() {
   return useMutation({
     // TODO(backend-contract): POST /api/v1/account/mfa/totp/verify body { factorId; code }
     //  → 204 | 401 mfa_failed
-    mutationFn: (body: TotpVerifyBody) => apiPost<void>('/api/v1/account/mfa/totp/verify', body),
+    //
+    // Quiet: a wrong code is a 401, and the global session-expiry redirect
+    // cannot distinguish it from an expired session. Both callers (this panel
+    // and the signup enrolment wizard) render it as inline copy, so the
+    // redirect has to stand down or the member loses the wizard mid-ceremony.
+    mutationFn: (body: TotpVerifyBody) =>
+      apiPostQuiet<void>('/api/v1/account/mfa/totp/verify', body),
   });
 }
 
