@@ -2441,3 +2441,113 @@ everything else in the work order.
   breaks at that line. Prefer `node --env-file=…`.
 - Typecheck with the API stopped: `NODE_OPTIONS=--max-old-space-size=900`.
 - Always `rm -f core` afterwards; the OOM-kills drop core files.
+
+### Fix applied: ES256/JWKS token verification (`apps/api/src/lib/jwt.ts`)
+
+Decision taken on 2026-11-02: fix the algorithm in code, and enable the Custom
+Access Token hook in the Supabase dashboard. Both halves are required; neither
+alone restores sessions.
+
+`verifyAccessToken` now reads the token's `alg` and routes it to one of two
+families, refusing anything else before crypto is attempted:
+
+- `HS256` → the shared project secret (`SUPABASE_JWT_SECRET`), as before.
+- `ES256`/`ES384`/`ES512`/`RS*`/`PS*` → the JWKS published at
+  `jwksUri(issuer)` = `<issuer>/.well-known/jwks.json`, via jose's
+  `createRemoteJWKSet`, which caches keys and refetches on an unknown `kid`. One
+  key set is memoised per URI in a module-level map — without that, every request
+  would build a fresh fetcher and a fresh cache, defeating the caching and
+  hitting the endpoint once per verification.
+
+Branching on a caller-controlled `alg` is safe **only** because the two branches
+use disjoint key material: HS256 uses the shared secret, the asymmetric branch
+uses the JWKS. The classic algorithm-confusion forgery — re-sign with HS256
+using the public key as the HMAC secret — needs one key to serve both roles, and
+here an attacker without the project secret cannot produce a token the HS256
+branch accepts, while the JWKS branch never sees that secret. A regression test
+performs exactly that forgery and asserts it is rejected.
+
+Two verification seams were added for tests, so no test needs the network:
+`options.jwks` (inject a key set) and `options.jwksUri` (override the location).
+`jose` resolves its overloads on the key's *concrete* type, so the two branches
+are separate `jwtVerify` call sites rather than one union-typed key variable —
+the union matched neither overload and failed `tsc` while passing `eslint`.
+
+`src/lib/jwt.test.ts` is new: 21 tests covering both families, the JWKS path, an
+unpublished `kid`, `alg: none`, an out-of-family `HS512`, the confusion forgery,
+malformed tokens, issuer/audience/expiry, and each custom claim. Note that the
+convenience signers spread overrides *onto* default claims, so "omit a claim"
+needs the `signExact*` helper — an absent key in an override silently leaves the
+default in place, which is how three of these tests first passed for the wrong
+reason.
+
+**API suite: 1088 → 1109 passed, 0 failed.** Lint and `tsc --noEmit` clean.
+
+Verified against the live project, not a mock: the genuine ES256 token Supabase
+issued for `divine@vunvault.com` now verifies through
+`createRemoteJWKSet('https://wwklefixmvtxvmzapjpj.supabase.co/auth/v1/.well-known/jwks.json')`
+— `alg ES256`, `kid 826fbfcb-06e2-44a2-8642-6efb39046cbf`, matching the
+published key. The algorithm fault is closed.
+
+### End-to-end proof that the hook is the only remaining blocker
+
+The magic-link verify legs wrote real rows to `user_sessions`, so the chain could
+be driven with a genuine session. Minting an HS256 token that carries the claims
+the hook *would* have supplied (`role: super_admin`, `org_id: null`,
+`permissions: []`) against the real session
+`13f8082b-d30c-4d6b-845c-e440b8b996e2` gives:
+
+| Request | Result |
+| --- | --- |
+| `GET /api/v1/auth/session` | **200** — `role: super_admin`, and `permissions` populated server-side (`dashboard:read`, `scans:*`, `intel:*`, `users:*`, …) rather than echoed from the empty token array |
+| `GET /api/v1/account/security` | **200** — `totp.enabled: false`, `require2fa: true`, posture `0/4` "Weak posture" |
+| `GET /api/v1/account/sessions` | **200** — both sessions listed, the presented one `current: true` |
+
+Every layer therefore works once the claims are present: signature verification,
+`LOOKUP_SQL` with the new `mfa_setup_deadline` column, the Task 2e exemption for
+`super_admin`, and permission enrichment. The single outstanding item is
+enabling **Authentication → Hooks → Custom Access Token →
+`public.vv_custom_access_token_hook`** in the Supabase dashboard. Until that is
+done, production still 401s every authenticated request — the signature is now
+accepted and the claims are what fail.
+
+`user_sessions` has no `created_at`; the column is `started_at`. Worth recording
+because the natural first guess errors.
+
+### Cleanup of test artifacts in the system of record
+
+The smoke test created 3 live `user_sessions` rows for `divine@vunvault.com`.
+They were revoked (`revoked_at = now()`), matched narrowly — that user, source IP
+`127.0.0.1`, started within the last two hours, still unrevoked — so the 15
+genuine sessions belonging to real users were untouched. Nothing else was
+written to production beyond migrations 0096 and 0097.
+
+### Secret removed from version control
+
+`apps/api/.env.example` was committed containing the **real**
+`SUPABASE_JWT_SECRET` (88 characters, signature-verified against the service-role
+JWT — not a placeholder that happened to match). Anyone with read access to the
+repo could mint a valid HS256 token for any user, including `super_admin`.
+
+Audited every non-empty entry in the file rather than assuming. All the other
+apparently-sensitive values are already dummies or local: `DATABASE_URL` and
+`DIRECT_URL` point at `localhost:5432` with a trivial password,
+`SUPABASE_SERVICE_ROLE_KEY` is `…dummy.dummy`, `SUPABASE_URL` is
+`dummy-project.supabase.co`, `RESEND_API_KEY` is `re_dummy123456789`, and
+`AUDIT_HMAC_KEY` is 44 characters of `A` and `=` — base64 of all-zero bytes, a
+placeholder, not a key. Two entries were real and both are now scrubbed:
+
+- `SUPABASE_JWT_SECRET` → `replace-with-your-project-jwt-secret`, with a comment
+  recording why the real value must never live here.
+- `UPSTASH_REDIS_URL` → `https://your-endpoint.upstash.io`. The committed value
+  was a live endpoint hostname (`real-phoenix-233836.upstash.io`) with **no**
+  embedded credential, so it was not usable on its own, but it named real
+  infrastructure. The real value is preserved as a commented line in the
+  gitignored `apps/api/.env`.
+
+**Scrubbing the working file does not remove the secret from git history.** The
+value is still recoverable from every earlier commit, so it should be rotated in
+the Supabase dashboard (Project Settings → API → JWT Secret) regardless. Note the
+interaction with the fix above: while an HS256 fallback is accepted and the
+secret is unrotated, the leaked value remains a working forgery vector. Rotating
+it closes that; the ES256 path is unaffected because it never uses the secret.
