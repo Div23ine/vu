@@ -27,7 +27,7 @@
     "@vunvault/lib": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "lucide-react": "^0.468.0",
-    "zustand": "^5.0.15"
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -38,7 +38,7 @@
     "eslint": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-hook-form": "^7.90.0",
+    "react-hook-form": "^7.91.0",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
