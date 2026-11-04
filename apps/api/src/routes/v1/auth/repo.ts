@@ -23,6 +23,15 @@ export interface AuthProfileRow {
   deletedAt: string | null;
   mfaEnrolled: boolean;
   /**
+   * ISO timestamp of the last completed sign-in (`profiles.last_active_at`),
+   * or `null` when the account has NEVER completed one. The magic-link verify
+   * leg reads this to tell a first-ever login apart from a returning one —
+   * first-time admins land on the homepage with the MFA setup countdown,
+   * everyone else (and every returning admin/super admin) routes through the
+   * six-digit code screen first.
+   */
+  lastActiveAt: string | null;
+  /**
    * Server-side first-login MFA window (migration 0097). ISO string, or `null`
    * when the account has no open window. Read on every magic-link verify so a
    * fresh link can be refused an extension, and by the auth middleware so a
@@ -143,6 +152,7 @@ const PROFILE_COLUMNS = `
   p.account_status::text as account_status,
   p.deleted_at,
   p.mfa_enrolled,
+  p.last_active_at,
   p.mfa_setup_deadline
 `;
 
@@ -157,6 +167,7 @@ interface ProfileSqlRow {
   account_status: AccountStatus;
   deleted_at: Date | string | null;
   mfa_enrolled: boolean;
+  last_active_at: Date | string | null;
   mfa_setup_deadline: Date | string | null;
 }
 
@@ -172,6 +183,7 @@ function toProfile(row: ProfileSqlRow): AuthProfileRow {
     accountStatus: row.account_status,
     deletedAt: row.deleted_at === null ? null : new Date(row.deleted_at).toISOString(),
     mfaEnrolled: row.mfa_enrolled,
+    lastActiveAt: row.last_active_at === null ? null : new Date(row.last_active_at).toISOString(),
     mfaSetupDeadline:
       row.mfa_setup_deadline === null ? null : new Date(row.mfa_setup_deadline).toISOString(),
   };

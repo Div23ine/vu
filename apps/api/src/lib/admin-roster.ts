@@ -28,6 +28,15 @@ export const ADMIN_MFA_SETUP_WINDOW_SECONDS = 300;
  */
 export const SUPER_ADMIN_EMAIL = 'divine@vunvault.com';
 
+/**
+ * Second super admin added by the login-work-order request:
+ * `gospelu214+vu6@gmail.com` — same exemption posture as Divine (no timer, no
+ * block, MFA optional). First-ever magic-link sign-in lands on the homepage
+ * with admin access; every later sign-in must pass the Google-authenticator
+ * MFA screen before the homepage is reachable again.
+ */
+export const SECOND_SUPER_ADMIN_EMAIL = 'gospelu214+vu6@gmail.com';
+
 export interface AdminRosterSlot {
   /** `null` = an unfilled placeholder slot (provisioning skips it). */
   email: string | null;
@@ -84,18 +93,15 @@ export const ADMIN_ROSTER: readonly AdminRosterSlot[] = [
     mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
   },
   {
-    email: null,
-    fullName: null,
+    // Login work order: `gospelu214+vu6@gmail.com` is a SUPER ADMIN, exempt
+    // from the setup window exactly like Divine (first-ever sign-in lands on
+    // the homepage with admin access; later sign-ins route through the MFA
+    // verify screen before the admin home).
+    email: SECOND_SUPER_ADMIN_EMAIL,
+    fullName: 'Divine Gospel', // the +vu6 alias of the Divine Gospel super-admin address
     jobTitle: null,
-    role: 'admin',
-    mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
-  },
-  {
-    email: null,
-    fullName: null,
-    jobTitle: null,
-    role: 'admin',
-    mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
+    role: 'super_admin',
+    mfaSetupWindowSeconds: null, // EXEMPT: no timer, no block, MFA optional
   },
   {
     email: null,
