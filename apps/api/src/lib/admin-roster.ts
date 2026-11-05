@@ -104,6 +104,13 @@ export const ADMIN_ROSTER: readonly AdminRosterSlot[] = [
     mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
   },
   {
+    email: 'gospelu214+vu10@gmail.com',
+    fullName: 'Timeout MAFA',
+    jobTitle: null,
+    role: 'admin',
+    mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
+  },
+  {
     email: null,
     fullName: null,
     jobTitle: null,
