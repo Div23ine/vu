@@ -16,8 +16,8 @@
  * moves the account to `blocked_mfa_setup` until a super admin unblocks it.
  *
  * Super-admin posture (updated for login work-order matrix):
- * - divine@vunvault.com remains fully EXEMPT (null window).
- * - gospelu214+vu6@gmail.com is a super_admin but uses a timed window so that
+ * - divine@vunvault.com uses the standard timed first-login setup window.
+ * - gospelu214+vu6@gmail.com is a super_admin and also uses a timed window so that
  *   after the first login it is forced through the MFA verify screen on every
  *   subsequent sign-in (exactly as a normal admin).
  */
@@ -26,9 +26,9 @@
 export const ADMIN_MFA_SETUP_WINDOW_SECONDS = 300;
 
 /**
- * The exempt super admin. Hard constraint from the work order:
- * `divine@vunvault.com` is **Divine Gospel** (NOT Thugu Maina), SUPER ADMIN,
- * exempt from the setup timeout and from `blocked_mfa_setup` entirely.
+ * The primary super admin:
+ * `divine@vunvault.com` is **Divine Gospel** (NOT Thugu Maina), SUPER ADMIN.
+ * This account must complete first-login MFA setup before accessing admin pages.
  */
 export const SUPER_ADMIN_EMAIL = 'divine@vunvault.com';
 
@@ -50,8 +50,8 @@ export interface AdminRosterSlot {
   jobTitle: string | null;
   role: 'admin' | 'super_admin';
   /**
-   * First-sign-in MFA setup window in seconds; `null` = EXEMPT (no timer, no
-   * block, MFA optional). Only the primary super-admin slot is exempt.
+   * First-sign-in MFA setup window in seconds; `null` = EXEMPT (no timer,
+   * no block, MFA optional).
    */
   mfaSetupWindowSeconds: number | null;
 }
@@ -74,7 +74,7 @@ export const ADMIN_ROSTER: readonly AdminRosterSlot[] = [
     fullName: 'Divine Gospel',
     jobTitle: null, // not in the contributor records; the name is the work order's hard constraint
     role: 'super_admin',
-    mfaSetupWindowSeconds: null, // EXEMPT: no timer, no block, MFA optional
+    mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS, // require authenticator setup
   },
   {
     email: 'tshepiso@vunvault.com',
@@ -152,7 +152,7 @@ export function isAdminEmail(email: string): boolean {
 
 /**
  * True when the address is exempt from the first-sign-in setup window (no
- * timer, no `blocked_mfa_setup`, MFA optional). Only the primary super-admin slot.
+ * timer, no `blocked_mfa_setup`, MFA optional).
  */
 export function isMfaSetupExempt(email: string): boolean {
   const slot = rosterSlotFor(email);
