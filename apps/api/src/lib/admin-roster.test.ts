@@ -21,11 +21,11 @@ import {
  */
 
 describe('admin roster — shape', () => {
-  it('carries exactly nine slots: five populated, four null placeholders', () => {
+  it('carries exactly nine slots: six populated, three null placeholders', () => {
     expect(ADMIN_ROSTER).toHaveLength(9);
-    expect(populatedRosterSlots()).toHaveLength(5);
+    expect(populatedRosterSlots()).toHaveLength(6);
     const placeholders = ADMIN_ROSTER.filter((slot) => slot.email === null);
-    expect(placeholders).toHaveLength(4);
+    expect(placeholders).toHaveLength(3);
     for (const slot of placeholders) {
       expect(slot.fullName).toBeNull();
       expect(slot.role).toBe('admin');
@@ -65,7 +65,7 @@ describe('admin roster — shape', () => {
     }
   });
 
-  it('resolves the four names from the contributor records', () => {
+  it('resolves roster names, including the explicitly supplied new admin name', () => {
     expect(rosterSlotFor('daniel@vunvault.com')).toMatchObject({
       fullName: 'Daniel Okafor',
       jobTitle: 'Security and Project Coordinator',
@@ -76,7 +76,7 @@ describe('admin roster — shape', () => {
       jobTitle: 'Research Analyst',
       role: 'admin',
     });
-    // about-data.ts spells it "Bukeonya"; the work-order resolution records
+    expect(rosterSlotFor('gospelu214+vu10@gmail.com')).toMatchObject({\n      fullName: 'Timeout MAFA',\n      jobTitle: null,\n      role: 'admin',\n      mfaSetupWindowSeconds: 300,\n    });\n    // about-data.ts spells it "Bukeonya"; the work-order resolution records
     // "Bukenoya Natasha" as canonical (variant flagged in the playbook).
     expect(rosterSlotFor('bukenya@vunvault.com')).toMatchObject({
       fullName: 'Bukenoya Natasha',
