@@ -275,8 +275,8 @@ export function setupWindowSecondsFor(profile: { email: string; role: UserRole }
  * browser (the exempt super admin's full-session leg); every JSON leg lets
  * the web app route itself.
  */
-export function homeForRole(role: UserRole): '/admin' | '/admin/profile' | '/portal' {
-  if (role === 'client') return '/portal';
+export function homeForRole(role: UserRole): '/' | '/admin' | '/admin/profile' {
+  if (role === 'client') return '/';
   if (role === 'support_engineer') return '/admin/profile';
   return '/admin';
 }
