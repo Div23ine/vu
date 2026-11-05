@@ -107,9 +107,9 @@ describe('cookie policy', () => {
     expect(cookieOptions('vv_csrf').httpOnly).toBe(false);
   });
 
-  it('uses Strict for the refresh and MFA cookies and Lax for the others', () => {
+  it('uses Strict for refresh and Lax for MFA challenge and other cookies', () => {
     expect(cookieOptions('vv_rt').sameSite).toBe('strict');
-    expect(cookieOptions('vv_mfa').sameSite).toBe('strict');
+    expect(cookieOptions('vv_mfa').sameSite).toBe('lax');
     expect(cookieOptions('vv_at').sameSite).toBe('lax');
     expect(cookieOptions('vv_csrf').sameSite).toBe('lax');
   });
