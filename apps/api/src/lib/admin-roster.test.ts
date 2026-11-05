@@ -12,8 +12,8 @@ import {
 
 /**
  * The administrator roster is the provisioning source of truth (Phase 2,
- * work order §2). These tests PIN the config: nine slots, five populated,
- * four null placeholders; the hard constraint that `divine@vunvault.com` is
+ * work order §2). These tests PIN the config: nine slots, seven populated,
+ * two null placeholders; the hard constraint that `divine@vunvault.com` is
  * Divine Gospel — SUPER ADMIN, exempt from the setup timer and from
  * `blocked_mfa_setup` — plus the login work order's second super admin
  * (`gospelu214+vu6@gmail.com`, same exemption) and the 5:00 window on every
@@ -81,7 +81,14 @@ describe('admin roster — shape', () => {
       jobTitle: null,
       role: 'admin',
       mfaSetupWindowSeconds: 300,
-    });\n    // about-data.ts spells it "Bukeonya"; the work-order resolution records
+    });
+    expect(rosterSlotFor('esther@vunvault.com')).toMatchObject({
+      fullName: 'Esther Haule',
+      jobTitle: null,
+      role: 'admin',
+      mfaSetupWindowSeconds: 300,
+    });
+    // about-data.ts spells it "Bukeonya"; the work-order resolution records
     // "Bukenoya Natasha" as canonical (variant flagged in the playbook).
     expect(rosterSlotFor('bukenya@vunvault.com')).toMatchObject({
       fullName: 'Bukenoya Natasha',
