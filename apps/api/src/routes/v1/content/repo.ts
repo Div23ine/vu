@@ -35,8 +35,8 @@ export interface ContentItemRow {
   /** Task 40b: the blog's severity chip and its priority sort. */
   severity: string | null;
   submittedAt: string | null;
-  approvedBy: string | null;
-  approvedAt: string | null;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
   publishedAt: string | null;
   scheduledFor: string | null;
   updatedAt: string;
