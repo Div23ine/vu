@@ -17,10 +17,11 @@ import { homeFor } from './lib/permissions';
  *  in `next.config.ts` and are NOT duplicated here.
  *
  * 2. **Route guards — cookie presence only.** The middleware checks that a
- *  session cookie EXISTS before letting a guarded path render, and steers
- *  logged-in visitors away from `/login`/`/signup`. It never validates a
- *  token: peeking the role is a routing convenience, never a security
- *  decision — the API remains the authority on every data call, and
+ *  session cookie EXISTS before letting a guarded path render. `/login` always
+ *  remains reachable so a visitor can switch accounts or request a fresh link;
+ *  only `/signup` redirects a visitor with an unexpired, recognizable session.
+ *  It never validates a token: peeking the role is a routing convenience, never
+ *  a security decision — the API remains the authority on every data call, and
  *  `requireSession` re-checks server-side before guarded layouts render.
  */
 
