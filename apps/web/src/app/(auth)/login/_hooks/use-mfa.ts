@@ -15,14 +15,19 @@ import type { WebAuthnRequestOptionsJson } from '../_lib/webauthn-client';
  * `challenge_expired`, `rate_limited`) for the dialog's verbatim copy.
  */
 
+export type MfaVerifyResult = {
+  data: SessionUser;
+  /** Preferred landing path after MFA success (role-aware matrix). */
+  redirectTo?: string;
+};
+
 export function useMfaVerify() {
   return useMutation({
-    // TODO(backend-contract): POST /api/v1/auth/mfa/verify body MfaVerifyBody
-    //  → 200 { data: SessionUser } | 401 { error: "mfa_failed" } | 410 { error: "challenge_expired" }
+    // POST /api/v1/auth/mfa/verify body MfaVerifyBody
+    //  → 200 { data: SessionUser, redirectTo?: string }
+    //  | 401 { error: "mfa_failed" } | 410 { error: "challenge_expired" }
     mutationFn: (body: MfaVerifyBody) =>
-      apiPost<{ data: SessionUser }>('/api/v1/auth/mfa/verify', body).then(
-        (response) => response.data,
-      ),
+      apiPost<MfaVerifyResult>('/api/v1/auth/mfa/verify', body),
   });
 }
 

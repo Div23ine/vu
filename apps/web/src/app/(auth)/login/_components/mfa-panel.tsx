@@ -91,7 +91,7 @@ export function MfaPanel({ methods, to, next }: MfaPanelProps) {
 
   const cardRef = useRef<HTMLElement>(null);
   const emailSent = useRef(false);
-  const pendingNav = useRef<{ user: SessionUser; via: MfaUiMethod } | null>(null);
+  const pendingNav = useRef<{ user: SessionUser; via: MfaUiMethod; redirectTo?: string } | null>(null);
 
   const pending =
     verify.isPending || recovery.isPending || webauthnOptions.isPending || emailOtp.isPending;
@@ -156,8 +156,8 @@ export function MfaPanel({ methods, to, next }: MfaPanelProps) {
   );
 
   const handleSuccess = useCallback(
-    (user: SessionUser, via: MfaUiMethod) => {
-      pendingNav.current = { user, via };
+    (user: SessionUser, via: MfaUiMethod, redirectTo?: string) => {
+      pendingNav.current = { user, via, redirectTo };
       setBoxState('ok');
       setPhase('success');
       setTimeout(() => {
@@ -169,7 +169,11 @@ export function MfaPanel({ methods, to, next }: MfaPanelProps) {
           router.replace('/login?error=mfa_required');
           return;
         }
-        router.replace(next !== null && next !== '/' ? next : home);
+        // Prefer API-provided redirectTo (role-aware matrix), then ?next=, then homeFor(role).
+        const target =
+          navigation.redirectTo ??
+          (next !== null && next !== '/' ? next : home);
+        router.replace(target);
       }, SUCCESS_NAV_DELAY_MS);
     },
     [next, queryClient, router],
@@ -180,8 +184,8 @@ export function MfaPanel({ methods, to, next }: MfaPanelProps) {
     try {
       const options = await webauthnOptions.mutateAsync();
       const assertion = await requestWebAuthnAssertion(options);
-      const user = await verify.mutateAsync({ method: 'webauthn', assertion });
-      handleSuccess(user, 'webauthn');
+      const result = await verify.mutateAsync({ method: 'webauthn', assertion });
+      handleSuccess(result.data, 'webauthn', result.redirectTo);
     } catch (cause) {
       if (isWebAuthnCancel(cause)) {
         setError(CANCELLED_KEY);
@@ -202,11 +206,11 @@ export function MfaPanel({ methods, to, next }: MfaPanelProps) {
       setError('');
       setBoxState('idle');
       try {
-        const user = await verify.mutateAsync({
+        const result = await verify.mutateAsync({
           method: method === 'email_otp' ? 'email_otp' : 'totp',
           code,
         });
-        handleSuccess(user, method);
+        handleSuccess(result.data, method, result.redirectTo);
       } catch (cause) {
         handleVerifyError(cause);
       }

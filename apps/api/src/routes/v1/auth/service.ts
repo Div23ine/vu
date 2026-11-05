@@ -924,10 +924,11 @@ export class AuthService {
         userId: profile.id,
         issued,
         setup: true,
-        // The site homepage (work order Task 2b: "redirect to homepage", never
-        // a generic login screen). `/login/mfa/setup` stays reachable from the
-        // popup's own control.
-        redirectTo: `${origin}/`,
+        // First-login admin / non-exempt super-admin: land on the role home
+        // (/admin) with aal1 session + vv_mfa challenge so the MFA setup
+        // popup can show the countdown. Subsequent logins still go through
+        // /login/mfa.
+        redirectTo: `${origin}${homeForRole(profile.role)}`,
       };
     }
 
