@@ -1570,6 +1570,9 @@ describe('Phase 2 — magic-link verify routes unenrolled accounts to setup', ()
       email: 'divine@vunvault.com',
       role: 'super_admin',
       fullName: 'Divine Gospel',
+      // A previous setup attempt must not keep the exempt account trapped
+      // behind the mandatory popup.
+      mfaSetupDeadline: new Date(Date.now() + 300_000).toISOString(),
     });
     const response = await mintAndVerify('divine@vunvault.com');
 
@@ -1581,6 +1584,7 @@ describe('Phase 2 — magic-link verify routes unenrolled accounts to setup', ()
     expect(names).toContain('vv_rt');
     expect(names).not.toContain('vv_mfa');
     expect(harness.repo.sessions).toHaveLength(1);
+    expect(harness.repo.profiles.find((p) => p.id === USER_ID)?.mfaSetupDeadline).toBeNull();
     expect(harness.audits.map((e) => e.eventType)).toContain('AUTH_SUCCESS');
     const ledgered = [...harness.kv.entries.keys()].filter((key) => key.startsWith('mfasetup:'));
     expect(ledgered).toEqual([]);
