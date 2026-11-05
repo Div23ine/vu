@@ -40,7 +40,9 @@ export const COOKIE_MAX_AGE: Record<CookieName, number | undefined> = {
 export const COOKIE_PATHS: Record<CookieName, string> = {
   vv_at: '/',
   vv_rt: '/api/v1/auth',
-  vv_mfa: '/api/v1/auth',
+  // The web MFA/setup pages must receive this HttpOnly challenge cookie too.
+  // It remains unreadable to JavaScript and is cleared with the same root path.
+  vv_mfa: '/',
   vv_csrf: '/',
 };
 
