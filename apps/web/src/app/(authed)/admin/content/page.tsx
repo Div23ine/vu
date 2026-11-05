@@ -274,6 +274,28 @@ function ContentView() {
         <ContentSummary />
       </section>
 
+      {filters.status !== 'approved' && (approvedQueue.data?.total ?? 0) > 0 ? (
+        <section className="adm-card" aria-label="Approved content awaiting publication">
+          <div className="adm-card-head">
+            <div>
+              <h2 className="adm-card-title">Approved content is waiting to go live</h2>
+              <p className="adm-card-note">
+                Approval completes editorial review; it does not publish the article. Open this
+                list to publish approved content now or schedule its publication.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="adm-btn adm-btn-primary"
+              onClick={() => updateParams({ status: 'approved' })}
+            >
+              <Send size={15} aria-hidden="true" />
+              <span>Review {approvedQueue.data?.total ?? 0} approved item(s)</span>
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       <div className="cm-layout">
         <div className="cm-col">
           <ContentToolbar
