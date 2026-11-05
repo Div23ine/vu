@@ -81,7 +81,7 @@ export function PortalHeader() {
       router.replace('/');
       router.refresh();
     } catch {
-      toast({ kind: 'error', title: 'Sign out failed', message: 'Please try again.' });
+      toast({ kind: 'crit', title: 'Sign out failed', message: 'Please try again.' });
       setLoggingOut(false);
     }
   };
