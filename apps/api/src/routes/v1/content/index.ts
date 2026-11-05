@@ -15,6 +15,7 @@ import { AUDITED } from '../../../audit/audited.js';
 import { asExecutor, type SqlExecutor } from '../../../audit/repo.js';
 import type { Tx } from '../../../plugins/db.js';
 import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage } from '../../../lib/object-storage.js';
 import { SqlContentRepo, type ContentRepo } from './repo.js';
 import { ModerationService, type AuditInstruction } from './service.js';
 
@@ -40,6 +41,7 @@ export interface ContentRoutesOptions {
   /** Test seams. */
   repo?: ContentRepo;
   service?: ModerationService;
+  storage?: ObjectStorage;
   notifyAuthor?: (input: {
     to: string;
     template: string;
@@ -62,6 +64,7 @@ const contentRoutes: FastifyPluginAsync<ContentRoutesOptions> = async (fastify, 
     if (options.service !== undefined) return options.service;
     return new ModerationService({
       repo: repoFor(executor),
+      storage: options.storage ?? (app.hasDecorator('storage') ? app.storage : undefined),
       notifyAuthor:
         options.notifyAuthor ??
         (app.hasDecorator('queues')

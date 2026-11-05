@@ -75,6 +75,8 @@ export interface ObjectStorage {
  */
 export interface ObjectWriter {
   put(key: string, body: Uint8Array, contentType: string): Promise<void>;
+  /** Read object body as UTF-8 text. Returns null when the key does not exist. */
+  getText(key: string): Promise<string | null>;
 }
 
 export interface R2ObjectStorageOptions {
@@ -162,6 +164,22 @@ export class R2ObjectStorage implements ObjectStorage, ObjectWriter {
       new GetObjectCommand({ Bucket: this.bucket, Key: input.key }),
       { expiresIn: input.expiresSec },
     );
+  }
+
+  async getText(key: string): Promise<string | null> {
+    try {
+      const result = await this.client.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      if (result.Body === undefined || result.Body === null) return null;
+      return await result.Body.transformToString('utf-8');
+    } catch (error) {
+      const code = (error as { name?: string; $metadata?: { httpStatusCode?: number } }).name;
+      const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata
+        ?.httpStatusCode;
+      if (code === 'NotFound' || code === 'NoSuchKey' || status === 404) return null;
+      throw error;
+    }
   }
 
   publicUrl(key: string): string {

@@ -12,6 +12,7 @@ import { BLOG_CATEGORY_LABELS } from '@vunvault/contracts';
 import type { ContentStatus } from '@vunvault/db/enum-values';
 import type { AuditEventType } from '../../../audit/events.js';
 import { HttpError } from '../../../lib/http-error.js';
+import type { ObjectStorage } from '../../../lib/object-storage.js';
 import {
   canTransition,
   DEFAULT_QUEUE_STATUSES,
@@ -71,6 +72,8 @@ export interface ModerationServiceDeps {
     template: string;
     vars: Record<string, string>;
   }) => Promise<void>;
+  /** Optional R2 storage for hybrid body reads (body_r2_key). */
+  storage?: ObjectStorage & { getText?: (key: string) => Promise<string | null> };
   now?: () => Date;
 }
 
@@ -79,11 +82,15 @@ export class ModerationService {
   private readonly notifyAuthor:
     | ((input: { to: string; template: string; vars: Record<string, string> }) => Promise<void>)
     | undefined;
+  private readonly storage:
+    | (ObjectStorage & { getText?: (key: string) => Promise<string | null> })
+    | undefined;
   private readonly now: () => Date;
 
   constructor(deps: ModerationServiceDeps) {
     this.repo = deps.repo;
     this.notifyAuthor = deps.notifyAuthor;
+    this.storage = deps.storage;
     this.now = deps.now ?? (() => new Date());
   }
 
@@ -243,11 +250,23 @@ export class ModerationService {
   async publicDetail(slug: string): Promise<PublicContentDetail> {
     const row = await this.repo.findPublishedBySlug(slug, this.now());
     if (row === null) throw HttpError.notFound();
+
+    // Hybrid body: prefer R2 when body_r2_key is set; fall back to body_md.
+    let bodyMd = row.bodyMd ?? '';
+    if (row.bodyR2Key !== null && row.bodyR2Key !== '' && this.storage?.getText !== undefined) {
+      try {
+        const fromR2 = await this.storage.getText(row.bodyR2Key);
+        if (fromR2 !== null) bodyMd = fromR2;
+      } catch {
+        // Fall back to DB body_md if R2 is unavailable.
+      }
+    }
+
     return {
       ...toPublicContentItem(row),
-      // Stored sanitised by the Studio (Task 36); the web app renders it with a
+      // Stored sanitised by the Studio; the web app renders it with a
       // safe renderer, so nothing here re-parses the Markdown.
-      bodyMd: row.bodyMd ?? '',
+      bodyMd,
     };
   }
 
