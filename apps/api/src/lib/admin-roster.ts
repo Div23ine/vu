@@ -1,8 +1,8 @@
 /**
  * The administrator roster (Phase 2, magic-link work order).
  *
- * Provisioning is DATA-DRIVEN from this single config list: nine slots, four
- * populated and five `null` placeholders. Filling a slot means editing this
+ * Provisioning is DATA-DRIVEN from this single config list: nine slots, seven
+ * populated and two `null` placeholders. Filling a slot means editing this
  * file and re-running `pnpm --filter @vunvault/api provision:admins` — no
  * migration, no code change anywhere else.
  *
@@ -57,7 +57,7 @@ export interface AdminRosterSlot {
 }
 
 /**
- * The nine slots. Placeholders 7–9 stay `null` until the pending admin emails
+ * The nine slots. Placeholders 8–9 stay `null` until the pending admin emails
  * are supplied (playbook → Known Gaps); each filled slot must carry a name
  * resolved from the contributor records.
  */
@@ -106,6 +106,13 @@ export const ADMIN_ROSTER: readonly AdminRosterSlot[] = [
   {
     email: 'gospelu214+vu10@gmail.com',
     fullName: 'Timeout MAFA',
+    jobTitle: null,
+    role: 'admin',
+    mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
+  },
+  {
+    email: 'esther@vunvault.com',
+    fullName: 'Esther Haule',
     jobTitle: null,
     role: 'admin',
     mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
