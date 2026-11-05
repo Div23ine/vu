@@ -47,10 +47,10 @@ export function canAny(
  *
  * `support_engineer` lands on `/admin/profile` because it is the only staff
  * role without `dashboard:read` — the Command Center would greet it with a
- * 403. Clients land in the portal; everyone else in the admin.
+ * 403. Clients land on the public home page; other staff land in the admin.
  */
-export function homeFor(role: UserRole): '/admin' | '/admin/profile' | '/portal' {
-  if (role === 'client') return '/portal';
+export function homeFor(role: UserRole): '/' | '/admin' | '/admin/profile' {
+  if (role === 'client') return '/';
   if (role === 'support_engineer') return '/admin/profile';
   return '/admin';
 }
