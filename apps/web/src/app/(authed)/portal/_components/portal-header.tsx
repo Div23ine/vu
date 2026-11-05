@@ -1,11 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShieldCheck } from 'lucide-react';
+import { LogOut, ShieldCheck } from 'lucide-react';
 import { cn } from '@vunvault/lib';
 import { usePentestDialog } from './request-pentest-dialog';
+import { apiPost } from '../../../../lib/api';
+import { toast } from '@vunvault/ui';
 import '../_styles/portal-chrome.css';
 
 /* Brand block: static operator SVG from `/public`, pixel-identical design
@@ -43,6 +47,9 @@ function isActiveRoute(pathname: string, href: string): boolean {
 
 export function PortalHeader() {
   const pathname = usePathname() ?? '/';
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [loggingOut, setLoggingOut] = useState(false);
   const openDialog = usePentestDialog((state) => state.openDialog);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -64,6 +71,20 @@ export function PortalHeader() {
   }, [drawerOpen]);
 
   const closeDrawer = () => setDrawerOpen(false);
+  const logout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await apiPost('/api/v1/auth/logout');
+      queryClient.clear();
+      router.replace('/');
+      router.refresh();
+    } catch {
+      toast({ kind: 'error', title: 'Sign out failed', message: 'Please try again.' });
+      setLoggingOut(false);
+    }
+  };
+
   const requestPenTest = () => {
     closeDrawer();
     openDialog();
@@ -108,6 +129,16 @@ export function PortalHeader() {
           <button
             type="button"
             className="vbb-navcta"
+            onClick={() => void logout()}
+            disabled={loggingOut}
+            aria-label="Sign out"
+          >
+            <LogOut size={14} aria-hidden="true" />
+            <span>{loggingOut ? 'Signing out…' : 'Logout'}</span>
+          </button>
+          <button
+            type="button"
+            className="vbb-navcta"
             aria-controls="requestPenTestModal"
             onClick={openDialog}
           >
@@ -143,6 +174,12 @@ export function PortalHeader() {
               </Link>
             </li>
           ))}
+          <li>
+            <button type="button" className="mobile-menu-login" onClick={() => void logout()} disabled={loggingOut}>
+              <LogOut size={14} aria-hidden="true" />
+              {loggingOut ? 'Signing out…' : 'Logout'}
+            </button>
+          </li>
           <li>
             <button type="button" className="mobile-menu-login" onClick={requestPenTest}>
               + Request PenTest
