@@ -27,6 +27,9 @@ function dbReturning(rows: unknown[]): { db: Db; sql: string[] } {
 const BASE_ROW = {
   session_id: 'sess-1',
   user_id: 'user-1',
+  email: 'divine@vunvault.com',
+  role: 'super_admin',
+  org_id: null,
   revoked_at: null,
   mfa_method: null,
   account_status: 'active',
@@ -41,6 +44,9 @@ describe('createDbSessionLookup', () => {
     await lookup('sess-1');
 
     const query = sql[0] ?? '';
+    expect(query).toContain('p.email');
+    expect(query).toContain('p.role');
+    expect(query).toContain('p.org_id');
     expect(query).toContain('p.mfa_setup_deadline');
     expect(query).toContain('p.mfa_enrolled');
     // The join is what makes the profile columns available at all.
@@ -63,6 +69,9 @@ describe('createDbSessionLookup', () => {
     expect(record).toMatchObject({
       sessionId: 'sess-1',
       userId: 'user-1',
+      email: 'divine@vunvault.com',
+      role: 'super_admin',
+      orgId: null,
       mfaSetupDeadline: '2026-03-01T12:05:00.000Z',
       mfaEnrolled: false,
       accountStatus: 'active',
