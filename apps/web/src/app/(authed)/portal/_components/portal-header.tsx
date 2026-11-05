@@ -30,6 +30,7 @@ import '../_styles/portal-chrome.css';
  */
 
 export const PORTAL_NAV_ITEMS = [
+  { label: 'My Profile', href: '/portal/profile' },
   { label: 'Academy Progress', href: '/portal/academy' },
   { label: 'Free Vulnerability Scanner', href: '/portal/scanner' },
   { label: 'Billing & Invoices', href: '/portal/billing' },
