@@ -1,5 +1,4 @@
 import { createRemoteJWKSet, decodeProtectedHeader, jwtVerify, type JWTVerifyGetKey } from 'jose';
-import { JwtClaims } from '@vunvault/contracts';
 import { z } from 'zod';
 import { HttpError } from './http-error.js';
 
@@ -57,8 +56,15 @@ const ASYMMETRIC_ALGORITHMS = [
 
 export type AuthenticatorAssuranceLevel = 'aal1' | 'aal2';
 
-export const TokenPayloadSchema = JwtClaims.extend({
+export const TokenPayloadSchema = z.object({
+  // Authorization attributes are loaded from the authoritative profiles row by
+  // the session registry. Supabase's optional Custom Access Token hook must not
+  // be a prerequisite for accepting a cryptographically valid session.
+  sub: z.string().uuid(),
   email: z.string().email(),
+  role: z.unknown().optional(),
+  org_id: z.unknown().optional(),
+  permissions: z.unknown().optional(),
   session_id: z.string().uuid(),
   aal: z.enum(['aal1', 'aal2']),
   exp: z.number().int().positive(),
