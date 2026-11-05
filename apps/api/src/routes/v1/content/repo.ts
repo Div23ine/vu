@@ -35,6 +35,8 @@ export interface ContentItemRow {
   /** Task 40b: the blog's severity chip and its priority sort. */
   severity: string | null;
   submittedAt: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
   publishedAt: string | null;
   scheduledFor: string | null;
   updatedAt: string;
@@ -76,6 +78,8 @@ export interface ItemPatch {
   imageAlt?: string | null;
   readMinutes?: number | null;
   submittedAt?: Date | null;
+  approvedBy?: string | null;
+  approvedAt?: Date | null;
   publishedAt?: Date | null;
   scheduledFor?: Date | null;
 }
@@ -176,6 +180,8 @@ const ITEM_COLUMNS = `
   ci.cve_id,
   ci.severity::text as severity,
   ci.submitted_at,
+  ci.approved_by::text as approved_by,
+  ci.approved_at,
   ci.published_at,
   ci.scheduled_for,
   ci.updated_at`;
@@ -211,6 +217,8 @@ interface SqlItemRow {
   cve_id: string | null;
   severity: string | null;
   submitted_at: Date | string | null;
+  approved_by: string | null;
+  approved_at: Date | string | null;
   published_at: Date | string | null;
   scheduled_for: Date | string | null;
   updated_at: Date | string;
@@ -377,6 +385,10 @@ export class SqlContentRepo implements ContentRepo {
     if (patch.submittedAt !== undefined) {
       add('submitted_at', tsOrNull(patch.submittedAt), 'timestamptz');
     }
+    if (patch.approvedBy !== undefined) add('approved_by', patch.approvedBy, 'uuid');
+    if (patch.approvedAt !== undefined) {
+      add('approved_at', tsOrNull(patch.approvedAt), 'timestamptz');
+    }
     if (patch.publishedAt !== undefined) {
       add('published_at', tsOrNull(patch.publishedAt), 'timestamptz');
     }
@@ -515,8 +527,8 @@ export class SqlContentRepo implements ContentRepo {
     const order =
       filters.sort === 'priority'
         ? `array_position(array['critical','high','medium','low'], ci.severity::text) nulls last,
-           ci.published_at desc`
-        : 'ci.published_at desc';
+           coalesce(ci.approved_at, ci.published_at) desc`
+        : 'coalesce(ci.approved_at, ci.published_at) desc';
     const rows = await this.executor.unsafe<SqlItemRow[]>(
       `select ${ITEM_COLUMNS} ${ITEM_FROM}
         where ${where}
@@ -590,7 +602,8 @@ function returningColumns(): string {
           null::text as first_name, null::text as last_name, author_team::text as author_team,
           null::text as author_email, status::text as status, category::text as category,
           tags, featured_image_key, featured_image_url, image_alt, read_minutes, excerpt,
-          risk_flags::text[] as risk_flags, cve_id, submitted_at, published_at, scheduled_for,
+          risk_flags::text[] as risk_flags, cve_id, submitted_at,
+          approved_by::text as approved_by, approved_at, published_at, scheduled_for,
           updated_at`;
 }
 
@@ -641,6 +654,8 @@ function mapItem(row: SqlItemRow): ContentItemRow {
     cveId: row.cve_id,
     severity: row.severity,
     submittedAt: iso(row.submitted_at),
+    approvedBy: row.approved_by,
+    approvedAt: iso(row.approved_at),
     publishedAt: iso(row.published_at),
     scheduledFor: iso(row.scheduled_for),
     updatedAt: new Date(row.updated_at).toISOString(),
