@@ -76,7 +76,12 @@ describe('admin roster — shape', () => {
       jobTitle: 'Research Analyst',
       role: 'admin',
     });
-    expect(rosterSlotFor('gospelu214+vu10@gmail.com')).toMatchObject({\n      fullName: 'Timeout MAFA',\n      jobTitle: null,\n      role: 'admin',\n      mfaSetupWindowSeconds: 300,\n    });\n    // about-data.ts spells it "Bukeonya"; the work-order resolution records
+    expect(rosterSlotFor('gospelu214+vu10@gmail.com')).toMatchObject({
+      fullName: 'Timeout MAFA',
+      jobTitle: null,
+      role: 'admin',
+      mfaSetupWindowSeconds: 300,
+    });\n    // about-data.ts spells it "Bukeonya"; the work-order resolution records
     // "Bukenoya Natasha" as canonical (variant flagged in the playbook).
     expect(rosterSlotFor('bukenya@vunvault.com')).toMatchObject({
       fullName: 'Bukenoya Natasha',
