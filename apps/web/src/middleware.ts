@@ -98,7 +98,12 @@ export default function middleware(request: NextRequest): NextResponse {
   // This lets users deliberately switch accounts or request a fresh magic link.
   // Signup can still send a signed-in visitor back to their home page, but only
   // when the access token has not expired.
-  if (isSignupPage(pathname) && hasSessionCookie && hasUnexpiredAccessToken) {
+  if (
+    isSignupPage(pathname) &&
+    hasSessionCookie &&
+    hasUnexpiredAccessToken &&
+    peekedRole !== undefined
+  ) {
     return redirectTo(homeFor(peekedRole));
   }
 
