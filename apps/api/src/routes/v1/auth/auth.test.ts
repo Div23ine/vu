@@ -1565,29 +1565,27 @@ describe('Phase 2 — magic-link verify routes unenrolled accounts to setup', ()
     expect(record.deadlineEpochMs).toBeLessThanOrEqual(Date.now() + 300_000 + 5_000);
   });
 
-  it('the EXEMPT super admin (divine@) signs straight in — no gate, no timer, no ledger', async () => {
+  it('the primary super admin (divine@) receives the first-login MFA setup window', async () => {
     seedRosterProfile({
       email: 'divine@vunvault.com',
       role: 'super_admin',
       fullName: 'Divine Gospel',
-      // A previous setup attempt must not keep the exempt account trapped
-      // behind the mandatory popup.
-      mfaSetupDeadline: new Date(Date.now() + 300_000).toISOString(),
     });
+    const before = Date.now();
     const response = await mintAndVerify('divine@vunvault.com');
+    const after = Date.now();
 
     expect(response.statusCode).toBe(302);
-    // Full session cookies straight from the verify leg; landing = the admin home.
-    expect(response.headers.location).toBe('https://www.vunvault.test/admin');
+    expect(response.headers.location).toBe('https://www.vunvault.test/');
     const names = cookieNames(response);
     expect(names).toContain('vv_at');
     expect(names).toContain('vv_rt');
-    expect(names).not.toContain('vv_mfa');
+    expect(names).toContain('vv_mfa');
     expect(harness.repo.sessions).toHaveLength(1);
-    expect(harness.repo.profiles.find((p) => p.id === USER_ID)?.mfaSetupDeadline).toBeNull();
-    expect(harness.audits.map((e) => e.eventType)).toContain('AUTH_SUCCESS');
-    const ledgered = [...harness.kv.entries.keys()].filter((key) => key.startsWith('mfasetup:'));
-    expect(ledgered).toEqual([]);
+    const record = ledgerRecord(USER_ID);
+    expect(record.email).toBe('divine@vunvault.com');
+    expect(record.deadlineEpochMs).toBeGreaterThanOrEqual(before + 300_000 - 5_000);
+    expect(record.deadlineEpochMs).toBeLessThanOrEqual(after + 300_000 + 5_000);
   });
 
   it('an ENROLLED divine@ takes the normal challenge like everyone else', async () => {
