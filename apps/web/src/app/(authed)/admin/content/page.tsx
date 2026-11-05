@@ -11,6 +11,7 @@ import {
   PieChart,
   PlayCircle,
   RefreshCw,
+  Send,
   TriangleAlert,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -109,6 +110,9 @@ function ContentView() {
   };
 
   const queue = useModerationQueue(filters);
+  // Approved items leave the review queue state; keep a dedicated query so
+  // administrators can always find them and complete publication.
+  const approvedQueue = useModerationQueue({ ...filters, status: 'approved', page: 1 });
   const summary = useModerationSummary();
   const { snapshot } = useQueueSnapshot();
   const action = useModerationAction();
@@ -233,6 +237,15 @@ function ContentView() {
             {/* No export endpoint exists (plan decision #5): disabled + tooltip. */}
             <button
               type="button"
+              className="adm-btn adm-btn-ghost"
+              id="cm-view-approved"
+              onClick={() => updateParams({ status: 'approved' })}
+            >
+              <Send size={15} aria-hidden="true" />
+              <span>Approved · Ready to Publish ({approvedQueue.data?.total ?? '…'})</span>
+            </button>
+            <button
+              type="button"
               className="adm-btn adm-btn-dark"
               id="cm-export-queue"
               disabled
@@ -276,6 +289,7 @@ function ContentView() {
             onReset={resetFilters}
           />
           <ContentTable
+            status={filters.status}
             items={items}
             total={total}
             isLoading={queue.isLoading}
