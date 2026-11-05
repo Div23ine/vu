@@ -285,7 +285,7 @@ export function toastFor(action: ContentReviewAction, title: string): void {
       toast({
         kind: 'ok',
         title: 'Content approved',
-        message: `"${title}" cleared for publication with reviewer notes.`,
+        message: `"${title}" is approved, but it is not live yet. Open Approved · Ready to Publish and choose Publish Now or Schedule.`,
       });
       return;
     case 'request_changes':
