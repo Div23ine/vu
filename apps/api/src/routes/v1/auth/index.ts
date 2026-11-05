@@ -632,13 +632,24 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) =
       remember: false,
       ...cookieContext(request),
     });
-    return { data: issued.user };
+    // Role-aware landing after successful MFA (login redirect matrix).
+    const redirectTo =
+      issued.user.role === 'client' ? '/portal' : '/admin';
+    return { data: issued.user, redirectTo };
   };
   (verifyHandler as unknown as Record<symbol, boolean>)[AUDITED] = true;
 
   app.post('/auth/mfa/verify', {
     config: { rateLimitPolicy: 'sensitive' },
-    schema: { body: MfaVerifyBody, response: { 200: z.object({ data: SessionUser }) } },
+    schema: {
+      body: MfaVerifyBody,
+      response: {
+        200: z.object({
+          data: SessionUser,
+          redirectTo: z.string().optional(),
+        }),
+      },
+    },
     handler: verifyHandler,
   });
 

@@ -14,8 +14,12 @@
  * MFA setup window: an administrator signing in for the first time gets a
  * visible 5:00 countdown to enrol an authenticator; expiry or abandonment
  * moves the account to `blocked_mfa_setup` until a super admin unblocks it.
- * The SUPER ADMIN below (`divine@vunvault.com`, Divine Gospel) is EXEMPT —
- * no timer, no block, MFA optional — per the work order's hard constraint.
+ *
+ * Super-admin posture (updated for login work-order matrix):
+ * - divine@vunvault.com remains fully EXEMPT (null window).
+ * - gospelu214+vu6@gmail.com is a super_admin but uses a timed window so that
+ *   after the first login it is forced through the MFA verify screen on every
+ *   subsequent sign-in (exactly as a normal admin).
  */
 
 /** Seconds an administrator has to complete first-sign-in MFA setup (5:00). */
@@ -29,11 +33,8 @@ export const ADMIN_MFA_SETUP_WINDOW_SECONDS = 300;
 export const SUPER_ADMIN_EMAIL = 'divine@vunvault.com';
 
 /**
- * Second super admin added by the login-work-order request:
- * `gospelu214+vu6@gmail.com` — same exemption posture as Divine (no timer, no
- * block, MFA optional). First-ever magic-link sign-in lands on the homepage
- * with admin access; every later sign-in must pass the Google-authenticator
- * MFA screen before the homepage is reachable again.
+ * Second super admin. Same role, but given a non-null window so the
+ * first-login → homepage + challenge, subsequent → /login/mfa matrix applies.
  */
 export const SECOND_SUPER_ADMIN_EMAIL = 'gospelu214+vu6@gmail.com';
 
@@ -50,7 +51,7 @@ export interface AdminRosterSlot {
   role: 'admin' | 'super_admin';
   /**
    * First-sign-in MFA setup window in seconds; `null` = EXEMPT (no timer, no
-   * block, MFA optional). Only the super-admin slot is exempt.
+   * block, MFA optional). Only the primary super-admin slot is exempt.
    */
   mfaSetupWindowSeconds: number | null;
 }
@@ -93,15 +94,14 @@ export const ADMIN_ROSTER: readonly AdminRosterSlot[] = [
     mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
   },
   {
-    // Login work order: `gospelu214+vu6@gmail.com` is a SUPER ADMIN, exempt
-    // from the setup window exactly like Divine (first-ever sign-in lands on
-    // the homepage with admin access; later sign-ins route through the MFA
-    // verify screen before the admin home).
+    // Login work order: gospelu214+vu6@gmail.com is a SUPER ADMIN.
+    // Non-null window so first login lands on /admin with aal1 + challenge,
+    // subsequent logins force /login/mfa → /admin after MFA success.
     email: SECOND_SUPER_ADMIN_EMAIL,
     fullName: 'Divine Gospel', // the +vu6 alias of the Divine Gospel super-admin address
     jobTitle: null,
     role: 'super_admin',
-    mfaSetupWindowSeconds: null, // EXEMPT: no timer, no block, MFA optional
+    mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
   },
   {
     email: null,
@@ -152,7 +152,7 @@ export function isAdminEmail(email: string): boolean {
 
 /**
  * True when the address is exempt from the first-sign-in setup window (no
- * timer, no `blocked_mfa_setup`, MFA optional). Only the super-admin slot.
+ * timer, no `blocked_mfa_setup`, MFA optional). Only the primary super-admin slot.
  */
 export function isMfaSetupExempt(email: string): boolean {
   const slot = rosterSlotFor(email);
