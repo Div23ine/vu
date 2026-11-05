@@ -147,7 +147,17 @@ function fail(
   const lower = message.toLowerCase();
 
   let code: string;
-  if (rawCode === 'user_already_exists' || rawCode === 'email_exists') {
+  // GoTrue can report an existing TOTP factor using a generic
+  // `user_already_exists` code (or only this message). Classify this before
+  // the email-taken checks so the enrolment retry can use a unique factor name.
+  // This is safe: it only matches the explicit MFA friendly-name collision.
+  if (
+    lower.includes('factor') &&
+    lower.includes('friendly name') &&
+    lower.includes('already exists')
+  ) {
+    code = 'mfa_factor_name_conflict';
+  } else if (rawCode === 'user_already_exists' || rawCode === 'email_exists') {
     code = 'email_taken';
   } else if (
     lower.includes('already been registered') ||
