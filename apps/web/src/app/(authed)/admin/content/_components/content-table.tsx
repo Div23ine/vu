@@ -183,8 +183,9 @@ export function ContentTable({
             <tfoot>
               <tr>
                 <td colSpan={7}>
-                  Content approved here is queued for publication, not immediately visible. Use the
-                  content editor to schedule a live time.
+                  {status === 'approved'
+                    ? 'These items are approved but not public yet. Use Publish Now to make an item live immediately, or Schedule to choose its publication time.'
+                    : 'Approving an item moves it to Approved · Ready to Publish. Open that view to publish it or schedule its release.'}
                 </td>
               </tr>
             </tfoot>
