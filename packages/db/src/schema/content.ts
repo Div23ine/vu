@@ -31,6 +31,12 @@ export const contentItems = pgTable(
     summary: text('summary'),
     bodyMd: text('body_md'),
     /**
+     * Hybrid content body (Task — R2 offload). When set, the canonical full
+     * markdown lives at this R2 key (e.g. `content/bodies/{id}.md`). `body_md`
+     * remains as a DB cache / fallback during the dual-write window.
+     */
+    bodyR2Key: text('body_r2_key'),
+    /**
      * e.g. `/blog/kenya-state-house-cyber-audit`, `/advisories/cve-2026-21447`,
      * `/products/sentinel`, `/news/accra-soc-hub`.
      */

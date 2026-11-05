@@ -14,6 +14,8 @@ export interface ContentItemRow {
   title: string;
   summary: string | null;
   bodyMd: string | null;
+  /** R2 key for full body when hybrid storage is used. */
+  bodyR2Key: string | null;
   slugPath: string;
   authorId: string;
   authorName: string;
@@ -64,6 +66,7 @@ export interface ItemPatch {
   title?: string;
   summary?: string | null;
   bodyMd?: string | null;
+  bodyR2Key?: string | null;
   slugPath?: string;
   category?: string | null;
   tags?: string[];
@@ -86,6 +89,7 @@ export interface NewContentItem {
   category: string | null;
   excerpt: string | null;
   bodyMd: string | null;
+  bodyR2Key?: string | null;
   tags: string[];
   featuredImageUrl: string | null;
   imageAlt: string | null;
@@ -151,6 +155,7 @@ const ITEM_COLUMNS = `
   ci.title,
   ci.summary,
   ci.body_md,
+  ci.body_r2_key,
   ci.slug_path,
   ci.author_id::text as author_id,
   coalesce(p.full_name, p.display_name, p.email::text) as author_name,
@@ -185,6 +190,7 @@ interface SqlItemRow {
   title: string;
   summary: string | null;
   body_md: string | null;
+  body_r2_key: string | null;
   slug_path: string;
   author_id: string;
   author_name: string;
@@ -357,6 +363,7 @@ export class SqlContentRepo implements ContentRepo {
     if (patch.title !== undefined) add('title', patch.title);
     if (patch.summary !== undefined) add('summary', patch.summary);
     if (patch.bodyMd !== undefined) add('body_md', patch.bodyMd);
+    if (patch.bodyR2Key !== undefined) add('body_r2_key', patch.bodyR2Key);
     if (patch.slugPath !== undefined) add('slug_path', patch.slugPath);
     if (patch.category !== undefined) add('category', patch.category, 'blog_category');
     if (patch.tags !== undefined) add('tags', patch.tags, 'text[]');
@@ -408,10 +415,10 @@ export class SqlContentRepo implements ContentRepo {
   async createItem(input: NewContentItem): Promise<ContentItemRow> {
     const rows = await this.executor.unsafe<SqlItemRow[]>(
       `insert into content_items
-         (id, type, title, slug_path, author_id, status, category, excerpt, body_md, tags,
+         (id, type, title, slug_path, author_id, status, category, excerpt, body_md, body_r2_key, tags,
           featured_image_url, image_alt, read_minutes)
        values ($1::uuid, $2::content_type, $3, $4, $5::uuid, $6::content_status,
-               $7::blog_category, $8, $9, $10::text[], $11, $12, $13)
+               $7::blog_category, $8, $9, $10, $11::text[], $12, $13, $14)
        returning ${returningColumns()}`,
       [
         input.id,
@@ -423,6 +430,7 @@ export class SqlContentRepo implements ContentRepo {
         input.category,
         input.excerpt,
         input.bodyMd,
+        input.bodyR2Key ?? null,
         input.tags,
         input.featuredImageUrl,
         input.imageAlt,
@@ -577,7 +585,7 @@ function publicWhere(filters: PublicContentFilters): { where: string; values: un
  * built from anyway.
  */
 function returningColumns(): string {
-  return `id::text as id, type::text as type, title, summary, body_md, slug_path,
+  return `id::text as id, type::text as type, title, summary, body_md, body_r2_key, slug_path,
           author_id::text as author_id, '' as author_name, null::text as display_name,
           null::text as first_name, null::text as last_name, author_team::text as author_team,
           null::text as author_email, status::text as status, category::text as category,
@@ -614,6 +622,7 @@ function mapItem(row: SqlItemRow): ContentItemRow {
     title: row.title,
     summary: row.summary,
     bodyMd: row.body_md,
+    bodyR2Key: row.body_r2_key ?? null,
     slugPath: row.slug_path,
     authorId: row.author_id,
     authorName: name,

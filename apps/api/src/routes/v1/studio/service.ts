@@ -44,6 +44,8 @@ import {
 
 /** Object-storage prefix for Studio images. */
 export const STUDIO_IMAGE_PREFIX = 'studio/';
+/** Object-storage prefix for full markdown bodies (hybrid R2 model). */
+export const CONTENT_BODY_PREFIX = 'content/bodies/';
 export const STUDIO_IMAGE_MAX_BYTES = STUDIO_LIMITS.imageMaxBytes;
 /** How long an image upload URL stays valid. */
 export const STUDIO_UPLOAD_SECONDS = 300;
@@ -130,11 +132,36 @@ export class StudioService {
     return { data, total: data.length };
   }
 
+
+  /**
+   * Dual-write the markdown body to R2 when storage is configured.
+   * Returns the object key, or null when storage is unavailable / body empty.
+   * Failures are logged by the caller; the DB body_md remains the fallback.
+   */
+  private async putBodyToR2(itemId: string, bodyMd: string): Promise<string | null> {
+    if (this.storage === undefined || bodyMd.trim() === '') return null;
+    const writer = this.storage as ObjectStorage & { put?: (key: string, body: Uint8Array, contentType: string) => Promise<void> };
+    if (typeof writer.put !== 'function') return null;
+    const key = `${CONTENT_BODY_PREFIX}${itemId}.md`;
+    await writer.put(key, new TextEncoder().encode(bodyMd), 'text/markdown; charset=utf-8');
+    return key;
+  }
+
   async createDraft(userId: string, body: StudioDraftBody): Promise<StudioItem> {
     const id = this.randomUuid();
     const title = body.title?.trim() ?? '';
     const slug = await this.allocateSlug(body.slug, title, id);
     const bodyMd = body.bodyMd === undefined ? null : sanitiseMarkdown(body.bodyMd);
+
+    let bodyR2Key: string | null = null;
+    if (bodyMd !== null) {
+      try {
+        bodyR2Key = await this.putBodyToR2(id, bodyMd);
+      } catch {
+        // R2 write is best-effort during dual-write window; body_md remains authoritative.
+        bodyR2Key = null;
+      }
+    }
 
     const created = await this.repo.createItem({
       id,
@@ -147,6 +174,7 @@ export class StudioService {
       category: body.category ?? null,
       excerpt: body.excerpt ?? null,
       bodyMd,
+      bodyR2Key,
       tags: normaliseTags(body.tags, STUDIO_LIMITS.tags),
       featuredImageUrl: body.featuredImageUrl ?? null,
       imageAlt: body.imageAlt ?? null,
@@ -175,6 +203,12 @@ export class StudioService {
     if (body.bodyMd !== undefined) {
       patch.bodyMd = sanitiseMarkdown(body.bodyMd);
       patch.readMinutes = readMinutes(patch.bodyMd);
+      try {
+        const key = await this.putBodyToR2(itemId, patch.bodyMd);
+        if (key !== null) patch.bodyR2Key = key;
+      } catch {
+        // best-effort dual-write
+      }
     }
     // An explicit slug, or a new title on an item that has no words in its slug
     // yet, re-derives the path. A published path is never rewritten.
