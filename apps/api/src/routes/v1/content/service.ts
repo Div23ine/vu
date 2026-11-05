@@ -182,8 +182,10 @@ export class ModerationService {
 
     const next = nextStatus(status, action);
     await this.repo.applyPatch(itemId, {
-      // `remind_author` changes no status.
+      // `remind_author` changes no status. Approval is separately attributable
+      // and timestamped; publication may happen later in its own action.
       ...(next === null ? {} : { status: next }),
+      ...(action === 'approve' ? { approvedBy: actor.id, approvedAt: at } : {}),
       ...(action === 'publish' ? { publishedAt: at } : {}),
       ...(scheduledFor === undefined ? {} : { scheduledFor }),
     });
