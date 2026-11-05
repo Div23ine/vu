@@ -21,11 +21,11 @@ import {
  */
 
 describe('admin roster — shape', () => {
-  it('carries exactly nine slots: six populated, three null placeholders', () => {
+  it('carries exactly nine slots: seven populated, two null placeholders', () => {
     expect(ADMIN_ROSTER).toHaveLength(9);
-    expect(populatedRosterSlots()).toHaveLength(6);
+    expect(populatedRosterSlots()).toHaveLength(7);
     const placeholders = ADMIN_ROSTER.filter((slot) => slot.email === null);
-    expect(placeholders).toHaveLength(3);
+    expect(placeholders).toHaveLength(2);
     for (const slot of placeholders) {
       expect(slot.fullName).toBeNull();
       expect(slot.role).toBe('admin');
