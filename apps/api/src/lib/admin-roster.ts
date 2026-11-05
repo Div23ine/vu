@@ -57,7 +57,7 @@ export interface AdminRosterSlot {
 }
 
 /**
- * The nine slots. Placeholders 5–9 stay `null` until the pending admin emails
+ * The nine slots. Placeholders 7–9 stay `null` until the pending admin emails
  * are supplied (playbook → Known Gaps); each filled slot must carry a name
  * resolved from the contributor records.
  */
