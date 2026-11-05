@@ -72,6 +72,9 @@ export const contentItems = pgTable(
      */
     severity: findingSeverityEnum('severity'),
     submittedAt: tz('submitted_at'),
+    /** Admin who approved the item; approval is distinct from publication. */
+    approvedBy: uuid('approved_by').references(() => profiles.id),
+    approvedAt: tz('approved_at'),
     publishedAt: tz('published_at'),
     scheduledFor: tz('scheduled_for'),
     ...timestamps,
