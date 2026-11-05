@@ -1,4 +1,5 @@
 import type { Db } from '@vunvault/db';
+import type { UserRole } from '@vunvault/contracts';
 
 /**
  * Session and account state lookups, cached in Redis.
@@ -19,6 +20,10 @@ export const LAST_SEEN_THROTTLE_SECONDS = 60;
 export interface SessionRecord {
   sessionId: string;
   userId: string;
+  /** Authoritative identity fields come from profiles, not optional JWT hook claims. */
+  email?: string;
+  role?: UserRole;
+  orgId?: string | null;
   revokedAt: string | null;
   /** In-house WebAuthn / email-OTP verifications are recorded here, not in Supabase. */
   mfaMethod: string | null;
@@ -52,6 +57,9 @@ export type SessionLookup = (sessionId: string) => Promise<SessionRecord | null>
 interface SessionRow {
   session_id: string;
   user_id: string;
+  email: string;
+  role: UserRole;
+  org_id: string | null;
   revoked_at: Date | string | null;
   mfa_method: string | null;
   account_status: string;
@@ -63,6 +71,9 @@ interface SessionRow {
 const LOOKUP_SQL = `
   select s.id::text          as session_id,
          s.user_id::text     as user_id,
+         p.email::text       as email,
+         p.role::text        as role,
+         p.org_id::text      as org_id,
          s.revoked_at,
          s.mfa_method,
          p.account_status,
@@ -87,6 +98,9 @@ export function createDbSessionLookup(db: Db): SessionLookup {
     return {
       sessionId: row.session_id,
       userId: row.user_id,
+      email: row.email,
+      role: row.role,
+      orgId: row.org_id,
       revokedAt: row.revoked_at === null ? null : new Date(row.revoked_at).toISOString(),
       mfaMethod: row.mfa_method,
       accountStatus: row.account_status,
