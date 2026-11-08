@@ -383,6 +383,94 @@ export const BLOG_CATEGORIES = [
   'tutorials',
 ] as const;
 export type BlogCategory = (typeof BLOG_CATEGORIES)[number];
+
+// --- UAMP (AI-powered uptime & API monitoring product) --------------------
+
+/** Postgres enum `uamp_monitor_type`. */
+export const UAMP_MONITOR_TYPES = [
+  'http',
+  'https',
+  'api',
+  'ssl',
+  'domain',
+  'dns',
+  'keyword',
+] as const;
+export type UampMonitorType = (typeof UAMP_MONITOR_TYPES)[number];
+
+/** Postgres enum `uamp_monitor_status`. */
+export const UAMP_MONITOR_STATUSES = [
+  'active',
+  'paused',
+  'disabled',
+  'pending',
+] as const;
+export type UampMonitorStatus = (typeof UAMP_MONITOR_STATUSES)[number];
+
+/** Postgres enum `uamp_check_result_status`. */
+export const UAMP_CHECK_RESULT_STATUSES = [
+  'up',
+  'down',
+  'degraded',
+  'error',
+  'timeout',
+] as const;
+export type UampCheckResultStatus = (typeof UAMP_CHECK_RESULT_STATUSES)[number];
+
+/** Postgres enum `uamp_incident_status`. */
+export const UAMP_INCIDENT_STATUSES = [
+  'open',
+  'acknowledged',
+  'investigating',
+  'resolved',
+  'false_positive',
+] as const;
+export type UampIncidentStatus = (typeof UAMP_INCIDENT_STATUSES)[number];
+
+/** Postgres enum `uamp_incident_severity`. */
+export const UAMP_INCIDENT_SEVERITIES = [
+  'critical',
+  'major',
+  'minor',
+  'info',
+] as const;
+export type UampIncidentSeverity = (typeof UAMP_INCIDENT_SEVERITIES)[number];
+
+/** Postgres enum `uamp_http_method`. */
+export const UAMP_HTTP_METHODS = [
+  'GET',
+  'HEAD',
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE',
+  'OPTIONS',
+] as const;
+export type UampHttpMethod = (typeof UAMP_HTTP_METHODS)[number];
+
+/** Postgres enum `uamp_status_page_visibility`. */
+export const UAMP_STATUS_PAGE_VISIBILITIES = ['public', 'private'] as const;
+export type UampStatusPageVisibility = (typeof UAMP_STATUS_PAGE_VISIBILITIES)[number];
+
+/** Postgres enum `uamp_alert_channel`. */
+export const UAMP_ALERT_CHANNELS = [
+  'email',
+  'webhook',
+  'slack',
+  'in_app',
+] as const;
+export type UampAlertChannel = (typeof UAMP_ALERT_CHANNELS)[number];
+
+/** Postgres enum `uamp_ai_investigation_status`. */
+export const UAMP_AI_INVESTIGATION_STATUSES = [
+  'queued',
+  'running',
+  'completed',
+  'failed',
+  'cancelled',
+] as const;
+export type UampAiInvestigationStatus = (typeof UAMP_AI_INVESTIGATION_STATUSES)[number];
+
 /** Every enum name in the database, mapped to its values. */
 export const ENUM_VALUES = {
   user_role: USER_ROLES,
@@ -436,6 +524,15 @@ export const ENUM_VALUES = {
   notification_channel: NOTIFICATION_CHANNELS,
   blog_category: BLOG_CATEGORIES,
   newsletter_status: NEWSLETTER_STATUSES,
+  uamp_monitor_type: UAMP_MONITOR_TYPES,
+  uamp_monitor_status: UAMP_MONITOR_STATUSES,
+  uamp_check_result_status: UAMP_CHECK_RESULT_STATUSES,
+  uamp_incident_status: UAMP_INCIDENT_STATUSES,
+  uamp_incident_severity: UAMP_INCIDENT_SEVERITIES,
+  uamp_http_method: UAMP_HTTP_METHODS,
+  uamp_status_page_visibility: UAMP_STATUS_PAGE_VISIBILITIES,
+  uamp_alert_channel: UAMP_ALERT_CHANNELS,
+  uamp_ai_investigation_status: UAMP_AI_INVESTIGATION_STATUSES,
 } as const;
 
 export type EnumName = keyof typeof ENUM_VALUES;

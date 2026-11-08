@@ -25,6 +25,7 @@ import contactAdminRoutes from './contact-admin/index.js';
 import internalScansRoutes from './internal-scans/index.js';
 import scanStreamRoutes from './scan-stream/index.js';
 import diagnosticsRoutes from './diagnostics/index.js';
+import uampRoutes from './uamp/index.js';
 
 /**
  * `/api/v1` aggregator.
@@ -59,6 +60,7 @@ const v1Routes: FastifyPluginAsync = async (app) => {
   await app.register(internalScansRoutes); // Task 40g
   await app.register(scanStreamRoutes); // Task 95
   await app.register(diagnosticsRoutes); // Revision 2 addendum A2.4
+  await app.register(uampRoutes); // UAMP product module
 };
 
 export default v1Routes;

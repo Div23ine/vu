@@ -49,6 +49,15 @@ import {
   SUBSCRIPTION_STATUSES,
   TEAMS,
   USER_ROLES,
+  UAMP_MONITOR_TYPES,
+  UAMP_MONITOR_STATUSES,
+  UAMP_CHECK_RESULT_STATUSES,
+  UAMP_INCIDENT_STATUSES,
+  UAMP_INCIDENT_SEVERITIES,
+  UAMP_HTTP_METHODS,
+  UAMP_STATUS_PAGE_VISIBILITIES,
+  UAMP_ALERT_CHANNELS,
+  UAMP_AI_INVESTIGATION_STATUSES,
 } from '@vunvault/db/enum-values';
 import { z } from 'zod';
 
@@ -212,3 +221,33 @@ export type NotificationChannel = z.infer<typeof NotificationChannelSchema>;
 
 export const BlogCategorySchema = z.enum(BLOG_CATEGORIES);
 export type BlogCategory = z.infer<typeof BlogCategorySchema>;
+
+
+// --- UAMP ---
+
+export const UampMonitorTypeSchema = z.enum(UAMP_MONITOR_TYPES);
+export type UampMonitorType = z.infer<typeof UampMonitorTypeSchema>;
+
+export const UampMonitorStatusSchema = z.enum(UAMP_MONITOR_STATUSES);
+export type UampMonitorStatus = z.infer<typeof UampMonitorStatusSchema>;
+
+export const UampCheckResultStatusSchema = z.enum(UAMP_CHECK_RESULT_STATUSES);
+export type UampCheckResultStatus = z.infer<typeof UampCheckResultStatusSchema>;
+
+export const UampIncidentStatusSchema = z.enum(UAMP_INCIDENT_STATUSES);
+export type UampIncidentStatus = z.infer<typeof UampIncidentStatusSchema>;
+
+export const UampIncidentSeveritySchema = z.enum(UAMP_INCIDENT_SEVERITIES);
+export type UampIncidentSeverity = z.infer<typeof UampIncidentSeveritySchema>;
+
+export const UampHttpMethodSchema = z.enum(UAMP_HTTP_METHODS);
+export type UampHttpMethod = z.infer<typeof UampHttpMethodSchema>;
+
+export const UampStatusPageVisibilitySchema = z.enum(UAMP_STATUS_PAGE_VISIBILITIES);
+export type UampStatusPageVisibility = z.infer<typeof UampStatusPageVisibilitySchema>;
+
+export const UampAlertChannelSchema = z.enum(UAMP_ALERT_CHANNELS);
+export type UampAlertChannel = z.infer<typeof UampAlertChannelSchema>;
+
+export const UampAiInvestigationStatusSchema = z.enum(UAMP_AI_INVESTIGATION_STATUSES);
+export type UampAiInvestigationStatus = z.infer<typeof UampAiInvestigationStatusSchema>;
