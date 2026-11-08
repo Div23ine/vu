@@ -1,4 +1,4 @@
-import type { Clock, Logger, PodRunner, PodSpec, RunHooks, RunResult } from '../ports';
+import type { Logger, PodRunner, PodSpec, RunHooks, RunResult } from '../ports';
 import { classifyIp } from '../domain/target-guard';
 import { consumeLogStream, type TerminalLine } from '../k8s/log-stream';
 
@@ -63,7 +63,6 @@ export interface HostFirewallPort {
 export interface DockerPodRunnerOptions {
   docker: DockerEnginePort;
   firewall: HostFirewallPort;
-  clock: Clock;
   logger: Logger;
   runnerImage: string;
   onTerminalLine?(line: TerminalLine): void;
@@ -84,12 +83,13 @@ export class DockerPodRunner implements PodRunner {
   }
 
   async run(spec: PodSpec, hooks: RunHooks, signal: AbortSignal): Promise<RunResult> {
-    const { docker, firewall, logger, clock } = this.options;
+    const { docker, firewall, logger } = this.options;
     const name = resourceName(spec);
     const networkLabels = labelsFor(spec);
     let network: DockerNetwork | null = null;
     let containerId: string | null = null;
-    let firewallInstalled = false;
+    let firewallAttempted = false;
+    let containerExited = false;
     let lineCount = 0;
     let bytesStreamed = 0;
     let reason: RunResult['reason'] = 'error';
@@ -97,13 +97,18 @@ export class DockerPodRunner implements PodRunner {
     let abortReason: 'abort' | 'kill' | null = signal.aborted ? 'abort' : null;
     let deadlineHit = false;
     let stopRequested = false;
+    let resolveAbort!: () => void;
+    const aborted = new Promise<void>((resolve) => { resolveAbort = resolve; });
+    let deadlineTimer: ReturnType<typeof setTimeout> | null = null;
+    let resolveDeadline!: () => void;
 
     const onAbort = (): void => {
       abortReason = abortReason ?? 'abort';
+      resolveAbort();
       if (containerId !== null) void stopOnce();
     };
     const stopOnce = async (): Promise<void> => {
-      if (containerId === null || stopRequested) return;
+      if (containerId === null || containerExited || stopRequested) return;
       stopRequested = true;
       await docker.stopContainer(containerId, 0).catch((error: unknown) => {
         logger.warn('could not stop Docker scan container', {
@@ -116,10 +121,14 @@ export class DockerPodRunner implements PodRunner {
 
     // A deadline promise is a backstop even if the runner process or log stream
     // becomes unresponsive. The container is stopped before cleanup begins.
-    const deadline = clock.sleep(spec.deadlineSeconds * 1_000).then(async () => {
-      deadlineHit = true;
-      await stopOnce();
-    }).catch(() => undefined);
+    const deadline = new Promise<void>((resolve) => {
+      resolveDeadline = resolve;
+      deadlineTimer = setTimeout(() => {
+        deadlineHit = true;
+        void stopOnce().finally(resolve);
+      }, spec.deadlineSeconds * 1_000);
+      deadlineTimer.unref?.();
+    });
 
     try {
       if (signal.aborted) {
@@ -132,8 +141,8 @@ export class DockerPodRunner implements PodRunner {
       // CRITICAL ORDER: install and confirm host egress rules BEFORE container
       // creation. Failure here leaves no executable runner.
       const allowedIPv4 = allowedAddresses(spec);
+      firewallAttempted = true;
       await firewall.install(network, allowedIPv4);
-      firewallInstalled = true;
 
       if (signal.aborted) {
         return { exitCode: 130, reason: 'abort', lineCount, bytesStreamed };
@@ -172,11 +181,14 @@ export class DockerPodRunner implements PodRunner {
           : { maxOutputBytes: this.options.maxOutputBytes }),
       });
 
-      const waitPromise = docker.waitContainer(containerId);
+      const waitPromise = docker.waitContainer(containerId).then((state) => {
+        containerExited = true;
+        return state;
+      });
       const outcome = await Promise.race([
         Promise.all([streamPromise, waitPromise]).then(([logs, state]) => ({ kind: 'finished' as const, logs, state })),
         deadline.then(() => ({ kind: 'deadline' as const })),
-        abortPromise(signal).then(() => ({ kind: 'abort' as const })),
+        aborted.then(() => ({ kind: 'abort' as const })),
       ]);
 
       if (outcome.kind === 'deadline' || deadlineHit) {
@@ -209,6 +221,8 @@ export class DockerPodRunner implements PodRunner {
       return { exitCode: -1, reason: 'error', lineCount, bytesStreamed };
     } finally {
       signal.removeEventListener('abort', onAbort);
+      if (deadlineTimer !== null) clearTimeout(deadlineTimer);
+      resolveDeadline();
       await stopOnce();
       if (containerId !== null) {
         await docker.removeContainer(containerId).catch((error: unknown) => {
@@ -216,7 +230,7 @@ export class DockerPodRunner implements PodRunner {
         });
       }
       if (network !== null) {
-        if (firewallInstalled) {
+        if (firewallAttempted) {
           await firewall.remove(network).catch((error: unknown) => {
             logger.error('could not remove Docker scan firewall rules', {
               networkId: network?.id,
@@ -299,11 +313,6 @@ function labelsFor(spec: PodSpec): Record<string, string> {
     'vv/job-code': spec.jobCode.toLowerCase(),
     'vv/attempt': String(spec.attempt),
   };
-}
-
-function abortPromise(signal: AbortSignal): Promise<void> {
-  if (signal.aborted) return Promise.resolve();
-  return new Promise((resolve) => signal.addEventListener('abort', () => resolve(), { once: true }));
 }
 
 async function settleLogs(
