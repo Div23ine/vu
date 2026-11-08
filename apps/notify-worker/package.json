@@ -16,7 +16,7 @@
     "@vunvault/contracts": "workspace:*",
     "@vunvault/db": "workspace:*",
     "@vunvault/lib": "workspace:*",
-    "bullmq": "^6.4.1",
+    "bullmq": "^6.7.0",
     "drizzle-orm": "catalog:",
     "ioredis": "^6.0.0",
     "pino": "^9.14.0",
@@ -25,7 +25,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@vunvault/config": "workspace:*",
     "eslint": "catalog:",
