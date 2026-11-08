@@ -138,7 +138,7 @@ export class DockerEngineHttpClient implements DockerEnginePort {
       if (response.statusCode !== 200) {
         void readBody(response).then((body) => {
           output.destroy(new Error(`Docker logs failed (HTTP ${response.statusCode}): ${body.slice(0, 300)}`));
-        });
+        }, (error: unknown) => output.destroy(error instanceof Error ? error : new Error(String(error))));
         return;
       }
       demultiplexDockerStream(response, output);
@@ -260,10 +260,13 @@ function demultiplexDockerStream(input: NodeJS.ReadableStream, output: PassThrou
       }
       if (pending.length < 8 + length) return;
       const payload = pending.subarray(8, 8 + length);
-      if (streamType === 1 || streamType === 2) output.write(payload);
+      if (streamType === 1 || streamType === 2) {
+        if (!output.write(payload)) input.pause();
+      }
       pending = pending.subarray(8 + length);
     }
   });
+  output.on('drain', () => input.resume());
   input.on('end', () => {
     if (pending.length !== 0) output.destroy(new Error('Docker log stream ended with an incomplete frame'));
     else output.end();
