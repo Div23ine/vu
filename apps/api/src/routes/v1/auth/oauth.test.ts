@@ -105,6 +105,7 @@ class FakeAuthRepo implements AuthRepo {
       accountStatus: input.accountStatus ?? 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
   }
   async activatePendingSignup(profileId: string) {
@@ -188,6 +189,7 @@ function fakeSession(overrides: Partial<SupabaseSession> = {}): SupabaseSession 
     userId: OAUTH_USER_ID,
     aal: 'aal1',
     ...overrides,
+    lastActiveAt: overrides.lastActiveAt ?? null,
   };
 }
 
@@ -199,6 +201,7 @@ function oauthUser(overrides: Partial<OAuthUser> = {}): OAuthUser {
     fullName: 'Jane Wanjiru',
     avatarUrl: null,
     ...overrides,
+    lastActiveAt: overrides.lastActiveAt ?? null,
   };
 }
 
@@ -349,6 +352,7 @@ async function makeHarness(): Promise<Harness> {
               deletedAt: null,
               mfaSetupDeadline: null,
               mfaEnrolled: false,
+              lastActiveAt: null,
             }
           : null,
     }),
@@ -608,6 +612,7 @@ describe('GET /api/v1/auth/oauth/callback', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: true,
+      lastActiveAt: null,
     });
     harness.supabase.exchangeResult = {
       session: fakeSession(),
@@ -666,6 +671,7 @@ describe('GET /api/v1/auth/oauth/callback', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
 
     const started = await start('google');
@@ -695,6 +701,7 @@ describe('GET /api/v1/auth/oauth/callback', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: true,
+      lastActiveAt: null,
     });
     harness.supabase.factors = [{ id: 'factor-1', type: 'totp', verified: true }];
     harness.onboarding.completed.add(OAUTH_USER_ID);
