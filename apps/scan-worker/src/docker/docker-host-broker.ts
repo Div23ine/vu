@@ -9,6 +9,7 @@ import type {
 } from './docker-pod-runner';
 import { DockerEngineHttpClient } from './docker-engine-http';
 import { HostFirewallUnixClient } from './host-firewall-client';
+import { classifyIp } from '../domain/target-guard';
 
 /**
  * Narrow host-side broker. This is the ONLY process allowed to own the raw
@@ -283,16 +284,11 @@ function parsePublicIps(value: unknown): string[] {
   return [...new Set(value as string[])];
 }
 export function isPublicIpv4(ip: string): boolean {
-  const parts = ip.split('.').map(Number);
-  if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false;
-  const [a, b, c, d] = parts as [number, number, number, number];
-  if (a === 0 || a === 10 || a === 127 || a >= 224 || (a === 169 && b === 254) ||
-      (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) ||
-      (a === 100 && b >= 64 && b <= 127) || (a === 192 && b === 0) ||
-      (a === 198 && (b === 18 || b === 19 || b === 51)) ||
-      (a === 203 && b === 0 && c === 113) || (a === 192 && b === 0 && c === 2) ||
-      (a === 255 && b === 255 && c === 255 && d === 255)) return false;
-  return true;
+  const octets = ip.split('.');
+  if (octets.length !== 4 ||
+      octets.some((part) => !/^\\d{1,3}$/.test(part) || Number(part) < 0 || Number(part) > 255) ||
+      octets.join('.') !== ip) return false;
+  return classifyIp(ip) === 'public';
 }
 function ownedNetwork(state: BrokerState, id: string): NetworkRecord {
   const item = state.networks.get(id);
@@ -323,7 +319,7 @@ export function expandPublicCidr(cidr: string): string[] {
   const prefix = Number(match[2]);
   if (octets.length !== 4 ||
       octets.some((n) => !Number.isInteger(n) || n < 0 || n > 255) ||
-      prefix < 24 || prefix > 32) {
+      octets.join('.') !== match[1] || prefix < 24 || prefix > 32) {
     throw new Error('invalid target CIDR');
   }
   const base = octets.reduce((value, octet) => value * 256 + octet, 0);
