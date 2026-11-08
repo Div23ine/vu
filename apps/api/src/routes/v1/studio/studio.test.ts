@@ -62,6 +62,7 @@ function row(overrides: Partial<ContentItemRow> = {}): ContentItemRow {
     title: '',
     summary: null,
     bodyMd: null,
+    bodyR2Key: null,
     slugPath: '/blog/untitled-e1000000',
     authorId: BLOGGER_ID,
     authorName: 'Wanjiru Kamau',
