@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 import { describe, expect, it } from 'vitest';
-import type { Clock, Logger, PodSpec } from '../ports';
+import type { Logger, PodSpec } from '../ports';
 import {
   DockerPodRunner,
   type DockerContainerConfig,
@@ -26,13 +26,6 @@ function logger(): Logger {
     warn: () => undefined,
     error: () => undefined,
     debug: () => undefined,
-  };
-}
-
-function clock(): Clock {
-  return {
-    now: () => 1_700_000_000_000,
-    sleep: async () => await new Promise<void>(() => undefined),
   };
 }
 
@@ -93,7 +86,6 @@ function harness(options: {
     runner: new DockerPodRunner({
       docker,
       firewall,
-      clock: clock(),
       logger: logger(),
       runnerImage: IMAGE,
     }),
@@ -128,7 +120,8 @@ describe('DockerPodRunner — fail-closed ordering', () => {
 
     expect(result.reason).toBe('error');
     expect(h.calls).not.toContain('create-container');
-    expect(h.calls).not.toContain('remove-firewall');
+    // install may have partially applied rules before reporting an error.
+    expect(h.calls).toContain('remove-firewall');
     expect(h.calls).toContain('remove-network');
   });
 
@@ -184,7 +177,6 @@ describe('DockerPodRunner — fail-closed ordering', () => {
     expect(() => new DockerPodRunner({
       docker: {} as DockerEnginePort,
       firewall: {} as HostFirewallPort,
-      clock: clock(),
       logger: logger(),
       runnerImage: 'registry.example.test/vv-runner:latest',
     })).toThrow(/sha256 digest/);
