@@ -66,6 +66,7 @@ function row(overrides: Partial<ContentItemRow> = {}): ContentItemRow {
     title: 'A post',
     summary: null,
     bodyMd: '# Body',
+    bodyR2Key: null,
     slugPath: '/blog/a-post',
     authorId: AUTHOR_ID,
     authorName: 'Brian Otieno',
