@@ -17,6 +17,7 @@ environment secret; migrations and images only).
 | -------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `NODE_ENV`                                         | C     | `development` \| `test` \| `production` (default development)                                                                        |
 | `PORT`                                             | C     | HTTP listen port (default 8080)                                                                                                      |
+| `REDIS_OPTIONAL`                                    | C     | `true` allows API startup without Redis for local/test-only modes; production must keep Redis configured                              |
 | `LOG_LEVEL`                                        | C     | pino level (default info)                                                                                                            |
 | `WEB_ORIGIN`                                       | C     | exact web origin — CORS + the Task 95 WS Origin check                                                                                |
 | `COOKIE_DOMAIN`                                    | C     | session cookie domain (empty allowed in dev)                                                                                         |
