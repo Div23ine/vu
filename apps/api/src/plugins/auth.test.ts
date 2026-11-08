@@ -196,6 +196,33 @@ describe('authentication', () => {
     await app.close();
   });
 
+  it('uses the database profile role instead of optional JWT authorization claims', async () => {
+    const app = await makeApp(
+      recordFor({
+        email: 'divine@vunvault.com',
+        role: 'super_admin',
+        orgId: null,
+      }),
+    );
+    // The signed token says client, but the server-side profile is authoritative.
+    const token = await signToken(claimsFor('client'));
+    const response = await app.inject({
+      method: 'GET',
+      url: '/__test/me',
+      headers: { cookie: cookieFor(token) },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      data: {
+        email: 'divine@vunvault.com',
+        role: 'super_admin',
+        orgId: null,
+        permissions: ROLE_PERMISSIONS.super_admin,
+      },
+    });
+    await app.close();
+  });
+
   it('rejects an expired token', async () => {
     const app = await makeApp();
     const token = await signToken(claimsFor('super_admin'), { expiresIn: '-1h' });

@@ -1,8 +1,8 @@
 /**
  * The administrator roster (Phase 2, magic-link work order).
  *
- * Provisioning is DATA-DRIVEN from this single config list: nine slots, four
- * populated and five `null` placeholders. Filling a slot means editing this
+ * Provisioning is DATA-DRIVEN from this single config list: nine slots, seven
+ * populated and two `null` placeholders. Filling a slot means editing this
  * file and re-running `pnpm --filter @vunvault/api provision:admins` — no
  * migration, no code change anywhere else.
  *
@@ -16,8 +16,8 @@
  * moves the account to `blocked_mfa_setup` until a super admin unblocks it.
  *
  * Super-admin posture (updated for login work-order matrix):
- * - divine@vunvault.com remains fully EXEMPT (null window).
- * - gospelu214+vu6@gmail.com is a super_admin but uses a timed window so that
+ * - divine@vunvault.com uses the standard timed first-login setup window.
+ * - gospelu214+vu6@gmail.com is a super_admin and also uses a timed window so that
  *   after the first login it is forced through the MFA verify screen on every
  *   subsequent sign-in (exactly as a normal admin).
  */
@@ -26,9 +26,9 @@
 export const ADMIN_MFA_SETUP_WINDOW_SECONDS = 300;
 
 /**
- * The exempt super admin. Hard constraint from the work order:
- * `divine@vunvault.com` is **Divine Gospel** (NOT Thugu Maina), SUPER ADMIN,
- * exempt from the setup timeout and from `blocked_mfa_setup` entirely.
+ * The primary super admin:
+ * `divine@vunvault.com` is **Divine Gospel** (NOT Thugu Maina), SUPER ADMIN.
+ * This account must complete first-login MFA setup before accessing admin pages.
  */
 export const SUPER_ADMIN_EMAIL = 'divine@vunvault.com';
 
@@ -50,14 +50,14 @@ export interface AdminRosterSlot {
   jobTitle: string | null;
   role: 'admin' | 'super_admin';
   /**
-   * First-sign-in MFA setup window in seconds; `null` = EXEMPT (no timer, no
-   * block, MFA optional). Only the primary super-admin slot is exempt.
+   * First-sign-in MFA setup window in seconds; `null` = EXEMPT (no timer,
+   * no block, MFA optional).
    */
   mfaSetupWindowSeconds: number | null;
 }
 
 /**
- * The nine slots. Placeholders 5–9 stay `null` until the pending admin emails
+ * The nine slots. Placeholders 8–9 stay `null` until the pending admin emails
  * are supplied (playbook → Known Gaps); each filled slot must carry a name
  * resolved from the contributor records.
  */
@@ -74,7 +74,7 @@ export const ADMIN_ROSTER: readonly AdminRosterSlot[] = [
     fullName: 'Divine Gospel',
     jobTitle: null, // not in the contributor records; the name is the work order's hard constraint
     role: 'super_admin',
-    mfaSetupWindowSeconds: null, // EXEMPT: no timer, no block, MFA optional
+    mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS, // require authenticator setup
   },
   {
     email: 'tshepiso@vunvault.com',
@@ -101,6 +101,20 @@ export const ADMIN_ROSTER: readonly AdminRosterSlot[] = [
     fullName: 'Divine Gospel', // the +vu6 alias of the Divine Gospel super-admin address
     jobTitle: null,
     role: 'super_admin',
+    mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
+  },
+  {
+    email: 'gospelu214+vu10@gmail.com',
+    fullName: 'Timeout MAFA',
+    jobTitle: null,
+    role: 'admin',
+    mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
+  },
+  {
+    email: 'esther@vunvault.com',
+    fullName: 'Esther Haule',
+    jobTitle: null,
+    role: 'admin',
     mfaSetupWindowSeconds: ADMIN_MFA_SETUP_WINDOW_SECONDS,
   },
   {
@@ -152,7 +166,7 @@ export function isAdminEmail(email: string): boolean {
 
 /**
  * True when the address is exempt from the first-sign-in setup window (no
- * timer, no `blocked_mfa_setup`, MFA optional). Only the primary super-admin slot.
+ * timer, no `blocked_mfa_setup`, MFA optional).
  */
 export function isMfaSetupExempt(email: string): boolean {
   const slot = rosterSlotFor(email);

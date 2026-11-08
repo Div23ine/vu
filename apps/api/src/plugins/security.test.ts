@@ -86,7 +86,7 @@ describe('cookie policy', () => {
     expect(COOKIE_PATHS).toEqual({
       vv_at: '/',
       vv_rt: '/api/v1/auth',
-      vv_mfa: '/api/v1/auth',
+      vv_mfa: '/',
       vv_csrf: '/',
     });
     expect(COOKIE_MAX_AGE).toEqual({
@@ -101,13 +101,15 @@ describe('cookie policy', () => {
     expect(cookieOptions('vv_at').httpOnly).toBe(true);
     expect(cookieOptions('vv_rt').httpOnly).toBe(true);
     expect(cookieOptions('vv_mfa').httpOnly).toBe(true);
+    // The web /login/mfa and /login/mfa/setup pages must receive the challenge.
+    expect(cookieOptions('vv_mfa').path).toBe('/');
     // Script must be able to read it, or the double-submit check is impossible.
     expect(cookieOptions('vv_csrf').httpOnly).toBe(false);
   });
 
-  it('uses Strict for the refresh and MFA cookies and Lax for the others', () => {
+  it('uses Strict for refresh and Lax for MFA challenge and other cookies', () => {
     expect(cookieOptions('vv_rt').sameSite).toBe('strict');
-    expect(cookieOptions('vv_mfa').sameSite).toBe('strict');
+    expect(cookieOptions('vv_mfa').sameSite).toBe('lax');
     expect(cookieOptions('vv_at').sameSite).toBe('lax');
     expect(cookieOptions('vv_csrf').sameSite).toBe('lax');
   });

@@ -17,10 +17,11 @@ import { homeFor } from './lib/permissions';
  *  in `next.config.ts` and are NOT duplicated here.
  *
  * 2. **Route guards — cookie presence only.** The middleware checks that a
- *  session cookie EXISTS before letting a guarded path render, and steers
- *  logged-in visitors away from `/login`/`/signup`. It never validates a
- *  token: peeking the role is a routing convenience, never a security
- *  decision — the API remains the authority on every data call, and
+ *  session cookie EXISTS before letting a guarded path render. `/login` always
+ *  remains reachable so a visitor can switch accounts or request a fresh link;
+ *  only `/signup` redirects a visitor with an unexpired, recognizable session.
+ *  It never validates a token: peeking the role is a routing convenience, never
+ *  a security decision — the API remains the authority on every data call, and
  *  `requireSession` re-checks server-side before guarded layouts render.
  */
 
@@ -44,8 +45,8 @@ function requiresSession(pathname: string): boolean {
   );
 }
 
-function isAuthPage(pathname: string): boolean {
-  return pathname === '/login' || pathname === '/signup';
+function isSignupPage(pathname: string): boolean {
+  return pathname === '/signup';
 }
 
 function isAdminArea(pathname: string): boolean {
@@ -81,21 +82,35 @@ export default function middleware(request: NextRequest): NextResponse {
   const hasSessionCookie =
     accessToken !== undefined || request.cookies.get(REFRESH_TOKEN_COOKIE)?.value !== undefined;
   // Routing convenience only — never a security decision (see module docs).
-  const peekedRole = accessToken === undefined ? undefined : peekClaims(accessToken)?.role;
+  const peekedClaims = accessToken === undefined ? null : peekClaims(accessToken);
+  const peekedRole = peekedClaims?.role;
+  // Expired cookies must not keep redirecting visitors away from auth pages.
+  const hasUnexpiredAccessToken =
+    peekedRole !== undefined &&
+    peekedClaims?.exp !== undefined &&
+    peekedClaims.exp * 1000 > Date.now();
 
   // 1. Guarded areas need a session cookie; without one, go log in and come back.
   if (requiresSession(pathname) && !hasSessionCookie) {
     return redirectTo(`/login?next=${encodeURIComponent(pathname + search)}`);
   }
 
-  // 2. Auth pages are pointless with a session — land the visitor where they belong.
-  //  If `vv_at` is missing or unreadable, do nothing: the page itself handles it.
-  if (isAuthPage(pathname) && hasSessionCookie && peekedRole !== undefined) {
+  // 2. Keep /login reachable even when a previous session cookie is present.
+  // This lets users deliberately switch accounts or request a fresh magic link.
+  // Signup can still send a signed-in visitor back to their home page, but only
+  // when the access token has not expired.
+  if (
+    isSignupPage(pathname) &&
+    hasSessionCookie &&
+    hasUnexpiredAccessToken &&
+    peekedRole !== undefined
+  ) {
     return redirectTo(homeFor(peekedRole));
   }
 
-  // 3. A client-role token has no business in the admin area.
-  if (isAdminArea(pathname) && peekedRole === 'client') {
+  // 3. A live client-role token has no business in the admin area. Ignore stale
+  // role claims so an expired cookie cannot cause a misleading forbidden redirect.
+  if (isAdminArea(pathname) && hasUnexpiredAccessToken && peekedRole === 'client') {
     return redirectTo('/forbidden');
   }
 

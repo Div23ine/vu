@@ -1,5 +1,5 @@
 import fp from 'fastify-plugin';
-import type { Permission, UserRole } from '@vunvault/contracts';
+import { ROLE_PERMISSIONS, UserRoleSchema, type Permission, type UserRole } from '@vunvault/contracts';
 import type { FastifyPluginAsync, FastifyRequest, preHandlerHookHandler } from 'fastify';
 import { HttpError } from '../lib/http-error.js';
 import { tokenIssuer, verifyAccessToken } from '../lib/jwt.js';
@@ -129,6 +129,18 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (app, options) =
     if (record.deletedAt !== null) throw HttpError.unauthorized();
     if (record.userId !== payload.sub) throw HttpError.unauthorized();
 
+    // The database profile is authoritative for identity and permissions. JWT
+    // custom claims remain a compatibility fallback for injected test registries
+    // and older deployments, but are never allowed to override a profile row.
+    const parsedRole = UserRoleSchema.safeParse(record.role ?? payload.role);
+    if (!parsedRole.success) throw HttpError.unauthorized();
+    const role = parsedRole.data;
+    const email = record.email ?? payload.email;
+    const orgId = record.orgId !== undefined
+      ? record.orgId
+      : (typeof payload.org_id === 'string' ? payload.org_id : null);
+    const permissions = [...ROLE_PERMISSIONS[role]];
+
     // Task 2e: the first-login MFA enrolment window is enforced here, not only
     // at the next sign-in. An account whose deadline has passed and whose
     // second factor is still not enrolled holds a session that no longer
@@ -140,7 +152,7 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (app, options) =
     if (
       record.mfaSetupDeadline !== null &&
       record.mfaEnrolled === false &&
-      payload.role !== 'super_admin' &&
+      role !== 'super_admin' &&
       Date.parse(record.mfaSetupDeadline) <= now()
     ) {
       throw HttpError.unauthorized();
@@ -154,10 +166,10 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (app, options) =
 
     return {
       id: payload.sub,
-      email: payload.email,
-      role: payload.role,
-      orgId: payload.org_id,
-      permissions: payload.permissions,
+      email,
+      role,
+      orgId,
+      permissions,
       aal,
       sessionId: payload.session_id,
     };

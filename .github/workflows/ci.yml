@@ -87,15 +87,11 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - run: pnpm install --frozen-lockfile
-      - name: Build packages and services
-        run: pnpm build
-      # `pnpm build` above already ran `next build` for web (turbo restores
-      # `.next` from cache on a hit), so the adapter is told to skip the Next
-      # build and only do its own transform + Worker bundle. Gating that here is
-      # the point: a route that is fine under `next build` can still fail to
-      # bundle for workerd. Requires the previous step — do not reorder.
+      # This job validates only the Cloudflare web Worker. Backend APIs and
+      # workers are built separately by the release/deployment pipeline; do not
+      # run the monorepo-wide `pnpm build` from this web build job.
       - name: Build the web Worker (@opennextjs/cloudflare)
-        run: pnpm --filter web exec opennextjs-cloudflare build --skipNextBuild
+        run: pnpm --filter web cf:build
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

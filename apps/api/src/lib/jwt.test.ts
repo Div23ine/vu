@@ -257,28 +257,32 @@ describe('verifyAccessToken — envelope claims', () => {
   });
 });
 
-describe('verifyAccessToken — custom claims (the Auth Hook contract)', () => {
-  it("rejects GoTrue's default role, which is not a member of the roster enum", async () => {
-    // Exactly what production issues while the Custom Access Token hook is off.
-    // Signature is valid; authorisation data is absent, so it must not pass.
-    await expectUnauthorized(await signEs256({ role: 'authenticated' }));
+describe('verifyAccessToken — authorization claims are database-backed', () => {
+  it("accepts GoTrue's default role when the Custom Access Token hook is disabled", async () => {
+    const { role: _role, org_id: _orgId, permissions: _permissions, ...base } = VALID_CLAIMS;
+    const verified = await verifyAccessToken(
+      await signExactEs256({ ...base, role: 'authenticated' }),
+      options(),
+    );
+    expect(verified.payload.sub).toBe(VALID_CLAIMS.sub);
+    expect(verified.payload.email).toBe('divine@vunvault.com');
   });
 
-  it('rejects a token with no org_id', async () => {
-    const { org_id: _omitted, ...withoutOrg } = VALID_CLAIMS;
-    await expectUnauthorized(await signExactEs256(withoutOrg));
+  it('accepts a signed token without role, org_id or permissions claims', async () => {
+    const { role: _role, org_id: _orgId, permissions: _permissions, ...withoutAuthorization } = VALID_CLAIMS;
+    const verified = await verifyAccessToken(await signExactEs256(withoutAuthorization), options());
+    expect(verified.payload.session_id).toBe(VALID_CLAIMS.session_id);
   });
 
-  it('rejects a token with no permissions claim', async () => {
-    const { permissions: _omitted, ...withoutPermissions } = VALID_CLAIMS;
-    await expectUnauthorized(await signExactEs256(withoutPermissions));
+  it('does not use malformed custom permissions as an authentication requirement', async () => {
+    const verified = await verifyAccessToken(
+      await signEs256({ permissions: ['not_a_real_permission'] }),
+      options(),
+    );
+    expect(verified.payload.sub).toBe(VALID_CLAIMS.sub);
   });
 
-  it('rejects an unrecognised permission', async () => {
-    await expectUnauthorized(await signEs256({ permissions: ['not_a_real_permission'] }));
-  });
-
-  it('accepts a token carrying a real org_id and permissions', async () => {
+  it('preserves valid optional custom claims for compatibility', async () => {
     const verified = await verifyAccessToken(
       await signEs256({
         role: 'admin',
@@ -292,12 +296,12 @@ describe('verifyAccessToken — custom claims (the Auth Hook contract)', () => {
     expect(verified.payload.aal).toBe('aal2');
   });
 
-  it('rejects a token with no session_id', async () => {
+  it('still rejects a token with no session_id', async () => {
     const { session_id: _omitted, ...withoutSession } = VALID_CLAIMS;
     await expectUnauthorized(await signExactEs256(withoutSession));
   });
 
-  it('rejects a malformed email', async () => {
+  it('still rejects a malformed email', async () => {
     await expectUnauthorized(await signEs256({ email: 'not-an-email' }));
   });
 });

@@ -1,5 +1,4 @@
 import { createRemoteJWKSet, decodeProtectedHeader, jwtVerify, type JWTVerifyGetKey } from 'jose';
-import { JwtClaims } from '@vunvault/contracts';
 import { z } from 'zod';
 import { HttpError } from './http-error.js';
 
@@ -21,15 +20,14 @@ import { HttpError } from './http-error.js';
  * is redirected, and then the first authenticated request 401s and the member is
  * bounced back to `/login`. Both families are accepted below.
  *
- * The custom claims (`role`, `org_id`, `permissions[]`) are minted by the
- * Postgres Auth Hook in `packages/db/sql/0024_auth_hook.sql`, which mirrors
- * `packages/contracts/src/permissions.ts`. The hook is configured in the
- * Supabase dashboard (Authentication → Hooks → Custom Access Token), NOT in
- * SQL, so creating the function is not enough — until it is enabled there,
- * GoTrue emits its own defaults (`role: "authenticated"`, no `org_id`, no
- * `permissions`) and the claim validation below rejects the token even though
- * its signature is perfectly good. That failure mode is indistinguishable from
- * an expired session at the HTTP layer, by design.
+ * Authorization claims are deliberately NOT trusted as the source of role or
+ * permissions. Supabase's optional Custom Access Token hook may add
+ * `role`, `org_id` and `permissions[]`, but deployments can omit that hook
+ * and still issue valid authenticated tokens. After signature verification,
+ * `auth.ts` resolves the session id against the server-side session registry,
+ * which joins the authoritative `profiles` row and derives permissions from
+ * `ROLE_PERMISSIONS`. This keeps authorization database-backed and prevents
+ * missing or stale JWT custom claims from creating a login redirect loop.
  */
 
 export const TOKEN_AUDIENCE = 'authenticated';
@@ -57,8 +55,15 @@ const ASYMMETRIC_ALGORITHMS = [
 
 export type AuthenticatorAssuranceLevel = 'aal1' | 'aal2';
 
-export const TokenPayloadSchema = JwtClaims.extend({
+export const TokenPayloadSchema = z.object({
+  // Authorization attributes are loaded from the authoritative profiles row by
+  // the session registry. Supabase's optional Custom Access Token hook must not
+  // be a prerequisite for accepting a cryptographically valid session.
+  sub: z.string().uuid(),
   email: z.string().email(),
+  role: z.unknown().optional(),
+  org_id: z.unknown().optional(),
+  permissions: z.unknown().optional(),
   session_id: z.string().uuid(),
   aal: z.enum(['aal1', 'aal2']),
   exp: z.number().int().positive(),

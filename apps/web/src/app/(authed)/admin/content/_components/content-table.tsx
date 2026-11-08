@@ -1,7 +1,7 @@
 'use client';
 
 import { FileText, Megaphone, Newspaper, Package, SearchX } from 'lucide-react';
-import type { ContentType, ModerationItem } from '@vunvault/contracts';
+import type { ContentStatus, ContentType, ModerationItem } from '@vunvault/contracts';
 import { CONTENT_STATUS_LABELS, CONTENT_TYPE_LABELS, TEAM_LABELS } from '@vunvault/contracts';
 import { cn, formatQueueStamp } from '@vunvault/lib';
 import { EmptyState, Skeleton } from '@vunvault/ui';
@@ -43,6 +43,7 @@ const STATUS_TONE: Record<ModerationItem['status'], string> = {
 };
 
 export interface ContentTableProps {
+  status: ContentStatus | '';
   items: readonly ModerationItem[];
   total: number;
   isLoading: boolean;
@@ -53,6 +54,7 @@ export interface ContentTableProps {
 }
 
 export function ContentTable({
+  status,
   items,
   total,
   isLoading,
@@ -67,11 +69,12 @@ export function ContentTable({
         <div>
           <h2 className="adm-card-title" id="cm-queue-heading">
             <SearchX size={15} aria-hidden="true" />
-            Pending Publication Queue
+            {status === 'approved' ? 'Approved — Ready to Publish' : 'Pending Publication Queue'}
           </h2>
           <p className="adm-card-note">
-            Content authored by staff members awaiting editorial sign-off before it renders on the
-            public website. Nothing here is visible to clients or the public yet.
+            {status === 'approved'
+              ? 'These items have passed editorial review but are not live yet. Use Publish Now to make an item public immediately, or Schedule to choose its publication time.'
+              : 'Content authored by staff members awaiting editorial sign-off before it renders on the public website. Approved items move to the Approved · Ready to Publish view.'}
           </p>
         </div>
         <span className="adm-tag adm-tag--warn">
@@ -88,10 +91,9 @@ export function ContentTable({
           <span className="cm-empty-icon" aria-hidden="true">
             <SearchX size={22} />
           </span>
-          <span className="cm-empty-title">No content matches the current filters</span>
+          <span className="cm-empty-title">{status === 'approved' ? 'No approved items waiting for publication' : 'No content matches the current filters'}</span>
           <span className="cm-empty-text">
-            Adjust your search terms or reset the filters to see the full pre-publication review
-            queue.
+            {status === 'approved' ? 'When an item is approved, it will appear here with Publish Now and Schedule actions.' : 'Adjust your search terms or reset the filters to see the full pre-publication review queue.'}
           </span>
           <button
             type="button"
@@ -181,8 +183,9 @@ export function ContentTable({
             <tfoot>
               <tr>
                 <td colSpan={7}>
-                  Content approved here is queued for publication, not immediately visible. Use the
-                  content editor to schedule a live time.
+                  {status === 'approved'
+                    ? 'These items are approved but not public yet. Use Publish Now to make an item live immediately, or Schedule to choose its publication time.'
+                    : 'Approving an item moves it to Approved · Ready to Publish. Open that view to publish it or schedule its release.'}
                 </td>
               </tr>
             </tfoot>

@@ -430,6 +430,8 @@ export class OAuthService {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      // A newly-created OAuth account has not completed a sign-in yet.
+      lastActiveAt: null,
     };
   }
 

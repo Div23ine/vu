@@ -275,8 +275,8 @@ export function setupWindowSecondsFor(profile: { email: string; role: UserRole }
  * browser (the exempt super admin's full-session leg); every JSON leg lets
  * the web app route itself.
  */
-export function homeForRole(role: UserRole): '/admin' | '/admin/profile' | '/portal' {
-  if (role === 'client') return '/portal';
+export function homeForRole(role: UserRole): '/' | '/admin' | '/admin/profile' {
+  if (role === 'client') return '/';
   if (role === 'support_engineer') return '/admin/profile';
   return '/admin';
 }
@@ -820,23 +820,17 @@ export class AuthService {
     // ——— Phase 2: forced first-sign-in MFA setup ———
     const enrolled = await this.mfaEnrolledFor(profile.id, profile.mfaEnrolled);
     if (!enrolled && needsForcedSetup(profile.role)) {
-      // Lazy expiry first: a timed administrator window that closed without
-      // enrolment blocks the account the next time it surfaces here.
-      const stale = await this.deps.setups.forUser(profile.id);
-      if (stale !== null && stale.deadlineEpochMs <= this.now().getTime()) {
-        await this.blockSetupWindow(stale);
-        return {
-          kind: 'setup_blocked',
-          email: profile.email,
-          userId: profile.id,
-          reason: 'window_expired',
-        };
-      }
-
-      // The EXEMPT super admin (roster window `null` — divine@vunvault.com):
-      // no setup gate, no timer, no block — MFA is optional, so an unenrolled
-      // exempt sign-in gets the FULL session straight from this leg.
+      // The EXEMPT super admin (roster window `null` — divine@vunvault.com)
+      // never participates in the timed setup flow. Clear any deadline or
+      // ledger left by an earlier configuration before issuing the full
+      // session; otherwise the session view can keep showing the mandatory
+      // setup popup even though this roster slot is exempt.
       if (isMfaSetupExempt(profile.email)) {
+        await this.deps.repo.clearMfaSetupDeadline(profile.id);
+        const previousSetup = await this.deps.setups.forUser(profile.id);
+        if (previousSetup !== null) await this.deps.setups.clear(previousSetup);
+        profile.mfaSetupDeadline = null;
+
         const issued = await this.issueSession(supabaseSession, profile, {
           meta,
           mfaMethod: null,
@@ -847,6 +841,19 @@ export class AuthService {
           email: profile.email,
           userId: profile.id,
           redirectTo: `${origin}${homeForRole(profile.role)}`,
+        };
+      }
+
+      // Lazy expiry first: a timed administrator window that closed without
+      // enrolment blocks the account the next time it surfaces here.
+      const stale = await this.deps.setups.forUser(profile.id);
+      if (stale !== null && stale.deadlineEpochMs <= this.now().getTime()) {
+        await this.blockSetupWindow(stale);
+        return {
+          kind: 'setup_blocked',
+          email: profile.email,
+          userId: profile.id,
+          reason: 'window_expired',
         };
       }
 

@@ -40,7 +40,9 @@ export const COOKIE_MAX_AGE: Record<CookieName, number | undefined> = {
 export const COOKIE_PATHS: Record<CookieName, string> = {
   vv_at: '/',
   vv_rt: '/api/v1/auth',
-  vv_mfa: '/api/v1/auth',
+  // The web MFA/setup pages must receive this HttpOnly challenge cookie too.
+  // It remains unreadable to JavaScript and is cleared with the same root path.
+  vv_mfa: '/',
   vv_csrf: '/',
 };
 
@@ -75,8 +77,10 @@ export function cookieOptions(
     // `vv_csrf` must be readable by script for the double-submit check.
     httpOnly: name !== COOKIE_NAMES.csrf,
     secure,
-    sameSite:
-      name === COOKIE_NAMES.refreshToken || name === COOKIE_NAMES.mfaChallenge ? 'strict' : 'lax',
+    // The MFA challenge is created on a top-level navigation from an email
+    // provider. Lax allows the browser to carry it through the redirect to
+    // the web app; refresh tokens remain Strict.
+    sameSite: name === COOKIE_NAMES.refreshToken ? 'strict' : 'lax',
     path: COOKIE_PATHS[name],
     ...(maxAge === undefined ? {} : { maxAge }),
     ...(domain === undefined || domain === '' ? {} : { domain }),

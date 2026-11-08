@@ -32,10 +32,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // The MSW worker script is copied, not `msw init`ed (no package.json
-    // mutation, no prompt). Then the dev server on a dedicated port.
+    // Generate the worker using MSW's supported CLI. pnpm's isolated
+    // dependency layout does not guarantee a physical
+    // apps/web/node_modules/msw/mockServiceWorker.js path.
     command:
-      "node -e \"require('fs').copyFileSync('apps/web/node_modules/msw/mockServiceWorker.js','apps/web/public/mockServiceWorker.js')\" && pnpm --filter web exec next dev --turbopack -p 3100",
+      'pnpm --filter web exec msw init public && pnpm --filter web exec next dev --turbopack -p 3100',
     url: 'http://127.0.0.1:3100',
     reuseExistingServer: !process.env.CI,
     timeout: 240_000,

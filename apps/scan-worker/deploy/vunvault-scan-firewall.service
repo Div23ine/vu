@@ -1,0 +1,38 @@
+[Unit]
+Description=VUNVAULT per-scan nftables firewall broker
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+Group=vunvault-scan-firewall
+EnvironmentFile=-/etc/vunvault/scan-firewall.env
+Environment=VV_SCAN_FIREWALL_SOCKET=/run/vunvault-scan-firewall/broker.sock
+ExecStart=/usr/bin/node /opt/vunvault/vu/apps/scan-worker/dist/docker/firewall-broker-host.js
+Restart=on-failure
+RestartSec=2
+UMask=0007
+RuntimeDirectory=vunvault-scan-firewall
+RuntimeDirectoryMode=0750
+
+# This helper is the only process with network-administration capability.
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+ReadOnlyPaths=/sys/class/net
+ReadWritePaths=/run/vunvault-scan-firewall
+
+[Install]
+WantedBy=multi-user.target

@@ -105,6 +105,7 @@ class FakeAuthRepo implements AuthRepo {
       accountStatus: input.accountStatus ?? 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
   }
   async activatePendingSignup(profileId: string) {
@@ -608,6 +609,7 @@ describe('GET /api/v1/auth/oauth/callback', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: true,
+      lastActiveAt: null,
     });
     harness.supabase.exchangeResult = {
       session: fakeSession(),
@@ -666,6 +668,7 @@ describe('GET /api/v1/auth/oauth/callback', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
 
     const started = await start('google');
@@ -695,6 +698,7 @@ describe('GET /api/v1/auth/oauth/callback', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: true,
+      lastActiveAt: null,
     });
     harness.supabase.factors = [{ id: 'factor-1', type: 'totp', verified: true }];
     harness.onboarding.completed.add(OAUTH_USER_ID);

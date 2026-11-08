@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Fingerprint, GraduationCap, KeyRound, Radar, Receipt } from 'lucide-react';
+import { Fingerprint, GraduationCap, KeyRound, PenSquare, Radar, Receipt } from 'lucide-react';
 import type { SubscriptionStatus } from '@vunvault/contracts';
 import { Skeleton } from '@vunvault/ui';
 import { useClientProfile } from '../_hooks/use-client-profile';
+import { useStudioStatus } from '../../studio/_hooks/use-studio';
 import { AccountStats } from './account-stats';
 import '../_styles/profile.css';
 
@@ -67,6 +68,7 @@ const TILES = [
 
 export function ProfileHero() {
   const { data, isLoading } = useClientProfile();
+  const studioStatus = useStudioStatus();
 
   return (
     <>
@@ -116,6 +118,17 @@ export function ProfileHero() {
             <span className="vvp-tile-text">{text}</span>
           </Link>
         ))}
+        {studioStatus.data?.verified === true ? (
+          <Link href="/portal/studio" className="vvp-tile">
+            <span className="vvp-tile-icon" aria-hidden="true">
+              <PenSquare size={19} />
+            </span>
+            <span className="vvp-tile-title">Content Studio</span>
+            <span className="vvp-tile-text">
+              Write articles, manage drafts and submit stories for editorial review.
+            </span>
+          </Link>
+        ) : null}
       </div>
     </>
   );
