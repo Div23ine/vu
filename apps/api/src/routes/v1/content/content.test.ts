@@ -56,6 +56,7 @@ function item(overrides: Partial<ContentItemRow> = {}): ContentItemRow {
     title: 'Kenya State House cyber audit',
     summary: null,
     bodyMd: '# Findings',
+    bodyR2Key: null,
     slugPath: '/blog/kenya-state-house-cyber-audit',
     authorId: AUTHOR_ID,
     authorName: 'Brian Otieno',

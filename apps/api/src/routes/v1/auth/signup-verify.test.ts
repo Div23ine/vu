@@ -97,6 +97,7 @@ class FakeAuthRepo implements AuthRepo {
       accountStatus: input.accountStatus ?? 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
   }
   async activatePendingSignup(profileId: string) {

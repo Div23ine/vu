@@ -93,6 +93,7 @@ class FakeAuthRepo implements AuthRepo {
       accountStatus: input.accountStatus ?? 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
       mfaSetupDeadline: null,
     });
   }
@@ -701,6 +702,7 @@ describe('POST /api/v1/auth/magic-link', () => {
       mfaEnrolled: false,
       mfaSetupDeadline: null,
       ...overrides,
+      lastActiveAt: overrides.lastActiveAt ?? null,
     });
   }
 
@@ -890,6 +892,7 @@ describe('POST /api/v1/auth/magic-link (provider rejection — enumeration-proof
         accountStatus: 'active',
         deletedAt: null,
         mfaEnrolled: false,
+        lastActiveAt: null,
       });
       const response = await local.app.inject({
         method: 'POST',
@@ -923,6 +926,7 @@ describe('GET /api/v1/auth/magic-link/verify', () => {
       deletedAt: null,
       mfaEnrolled: false,
       ...overrides,
+      lastActiveAt: overrides.lastActiveAt ?? null,
     });
   }
 
@@ -1196,6 +1200,7 @@ describe('POST /api/v1/auth/mfa/verify', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: true,
+      lastActiveAt: null,
     });
     harness.supabase.factors = [{ id: 'factor-1', type: 'totp', verified: true }];
     // Phase 1: the challenge is opened by the magic-link pair, not a password.
@@ -1439,6 +1444,7 @@ describe('GET /api/v1/auth/session', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: true,
+      lastActiveAt: null,
     });
 
     const response = await harness.app.inject({
@@ -1461,6 +1467,7 @@ describe('GET /api/v1/auth/session', () => {
       email: 'e.reed@vunvault.com',
       role: 'super_admin',
       mfaEnrolled: true,
+      lastActiveAt: null,
     });
     expect(body.data.permissions).toContain('intel:broadcast');
   });
@@ -1487,6 +1494,7 @@ describe('Phase 2 — magic-link verify routes unenrolled accounts to setup', ()
       deletedAt: null,
       mfaEnrolled: false,
       ...overrides,
+      lastActiveAt: overrides.lastActiveAt ?? null,
     });
   }
 
@@ -1627,6 +1635,7 @@ describe('Phase 2 — POST /api/v1/auth/mfa/setup/*', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
   }
 
@@ -1737,6 +1746,7 @@ describe('Phase 2 — POST /api/v1/auth/mfa/setup/*', () => {
       email: 'daniel@vunvault.com',
       role: 'admin',
       mfaEnrolled: true,
+      lastActiveAt: null,
     });
     expect(harness.supabase.verifyCalls).toEqual([{ factorId: 'f1', code: '481920' }]);
 
@@ -1864,6 +1874,7 @@ describe('Phase 2 — POST /api/v1/auth/mfa/setup/*', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
     // Task 2c: `needsForcedSetup('client')` is false, so this handle is an
     // ORDINARY MFA challenge. There is no setup window for a client to abandon
@@ -2069,6 +2080,7 @@ describe('Phase 4 — magic-link anti-abuse (honeypot, timing, per-address windo
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
   }
 
@@ -2148,6 +2160,7 @@ describe('Phase 4 — captcha soft limit (TURNSTILE_ENFORCE on)', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
   }
 
