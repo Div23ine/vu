@@ -353,9 +353,10 @@ export function useDraftEditor(routeId: string) {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Please choose another image and try again.';
         const tooLarge = message.includes('smaller than 50 MB');
+        const unsupported = message.includes('valid JPEG') || message.includes('contents do not match');
         toast({
-          kind: tooLarge ? 'warn' : 'crit',
-          title: tooLarge ? 'File too large' : 'Image upload failed',
+          kind: tooLarge || unsupported ? 'warn' : 'crit',
+          title: tooLarge ? 'File too large' : unsupported ? 'Unsupported file' : 'Image upload failed',
           message,
         });
       } finally {
