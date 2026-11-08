@@ -1,16 +1,14 @@
 import Fastify from 'fastify';
-import { connect as tlsConnect } from 'node:tls';
+import { request as httpsRequest } from 'node:https';
+import { checkServerIdentity, connect as tlsConnect } from 'node:tls';
 import { promisify } from 'node:util';
 import dns from 'node:dns';
+import { resolvePublicIPv4 } from './security.js';
 
 /**
- * VUNVAULT recon — the unprivileged scanner backend.
- *
- * Passive checks only: DNS resolution, TLS certificate facts and HTTPS
- * header presence. No port scans, no probes beyond one HEAD request to the
- * submitted host, nothing that touches systems without consent (the web UI
- * collects that consent before calling us). Runs in Docker as a non-root
- * user with all capabilities dropped.
+ * VUNVAULT recon — passive checks only: DNS facts, TLS certificate facts and
+ * HTTPS security-header presence. All network connections use one validated,
+ * pinned public IPv4 address. Redirects are never followed.
  */
 
 const resolve4 = promisify(dns.resolve4);
@@ -18,12 +16,31 @@ const resolve6 = promisify(dns.resolve6);
 const resolveCname = promisify(dns.resolveCname);
 const resolveMx = promisify(dns.resolveMx);
 
-const DOMAIN_RE = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
+const DOMAIN_RE = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/;
+const REQUEST_WINDOW_MS = 60_000;
+const REQUESTS_PER_WINDOW = 10;
+const MAX_CONCURRENT_SCANS = 2;
 
 interface Finding {
   check: string;
   status: 'ok' | 'warn' | 'fail';
   detail: string;
+}
+
+const app = Fastify({ logger: true, bodyLimit: 1024 });
+const requestWindows = new Map<string, { startedAt: number; count: number }>();
+let activeScans = 0;
+
+function allowRequest(ip: string): boolean {
+  const now = Date.now();
+  const current = requestWindows.get(ip);
+  if (current === undefined || now - current.startedAt >= REQUEST_WINDOW_MS) {
+    requestWindows.set(ip, { startedAt: now, count: 1 });
+    return true;
+  }
+  if (current.count >= REQUESTS_PER_WINDOW) return false;
+  current.count += 1;
+  return true;
 }
 
 async function dnsChecks(domain: string): Promise<Finding[]> {
@@ -47,10 +64,16 @@ async function dnsChecks(domain: string): Promise<Finding[]> {
   return out;
 }
 
-async function tlsChecks(domain: string): Promise<Finding[]> {
+async function tlsChecks(domain: string, address: string): Promise<Finding[]> {
   return new Promise((resolve) => {
     const socket = tlsConnect(
-      { host: domain, port: 443, servername: domain, timeout: 8000 },
+      {
+        host: address,
+        port: 443,
+        servername: domain,
+        timeout: 8000,
+        checkServerIdentity: (_hostname, cert) => checkServerIdentity(domain, cert),
+      },
       () => {
         const cert = socket.getPeerCertificate();
         const now = Date.now();
@@ -80,51 +103,65 @@ async function tlsChecks(domain: string): Promise<Finding[]> {
       },
     );
     socket.on('error', (error) => {
-      resolve([{ check: 'tls.handshake', status: 'fail', detail: error.message }]);
+      resolve([{ check: 'tls.handshake', status: 'fail', detail: error.message.slice(0, 160) }]);
     });
     socket.on('timeout', () => {
-      socket.destroy();
-      resolve([{ check: 'tls.handshake', status: 'fail', detail: 'timeout after 8s' }]);
+      socket.destroy(new Error('timeout after 8s'));
     });
   });
 }
 
-async function headerChecks(domain: string): Promise<Finding[]> {
-  const url = `https://${domain}/`;
-  try {
-    const response = await fetch(url, { method: 'HEAD', redirect: 'follow' });
-    const wanted: Array<[string, string]> = [
-      ['strict-transport-security', 'HSTS'],
-      ['content-security-policy', 'CSP'],
-      ['x-frame-options', 'X-Frame-Options'],
-      ['referrer-policy', 'Referrer-Policy'],
-      ['permissions-policy', 'Permissions-Policy'],
-    ];
-    const findings = wanted.map<Finding>(([header, label]) => ({
-      check: `http.${label.toLowerCase()}`,
-      status: response.headers.has(header) ? 'ok' : 'warn',
-      detail: response.headers.has(header) ? `${label} present` : `${label} missing`,
-    }));
-    findings.push({
-      check: 'http.status',
-      status: response.ok ? 'ok' : 'warn',
-      detail: `GET-equivalent status ${response.status}`,
+async function headerChecks(domain: string, address: string): Promise<Finding[]> {
+  return new Promise((resolve) => {
+    const request = httpsRequest(
+      {
+        hostname: address,
+        port: 443,
+        path: '/',
+        method: 'HEAD',
+        headers: { host: domain },
+        servername: domain,
+        agent: false,
+        timeout: 8000,
+        checkServerIdentity: (_hostname, cert) => checkServerIdentity(domain, cert),
+      },
+      (response) => {
+        response.resume();
+        const wanted: Array<[string, string]> = [
+          ['strict-transport-security', 'HSTS'],
+          ['content-security-policy', 'CSP'],
+          ['x-frame-options', 'X-Frame-Options'],
+          ['referrer-policy', 'Referrer-Policy'],
+          ['permissions-policy', 'Permissions-Policy'],
+        ];
+        const findings = wanted.map<Finding>(([header, label]) => ({
+          check: `http.${label.toLowerCase()}`,
+          status: response.headers[header] !== undefined ? 'ok' : 'warn',
+          detail: response.headers[header] !== undefined ? `${label} present` : `${label} missing`,
+        }));
+        findings.push({
+          check: 'http.status',
+          status: (response.statusCode ?? 500) < 400 ? 'ok' : 'warn',
+          detail: `HEAD status ${response.statusCode ?? 'unknown'}`,
+        });
+        const server = response.headers.server;
+        if (typeof server === 'string') {
+          findings.push({
+            check: 'http.server_banner',
+            status: 'warn',
+            detail: `server header exposes: ${server.slice(0, 100)}`,
+          });
+        }
+        resolve(findings);
+      },
+    );
+    request.setTimeout(8000, () => request.destroy(new Error('timeout after 8s')));
+    request.on('error', (error) => {
+      resolve([{ check: 'http.reach', status: 'fail', detail: error.message.slice(0, 160) }]);
     });
-    const server = response.headers.get('server');
-    if (server !== null) {
-      findings.push({
-        check: 'http.server_banner',
-        status: 'warn',
-        detail: `server header exposes: ${server}`,
-      });
-    }
-    return findings;
-  } catch (error) {
-    return [{ check: 'http.reach', status: 'fail', detail: (error as Error).message }];
-  }
+    request.end();
+  });
 }
-
-const app = Fastify({ logger: true });
 
 app.get('/healthz', async () => ({ status: 'ok' }));
 
@@ -133,12 +170,35 @@ app.post<{ Body: { domain: string } }>('/recon', async (request, reply) => {
   if (!DOMAIN_RE.test(domain)) {
     return reply.status(400).send({ error: 'invalid_domain' });
   }
-  const findings = [
-    ...(await dnsChecks(domain)),
-    ...(await tlsChecks(domain)),
-    ...(await headerChecks(domain)),
-  ];
-  return reply.status(200).send({ data: { domain, findings, ranAt: new Date().toISOString() } });
+  if (!allowRequest(request.ip)) {
+    return reply.status(429).send({ error: 'rate_limited' });
+  }
+  if (activeScans >= MAX_CONCURRENT_SCANS) {
+    return reply.status(503).send({ error: 'scanner_busy' });
+  }
+
+  activeScans += 1;
+  try {
+    let address: string;
+    try {
+      address = await resolvePublicIPv4(domain);
+    } catch (error) {
+      const reason = (error as Error).message;
+      const status = reason === 'target_resolves_to_non_public_address' ? 403 : 422;
+      return reply.status(status).send({ error: 'target_not_publicly_scannable' });
+    }
+
+    const findings = [
+      ...(await dnsChecks(domain)),
+      ...(await tlsChecks(domain, address)),
+      ...(await headerChecks(domain, address)),
+    ];
+    return reply.status(200).send({
+      data: { domain, findings, ranAt: new Date().toISOString() },
+    });
+  } finally {
+    activeScans -= 1;
+  }
 });
 
 const port = Number(process.env.PORT ?? 8090);
