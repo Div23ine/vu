@@ -141,7 +141,8 @@ async function route(req: IncomingMessage, res: ServerResponse, state: BrokerSta
       const network = ownedNetworkByName(state, config.networkName);
       if ([...state.containers.values()].some((container) => container.networkId === network.id)) {
         throw new Error('a runner already exists for this scan network');
-      }\n      if (network.allowedIPv4 === undefined) throw new Error('egress firewall must be installed before container creation');
+      }
+      if (network.allowedIPv4 === undefined) throw new Error('egress firewall must be installed before container creation');
       const id = await state.docker.createContainer(config);
       state.containers.set(id, { id, networkId: network.id, labels: config.labels });
       return send(res, 201, { id });
