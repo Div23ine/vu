@@ -20,11 +20,12 @@ export const AVATAR_CONTENT_TYPES = [
   'image/jpeg',
   'image/webp',
   'image/svg+xml',
+  'image/gif',
 ] as const;
 
 export type AvatarContentType = (typeof AVATAR_CONTENT_TYPES)[number];
 
-export const AVATAR_MAX_BYTES = 4_194_304;
+export const AVATAR_MAX_BYTES = 52_428_800;
 export const AVATAR_PREFIX = 'avatars/';
 /** Presigned PUT URLs are short-lived: five minutes to start the upload. */
 export const PRESIGN_PUT_SECONDS = 300;
@@ -34,6 +35,7 @@ const EXTENSIONS: Record<AvatarContentType, string> = {
   'image/jpeg': 'jpg',
   'image/webp': 'webp',
   'image/svg+xml': 'svg',
+  'image/gif': 'gif',
 };
 
 export function avatarExtension(contentType: string): string | null {

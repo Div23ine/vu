@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v7
         with:
@@ -28,11 +29,9 @@ jobs:
           fetch-depth: 0 # the weekly run scans full history
       - uses: gitleaks/gitleaks-action@v2
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-        with:
-          config-path: .gitleaks.toml
-          # Redact so a finding never re-leaks the value into the log.
-          args: --redact --no-banner
+          GITLEAKS_CONFIG: .gitleaks.toml
 
   codeql:
     name: codeql (security-extended)
@@ -107,7 +106,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .

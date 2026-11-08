@@ -269,10 +269,10 @@ export const UpdateProfileSettingsBody = z.object({
 });
 export type UpdateProfileSettingsBody = z.infer<typeof UpdateProfileSettingsBody>;
 
-export const AVATAR_MAX_BYTES = 4_194_304;
+export const AVATAR_MAX_BYTES = 52_428_800;
 
 export const AvatarUploadRequest = z.object({
-  contentType: z.enum(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']),
+  contentType: z.enum(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml']),
   sizeBytes: z.number().int().positive().max(AVATAR_MAX_BYTES),
 });
 export type AvatarUploadRequest = z.infer<typeof AvatarUploadRequest>;

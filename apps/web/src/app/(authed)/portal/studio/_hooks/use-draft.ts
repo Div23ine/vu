@@ -17,6 +17,7 @@ import {
   TAG_PATTERN,
 } from '@vunvault/contracts';
 import { isApiError } from '@vunvault/lib';
+import { IMAGE_UPLOAD_MAX_BYTES, prepareImageUpload } from '@vunvault/lib/image-upload';
 import { toast } from '@vunvault/ui';
 import { apiPost, apiPut } from '../../../../../lib/api';
 import { readMinutes } from '../_lib/markdown';
@@ -94,13 +95,6 @@ const EMPTY_READINESS: StudioSubmitReadiness = {
   tags: false,
 };
 
-const IMAGE_TYPES: ReadonlySet<string> = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-]);
-
 interface ImageUploadUrl {
   uploadUrl: string;
   objectKey: string;
@@ -157,10 +151,6 @@ function missingPhrases(readiness: StudioSubmitReadiness): string[] {
   return phrases;
 }
 
-function formatMegabytes(sizeBytes: number): string {
-  return `${(sizeBytes / 1_048_576).toFixed(1)} MB`;
-}
-
 export function useDraftEditor(routeId: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -180,6 +170,7 @@ export function useDraftEditor(routeId: string) {
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [compressImages, setCompressImages] = useState(true);
 
   // Seed the form once from the server copy of an existing draft.
   useEffect(() => {
@@ -335,49 +326,44 @@ export function useDraftEditor(routeId: string) {
 
   const uploadImage = useCallback(
     async (file: File) => {
-      if (!IMAGE_TYPES.has(file.type)) {
-        toast({
-          kind: 'warn',
-          title: 'Unsupported file',
-          message: 'Please choose a JPG, PNG, WebP or GIF image.',
-        });
-        return;
-      }
-      if (file.size > STUDIO_LIMITS.imageMaxBytes) {
-        toast({
-          kind: 'warn',
-          title: 'File too large',
-          message: `Images must be 5 MB or smaller. This one is ${formatMegabytes(file.size)}.`,
-        });
-        return;
-      }
       setUploading(true);
       try {
-        // TODO(backend-contract): POST /api/v1/studio/images/upload-url body { contentType; sizeBytes }
-        //  → 200 { data: { uploadUrl; objectKey; publicUrl; expiresAt } }
+        const prepared = await prepareImageUpload(file, {
+          compress: compressImages,
+          maxBytes: IMAGE_UPLOAD_MAX_BYTES,
+        });
         const { uploadUrl, publicUrl } = await apiPost<{ data: ImageUploadUrl }>(
           '/api/v1/studio/images/upload-url',
-          { contentType: file.type, sizeBytes: file.size },
+          { contentType: prepared.contentType, sizeBytes: prepared.uploadedBytes },
         ).then((response) => response.data);
         const response = await fetch(uploadUrl, {
           method: 'PUT',
-          headers: { 'Content-Type': file.type },
-          body: file,
+          headers: { 'Content-Type': prepared.contentType },
+          body: prepared.file,
         });
         if (!response.ok) throw new Error('The image upload was rejected.');
         update({ featuredImageUrl: publicUrl });
         toast({
           kind: 'ok',
           title: 'Image attached',
-          message: `${file.name} is now the featured image.`,
+          message: prepared.compressed
+            ? `${file.name} optimized from ${(prepared.originalBytes / 1_048_576).toFixed(1)} MB to ${(prepared.uploadedBytes / 1_048_576).toFixed(1)} MB.`
+            : `${file.name} uploaded without changing its image data.`,
         });
-      } catch {
-        toast({ kind: 'crit', title: 'The image could not be read. Try a different file.' });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Please choose another image and try again.';
+        const tooLarge = message.includes('smaller than 50 MB');
+        const unsupported = message.includes('valid JPEG') || message.includes('contents do not match');
+        toast({
+          kind: tooLarge || unsupported ? 'warn' : 'crit',
+          title: tooLarge ? 'File too large' : unsupported ? 'Unsupported file' : 'Image upload failed',
+          message,
+        });
       } finally {
         setUploading(false);
       }
     },
-    [update],
+    [compressImages, update],
   );
 
   const removeImage = useCallback(() => {
@@ -458,6 +444,8 @@ export function useDraftEditor(routeId: string) {
     saveState,
     submitting,
     uploading,
+    compressImages,
+    setCompressImages,
     readiness,
     failedReadiness,
     ready,

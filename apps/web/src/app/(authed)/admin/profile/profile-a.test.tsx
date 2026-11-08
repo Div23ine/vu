@@ -353,13 +353,13 @@ describe('/admin/profile — avatar', () => {
     await openPictureTab(user);
 
     // One byte over the contract's AVATAR_MAX_BYTES.
-    await user.upload(screen.getByLabelText('Profile picture file'), png('big.png', 4_194_305));
+    await user.upload(screen.getByLabelText('Profile picture file'), png('big.png', 52_428_801));
 
     await waitFor(() =>
       expect(toasts()[0]).toMatchObject({
         kind: 'warn',
         title: 'File too large',
-        message: 'Avatar uploads are limited to 4 MB.',
+        message: 'Images must be smaller than 50 MB.',
       }),
     );
     expect(requestLog.filter((entry) => entry.includes('/account/avatar'))).toHaveLength(0);
@@ -372,16 +372,16 @@ describe('/admin/profile — avatar', () => {
 
     // A dropped file bypasses the input's `accept` filter entirely, which is
     // exactly why the component checks the type itself.
-    const gif = new File([new Uint8Array(64)], 'avatar.gif', { type: 'image/gif' });
+    const pdf = new File([new Uint8Array(64)], 'avatar.pdf', { type: 'application/pdf' });
     fireEvent.drop(screen.getByRole('button', { name: 'Upload a profile picture' }), {
-      dataTransfer: { files: [gif], types: ['Files'] },
+      dataTransfer: { files: [pdf], types: ['Files'] },
     });
 
     await waitFor(() =>
       expect(toasts()[0]).toMatchObject({
         kind: 'warn',
         title: 'Unsupported file type',
-        message: 'Please upload a PNG, JPG, WEBP or SVG image.',
+        message: 'Please choose a valid JPEG, PNG, WebP, GIF or SVG image.',
       }),
     );
     expect(requestLog.filter((entry) => entry.includes('/account/avatar'))).toHaveLength(0);
