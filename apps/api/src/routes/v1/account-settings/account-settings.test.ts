@@ -201,16 +201,16 @@ describe('avatar upload-url', () => {
     });
   });
 
-  it('rejects a declared 5 MB upload before any URL is issued', async () => {
+  it('accepts images larger than 5 MB and rejects uploads over 50 MB', async () => {
     const { service, storage } = makeService();
     const error = await service
-      .createAvatarUpload(USER_ID, { contentType: 'image/png', sizeBytes: 5 * 1024 * 1024 })
+      .createAvatarUpload(USER_ID, { contentType: 'image/png', sizeBytes: AVATAR_MAX_BYTES + 1 })
       .catch((caught: unknown) => caught);
     expect((error as HttpError).status).toBe(422);
     expect((error as HttpError).code).toBe('file_too_large');
     expect(storage.presigned).toHaveLength(0);
 
-    // Exactly at the limit is fine.
+    // Five megabytes is now accepted; the configured 50 MB ceiling is inclusive.
     const ok = await service.createAvatarUpload(USER_ID, {
       contentType: 'image/png',
       sizeBytes: AVATAR_MAX_BYTES,
