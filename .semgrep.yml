@@ -3,7 +3,7 @@
 # CI: the `semgrep` job in security.yml runs `semgrep scan --error --config .semgrep.yml`.
 rules:
   - id: vv-no-dangerously-set-inner-html
-    languages: [typescript, tsx, javascript]
+    languages: [typescript, javascript]
     severity: ERROR
     message: >-
       dangerouslySetInnerHTML is banned: every rendered string in this codebase
