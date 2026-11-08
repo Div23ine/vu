@@ -34,7 +34,7 @@ export const STUDIO_LIMITS = {
   excerpt: 240,
   tags: 8,
   minWords: 150,
-  imageMaxBytes: 5_242_880,
+  imageMaxBytes: 52_428_800,
 } as const;
 
 /** Reading speed used by `readMinutes`. */
