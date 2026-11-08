@@ -144,7 +144,7 @@ export class DockerEngineHttpClient implements DockerEnginePort {
       demultiplexDockerStream(response, output);
     });
     req.setTimeout(this.timeoutMs, () => req.destroy(new Error('Docker logs request timed out')));
-    const onAbort = (): void => req.destroy(new Error('Docker logs request aborted'));
+    const onAbort = (): void => { req.destroy(new Error('Docker logs request aborted')); };
     if (signal.aborted) onAbort();
     else signal.addEventListener('abort', onAbort, { once: true });
     req.on('error', (error) => output.destroy(error));
