@@ -200,7 +200,6 @@ function oauthUser(overrides: Partial<OAuthUser> = {}): OAuthUser {
     fullName: 'Jane Wanjiru',
     avatarUrl: null,
     ...overrides,
-    lastActiveAt: overrides.lastActiveAt ?? null,
   };
 }
 
