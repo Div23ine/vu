@@ -50,6 +50,15 @@ import {
   SUBSCRIPTION_STATUSES,
   TEAMS,
   USER_ROLES,
+  UAMP_MONITOR_TYPES,
+  UAMP_MONITOR_STATUSES,
+  UAMP_CHECK_RESULT_STATUSES,
+  UAMP_INCIDENT_STATUSES,
+  UAMP_INCIDENT_SEVERITIES,
+  UAMP_HTTP_METHODS,
+  UAMP_STATUS_PAGE_VISIBILITIES,
+  UAMP_ALERT_CHANNELS,
+  UAMP_AI_INVESTIGATION_STATUSES,
 } from '../enum-values.js';
 
 /**
@@ -111,3 +120,14 @@ export const recoveryQuestionEnum = pgEnum('recovery_question', RECOVERY_QUESTIO
 export const notificationEventEnum = pgEnum('notification_event', NOTIFICATION_EVENTS);
 export const notificationChannelEnum = pgEnum('notification_channel', NOTIFICATION_CHANNELS);
 export const blogCategoryEnum = pgEnum('blog_category', BLOG_CATEGORIES);
+
+// --- UAMP: AI-powered uptime & API monitoring product ---
+export const uampMonitorTypeEnum = pgEnum('uamp_monitor_type', UAMP_MONITOR_TYPES);
+export const uampMonitorStatusEnum = pgEnum('uamp_monitor_status', UAMP_MONITOR_STATUSES);
+export const uampCheckResultStatusEnum = pgEnum('uamp_check_result_status', UAMP_CHECK_RESULT_STATUSES);
+export const uampIncidentStatusEnum = pgEnum('uamp_incident_status', UAMP_INCIDENT_STATUSES);
+export const uampIncidentSeverityEnum = pgEnum('uamp_incident_severity', UAMP_INCIDENT_SEVERITIES);
+export const uampHttpMethodEnum = pgEnum('uamp_http_method', UAMP_HTTP_METHODS);
+export const uampStatusPageVisibilityEnum = pgEnum('uamp_status_page_visibility', UAMP_STATUS_PAGE_VISIBILITIES);
+export const uampAlertChannelEnum = pgEnum('uamp_alert_channel', UAMP_ALERT_CHANNELS);
+export const uampAiInvestigationStatusEnum = pgEnum('uamp_ai_investigation_status', UAMP_AI_INVESTIGATION_STATUSES);

@@ -37,6 +37,7 @@ group "default" {
     "api",
     "broadcast-worker",
     "notify-worker",
+    "uamp-worker",
     "maintenance-worker",
     "scan-controller",
     "scan-runner",
@@ -86,6 +87,16 @@ target "notify-worker" {
   tags = [
     "${REGISTRY}/vv/notify-worker:${TAG}",
     "${REGISTRY}/vv/notify-worker:${GIT_SHA}",
+  ]
+}
+
+
+target "uamp-worker" {
+  inherits   = ["_common"]
+  args       = { APP = "uamp-worker" }
+  tags = [
+    "${REGISTRY}/vv/uamp-worker:${TAG}",
+    "${REGISTRY}/vv/uamp-worker:${GIT_SHA}",
   ]
 }
 

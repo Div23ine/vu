@@ -13,6 +13,7 @@ export const QUEUE_NAMES = {
   maintenance: 'maintenance',
   pdf: 'pdf',
   notify: 'notify',
+  uamp: 'uamp',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -95,3 +96,13 @@ export const QUEUE_PAYLOADS = {
   notify: NotifyJobPayload,
   maintenance: MaintenanceJobPayload,
 } as const;
+
+
+/** One UAMP monitor check execution. */
+export const UampCheckJobPayload = z.object({
+  monitorId: z.string().uuid(),
+  orgId: z.string().uuid(),
+  /** Optional location tag for multi-region checks. */
+  location: z.string().max(64).optional(),
+});
+export type UampCheckJobPayload = z.infer<typeof UampCheckJobPayload>;

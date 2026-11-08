@@ -1,0 +1,10 @@
+apiVersion: v2
+name: vv-uamp-worker
+description: VUNVAULT UAMP monitoring worker on OKE. Secrets from OCI Vault via External Secrets.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+dependencies:
+  - name: vv-lib
+    version: 1.0.0
+    repository: file://../vv-lib

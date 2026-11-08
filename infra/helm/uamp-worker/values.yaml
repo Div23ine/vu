@@ -1,0 +1,35 @@
+# vv-uamp-worker values. NO secret values — OCIDs and configuration only.
+
+image:
+  repository: "" # <registry>/vv/uamp-worker
+  tag: ""
+  digest: ""
+
+replicaCount: 2
+
+serviceAccount:
+  name: vv-uamp-worker
+  annotations: {}
+
+env:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  UAMP_CONCURRENCY: "5"
+  UAMP_SCHEDULER_INTERVAL_MS: "30000"
+  UAMP_USER_AGENT: "UAMP-Monitor/1.0 (+https://uptimehq.vunvault.com)"
+  REDIS_KEY_PREFIX: "vv"
+
+vaultSecrets:
+  REDIS_URL: ""
+  DATABASE_URL: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+nodeSelector: {}
+tolerations: []

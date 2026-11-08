@@ -9,3 +9,4 @@ export * from './intel.js';
 export * from './account.js';
 export * from './store.js';
 export * from './tools.js';
+export * from './uamp.js';
