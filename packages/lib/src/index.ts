@@ -46,3 +46,5 @@ export {
   type LocalMinor,
   type UsdCents,
 } from './money';
+
+export { IMAGE_UPLOAD_MAX_BYTES, prepareImageUpload, type PrepareImageOptions, type PreparedImage } from './image-upload';
