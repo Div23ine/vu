@@ -34,10 +34,13 @@ For each job:
 2. Install and confirm the host egress policy.
 3. Create the runner only after firewall installation succeeds.
 4. Start the runner, stream bounded logs, and wait for exit.
-5. Remove the runner, remove the firewall policy, then remove the network.
+5. Remove the runner, remove the firewall policy, then remove the network. If
+   container removal or firewall cleanup fails, retain the network rather than
+   removing the evidence needed for safe host reconciliation.
 
-The broker refuses unknown resource IDs and requires broker-created network and
-container records. It validates every create-container request against the
+The broker refuses unknown resource IDs, requires broker-created network and
+container records, and caps active scan networks at two. It allows only one
+runner container per network. It validates every create-container request against the
 host-pinned image and the fixed policy: UID/GID 65532, read-only root filesystem,
 no privilege escalation, all capabilities dropped, no-new-privileges, 1 GiB
 memory, 1 CPU, 128 PIDs, bounded tmpfs, local-only DNS, IPv6 disabled, and no
