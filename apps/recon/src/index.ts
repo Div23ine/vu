@@ -16,7 +16,7 @@ const resolve6 = promisify(dns.resolve6);
 const resolveCname = promisify(dns.resolveCname);
 const resolveMx = promisify(dns.resolveMx);
 
-const DOMAIN_RE = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/;
+const DOMAIN_RE = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 const REQUEST_WINDOW_MS = 60_000;
 const REQUESTS_PER_WINDOW = 10;
 const MAX_CONCURRENT_SCANS = 2;
