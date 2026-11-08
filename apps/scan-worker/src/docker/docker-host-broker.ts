@@ -117,7 +117,7 @@ async function route(req: IncomingMessage, res: ServerResponse, state: BrokerSta
       return send(res, 201, { network });
     }
     if (method === 'POST' && path === '/v1/firewall/install') {
-      const body = await readJson(req);
+      const body = object(await readJson(req));
       const id = stringField(body, 'networkId');
       const network = ownedNetwork(state, id);
       const ips = parsePublicIps(body.allowedIPv4);
@@ -425,7 +425,7 @@ export class DockerHostBrokerClient implements DockerEnginePort, HostFirewallPor
       });
       req.setTimeout(this.timeoutMs, () => req.destroy(new Error('Docker broker logs timed out')));
       req.on('error', reject);
-      const abort = (): void => req.destroy(new Error('Docker broker logs aborted'));
+      const abort = (): void => { req.destroy(new Error('Docker broker logs aborted')); };
       if (signal.aborted) abort(); else signal.addEventListener('abort', abort, { once: true });
       req.on('close', () => signal.removeEventListener('abort', abort));
       req.end();
