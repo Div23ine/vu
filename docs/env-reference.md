@@ -17,6 +17,7 @@ environment secret; migrations and images only).
 | -------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `NODE_ENV`                                         | C     | `development` \| `test` \| `production` (default development)                                                                        |
 | `PORT`                                             | C     | HTTP listen port (default 8080)                                                                                                      |
+| `REDIS_OPTIONAL`                                    | C     | `true` allows API startup without Redis for local/test-only modes; production must keep Redis configured                              |
 | `LOG_LEVEL`                                        | C     | pino level (default info)                                                                                                            |
 | `WEB_ORIGIN`                                       | C     | exact web origin — CORS + the Task 95 WS Origin check                                                                                |
 | `COOKIE_DOMAIN`                                    | C     | session cookie domain (empty allowed in dev)                                                                                         |
@@ -117,6 +118,7 @@ Everything the broadcast-worker has (same channels), plus:
 | `SCAN_CONTROLLER_HMAC_KEY`                                    | V*    | signs the internal callbacks (the API holds the same key) |
 | `WORKER_SLOTS_TOTAL`                                          | C     | queue capacity signal (default 4)                         |
 | `REDIS_KEY_PREFIX`, `API_TIMEOUT_MS`, `NODE_ENV`, `LOG_LEVEL` | C     | as above                                                  |
+| `VV_SCAN_FIREWALL_SOCKET`, `VV_SCAN_FIREWALL_GID` | C | host-only Unix socket + group ID for the nftables helper; accessible only to the Docker host broker |\n| `VV_DOCKER_BROKER_SOCKET`, `VV_DOCKER_SOCKET` | C | host-only private controller socket, socket group ID, and raw Docker socket path for the body-validating host broker |
 
 \* On the k3s cluster these arrive via the Terraform-built
 `vv-scan-controller-secrets` Kubernetes Secret (Task 98) — the scan nodes have

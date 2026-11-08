@@ -35,7 +35,7 @@ function makeHandlerDeps(): HandlerDeps {
     repo: {} as HandlerDeps['repo'],
     notify: { enqueueEmail: vi.fn() },
     broadcast: { requeue: vi.fn() },
-    storage: { put: vi.fn() },
+    storage: { put: vi.fn(), getText: vi.fn(async () => null) },
     hmacKeyFor: () => undefined,
     clock: { now: () => new Date('2026-09-24T09:05:00.000Z') },
     logger: makeLogger(),

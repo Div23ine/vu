@@ -1,0 +1,33 @@
+[Unit]
+Description=VUNVAULT Docker scan host broker
+Documentation=file:/opt/vunvault/vu/apps/scan-worker/src/docker/README.md
+Requires=docker.service vunvault-scan-firewall.service
+After=docker.service vunvault-scan-firewall.service
+ConditionPathExists=/var/run/docker.sock
+
+[Service]
+Type=simple
+User=vunvault-scan-docker
+Group=vunvault-scan-controller
+SupplementaryGroups=docker vunvault-scan-firewall
+EnvironmentFile=/etc/vunvault/scan-docker-broker.env
+ExecStart=/usr/bin/node /opt/vunvault/apps/scan-worker/dist/docker/docker-host-broker.js
+Restart=on-failure
+RestartSec=3
+UMask=0007
+RuntimeDirectory=vunvault-scan-docker
+RuntimeDirectoryMode=0750
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/run/vunvault-scan-docker
+
+[Install]
+WantedBy=multi-user.target

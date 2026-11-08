@@ -102,6 +102,7 @@ function makeHarness(
     async put(key, body, contentType) {
       puts.push({ key, bytes: body.length, contentType });
     },
+    async getText() { return null; },
   };
 
   const clock: Clock = { now: () => new Date('2026-09-24T15:00:00.000Z') };
@@ -142,6 +143,7 @@ describe('PdfHandler — invoice', () => {
       async put() {
         throw new Error('r2 503');
       },
+      async getText() { return null; },
     };
     const h = makeHarness({ storage: failing });
     await expect(h.handler.handle({ kind: 'invoice', refId: INVOICE_ID })).rejects.toThrow(
