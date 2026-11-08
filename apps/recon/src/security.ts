@@ -39,6 +39,7 @@ function ipv4Number(address: string): number | null {
 
 function cidrContains(address: number, cidr: string): boolean {
   const [network, prefixText] = cidr.split('/');
+  if (network === undefined || prefixText === undefined) return false;
   const base = ipv4Number(network);
   const prefix = Number(prefixText);
   if (base === null || !Number.isInteger(prefix) || prefix < 0 || prefix > 32) return false;
@@ -56,11 +57,12 @@ export async function resolvePublicIPv4(
   lookup: LookupAll = dnsLookup,
 ): Promise<string> {
   const records = await lookup(domain, { all: true, family: 4, verbatim: true });
-  if (records.length === 0) throw new Error('target_has_no_ipv4_address');
+  const first = records[0];
+  if (first === undefined) throw new Error('target_has_no_ipv4_address');
   // Reject the whole hostname if ANY answer is unsafe; do not select a public
   // answer while another DNS answer can direct a later connection internally.
   if (records.some((record) => record.family !== 4 || !isPublicIPv4(record.address))) {
     throw new Error('target_resolves_to_non_public_address');
   }
-  return records[0].address;
+  return first.address;
 }
