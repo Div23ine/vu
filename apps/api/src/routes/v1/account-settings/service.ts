@@ -196,7 +196,7 @@ export class AccountSettingsService {
       throw new HttpError(422, 'unsupported_type', 'That file type is not accepted');
     }
     if (request.sizeBytes > AVATAR_MAX_BYTES) {
-      throw new HttpError(422, 'file_too_large', 'Avatars must be 4 MB or smaller');
+      throw new HttpError(422, 'file_too_large', 'Images must be 50 MB or smaller');
     }
     const extension = avatarExtension(request.contentType) ?? 'bin';
     const objectKey = `${AVATAR_PREFIX}${userId}/${this.randomUuid()}.${extension}`;
