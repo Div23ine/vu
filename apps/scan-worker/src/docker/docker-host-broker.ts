@@ -174,7 +174,7 @@ async function route(req: IncomingMessage, res: ServerResponse, state: BrokerSta
     if (method === 'GET' && logs?.[1]) {
       const record = ownedContainer(state, logs[1]);
       const signal = new AbortController();
-      req.on('close', () => signal.abort());
+      res.on('close', () => signal.abort());
       const stream = await state.docker.followLogs(record.id, signal.signal);
       res.writeHead(200, { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' });
       stream.on('data', (chunk: Buffer | string) => { if (!res.write(chunk)) stream.pause(); });
@@ -253,7 +253,7 @@ function parseLabels(value: unknown): Record<string, string> {
     throw new Error('invalid scan labels');
   }
   const result = Object.fromEntries(entries) as Record<string, string>;
-  if (result[LABEL_NAME] !== 'vv-scan' || !result[LABEL_JOB] || !/^[a-z0-9-]{1,64}$/.test(result[LABEL_CODE] ?? '') ||
+  if (result[LABEL_NAME] !== 'vv-scan' || !/^[a-f0-9-]{8,64}$/i.test(result[LABEL_JOB] ?? '') || !/^[a-z0-9-]{1,64}$/.test(result[LABEL_CODE] ?? '') ||
       !/^[1-9]\d{0,3}$/.test(result[LABEL_ATTEMPT] ?? '')) throw new Error('invalid scan labels');
   return result;
 }
