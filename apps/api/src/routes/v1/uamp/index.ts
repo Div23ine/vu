@@ -169,8 +169,6 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(204).send();
     },
   );
-};
-
 
   // ---------------------------------------------------------------- incidents
   app.get(
@@ -376,5 +374,6 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(204).send();
     },
   );
+};
 
 export default uampRoutes;

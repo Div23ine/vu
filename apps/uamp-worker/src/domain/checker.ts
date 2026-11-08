@@ -50,7 +50,9 @@ export async function runCheck(input: CheckInput): Promise<CheckOutcome> {
     const init: RequestInit = {
       method,
       headers,
-      redirect: 'follow',
+      // Never follow an untrusted redirect automatically; it could target a private service.
+      // A future redirect feature must validate every hop and the resolved destination IP.
+      redirect: 'manual',
       signal: controller.signal,
     };
     if (input.requestBody && ['POST', 'PUT', 'PATCH'].includes(method)) {
