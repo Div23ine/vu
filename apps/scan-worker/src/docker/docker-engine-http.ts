@@ -5,10 +5,11 @@ import type { DockerContainerConfig, DockerEnginePort, DockerNetwork } from './d
 /**
  * Minimal Docker Engine HTTP client.
  *
- * socketPath MUST point to a restricted Docker API proxy socket, never the
- * host's raw /var/run/docker.sock. The proxy must allow only networks/create,
- * containers/create, containers/{id}/start|wait|logs|stop, and DELETE for the
- * specific per-job container/network resources.
+ * This client is for the separate host broker process only. It is the process
+ * that owns access to the raw Docker socket and validates every controller
+ * request before calling this client. Never instantiate it in the scan
+ * controller, API, or runner. Endpoint-only socket proxies are insufficient:
+ * containers/create accepts dangerous host mounts and privilege settings.
  */
 
 export interface DockerEngineHttpOptions {
