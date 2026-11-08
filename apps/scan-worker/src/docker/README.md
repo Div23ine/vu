@@ -10,8 +10,8 @@ The intended process split is:
 - **Scan controller:** unprivileged. It must not receive the host Docker socket,
   CAP_NET_ADMIN, host networking, or host filesystem mounts.
 - **Host firewall broker:** separate root-owned process with only
-  CAP_NET_ADMIN. It listens on a private Unix socket and accepts only the
-  fixed POST /v1/policies and DELETE /v1/policies/:networkId operations.
+  CAP_NET_ADMIN. It listens on a private Unix socket accessible only to the body-validating
+  Docker host broker. The scan controller must not call this socket directly.
 - **Docker Engine broker:** must be a body-validating broker, not a generic
   endpoint-only socket proxy. Docker's container-create API can request
   privileged containers and arbitrary host bind mounts; merely allowing
@@ -56,8 +56,9 @@ enabling it:
 1. Build the scan-worker package and install its compiled output under
    /opt/vunvault/vu.
 2. Create the dedicated group vunvault-scan-firewall.
-3. Set VV_SCAN_FIREWALL_GID in /etc/vunvault/scan-firewall.env to that
-   group's numeric GID.
+3. Set VV_SCAN_FIREWALL_GID in /etc/vunvault/scan-firewall.env to the
+   numeric GID reserved for the trusted host Docker broker process. Do not add
+   the scan-controller container to this group.
 4. Verify nftables is installed and that the host uses a compatible nftables
    backend. Do not mix unmanaged rules with the inet vv_scan table.
 5. Review the systemd unit and socket ownership, then install it with systemd.
