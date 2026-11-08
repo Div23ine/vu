@@ -275,7 +275,7 @@ function parsePublicIps(value: unknown): string[] {
       value.some((ip) => typeof ip !== 'string' || !isPublicIpv4(ip))) throw new Error('invalid public IPv4 allowlist');
   return [...new Set(value as string[])];
 }
-function isPublicIpv4(ip: string): boolean {
+export function isPublicIpv4(ip: string): boolean {
   const parts = ip.split('.').map(Number);
   if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false;
   const [a, b, c, d] = parts as [number, number, number, number];
@@ -309,7 +309,7 @@ function sameStringSet(a: string[], b: string[]): boolean {
     a.every((value) => b.includes(value));
 }
 
-function expandPublicCidr(cidr: string): string[] {
+export function expandPublicCidr(cidr: string): string[] {
   const match = /^(\d{1,3}(?:\.\d{1,3}){3})\/(\d{1,2})$/.exec(cidr);
   if (!match?.[1] || !match[2]) throw new Error('invalid target CIDR');
   const octets = match[1].split('.').map(Number);
