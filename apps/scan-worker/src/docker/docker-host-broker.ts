@@ -24,6 +24,7 @@ import { classifyIp } from '../domain/target-guard';
 
 const MAX_BODY = 32 * 1024;
 const MAX_IPS = 256;
+const MAX_ACTIVE_JOBS = 2;
 const LABEL_NAME = 'app.kubernetes.io/name';
 const LABEL_JOB = 'vv/job-id';
 const LABEL_CODE = 'vv/job-code';
@@ -111,6 +112,7 @@ async function route(req: IncomingMessage, res: ServerResponse, state: BrokerSta
     const method = req.method ?? '';
     const path = req.url ?? '';
     if (method === 'POST' && path === '/v1/networks') {
+      if (state.networks.size >= MAX_ACTIVE_JOBS) throw new Error('host broker concurrency ceiling reached');
       const body = await readJson(req);
       const { name, labels } = parseNetworkRequest(body);
       const network = await state.docker.createNetwork(name, labels);
@@ -137,7 +139,7 @@ async function route(req: IncomingMessage, res: ServerResponse, state: BrokerSta
       const body = await readJson(req);
       const config = parseContainerRequest(body, state);
       const network = ownedNetworkByName(state, config.networkName);
-      if (network.allowedIPv4 === undefined) throw new Error('egress firewall must be installed before container creation');
+      if ([...state.containers.values()].some((container) => container.networkId === network.id)) {\n        throw new Error('a runner already exists for this scan network');\n      }\n      if (network.allowedIPv4 === undefined) throw new Error('egress firewall must be installed before container creation');
       const id = await state.docker.createContainer(config);
       state.containers.set(id, { id, networkId: network.id, labels: config.labels });
       return send(res, 201, { id });
