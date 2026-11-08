@@ -118,7 +118,7 @@ Everything the broadcast-worker has (same channels), plus:
 | `SCAN_CONTROLLER_HMAC_KEY`                                    | V*    | signs the internal callbacks (the API holds the same key) |
 | `WORKER_SLOTS_TOTAL`                                          | C     | queue capacity signal (default 4)                         |
 | `REDIS_KEY_PREFIX`, `API_TIMEOUT_MS`, `NODE_ENV`, `LOG_LEVEL` | C     | as above                                                  |
-| `VV_SCAN_FIREWALL_SOCKET`, `VV_SCAN_FIREWALL_GID` | C | host-only Unix socket + group ID for the nftables helper; accessible only to the Docker host broker |\n| `VV_DOCKER_BROKER_SOCKET`, `VV_DOCKER_BROKER_GID`, `VV_DOCKER_SOCKET` | C | host-only private controller socket, socket group ID, and raw Docker socket path for the body-validating host broker |
+| `VV_SCAN_FIREWALL_SOCKET`, `VV_SCAN_FIREWALL_GID` | C | host-only Unix socket + group ID for the nftables helper; accessible only to the Docker host broker |\n| `VV_DOCKER_BROKER_SOCKET`, `VV_DOCKER_SOCKET` | C | host-only private controller socket, socket group ID, and raw Docker socket path for the body-validating host broker |
 
 \* On the k3s cluster these arrive via the Terraform-built
 `vv-scan-controller-secrets` Kubernetes Secret (Task 98) — the scan nodes have
