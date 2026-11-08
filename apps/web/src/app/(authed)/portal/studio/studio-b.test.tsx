@@ -385,7 +385,7 @@ describe('/portal/studio/edit/[id] — featured image', () => {
     ).toBe(true);
 
     const huge = new File(['x'], 'huge.png', { type: 'image/png' });
-    Object.defineProperty(huge, 'size', { value: 6 * 1024 * 1024 });
+    Object.defineProperty(huge, 'size', { value: 51 * 1024 * 1024 });
     fireEvent.change(input, { target: { files: [huge] } });
     expect(
       useToastStore
@@ -393,7 +393,7 @@ describe('/portal/studio/edit/[id] — featured image', () => {
         .toasts.some(
           (entry) =>
             entry.title === 'File too large' &&
-            entry.message === 'Images must be 5 MB or smaller. This one is 6.0 MB.',
+            entry.message === 'Images must be smaller than 50 MB.',
         ),
     ).toBe(true);
 
