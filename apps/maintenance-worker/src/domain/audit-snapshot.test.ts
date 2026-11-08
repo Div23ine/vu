@@ -36,6 +36,7 @@ function makeHarness(
       if (options.putFails === true) throw new Error('r2 503');
       puts.push({ key, body: new TextDecoder().decode(body), contentType });
     },
+    async getText() { return null; },
   };
 
   return { repo, storage, puts };
