@@ -162,8 +162,7 @@ function commentFor(network: DockerNetwork): string {
 }
 
 function handlesFor(output: string, comment: string, chain: string): { chain: string; handle: number }[] {
-  const escaped = comment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const pattern = new RegExp(`comment "\${escaped}" # handle (\\d+)`);
+  const pattern = new RegExp('comment "' + comment + '" # handle (\\d+)');
   const result: { chain: string; handle: number }[] = [];
   for (const line of output.split('\n')) {
     const match = pattern.exec(line);
