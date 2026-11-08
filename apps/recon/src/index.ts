@@ -34,6 +34,11 @@ let activeScans = 0;
 function allowRequest(ip: string): boolean {
   const now = Date.now();
   const current = requestWindows.get(ip);
+  if (requestWindows.size >= 10_000) {
+    for (const [key, window] of requestWindows) {
+      if (now - window.startedAt >= REQUEST_WINDOW_MS) requestWindows.delete(key);
+    }
+  }
   if (current === undefined || now - current.startedAt >= REQUEST_WINDOW_MS) {
     requestWindows.set(ip, { startedAt: now, count: 1 });
     return true;
