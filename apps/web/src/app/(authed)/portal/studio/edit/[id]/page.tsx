@@ -208,6 +208,8 @@ export default function StudioEditorPage({ params }: StudioEditorPageProps) {
               imageUrl={fields.featuredImageUrl}
               imageAlt={fields.imageAlt}
               uploading={editor.uploading}
+              compressImages={editor.compressImages}
+              onCompressionChange={editor.setCompressImages}
               disabled={editor.readOnly}
               onFile={(file) => void editor.uploadImage(file)}
               onUrlChange={editor.setImageUrl}
