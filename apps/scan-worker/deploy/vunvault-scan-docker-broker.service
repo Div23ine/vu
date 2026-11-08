@@ -1,6 +1,6 @@
 [Unit]
 Description=VUNVAULT Docker scan host broker
-Documentation=file:/opt/vunvault/apps/scan-worker/src/docker/README.md
+Documentation=file:/opt/vunvault/vu/apps/scan-worker/src/docker/README.md
 Requires=docker.service vunvault-scan-firewall.service
 After=docker.service vunvault-scan-firewall.service
 ConditionPathExists=/var/run/docker.sock
