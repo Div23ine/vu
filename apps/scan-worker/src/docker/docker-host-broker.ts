@@ -8,7 +8,7 @@ import type {
   HostFirewallPort,
 } from './docker-pod-runner';
 import { DockerEngineHttpClient } from './docker-engine-http';
-import { NftHostFirewallBroker } from './nft-firewall-broker';
+import { HostFirewallUnixClient } from './host-firewall-client';
 
 /**
  * Narrow host-side broker. This is the ONLY process allowed to own the raw
@@ -93,7 +93,7 @@ export async function startDockerHostBroker(options: BrokerOptions): Promise<Doc
 
 interface BrokerState {
   docker: DockerEngineHttpClient;
-  firewall: NftHostFirewallBroker;
+  firewall: HostFirewallPort;
   networks: Map<string, NetworkRecord>;
   containers: Map<string, ContainerRecord>;
   runnerImage: string;
@@ -409,4 +409,40 @@ async function readResponse(response: IncomingMessage): Promise<string> {
     chunks.push(buffer);
   }
   return Buffer.concat(chunks).toString('utf8');
+}
+
+
+async function main(): Promise<void> {
+  const socketPath = process.env.VV_DOCKER_BROKER_SOCKET ?? '/run/vunvault-scan-docker/broker.sock';
+  const dockerSocketPath = process.env.VV_DOCKER_SOCKET ?? '/var/run/docker.sock';
+  const firewallSocketPath = process.env.VV_SCAN_FIREWALL_SOCKET ?? '/run/vunvault-scan-firewall/broker.sock';
+  const runnerImage = process.env.RUNNER_IMAGE ?? '';
+  const rawGroupId = process.env.VV_DOCKER_BROKER_GID;
+  const groupId = rawGroupId === undefined || rawGroupId === '' ? undefined : Number(rawGroupId);
+  if (groupId !== undefined && (!Number.isInteger(groupId) || groupId < 1)) {
+    throw new Error('VV_DOCKER_BROKER_GID must be a positive numeric group ID');
+  }
+  const broker = await startDockerHostBroker({
+    socketPath, dockerSocketPath, firewallSocketPath, runnerImage,
+    ...(groupId === undefined ? {} : { groupId }),
+  });
+  process.stdout.write('VUNVAULT Docker host broker ready on its private Unix socket\\n');
+  let closing = false;
+  const shutdown = (): void => {
+    if (closing) return;
+    closing = true;
+    void broker.close().then(() => process.exit(0), (error: unknown) => {
+      process.stderr.write(`Docker host broker shutdown failed: ${error instanceof Error ? error.message : String(error)}\\n`);
+      process.exit(1);
+    });
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+}
+const entryName = process.argv[1]?.split('/').pop();
+if (entryName !== undefined && import.meta.url.endsWith(`/${entryName}`)) {
+  main().catch((error: unknown) => {
+    process.stderr.write(`Docker host broker failed to start: ${error instanceof Error ? error.message : String(error)}\\n`);
+    process.exit(1);
+  });
 }
