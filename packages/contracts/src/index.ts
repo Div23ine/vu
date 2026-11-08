@@ -25,3 +25,4 @@ export * from './users';
 export * from './tools';
 export * from './orders';
 export * from './analytics';
+export * from './uamp';
