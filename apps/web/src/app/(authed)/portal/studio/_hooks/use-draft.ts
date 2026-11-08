@@ -351,10 +351,12 @@ export function useDraftEditor(routeId: string) {
             : `${file.name} uploaded without changing its image data.`,
         });
       } catch (error) {
+        const message = error instanceof Error ? error.message : 'Please choose another image and try again.';
+        const tooLarge = message.includes('smaller than 50 MB');
         toast({
-          kind: 'crit',
-          title: 'Image upload failed',
-          message: error instanceof Error ? error.message : 'Please choose another image and try again.',
+          kind: tooLarge ? 'warn' : 'crit',
+          title: tooLarge ? 'File too large' : 'Image upload failed',
+          message,
         });
       } finally {
         setUploading(false);
