@@ -90,6 +90,7 @@ export class DockerPodRunner implements PodRunner {
     let containerId: string | null = null;
     let firewallAttempted = false;
     let containerExited = false;
+    let containerStarted = false;
     let lineCount = 0;
     let bytesStreamed = 0;
     let reason: RunResult['reason'] = 'error';
@@ -108,7 +109,7 @@ export class DockerPodRunner implements PodRunner {
       if (containerId !== null) void stopOnce();
     };
     const stopOnce = async (): Promise<void> => {
-      if (containerId === null || containerExited || stopRequested) return;
+      if (containerId === null || !containerStarted || containerExited || stopRequested) return;
       stopRequested = true;
       await docker.stopContainer(containerId, 0).catch((error: unknown) => {
         logger.warn('could not stop Docker scan container', {
@@ -137,6 +138,7 @@ export class DockerPodRunner implements PodRunner {
 
       // Create an empty isolated network. No container is attached yet.
       network = await docker.createNetwork(name, networkLabels);
+      if (deadlineHit) return { exitCode: 124, reason: 'deadline', lineCount, bytesStreamed };
 
       // CRITICAL ORDER: install and confirm host egress rules BEFORE container
       // creation. Failure here leaves no executable runner.
@@ -144,6 +146,7 @@ export class DockerPodRunner implements PodRunner {
       firewallAttempted = true;
       await firewall.install(network, allowedIPv4);
 
+      if (deadlineHit) return { exitCode: 124, reason: 'deadline', lineCount, bytesStreamed };
       if (signal.aborted) {
         return { exitCode: 130, reason: 'abort', lineCount, bytesStreamed };
       }
@@ -169,7 +172,18 @@ export class DockerPodRunner implements PodRunner {
       };
 
       containerId = await docker.createContainer(config);
+      if (deadlineHit) return { exitCode: 124, reason: 'deadline', lineCount, bytesStreamed };
+      if (signal.aborted) return { exitCode: 130, reason: 'abort', lineCount, bytesStreamed };
       await docker.startContainer(containerId);
+      containerStarted = true;
+      if (deadlineHit) {
+        await stopOnce();
+        return { exitCode: 124, reason: 'deadline', lineCount, bytesStreamed };
+      }
+      if (signal.aborted) {
+        await stopOnce();
+        return { exitCode: 130, reason: 'abort', lineCount, bytesStreamed };
+      }
 
       const stream = await docker.followLogs(containerId, signal);
       const streamPromise = consumeLogStream(stream, {
@@ -224,12 +238,19 @@ export class DockerPodRunner implements PodRunner {
       if (deadlineTimer !== null) clearTimeout(deadlineTimer);
       resolveDeadline();
       await stopOnce();
+      let containerRemoved = containerId === null;
       if (containerId !== null) {
-        await docker.removeContainer(containerId).catch((error: unknown) => {
-          logger.warn('could not remove Docker scan container', { message: messageOf(error) });
-        });
+        try {
+          await docker.removeContainer(containerId);
+          containerRemoved = true;
+        } catch (error) {
+          logger.error('could not remove Docker scan container; retaining its firewall policy and network', {
+            containerId,
+            message: messageOf(error),
+          });
+        }
       }
-      if (network !== null) {
+      if (network !== null && containerRemoved) {
         if (firewallAttempted) {
           await firewall.remove(network).catch((error: unknown) => {
             logger.error('could not remove Docker scan firewall rules', {
@@ -284,6 +305,7 @@ function allowedAddresses(spec: PodSpec): string[] {
   }
   const size = 2 ** (32 - prefix);
   const network = Math.floor(base / size) * size;
+  if (base !== network) throw new Error('Docker scan CIDR must use its canonical network address');
   const addresses: string[] = [];
   for (let offset = 0; offset < size; offset += 1) {
     const value = network + offset;
