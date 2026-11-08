@@ -248,10 +248,11 @@ async function readBody(response: IncomingMessage): Promise<string> {
 /** Docker's non-TTY log stream frames each stdout/stderr chunk with an 8-byte header. */
 function demultiplexDockerStream(input: NodeJS.ReadableStream, output: PassThrough): void {
   let pending = Buffer.alloc(0);
-  input.on('data', (chunk: Buffer | string) => {
-    const next = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    pending = pending.length === 0 ? next : Buffer.concat([pending, next]);
-    while (pending.length >= 8) {
+  let paused = false;
+  let ended = false;
+
+  const drainFrames = (): void => {
+    while (!paused && pending.length >= 8) {
       const streamType = pending[0];
       const length = pending.readUInt32BE(4);
       if (length > 1024 * 1024) {
@@ -260,16 +261,33 @@ function demultiplexDockerStream(input: NodeJS.ReadableStream, output: PassThrou
       }
       if (pending.length < 8 + length) return;
       const payload = pending.subarray(8, 8 + length);
-      if (streamType === 1 || streamType === 2) {
-        if (!output.write(payload)) input.pause();
-      }
       pending = pending.subarray(8 + length);
+      if (streamType === 1 || streamType === 2) {
+        if (!output.write(payload)) {
+          paused = true;
+          input.pause();
+        }
+      }
     }
+    if (ended && !paused) {
+      if (pending.length !== 0) output.destroy(new Error('Docker log stream ended with an incomplete frame'));
+      else output.end();
+    }
+  };
+
+  input.on('data', (chunk: Buffer | string) => {
+    const next = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    pending = pending.length === 0 ? next : Buffer.concat([pending, next]);
+    drainFrames();
   });
-  output.on('drain', () => input.resume());
+  output.on('drain', () => {
+    paused = false;
+    drainFrames();
+    input.resume();
+  });
   input.on('end', () => {
-    if (pending.length !== 0) output.destroy(new Error('Docker log stream ended with an incomplete frame'));
-    else output.end();
+    ended = true;
+    drainFrames();
   });
   input.on('error', (error) => output.destroy(error));
 }
