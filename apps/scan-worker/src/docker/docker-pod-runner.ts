@@ -271,7 +271,11 @@ export class DockerPodRunner implements PodRunner {
   }
 }
 
-function abortKind(signal: AbortSignal): 'abort' | 'kill' {\n  return signal.reason === 'kill' ? 'kill' : 'abort';\n}\n\nfunction runnerEnvironment(spec: PodSpec): string[] {
+function abortKind(signal: AbortSignal): 'abort' | 'kill' {
+  return signal.reason === 'kill' ? 'kill' : 'abort';
+}
+
+function runnerEnvironment(spec: PodSpec): string[] {
   const values: Record<string, string> = {
     VV_JOB_ID: spec.jobId,
     VV_JOB_CODE: spec.jobCode,
