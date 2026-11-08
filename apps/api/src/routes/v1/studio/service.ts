@@ -301,7 +301,7 @@ export class StudioService {
     }
     if (body.sizeBytes > STUDIO_IMAGE_MAX_BYTES) {
       throw HttpError.badRequest('validation_failed', [
-        { path: ['sizeBytes'], message: 'Images are five megabytes at most' },
+        { path: ['sizeBytes'], message: 'Images must be 50 MB or smaller' },
       ]);
     }
     const extension = IMAGE_EXTENSIONS[body.contentType];
