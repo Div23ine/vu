@@ -222,12 +222,26 @@ function parseContainerRequest(value: unknown, state: BrokerState): DockerContai
   if (envMap.HOME !== '/tmp') throw new Error('runner HOME must be /tmp');
   const allowed = network.allowedIPv4 ?? [];
   const pinned = envMap.VV_TARGET_IPS === '' ? [] : (envMap.VV_TARGET_IPS ?? '').split(',');
-  if (pinned.some((ip) => !allowed.includes(ip))) throw new Error('runner target IPs exceed firewall allowlist');
-  if (envMap.VV_TARGET_CIDR !== undefined && pinned.length !== 0) throw new Error('CIDR runner cannot also supply pinned host IPs');
-  const extraHosts = stringArray(c.extraHosts, 16);
-  if (extraHosts.some((entry) => !/^[a-z0-9.-]+:\d{1,3}(?:\.\d{1,3}){3}$/.test(entry))) {
-    throw new Error('invalid pinned extra-host entry');
+  const targetHost = envMap.VV_TARGET_HOST ?? '';
+  const cidr = envMap.VV_TARGET_CIDR;
+  if (!/^([a-z0-9-]+\.)+[a-z]{2,63}$/.test(targetHost) && !isPublicIpv4(targetHost) &&
+      !/^\d{1,3}(?:\.\d{1,3}){3}\/\d{1,2}$/.test(targetHost)) {
+    throw new Error('invalid runner target host');
   }
+  if (!/^\d+$/.test(envMap.VV_DEADLINE_SECONDS ?? '') ||
+      Number(envMap.VV_DEADLINE_SECONDS) < 1 || Number(envMap.VV_DEADLINE_SECONDS) > 840) {
+    throw new Error('invalid runner deadline');
+  }
+  if (cidr !== undefined) {
+    if (targetHost !== cidr || pinned.length !== 0 || !sameStringSet(allowed, expandPublicCidr(cidr))) {
+      throw new Error('CIDR target does not match firewall allowlist');
+    }
+  } else if (pinned.length === 0 || !sameStringSet(allowed, pinned)) {
+    throw new Error('runner target IPs do not exactly match firewall allowlist');
+  }
+  const extraHosts = stringArray(c.extraHosts, 16);
+  const expectedExtraHosts = cidr === undefined ? pinned.map((ip) => `${targetHost}:${ip}`) : [];
+  if (!sameStringSet(extraHosts, expectedExtraHosts)) throw new Error('pinned extra-host entries do not match target');
   if (c.user !== RUNNER_UID || c.readonlyRootfs !== true || c.privileged !== false ||
       !arrayEquals(c.capDrop, ['ALL']) || !arrayEquals(c.securityOpt, ['no-new-privileges:true']) ||
       c.pidsLimit !== RUNNER_PIDS || c.memoryBytes !== RUNNER_MEMORY || c.nanoCpus !== RUNNER_CPUS ||
