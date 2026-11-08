@@ -700,7 +700,6 @@ describe('POST /api/v1/auth/magic-link', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
-      lastActiveAt: null,
       mfaSetupDeadline: null,
       ...overrides,
       lastActiveAt: overrides.lastActiveAt ?? null,
@@ -1494,7 +1493,6 @@ describe('Phase 2 — magic-link verify routes unenrolled accounts to setup', ()
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
-      lastActiveAt: null,
       ...overrides,
       lastActiveAt: overrides.lastActiveAt ?? null,
     });
