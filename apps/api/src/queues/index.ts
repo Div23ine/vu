@@ -23,6 +23,7 @@ export const QUEUE_JOB_OPTIONS: Record<QueueName, DefaultJobOptions> = {
   maintenance: DEFAULT_JOB_OPTIONS,
   pdf: DEFAULT_JOB_OPTIONS,
   notify: DEFAULT_JOB_OPTIONS,
+  uamp: { ...DEFAULT_JOB_OPTIONS, attempts: 2 },
 };
 
 export type QueueRegistry = Record<QueueName, Queue>;

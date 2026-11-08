@@ -16,6 +16,7 @@ import {
   UampMonitorSchema,
 } from '@vunvault/contracts';
 import { HttpError } from '../../../lib/http-error.js';
+import { resolveUampPlanCode } from './entitlements.js';
 import { SqlUampRepo } from './repo.js';
 import { toWireCheckResult, toWireIncident, toWireMonitor, UampService } from './service.js';
 
@@ -40,11 +41,12 @@ function actor(request: FastifyRequest): { id: string; email: string; orgId: str
 const uampRoutes: FastifyPluginAsync = async (fastify) => {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
 
-  function serviceFor(): UampService {
+  async function serviceFor(orgId: string): Promise<UampService> {
     if (!app.hasDecorator('db')) {
       throw new HttpError(503, 'service_unavailable', 'UAMP is not available');
     }
-    return new UampService(new SqlUampRepo(app.db));
+    const planCode = await resolveUampPlanCode(app.db, orgId);
+    return UampService.fromPlanCode(new SqlUampRepo(app.db), planCode);
   }
 
   const auth = [app.authenticate];
@@ -62,7 +64,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
     async (request) => {
       const user = actor(request);
       const q = request.query as z.infer<typeof UampMonitorListQuery>;
-      const { rows, total } = await serviceFor().listMonitors({
+      const { rows, total } = await (await serviceFor(user.orgId)).listMonitors({
         orgId: user.orgId,
         status: q.status,
         type: q.type,
@@ -86,7 +88,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
     async (request) => {
       const user = actor(request);
       const { id } = request.params as z.infer<typeof IdParams>;
-      const row = await serviceFor().getMonitor(user.orgId, id);
+      const row = await (await serviceFor(user.orgId)).getMonitor(user.orgId, id);
       return { data: toWireMonitor(row) };
     },
   );
@@ -103,7 +105,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const user = actor(request);
       const body = request.body as z.infer<typeof CreateUampMonitorBody>;
-      const row = await serviceFor().createMonitor({
+      const row = await (await serviceFor(user.orgId)).createMonitor({
         orgId: user.orgId,
         createdBy: user.id,
         name: body.name,
@@ -137,7 +139,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
       const user = actor(request);
       const { id } = request.params as z.infer<typeof IdParams>;
       const body = request.body as z.infer<typeof UpdateUampMonitorBody>;
-      const row = await serviceFor().updateMonitor(user.orgId, id, body);
+      const row = await (await serviceFor(user.orgId)).updateMonitor(user.orgId, id, body);
       return { data: toWireMonitor(row) };
     },
   );
@@ -154,7 +156,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const user = actor(request);
       const { id } = request.params as z.infer<typeof IdParams>;
-      await serviceFor().deleteMonitor(user.orgId, id);
+      await (await serviceFor(user.orgId)).deleteMonitor(user.orgId, id);
       return reply.status(204).send();
     },
   );
@@ -174,7 +176,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
     async (request) => {
       const user = actor(request);
       const q = request.query as z.infer<typeof UampIncidentListQuery>;
-      const { rows, total } = await serviceFor().listIncidents({
+      const { rows, total } = await (await serviceFor(user.orgId)).listIncidents({
         orgId: user.orgId,
         status: q.status,
         severity: q.severity,
@@ -198,7 +200,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
     async (request) => {
       const user = actor(request);
       const { id } = request.params as z.infer<typeof IdParams>;
-      const row = await serviceFor().getIncident(user.orgId, id);
+      const row = await (await serviceFor(user.orgId)).getIncident(user.orgId, id);
       return { data: toWireIncident(row) };
     },
   );
@@ -217,7 +219,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
       const user = actor(request);
       const { id } = request.params as z.infer<typeof IdParams>;
       const body = request.body as z.infer<typeof UpdateUampIncidentBody>;
-      const row = await serviceFor().updateIncident(user.orgId, id, user.id, body);
+      const row = await (await serviceFor(user.orgId)).updateIncident(user.orgId, id, user.id, body);
       return { data: toWireIncident(row) };
     },
   );
@@ -235,7 +237,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
     async (request) => {
       const user = actor(request);
       const q = request.query as z.infer<typeof UampCheckResultListQuery>;
-      const { rows, total } = await serviceFor().listCheckResults({
+      const { rows, total } = await (await serviceFor(user.orgId)).listCheckResults({
         orgId: user.orgId,
         monitorId: q.monitorId,
         status: q.status,

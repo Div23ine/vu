@@ -1,4 +1,10 @@
 import { HttpError } from '../../../lib/http-error.js';
+import {
+  DEFAULT_UAMP_ENTITLEMENTS,
+  entitlementsForPlan,
+  type UampEntitlements,
+} from './entitlements.js';
+
 import type {
   CheckResultRow,
   CreateMonitorInput,
@@ -18,22 +24,18 @@ import type {
  * existing subscription system; limits are configurable and not hard-coded.
  */
 
-export interface UampEntitlements {
-  maxMonitors: number;
-  minIntervalSeconds: number;
-}
-
-/** Default free-tier entitlements until billing wiring lands. */
-export const DEFAULT_UAMP_ENTITLEMENTS: UampEntitlements = {
-  maxMonitors: 5,
-  minIntervalSeconds: 300,
-};
+export type { UampEntitlements };
+export { DEFAULT_UAMP_ENTITLEMENTS };
 
 export class UampService {
   constructor(
     private readonly repo: UampRepo,
     private readonly entitlements: UampEntitlements = DEFAULT_UAMP_ENTITLEMENTS,
   ) {}
+
+  static fromPlanCode(repo: UampRepo, planCode: string | null | undefined): UampService {
+    return new UampService(repo, entitlementsForPlan(planCode));
+  }
 
   async listMonitors(filter: ListMonitorsFilter) {
     return this.repo.listMonitors(filter);
