@@ -43,7 +43,7 @@
     "@types/react-dom": "^19.3.0",
     "@vunvault/config": "workspace:*",
     "eslint": "catalog:",
-    "jsdom": "^25.0.1",
+    "jsdom": "^31.0.0",
     "msw": "^2.15.0",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
