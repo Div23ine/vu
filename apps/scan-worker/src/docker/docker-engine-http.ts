@@ -34,6 +34,24 @@ export class DockerEngineHttpClient implements DockerEnginePort {
     this.timeoutMs = options.requestTimeoutMs ?? 15_000;
   }
 
+  async listScanNetworks(): Promise<{ id: string; name: string; labels: Record<string, string> }[]> {
+    const filters = encodeURIComponent(JSON.stringify({ label: ['app.kubernetes.io/name=vv-scan'] }));
+    const rows = await this.json<{ Id?: string; Name?: string; Labels?: Record<string, string> }[]>('GET', `/networks?filters=${filters}`, undefined);
+    return rows.flatMap((row) =>
+      typeof row.Id === 'string' && typeof row.Name === 'string'
+        ? [{ id: row.Id, name: row.Name, labels: row.Labels ?? {} }]
+        : [],
+    );
+  }
+
+  async listScanContainers(): Promise<{ id: string; labels: Record<string, string> }[]> {
+    const filters = encodeURIComponent(JSON.stringify({ label: ['app.kubernetes.io/name=vv-scan'] }));
+    const rows = await this.json<{ Id?: string; Labels?: Record<string, string> }[]>('GET', `/containers/json?all=1&filters=${filters}`, undefined);
+    return rows.flatMap((row) =>
+      typeof row.Id === 'string' ? [{ id: row.Id, labels: row.Labels ?? {} }] : [],
+    );
+  }
+
   async createNetwork(name: string, labels: Record<string, string>): Promise<DockerNetwork> {
     const response = await this.json<DockerNetworkCreateResponse>('POST', '/networks/create', {
       Name: name,
@@ -168,7 +186,7 @@ export class DockerEngineHttpClient implements DockerEnginePort {
   }
 
   private async json<T>(method: string, path: string, body: unknown): Promise<T> {
-    const response = await this.perform(method, path, JSON.stringify(body));
+    const response = await this.perform(method, path, body === undefined ? '' : JSON.stringify(body));
     if (response.status < 200 || response.status >= 300) {
       throw new Error(`Docker Engine ${method} failed (HTTP ${response.status}): ${response.body.slice(0, 300)}`);
     }
