@@ -38,6 +38,7 @@ function allowRequest(ip: string): boolean {
     for (const [key, window] of requestWindows) {
       if (now - window.startedAt >= REQUEST_WINDOW_MS) requestWindows.delete(key);
     }
+    if (requestWindows.size >= 10_000 && current === undefined) return false;
   }
   if (current === undefined || now - current.startedAt >= REQUEST_WINDOW_MS) {
     requestWindows.set(ip, { startedAt: now, count: 1 });
