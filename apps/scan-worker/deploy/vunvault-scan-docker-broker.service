@@ -8,8 +8,8 @@ ConditionPathExists=/var/run/docker.sock
 [Service]
 Type=simple
 User=vunvault-scan-docker
-Group=vunvault-scan-docker
-SupplementaryGroups=docker vunvault-scan-firewall
+Group=vunvault-scan-controller
+SupplementaryGroups=vunvault-scan-docker docker vunvault-scan-firewall
 EnvironmentFile=/etc/vunvault/scan-docker-broker.env
 ExecStart=/usr/bin/node /opt/vunvault/apps/scan-worker/dist/docker/docker-host-broker.js
 Restart=on-failure
