@@ -188,31 +188,32 @@ jobs:
           ref: ${{ env.GIT_SHA }}
       - uses: ./.github/actions/setup
       - run: pnpm install --frozen-lockfile
-      # NEXT_PUBLIC_* are BUILD-TIME: Next inlines them into the client bundle
-      # during the build, so this shell IS the configuration — a dashboard
-      # variable changed after the build does nothing. The `environment:` above
-      # selects the per-environment repository variables.
-      # `cf:build` runs `next build` itself (not through turbo) so the inlined
-      # values can never come from another environment's cached build.
-      - name: Build the Worker (@opennextjs/cloudflare)
+      # The web app is a separate Cloudflare Worker. Build and deploy only
+      # the web workspace; do not invoke the monorepo-wide build here.
+      # NEXT_PUBLIC_* values are inlined at build time and come from the selected
+      # GitHub Environment (staging or production).
+      - name: Build and deploy the web Worker
         env:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
           NEXT_PUBLIC_R2_HOST: ${{ vars.NEXT_PUBLIC_R2_HOST }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.STRIPE_PUBLISHABLE_KEY }}
-        run: pnpm --filter web cf:build
-      - name: Deploy the Worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ vars.CF_ACCOUNT_ID }}
-          workingDirectory: apps/web
-          # --env picks the wrangler.jsonc environment, which owns the Worker
-          # NAME and its custom domains. ENVIRONMENT is exactly staging |
-          # production and those keys exist; a typo here would deploy staging
-          # under a production trigger rather than failing, so it is not
-          # defaulted the way the old `--branch` value was.
-          command: deploy --env ${{ env.ENVIRONMENT }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          case "${ENVIRONMENT}" in
+            production)
+              pnpm --filter web cf:deploy:production
+              ;;
+            staging)
+              pnpm --filter web cf:deploy:staging
+              ;;
+            *)
+              echo "Unsupported web deployment environment: ${ENVIRONMENT}" >&2
+              exit 1
+              ;;
+          esac
 
   smoke:
     name: post-deploy smoke
