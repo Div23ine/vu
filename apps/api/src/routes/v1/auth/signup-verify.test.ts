@@ -97,6 +97,7 @@ class FakeAuthRepo implements AuthRepo {
       accountStatus: input.accountStatus ?? 'active',
       deletedAt: null,
       mfaEnrolled: false,
+      lastActiveAt: null,
     });
   }
   async activatePendingSignup(profileId: string) {
@@ -182,6 +183,7 @@ function fakeSession(overrides: Partial<SupabaseSession> = {}): SupabaseSession 
     userId: USER_ID,
     aal: 'aal1',
     ...overrides,
+    lastActiveAt: overrides.lastActiveAt ?? null,
   };
 }
 
@@ -354,6 +356,7 @@ async function makeHarness(): Promise<Harness> {
               deletedAt: null,
               mfaSetupDeadline: null,
               mfaEnrolled: false,
+              lastActiveAt: null,
             }
           : null,
     }),
