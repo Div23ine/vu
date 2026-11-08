@@ -1,5 +1,5 @@
 import { createServer, request as httpRequest, type IncomingMessage, type ServerResponse } from 'node:http';
-import { mkdir, lstat, unlink, chmod, chown } from 'node:fs/promises';
+import { mkdir, lstat, unlink, chmod } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import type {
   DockerContainerConfig,
@@ -82,7 +82,6 @@ export async function startDockerHostBroker(options: BrokerOptions): Promise<Doc
     server.listen(options.socketPath, () => { server.removeListener('error', reject); resolve(); });
   });
   await chmod(options.socketPath, 0o660);
-  if (options.groupId !== undefined) await chown(options.socketPath, 0, options.groupId);
   return {
     close: async () => {
       await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
@@ -417,14 +416,8 @@ async function main(): Promise<void> {
   const dockerSocketPath = process.env.VV_DOCKER_SOCKET ?? '/var/run/docker.sock';
   const firewallSocketPath = process.env.VV_SCAN_FIREWALL_SOCKET ?? '/run/vunvault-scan-firewall/broker.sock';
   const runnerImage = process.env.RUNNER_IMAGE ?? '';
-  const rawGroupId = process.env.VV_DOCKER_BROKER_GID;
-  const groupId = rawGroupId === undefined || rawGroupId === '' ? undefined : Number(rawGroupId);
-  if (groupId !== undefined && (!Number.isInteger(groupId) || groupId < 1)) {
-    throw new Error('VV_DOCKER_BROKER_GID must be a positive numeric group ID');
-  }
   const broker = await startDockerHostBroker({
     socketPath, dockerSocketPath, firewallSocketPath, runnerImage,
-    ...(groupId === undefined ? {} : { groupId }),
   });
   process.stdout.write('VUNVAULT Docker host broker ready on its private Unix socket\\n');
   let closing = false;
