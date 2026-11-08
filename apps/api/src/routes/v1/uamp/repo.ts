@@ -58,6 +58,53 @@ export interface ListMonitorsFilter {
   pageSize: number;
 }
 
+export interface IncidentRow {
+  id: string;
+  orgId: string;
+  monitorId: string;
+  status: string;
+  severity: string;
+  title: string;
+  summary: string | null;
+  startedAt: Date;
+  acknowledgedAt: Date | null;
+  resolvedAt: Date | null;
+  failureCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CheckResultRow {
+  id: string;
+  orgId: string;
+  monitorId: string;
+  status: string;
+  httpStatus: number | null;
+  latencyMs: number | null;
+  location: string | null;
+  errorMessage: string | null;
+  responseSnippet: string | null;
+  checkedAt: Date;
+  createdAt: Date;
+}
+
+export interface ListIncidentsFilter {
+  orgId: string;
+  status?: string;
+  severity?: string;
+  monitorId?: string;
+  page: number;
+  pageSize: number;
+}
+
+export interface ListCheckResultsFilter {
+  orgId: string;
+  monitorId?: string;
+  status?: string;
+  page: number;
+  pageSize: number;
+}
+
 export interface UampRepo {
   listMonitors(filter: ListMonitorsFilter): Promise<{ rows: MonitorRow[]; total: number }>;
   getMonitor(orgId: string, id: string): Promise<MonitorRow | null>;
@@ -69,6 +116,14 @@ export interface UampRepo {
   ): Promise<MonitorRow | null>;
   softDeleteMonitor(orgId: string, id: string): Promise<boolean>;
   countActiveMonitors(orgId: string): Promise<number>;
+  listIncidents(filter: ListIncidentsFilter): Promise<{ rows: IncidentRow[]; total: number }>;
+  getIncident(orgId: string, id: string): Promise<IncidentRow | null>;
+  updateIncident(
+    orgId: string,
+    id: string,
+    patch: { status?: string; severity?: string; summary?: string; acknowledgedBy?: string; resolvedBy?: string },
+  ): Promise<IncidentRow | null>;
+  listCheckResults(filter: ListCheckResultsFilter): Promise<{ rows: CheckResultRow[]; total: number }>;
 }
 
 function mapMonitor(row: typeof uampMonitors.$inferSelect): MonitorRow {
@@ -203,6 +258,146 @@ export class SqlUampRepo implements UampRepo {
       )
       .returning({ id: uampMonitors.id });
     return rows.length > 0;
+  }
+
+
+  async listIncidents(filter: ListIncidentsFilter): Promise<{ rows: IncidentRow[]; total: number }> {
+    const conditions = [eq(uampIncidents.orgId, filter.orgId)];
+    if (filter.status) conditions.push(eq(uampIncidents.status, filter.status as never));
+    if (filter.severity) conditions.push(eq(uampIncidents.severity, filter.severity as never));
+    if (filter.monitorId) conditions.push(eq(uampIncidents.monitorId, filter.monitorId));
+    const where = and(...conditions);
+    const offset = (filter.page - 1) * filter.pageSize;
+    const [rows, totalRow] = await Promise.all([
+      this.db
+        .select()
+        .from(uampIncidents)
+        .where(where)
+        .orderBy(desc(uampIncidents.startedAt))
+        .limit(filter.pageSize)
+        .offset(offset),
+      this.db.select({ value: count() }).from(uampIncidents).where(where),
+    ]);
+    return {
+      rows: rows.map((r) => ({
+        id: r.id,
+        orgId: r.orgId,
+        monitorId: r.monitorId,
+        status: r.status,
+        severity: r.severity,
+        title: r.title,
+        summary: r.summary,
+        startedAt: r.startedAt,
+        acknowledgedAt: r.acknowledgedAt,
+        resolvedAt: r.resolvedAt,
+        failureCount: r.failureCount,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      })),
+      total: Number(totalRow[0]?.value ?? 0),
+    };
+  }
+
+  async getIncident(orgId: string, id: string): Promise<IncidentRow | null> {
+    const rows = await this.db
+      .select()
+      .from(uampIncidents)
+      .where(and(eq(uampIncidents.id, id), eq(uampIncidents.orgId, orgId)))
+      .limit(1);
+    const r = rows[0];
+    if (!r) return null;
+    return {
+      id: r.id,
+      orgId: r.orgId,
+      monitorId: r.monitorId,
+      status: r.status,
+      severity: r.severity,
+      title: r.title,
+      summary: r.summary,
+      startedAt: r.startedAt,
+      acknowledgedAt: r.acknowledgedAt,
+      resolvedAt: r.resolvedAt,
+      failureCount: r.failureCount,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    };
+  }
+
+  async updateIncident(
+    orgId: string,
+    id: string,
+    patch: { status?: string; severity?: string; summary?: string; acknowledgedBy?: string; resolvedBy?: string },
+  ): Promise<IncidentRow | null> {
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (patch.status !== undefined) {
+      updates.status = patch.status;
+      if (patch.status === 'acknowledged') {
+        updates.acknowledgedAt = new Date();
+        if (patch.acknowledgedBy) updates.acknowledgedBy = patch.acknowledgedBy;
+      }
+      if (patch.status === 'resolved' || patch.status === 'false_positive') {
+        updates.resolvedAt = new Date();
+        if (patch.resolvedBy) updates.resolvedBy = patch.resolvedBy;
+      }
+    }
+    if (patch.severity !== undefined) updates.severity = patch.severity;
+    if (patch.summary !== undefined) updates.summary = patch.summary;
+    const rows = await this.db
+      .update(uampIncidents)
+      .set(updates)
+      .where(and(eq(uampIncidents.id, id), eq(uampIncidents.orgId, orgId)))
+      .returning();
+    const r = rows[0];
+    if (!r) return null;
+    return {
+      id: r.id,
+      orgId: r.orgId,
+      monitorId: r.monitorId,
+      status: r.status,
+      severity: r.severity,
+      title: r.title,
+      summary: r.summary,
+      startedAt: r.startedAt,
+      acknowledgedAt: r.acknowledgedAt,
+      resolvedAt: r.resolvedAt,
+      failureCount: r.failureCount,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    };
+  }
+
+  async listCheckResults(filter: ListCheckResultsFilter): Promise<{ rows: CheckResultRow[]; total: number }> {
+    const conditions = [eq(uampCheckResults.orgId, filter.orgId)];
+    if (filter.monitorId) conditions.push(eq(uampCheckResults.monitorId, filter.monitorId));
+    if (filter.status) conditions.push(eq(uampCheckResults.status, filter.status as never));
+    const where = and(...conditions);
+    const offset = (filter.page - 1) * filter.pageSize;
+    const [rows, totalRow] = await Promise.all([
+      this.db
+        .select()
+        .from(uampCheckResults)
+        .where(where)
+        .orderBy(desc(uampCheckResults.checkedAt))
+        .limit(filter.pageSize)
+        .offset(offset),
+      this.db.select({ value: count() }).from(uampCheckResults).where(where),
+    ]);
+    return {
+      rows: rows.map((r) => ({
+        id: r.id,
+        orgId: r.orgId,
+        monitorId: r.monitorId,
+        status: r.status,
+        httpStatus: r.httpStatus,
+        latencyMs: r.latencyMs,
+        location: r.location,
+        errorMessage: r.errorMessage,
+        responseSnippet: r.responseSnippet,
+        checkedAt: r.checkedAt,
+        createdAt: r.createdAt,
+      })),
+      total: Number(totalRow[0]?.value ?? 0),
+    };
   }
 
   async countActiveMonitors(orgId: string): Promise<number> {

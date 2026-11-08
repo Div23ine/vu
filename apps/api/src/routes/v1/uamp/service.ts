@@ -1,6 +1,10 @@
 import { HttpError } from '../../../lib/http-error.js';
 import type {
+  CheckResultRow,
   CreateMonitorInput,
+  IncidentRow,
+  ListCheckResultsFilter,
+  ListIncidentsFilter,
   ListMonitorsFilter,
   MonitorRow,
   UampRepo,
@@ -92,6 +96,35 @@ export class UampService {
    * Basic SSRF guard: block obvious private / loopback / link-local targets.
    * Workers apply a stricter network policy at check time.
    */
+
+  async listIncidents(filter: ListIncidentsFilter) {
+    return this.repo.listIncidents(filter);
+  }
+
+  async getIncident(orgId: string, id: string): Promise<IncidentRow> {
+    const row = await this.repo.getIncident(orgId, id);
+    if (!row) throw new HttpError(404, 'not_found', 'Incident not found');
+    return row;
+  }
+
+  async updateIncident(
+    orgId: string,
+    id: string,
+    actorId: string,
+    patch: { status?: string; severity?: string; summary?: string },
+  ): Promise<IncidentRow> {
+    const extra: { acknowledgedBy?: string; resolvedBy?: string } = {};
+    if (patch.status === 'acknowledged') extra.acknowledgedBy = actorId;
+    if (patch.status === 'resolved' || patch.status === 'false_positive') extra.resolvedBy = actorId;
+    const row = await this.repo.updateIncident(orgId, id, { ...patch, ...extra });
+    if (!row) throw new HttpError(404, 'not_found', 'Incident not found');
+    return row;
+  }
+
+  async listCheckResults(filter: ListCheckResultsFilter) {
+    return this.repo.listCheckResults(filter);
+  }
+
   private assertSafeTarget(target: string): void {
     let host: string;
     try {
@@ -140,5 +173,39 @@ export function toWireMonitor(row: MonitorRow) {
     lastLatencyMs: row.lastLatencyMs,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+export function toWireIncident(row: IncidentRow) {
+  return {
+    id: row.id,
+    orgId: row.orgId,
+    monitorId: row.monitorId,
+    status: row.status,
+    severity: row.severity,
+    title: row.title,
+    summary: row.summary,
+    startedAt: row.startedAt.toISOString(),
+    acknowledgedAt: row.acknowledgedAt?.toISOString() ?? null,
+    resolvedAt: row.resolvedAt?.toISOString() ?? null,
+    failureCount: row.failureCount,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+export function toWireCheckResult(row: CheckResultRow) {
+  return {
+    id: row.id,
+    orgId: row.orgId,
+    monitorId: row.monitorId,
+    status: row.status,
+    httpStatus: row.httpStatus,
+    latencyMs: row.latencyMs,
+    location: row.location,
+    errorMessage: row.errorMessage,
+    responseSnippet: row.responseSnippet,
+    checkedAt: row.checkedAt.toISOString(),
+    createdAt: row.createdAt.toISOString(),
   };
 }

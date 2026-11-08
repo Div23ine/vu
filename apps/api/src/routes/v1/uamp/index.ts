@@ -3,7 +3,13 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import {
   CreateUampMonitorBody,
+  UpdateUampIncidentBody,
   UpdateUampMonitorBody,
+  UampCheckResultListQuery,
+  UampCheckResultListResponse,
+  UampIncidentListQuery,
+  UampIncidentListResponse,
+  UampIncidentResponse,
   UampMonitorListQuery,
   UampMonitorListResponse,
   UampMonitorResponse,
@@ -11,7 +17,7 @@ import {
 } from '@vunvault/contracts';
 import { HttpError } from '../../../lib/http-error.js';
 import { SqlUampRepo } from './repo.js';
-import { toWireMonitor, UampService } from './service.js';
+import { toWireCheckResult, toWireIncident, toWireMonitor, UampService } from './service.js';
 
 /**
  * UAMP product routes — mounted under `/api/v1/uamp`.
@@ -153,5 +159,91 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 };
+
+
+  // ---------------------------------------------------------------- incidents
+  app.get(
+    '/uamp/incidents',
+    {
+      preHandler: auth,
+      schema: {
+        querystring: UampIncidentListQuery,
+        response: { 200: UampIncidentListResponse },
+      },
+    },
+    async (request) => {
+      const user = actor(request);
+      const q = request.query as z.infer<typeof UampIncidentListQuery>;
+      const { rows, total } = await serviceFor().listIncidents({
+        orgId: user.orgId,
+        status: q.status,
+        severity: q.severity,
+        monitorId: q.monitorId,
+        page: q.page,
+        pageSize: q.pageSize,
+      });
+      return { data: rows.map(toWireIncident), total };
+    },
+  );
+
+  app.get(
+    '/uamp/incidents/:id',
+    {
+      preHandler: auth,
+      schema: {
+        params: IdParams,
+        response: { 200: UampIncidentResponse },
+      },
+    },
+    async (request) => {
+      const user = actor(request);
+      const { id } = request.params as z.infer<typeof IdParams>;
+      const row = await serviceFor().getIncident(user.orgId, id);
+      return { data: toWireIncident(row) };
+    },
+  );
+
+  app.patch(
+    '/uamp/incidents/:id',
+    {
+      preHandler: auth,
+      schema: {
+        params: IdParams,
+        body: UpdateUampIncidentBody,
+        response: { 200: UampIncidentResponse },
+      },
+    },
+    async (request) => {
+      const user = actor(request);
+      const { id } = request.params as z.infer<typeof IdParams>;
+      const body = request.body as z.infer<typeof UpdateUampIncidentBody>;
+      const row = await serviceFor().updateIncident(user.orgId, id, user.id, body);
+      return { data: toWireIncident(row) };
+    },
+  );
+
+  // ------------------------------------------------------------ check results
+  app.get(
+    '/uamp/check-results',
+    {
+      preHandler: auth,
+      schema: {
+        querystring: UampCheckResultListQuery,
+        response: { 200: UampCheckResultListResponse },
+      },
+    },
+    async (request) => {
+      const user = actor(request);
+      const q = request.query as z.infer<typeof UampCheckResultListQuery>;
+      const { rows, total } = await serviceFor().listCheckResults({
+        orgId: user.orgId,
+        monitorId: q.monitorId,
+        status: q.status,
+        page: q.page,
+        pageSize: q.pageSize,
+      });
+      return { data: rows.map(toWireCheckResult), total };
+    },
+  );
 
 export default uampRoutes;
