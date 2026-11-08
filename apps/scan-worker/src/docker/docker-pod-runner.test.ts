@@ -40,6 +40,7 @@ function harness(options: {
   failFirewall?: boolean;
   failCreateContainer?: boolean;
   failRemoveContainer?: boolean;
+  failRemoveFirewall?: boolean;
   exitCode?: number;
 } = {}): Harness {
   const calls: string[] = [];
@@ -84,6 +85,7 @@ function harness(options: {
     async remove(received) {
       calls.push('remove-firewall');
       expect(received.id).toBe(network.id);
+      if (options.failRemoveFirewall) throw new Error('firewall cleanup failed');
     },
   };
   return {
@@ -188,6 +190,20 @@ describe('DockerPodRunner — fail-closed ordering', () => {
     expect(result.reason).toBe('completed');
     expect(h.calls).toContain('remove-container');
     expect(h.calls).not.toContain('remove-firewall');
+    expect(h.calls).not.toContain('remove-network');
+  });
+
+  it('retains the Docker network when firewall cleanup fails', async () => {
+    const h = harness({ failRemoveFirewall: true });
+    const result = await h.runner.run(SPEC, {
+      onLine: () => undefined,
+      onProgress: () => undefined,
+      onFinding: () => undefined,
+    }, new AbortController().signal);
+
+    expect(result.reason).toBe('completed');
+    expect(h.calls).toContain('remove-container');
+    expect(h.calls).toContain('remove-firewall');
     expect(h.calls).not.toContain('remove-network');
   });
 
