@@ -10,7 +10,7 @@ import '../../_styles/editor.css';
 
 /**
  * Featured image card — drag-drop zone + file input (JPG/PNG/WebP/
- * GIF, ≤ 5 MB — the hook validates and toasts), the hosted-URL field, the
+ * GIF, ≤ 50 MB — the shared image service validates and optimizes), the hosted-URL field, the
  * preview with its remove button, and the alt-text field. Uploads go through
  * `POST /studio/images/upload-url` → `PUT` to the presigned URL; data URLs
  * are never embedded.
@@ -20,6 +20,8 @@ interface FeaturedImageProps {
   imageUrl: string | null;
   imageAlt: string;
   uploading: boolean;
+  compressImages: boolean;
+  onCompressionChange(enabled: boolean): void;
   disabled?: boolean;
   onFile(file: File): void;
   onUrlChange(url: string): void;
@@ -39,6 +41,8 @@ export function FeaturedImage({
   imageUrl,
   imageAlt,
   uploading,
+  compressImages,
+  onCompressionChange,
   disabled = false,
   onFile,
   onUrlChange,
@@ -95,7 +99,7 @@ export function FeaturedImage({
             <UploadCloud size={20} />
           </span>
           <span className="vbg-drop-title">Drop an image here</span>
-          <span className="vbg-drop-text">or click to browse · JPG, PNG, WebP, GIF · max 5 MB</span>
+          <span className="vbg-drop-text">or click to browse · JPG, PNG, WebP, GIF · max 50 MB</span>
           <input
             ref={inputRef}
             type="file"
@@ -108,6 +112,16 @@ export function FeaturedImage({
             }}
           />
         </div>
+
+        <label className="vbg-image-compress">
+          <input
+            type="checkbox"
+            checked={compressImages}
+            disabled={disabled || uploading}
+            onChange={(event) => onCompressionChange(event.target.checked)}
+          />
+          Compress images before upload (recommended)
+        </label>
 
         <div className="vbg-divider-or" aria-hidden="true">
           or
