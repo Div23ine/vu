@@ -79,12 +79,15 @@ export function AvatarUploader({ profile }: AvatarUploaderProps) {
           : 'Your image was uploaded without changing its image data.',
       });
     } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : isApiError(error) ? error.message : 'The file could not be processed. Please try again.';
+      const tooLarge = message.includes('smaller than 50 MB');
+      const unsupported = message.includes('valid JPEG') || message.includes('contents do not match') || message.includes('invalid.');
       toast({
-        kind: 'crit',
-        title: 'Upload failed',
-        message: error instanceof Error
-          ? error.message
-          : isApiError(error) ? error.message : 'The file could not be processed. Please try again.',
+        kind: tooLarge || unsupported ? 'warn' : 'crit',
+        title: tooLarge ? 'File too large' : unsupported ? 'Unsupported file type' : 'Upload failed',
+        message,
       });
     } finally {
       setBusy(false);
