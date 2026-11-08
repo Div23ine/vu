@@ -419,15 +419,25 @@ export class DockerHostBrokerClient implements DockerEnginePort, HostFirewallPor
   async removeNetwork(id: string): Promise<void> { await this.json('DELETE', `/v1/networks/${id}`); }
   async followLogs(id: string, signal: AbortSignal): Promise<NodeJS.ReadableStream> {
     return await new Promise<NodeJS.ReadableStream>((resolve, reject) => {
+      const cleanup = (): void => signal.removeEventListener('abort', abort);
+      const abort = (): void => { req.destroy(new Error('Docker broker logs aborted')); };
       const req = httpRequest({ socketPath: this.socketPath, path: `/v1/containers/${id}/logs`, method: 'GET' }, (res) => {
-        if (res.statusCode !== 200) { void readResponse(res).then((body) => reject(new Error(body)), reject); return; }
+        if (res.statusCode !== 200) {
+          void readResponse(res).then((body) => {
+            cleanup();
+            reject(new Error(body));
+          }, (error: unknown) => {
+            cleanup();
+            reject(error);
+          });
+          return;
+        }
+        res.once('close', cleanup);
         resolve(res);
       });
       req.setTimeout(this.timeoutMs, () => req.destroy(new Error('Docker broker logs timed out')));
-      req.on('error', reject);
-      const abort = (): void => { req.destroy(new Error('Docker broker logs aborted')); };
+      req.on('error', (error) => { cleanup(); reject(error); });
       if (signal.aborted) abort(); else signal.addEventListener('abort', abort, { once: true });
-      req.on('close', () => signal.removeEventListener('abort', abort));
       req.end();
     });
   }
