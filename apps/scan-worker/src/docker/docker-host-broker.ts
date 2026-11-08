@@ -40,8 +40,8 @@ const RUNNER_ENV = new Set([
 interface BrokerOptions {
   socketPath: string;
   dockerSocketPath: string;
+  firewallSocketPath: string;
   runnerImage: string;
-  groupId?: number;
 }
 interface NetworkRecord extends DockerNetwork {
   labels: Record<string, string>;
@@ -55,7 +55,7 @@ export interface DockerHostBrokerServer {
 
 /** Start under a dedicated systemd identity with access to Docker and firewall sockets. */
 export async function startDockerHostBroker(options: BrokerOptions): Promise<DockerHostBrokerServer> {
-  if (!options.socketPath.startsWith('/') || !options.dockerSocketPath.startsWith('/')) {
+  if (!options.socketPath.startsWith('/') || !options.dockerSocketPath.startsWith('/') || !options.firewallSocketPath.startsWith('/')) {
     throw new Error('broker socket paths must be absolute');
   }
   if (!/^.+@sha256:[a-f0-9]{64}$/.test(options.runnerImage)) {
@@ -71,7 +71,14 @@ export async function startDockerHostBroker(options: BrokerOptions): Promise<Doc
   }
 
   const docker = new DockerEngineHttpClient({ socketPath: options.dockerSocketPath });
-  const firewall = new NftHostFirewallBroker();
+  const [staleNetworks, staleContainers] = await Promise.all([
+    docker.listScanNetworks(),
+    docker.listScanContainers(),
+  ]);
+  if (staleNetworks.length > 0 || staleContainers.length > 0) {
+    throw new Error('stale scan Docker resources detected; broker startup blocked pending reconciliation');
+  }
+  const firewall = new HostFirewallUnixClient({ socketPath: options.firewallSocketPath });
   const networks = new Map<string, NetworkRecord>();
   const containers = new Map<string, ContainerRecord>();
   const server = createServer((req, res) => {
@@ -262,7 +269,7 @@ function parseContainerRequest(value: unknown, state: BrokerState): DockerContai
 function parseLabels(value: unknown): Record<string, string> {
   const labels = object(value);
   const entries = Object.entries(labels);
-  if (entries.length !== 4 || entries.some(([key, val]) => typeof val !== 'string' || val.length > 128)) {
+  if (entries.length !== 4 || entries.some(([, val]) => typeof val !== 'string' || val.length > 128)) {
     throw new Error('invalid scan labels');
   }
   const result = Object.fromEntries(entries) as Record<string, string>;
