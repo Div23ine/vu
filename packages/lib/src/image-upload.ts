@@ -59,7 +59,7 @@ function sanitizeSvg(source: string): string {
     'opacity', 'transform', 'offset', 'stop-color', 'stop-opacity', 'clip-path',
     'mask', 'font-size', 'font-family', 'font-weight', 'text-anchor', 'id',
   ]);
-  for (const node of [...parsed.querySelectorAll('*')]) {
+  for (const node of [parsed.documentElement, ...parsed.querySelectorAll('*')]) {
     if (!allowedTags.has(node.localName)) {
       node.remove();
       continue;
