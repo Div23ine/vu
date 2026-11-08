@@ -67,12 +67,10 @@ function sanitizeSvg(source: string): string {
     for (const attribute of [...node.attributes]) {
       const name = attribute.name;
       const value = attribute.value.trim();
-      if (
-        !allowedAttributes.has(name) ||
-        /^on/i.test(name) ||
-        /url\s*\(/i.test(value) ||
-        /javascript:|data:|https?:|\/\//i.test(value)
-      ) node.removeAttribute(name);
+      const unsafeValue = name === 'xmlns'
+        ? value !== 'http://www.w3.org/2000/svg'
+        : /url\s*\(/i.test(value) || /javascript:|data:|https?:|\/\//i.test(value);
+      if (!allowedAttributes.has(name) || /^on/i.test(name) || unsafeValue) node.removeAttribute(name);
     }
   }
   const svg = new XMLSerializer().serializeToString(parsed.documentElement);
