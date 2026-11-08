@@ -286,7 +286,7 @@ function parsePublicIps(value: unknown): string[] {
 export function isPublicIpv4(ip: string): boolean {
   const octets = ip.split('.');
   if (octets.length !== 4 ||
-      octets.some((part) => !/^\\d{1,3}$/.test(part) || Number(part) < 0 || Number(part) > 255) ||
+      octets.some((part) => !/^\d{1,3}$/.test(part) || Number(part) < 0 || Number(part) > 255) ||
       octets.join('.') !== ip) return false;
   return classifyIp(ip) === 'public';
 }
