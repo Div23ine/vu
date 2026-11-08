@@ -1,5 +1,4 @@
 import { createServer, request as httpRequest, type IncomingMessage, type ServerResponse } from 'node:http';
-import { PassThrough } from 'node:stream';
 import { mkdir, lstat, unlink, chmod, chown } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import type {
@@ -146,7 +145,6 @@ async function route(req: IncomingMessage, res: ServerResponse, state: BrokerSta
     if (method === 'POST' && wait?.[1]) {
       const record = ownedContainer(state, wait[1]);
       const result = await state.docker.waitContainer(record.id);
-      state.containers.delete(record.id);
       return send(res, 200, result);
     }
     const stop = /^\/v1\/containers\/([a-f0-9]{12,64})\/stop$/.exec(path);
@@ -223,6 +221,10 @@ function parseContainerRequest(value: unknown, state: BrokerState): DockerContai
     throw new Error('runner environment does not match ownership labels');
   }
   if (envMap.HOME !== '/tmp') throw new Error('runner HOME must be /tmp');
+  const allowed = network.allowedIPv4 ?? [];
+  const pinned = envMap.VV_TARGET_IPS === '' ? [] : (envMap.VV_TARGET_IPS ?? '').split(',');
+  if (pinned.some((ip) => !allowed.includes(ip))) throw new Error('runner target IPs exceed firewall allowlist');
+  if (envMap.VV_TARGET_CIDR !== undefined && pinned.length !== 0) throw new Error('CIDR runner cannot also supply pinned host IPs');
   const extraHosts = stringArray(c.extraHosts, 16);
   if (extraHosts.some((entry) => !/^[a-z0-9.-]+:\d{1,3}(?:\.\d{1,3}){3}$/.test(entry))) {
     throw new Error('invalid pinned extra-host entry');
