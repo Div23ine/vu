@@ -177,7 +177,7 @@ export interface FirewallBrokerServerOptions {
   broker?: NftHostFirewallBroker;
 }
 
-/** Unix-socket-only API. Mount this socket, not docker.sock, into the controller. */
+/** Unix-socket-only API. Only the body-validating Docker host broker may access this socket. */
 export async function startFirewallBrokerServer(options: FirewallBrokerServerOptions): Promise<{
   close(): Promise<void>;
   address: AddressInfo | string | null;
