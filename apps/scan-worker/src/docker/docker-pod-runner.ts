@@ -95,7 +95,7 @@ export class DockerPodRunner implements PodRunner {
     let bytesStreamed = 0;
     let reason: RunResult['reason'] = 'error';
     let exitCode = -1;
-    let abortReason: 'abort' | 'kill' | null = signal.aborted ? 'abort' : null;
+    let abortReason: 'abort' | 'kill' | null = signal.aborted ? abortKind(signal) : null;
     let deadlineHit = false;
     let stopRequested = false;
     let resolveAbort!: () => void;
@@ -104,7 +104,7 @@ export class DockerPodRunner implements PodRunner {
     let resolveDeadline!: () => void;
 
     const onAbort = (): void => {
-      abortReason = abortReason ?? 'abort';
+      abortReason = abortReason ?? abortKind(signal);
       resolveAbort();
       if (containerId !== null) void stopOnce();
     };
@@ -271,7 +271,7 @@ export class DockerPodRunner implements PodRunner {
   }
 }
 
-function runnerEnvironment(spec: PodSpec): string[] {
+function abortKind(signal: AbortSignal): 'abort' | 'kill' {\n  return signal.reason === 'kill' ? 'kill' : 'abort';\n}\n\nfunction runnerEnvironment(spec: PodSpec): string[] {
   const values: Record<string, string> = {
     VV_JOB_ID: spec.jobId,
     VV_JOB_CODE: spec.jobCode,
