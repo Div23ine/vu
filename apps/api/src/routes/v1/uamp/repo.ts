@@ -1,8 +1,10 @@
 import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import {
+  uampAlertRules,
   uampCheckResults,
   uampIncidents,
   uampMonitors,
+  uampStatusPages,
   type UampHeader,
   type UampResponseAssertion,
 } from '@vunvault/db';
@@ -124,6 +126,16 @@ export interface UampRepo {
     patch: { status?: string; severity?: string; summary?: string; acknowledgedBy?: string; resolvedBy?: string },
   ): Promise<IncidentRow | null>;
   listCheckResults(filter: ListCheckResultsFilter): Promise<{ rows: CheckResultRow[]; total: number }>;
+  listStatusPages(orgId: string, page: number, pageSize: number): Promise<{ rows: StatusPageRow[]; total: number }>;
+  getStatusPage(orgId: string, id: string): Promise<StatusPageRow | null>;
+  createStatusPage(input: CreateStatusPageInput): Promise<StatusPageRow>;
+  updateStatusPage(orgId: string, id: string, patch: Partial<CreateStatusPageInput> & { isActive?: boolean }): Promise<StatusPageRow | null>;
+  deleteStatusPage(orgId: string, id: string): Promise<boolean>;
+  countStatusPages(orgId: string): Promise<number>;
+  listAlertRules(orgId: string, monitorId?: string): Promise<AlertRuleRow[]>;
+  createAlertRule(input: CreateAlertRuleInput): Promise<AlertRuleRow>;
+  updateAlertRule(orgId: string, id: string, patch: Partial<CreateAlertRuleInput> & { enabled?: boolean }): Promise<AlertRuleRow | null>;
+  deleteAlertRule(orgId: string, id: string): Promise<boolean>;
 }
 
 function mapMonitor(row: typeof uampMonitors.$inferSelect): MonitorRow {
@@ -400,6 +412,123 @@ export class SqlUampRepo implements UampRepo {
     };
   }
 
+
+  async listStatusPages(orgId: string, page: number, pageSize: number) {
+    const where = eq(uampStatusPages.orgId, orgId);
+    const offset = (page - 1) * pageSize;
+    const [rows, totalRow] = await Promise.all([
+      this.db.select().from(uampStatusPages).where(where).orderBy(desc(uampStatusPages.createdAt)).limit(pageSize).offset(offset),
+      this.db.select({ value: count() }).from(uampStatusPages).where(where),
+    ]);
+    return {
+      rows: rows.map((r) => ({
+        id: r.id, orgId: r.orgId, name: r.name, slug: r.slug, visibility: r.visibility,
+        customDomain: r.customDomain, monitorIds: r.monitorIds ?? [], headline: r.headline,
+        isActive: r.isActive, createdAt: r.createdAt, updatedAt: r.updatedAt,
+      })),
+      total: Number(totalRow[0]?.value ?? 0),
+    };
+  }
+
+  async getStatusPage(orgId: string, id: string) {
+    const rows = await this.db.select().from(uampStatusPages).where(and(eq(uampStatusPages.id, id), eq(uampStatusPages.orgId, orgId))).limit(1);
+    const r = rows[0];
+    if (!r) return null;
+    return {
+      id: r.id, orgId: r.orgId, name: r.name, slug: r.slug, visibility: r.visibility,
+      customDomain: r.customDomain, monitorIds: r.monitorIds ?? [], headline: r.headline,
+      isActive: r.isActive, createdAt: r.createdAt, updatedAt: r.updatedAt,
+    };
+  }
+
+  async createStatusPage(input: CreateStatusPageInput) {
+    const [r] = await this.db.insert(uampStatusPages).values({
+      orgId: input.orgId, name: input.name, slug: input.slug,
+      visibility: (input.visibility as never) ?? 'public',
+      customDomain: input.customDomain, monitorIds: input.monitorIds ?? [], headline: input.headline,
+    }).returning();
+    return {
+      id: r!.id, orgId: r!.orgId, name: r!.name, slug: r!.slug, visibility: r!.visibility,
+      customDomain: r!.customDomain, monitorIds: r!.monitorIds ?? [], headline: r!.headline,
+      isActive: r!.isActive, createdAt: r!.createdAt, updatedAt: r!.updatedAt,
+    };
+  }
+
+  async updateStatusPage(orgId: string, id: string, patch: Partial<CreateStatusPageInput> & { isActive?: boolean }) {
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (patch.name !== undefined) updates.name = patch.name;
+    if (patch.slug !== undefined) updates.slug = patch.slug;
+    if (patch.visibility !== undefined) updates.visibility = patch.visibility;
+    if (patch.customDomain !== undefined) updates.customDomain = patch.customDomain;
+    if (patch.monitorIds !== undefined) updates.monitorIds = patch.monitorIds;
+    if (patch.headline !== undefined) updates.headline = patch.headline;
+    if (patch.isActive !== undefined) updates.isActive = patch.isActive;
+    const rows = await this.db.update(uampStatusPages).set(updates).where(and(eq(uampStatusPages.id, id), eq(uampStatusPages.orgId, orgId))).returning();
+    const r = rows[0];
+    if (!r) return null;
+    return {
+      id: r.id, orgId: r.orgId, name: r.name, slug: r.slug, visibility: r.visibility,
+      customDomain: r.customDomain, monitorIds: r.monitorIds ?? [], headline: r.headline,
+      isActive: r.isActive, createdAt: r.createdAt, updatedAt: r.updatedAt,
+    };
+  }
+
+  async deleteStatusPage(orgId: string, id: string) {
+    const rows = await this.db.delete(uampStatusPages).where(and(eq(uampStatusPages.id, id), eq(uampStatusPages.orgId, orgId))).returning({ id: uampStatusPages.id });
+    return rows.length > 0;
+  }
+
+  async countStatusPages(orgId: string) {
+    const rows = await this.db.select({ value: count() }).from(uampStatusPages).where(eq(uampStatusPages.orgId, orgId));
+    return Number(rows[0]?.value ?? 0);
+  }
+
+  async listAlertRules(orgId: string, monitorId?: string) {
+    const conditions = [eq(uampAlertRules.orgId, orgId)];
+    if (monitorId) conditions.push(eq(uampAlertRules.monitorId, monitorId));
+    const rows = await this.db.select().from(uampAlertRules).where(and(...conditions)).orderBy(desc(uampAlertRules.createdAt));
+    return rows.map((r) => ({
+      id: r.id, orgId: r.orgId, monitorId: r.monitorId, channel: r.channel,
+      destination: r.destination, enabled: r.enabled, failureThreshold: r.failureThreshold,
+      createdAt: r.createdAt, updatedAt: r.updatedAt,
+    }));
+  }
+
+  async createAlertRule(input: CreateAlertRuleInput) {
+    const [r] = await this.db.insert(uampAlertRules).values({
+      orgId: input.orgId, monitorId: input.monitorId, channel: input.channel as never,
+      destination: input.destination, enabled: input.enabled ?? true,
+      failureThreshold: input.failureThreshold ?? 1,
+    }).returning();
+    return {
+      id: r!.id, orgId: r!.orgId, monitorId: r!.monitorId, channel: r!.channel,
+      destination: r!.destination, enabled: r!.enabled, failureThreshold: r!.failureThreshold,
+      createdAt: r!.createdAt, updatedAt: r!.updatedAt,
+    };
+  }
+
+  async updateAlertRule(orgId: string, id: string, patch: Partial<CreateAlertRuleInput> & { enabled?: boolean }) {
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (patch.channel !== undefined) updates.channel = patch.channel;
+    if (patch.destination !== undefined) updates.destination = patch.destination;
+    if (patch.enabled !== undefined) updates.enabled = patch.enabled;
+    if (patch.failureThreshold !== undefined) updates.failureThreshold = patch.failureThreshold;
+    if (patch.monitorId !== undefined) updates.monitorId = patch.monitorId;
+    const rows = await this.db.update(uampAlertRules).set(updates).where(and(eq(uampAlertRules.id, id), eq(uampAlertRules.orgId, orgId))).returning();
+    const r = rows[0];
+    if (!r) return null;
+    return {
+      id: r.id, orgId: r.orgId, monitorId: r.monitorId, channel: r.channel,
+      destination: r.destination, enabled: r.enabled, failureThreshold: r.failureThreshold,
+      createdAt: r.createdAt, updatedAt: r.updatedAt,
+    };
+  }
+
+  async deleteAlertRule(orgId: string, id: string) {
+    const rows = await this.db.delete(uampAlertRules).where(and(eq(uampAlertRules.id, id), eq(uampAlertRules.orgId, orgId))).returning({ id: uampAlertRules.id });
+    return rows.length > 0;
+  }
+
   async countActiveMonitors(orgId: string): Promise<number> {
     const rows = await this.db
       .select({ value: count() })
@@ -416,4 +545,4 @@ export class SqlUampRepo implements UampRepo {
 }
 
 // Re-export table refs so tests can import from one place if needed.
-export { uampMonitors, uampCheckResults, uampIncidents };
+export { uampMonitors, uampCheckResults, uampIncidents, uampStatusPages, uampAlertRules };

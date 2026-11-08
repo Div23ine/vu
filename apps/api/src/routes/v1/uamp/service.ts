@@ -6,13 +6,17 @@ import {
 } from './entitlements.js';
 
 import type {
+  AlertRuleRow,
   CheckResultRow,
+  CreateAlertRuleInput,
   CreateMonitorInput,
+  CreateStatusPageInput,
   IncidentRow,
   ListCheckResultsFilter,
   ListIncidentsFilter,
   ListMonitorsFilter,
   MonitorRow,
+  StatusPageRow,
   UampRepo,
 } from './repo.js';
 
@@ -127,6 +131,67 @@ export class UampService {
     return this.repo.listCheckResults(filter);
   }
 
+
+  async listStatusPages(orgId: string, page: number, pageSize: number) {
+    return this.repo.listStatusPages(orgId, page, pageSize);
+  }
+
+  async getStatusPage(orgId: string, id: string): Promise<StatusPageRow> {
+    const row = await this.repo.getStatusPage(orgId, id);
+    if (!row) throw new HttpError(404, 'not_found', 'Status page not found');
+    return row;
+  }
+
+  async createStatusPage(input: CreateStatusPageInput): Promise<StatusPageRow> {
+    const count = await this.repo.countStatusPages(input.orgId);
+    if (count >= this.entitlements.maxStatusPages) {
+      throw new HttpError(
+        402,
+        'status_page_limit_reached',
+        `Your plan allows at most ${this.entitlements.maxStatusPages} status pages`,
+      );
+    }
+    return this.repo.createStatusPage(input);
+  }
+
+  async updateStatusPage(
+    orgId: string,
+    id: string,
+    patch: Partial<CreateStatusPageInput> & { isActive?: boolean },
+  ): Promise<StatusPageRow> {
+    const row = await this.repo.updateStatusPage(orgId, id, patch);
+    if (!row) throw new HttpError(404, 'not_found', 'Status page not found');
+    return row;
+  }
+
+  async deleteStatusPage(orgId: string, id: string): Promise<void> {
+    const ok = await this.repo.deleteStatusPage(orgId, id);
+    if (!ok) throw new HttpError(404, 'not_found', 'Status page not found');
+  }
+
+  async listAlertRules(orgId: string, monitorId?: string) {
+    return this.repo.listAlertRules(orgId, monitorId);
+  }
+
+  async createAlertRule(input: CreateAlertRuleInput): Promise<AlertRuleRow> {
+    return this.repo.createAlertRule(input);
+  }
+
+  async updateAlertRule(
+    orgId: string,
+    id: string,
+    patch: Partial<CreateAlertRuleInput> & { enabled?: boolean },
+  ): Promise<AlertRuleRow> {
+    const row = await this.repo.updateAlertRule(orgId, id, patch);
+    if (!row) throw new HttpError(404, 'not_found', 'Alert rule not found');
+    return row;
+  }
+
+  async deleteAlertRule(orgId: string, id: string): Promise<void> {
+    const ok = await this.repo.deleteAlertRule(orgId, id);
+    if (!ok) throw new HttpError(404, 'not_found', 'Alert rule not found');
+  }
+
   private assertSafeTarget(target: string): void {
     let host: string;
     try {
@@ -209,5 +274,35 @@ export function toWireCheckResult(row: CheckResultRow) {
     responseSnippet: row.responseSnippet,
     checkedAt: row.checkedAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export function toWireStatusPage(row: StatusPageRow) {
+  return {
+    id: row.id,
+    orgId: row.orgId,
+    name: row.name,
+    slug: row.slug,
+    visibility: row.visibility,
+    customDomain: row.customDomain,
+    monitorIds: row.monitorIds,
+    headline: row.headline,
+    isActive: row.isActive,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+export function toWireAlertRule(row: AlertRuleRow) {
+  return {
+    id: row.id,
+    orgId: row.orgId,
+    monitorId: row.monitorId,
+    channel: row.channel,
+    destination: row.destination,
+    enabled: row.enabled,
+    failureThreshold: row.failureThreshold,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }

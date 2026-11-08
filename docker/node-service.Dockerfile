@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.7
 #
 # VUNVAULT node-service image (Task 97) — ONE parametrised Dockerfile for all
-# five Node services: api, broadcast-worker, notify-worker, maintenance-worker
-# and scan-worker (the controller). `docker-bake.hcl` selects the service with
+# six Node services: api, broadcast-worker, notify-worker, maintenance-worker, uamp-worker
+#, scan-worker (the controller). `docker-bake.hcl` selects the service with
 # the APP build arg; nothing else differs between them.
 #
 # The two base images have NO defaults on purpose: they are pinned BY DIGEST in
@@ -47,6 +47,7 @@ COPY apps/broadcast-worker/package.json apps/broadcast-worker/
 COPY apps/maintenance-worker/package.json apps/maintenance-worker/
 COPY apps/notify-worker/package.json apps/notify-worker/
 COPY apps/scan-worker/package.json apps/scan-worker/
+COPY apps/uamp-worker/package.json apps/uamp-worker/
 COPY apps/web/package.json apps/web/
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm fetch --frozen-lockfile --store-dir /pnpm/store

@@ -2,9 +2,13 @@ import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import {
+  CreateUampAlertRuleBody,
   CreateUampMonitorBody,
+  CreateUampStatusPageBody,
+  PageQuery,
   UpdateUampIncidentBody,
   UpdateUampMonitorBody,
+  UampAlertRuleSchema,
   UampCheckResultListQuery,
   UampCheckResultListResponse,
   UampIncidentListQuery,
@@ -14,11 +18,16 @@ import {
   UampMonitorListResponse,
   UampMonitorResponse,
   UampMonitorSchema,
+  UampStatusPageListResponse,
+  UampStatusPageResponse,
+  UampStatusPageSchema,
+  envelope,
 } from '@vunvault/contracts';
+
 import { HttpError } from '../../../lib/http-error.js';
 import { resolveUampPlanCode } from './entitlements.js';
 import { SqlUampRepo } from './repo.js';
-import { toWireCheckResult, toWireIncident, toWireMonitor, UampService } from './service.js';
+import { toWireAlertRule, toWireCheckResult, toWireIncident, toWireMonitor, toWireStatusPage, UampService } from './service.js';
 
 /**
  * UAMP product routes — mounted under `/api/v1/uamp`.
@@ -245,6 +254,126 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
         pageSize: q.pageSize,
       });
       return { data: rows.map(toWireCheckResult), total };
+    },
+  );
+
+
+  // ------------------------------------------------------------- status pages
+  app.get(
+    '/uamp/status-pages',
+    {
+      preHandler: auth,
+      schema: {
+        querystring: PageQuery,
+        response: { 200: UampStatusPageListResponse },
+      },
+    },
+    async (request) => {
+      const user = actor(request);
+      const q = request.query as z.infer<typeof PageQuery>;
+      const { rows, total } = await (await serviceFor(user.orgId)).listStatusPages(
+        user.orgId,
+        q.page,
+        q.pageSize,
+      );
+      return { data: rows.map(toWireStatusPage), total };
+    },
+  );
+
+  app.get(
+    '/uamp/status-pages/:id',
+    {
+      preHandler: auth,
+      schema: { params: IdParams, response: { 200: UampStatusPageResponse } },
+    },
+    async (request) => {
+      const user = actor(request);
+      const { id } = request.params as z.infer<typeof IdParams>;
+      const row = await (await serviceFor(user.orgId)).getStatusPage(user.orgId, id);
+      return { data: toWireStatusPage(row) };
+    },
+  );
+
+  app.post(
+    '/uamp/status-pages',
+    {
+      preHandler: auth,
+      schema: { body: CreateUampStatusPageBody, response: { 201: UampStatusPageResponse } },
+    },
+    async (request, reply) => {
+      const user = actor(request);
+      const body = request.body as z.infer<typeof CreateUampStatusPageBody>;
+      const row = await (await serviceFor(user.orgId)).createStatusPage({
+        orgId: user.orgId,
+        ...body,
+      });
+      return reply.status(201).send({ data: toWireStatusPage(row) });
+    },
+  );
+
+  app.delete(
+    '/uamp/status-pages/:id',
+    {
+      preHandler: auth,
+      schema: { params: IdParams, response: { 204: z.null() } },
+    },
+    async (request, reply) => {
+      const user = actor(request);
+      const { id } = request.params as z.infer<typeof IdParams>;
+      await (await serviceFor(user.orgId)).deleteStatusPage(user.orgId, id);
+      return reply.status(204).send();
+    },
+  );
+
+  // --------------------------------------------------------------- alert rules
+  app.get(
+    '/uamp/alert-rules',
+    {
+      preHandler: auth,
+      schema: {
+        querystring: z.object({ monitorId: z.string().uuid().optional() }),
+        response: { 200: z.object({ data: z.array(UampAlertRuleSchema) }) },
+      },
+    },
+    async (request) => {
+      const user = actor(request);
+      const q = request.query as { monitorId?: string };
+      const rows = await (await serviceFor(user.orgId)).listAlertRules(user.orgId, q.monitorId);
+      return { data: rows.map(toWireAlertRule) };
+    },
+  );
+
+  app.post(
+    '/uamp/alert-rules',
+    {
+      preHandler: auth,
+      schema: {
+        body: CreateUampAlertRuleBody,
+        response: { 201: envelope(UampAlertRuleSchema) },
+      },
+    },
+    async (request, reply) => {
+      const user = actor(request);
+      const body = request.body as z.infer<typeof CreateUampAlertRuleBody>;
+      const row = await (await serviceFor(user.orgId)).createAlertRule({
+        orgId: user.orgId,
+        ...body,
+      });
+      return reply.status(201).send({ data: toWireAlertRule(row) });
+    },
+  );
+
+  app.delete(
+    '/uamp/alert-rules/:id',
+    {
+      preHandler: auth,
+      schema: { params: IdParams, response: { 204: z.null() } },
+    },
+    async (request, reply) => {
+      const user = actor(request);
+      const { id } = request.params as z.infer<typeof IdParams>;
+      await (await serviceFor(user.orgId)).deleteAlertRule(user.orgId, id);
+      return reply.status(204).send();
     },
   );
 
