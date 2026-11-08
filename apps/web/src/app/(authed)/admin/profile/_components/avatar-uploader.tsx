@@ -8,7 +8,7 @@
 import { useRef, useState } from 'react';
 import { ImageIcon, Trash2, UploadCloud, UserRound } from 'lucide-react';
 import type { ProfileSettings } from '@vunvault/contracts';
-import { AVATAR_MAX_BYTES, AvatarUploadRequest } from '@vunvault/contracts';
+import { IMAGE_UPLOAD_MAX_BYTES, prepareImageUpload } from '@vunvault/lib/image-upload';
 import { cn, formatUtcClock, isApiError } from '@vunvault/lib';
 import { toast } from '@vunvault/ui';
 import {
@@ -39,7 +39,7 @@ import {
  * file cannot script in this origin.
  */
 
-const ACCEPTED = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'] as const;
+const ACCEPTED = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'] as const;
 
 export interface AvatarUploaderProps {
   profile: ProfileSettings | null;
@@ -49,6 +49,7 @@ export function AvatarUploader({ profile }: AvatarUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragover, setDragover] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [compressImages, setCompressImages] = useState(true);
   const requestUrl = useRequestAvatarUploadUrl();
   const confirm = useConfirmAvatar();
   const remove = useRemoveAvatar();
@@ -57,64 +58,36 @@ export function AvatarUploader({ profile }: AvatarUploaderProps) {
   const hasAvatar = profile !== null && profile.avatarUrl !== null;
 
   const upload = async (file: File): Promise<void> => {
-    // Client-side gate, checked against the contract's own schema so the UI and
-    // the API cannot disagree about what is acceptable.
-    const parsed = AvatarUploadRequest.safeParse({
-      contentType: file.type,
-      sizeBytes: file.size,
-    });
-    if (!parsed.success) {
-      const tooLarge = file.size > AVATAR_MAX_BYTES;
-      const badType = !ACCEPTED.includes(file.type as (typeof ACCEPTED)[number]);
-      if (tooLarge) {
-        toast({
-          kind: 'warn',
-          title: 'File too large',
-          message: 'Avatar uploads are limited to 4 MB.',
-        });
-        return;
-      }
-      if (badType) {
-        toast({
-          kind: 'warn',
-          title: 'Unsupported file type',
-          message: 'Please upload a PNG, JPG, WEBP or SVG image.',
-        });
-        return;
-      }
-      toast({
-        kind: 'warn',
-        title: 'Unsupported file type',
-        message: 'Please upload a PNG, JPG, WEBP or SVG image.',
-      });
-      return;
-    }
-
     setBusy(true);
     try {
-      const granted = await requestUrl.mutateAsync({
-        contentType: file.type,
-        sizeBytes: file.size,
+      const prepared = await prepareImageUpload(file, {
+        compress: compressImages,
+        maxBytes: IMAGE_UPLOAD_MAX_BYTES,
       });
-      const uploaded = await putAvatarToPresignedUrl(granted.uploadUrl, file);
-      if (!uploaded) throw new Error('presigned put failed');
+      const granted = await requestUrl.mutateAsync({
+        contentType: prepared.contentType,
+        sizeBytes: prepared.uploadedBytes,
+      });
+      const uploaded = await putAvatarToPresignedUrl(granted.uploadUrl, prepared.file);
+      if (!uploaded) throw new Error('The image upload was rejected by storage.');
       await confirm.mutateAsync(granted.objectKey);
       toast({
         kind: 'ok',
         title: 'Avatar updated',
-        message: `Image accepted and queued for security scanning at ${formatUtcClock(new Date())}.`,
+        message: prepared.compressed
+          ? `Optimized from ${(prepared.originalBytes / 1_048_576).toFixed(1)} MB to ${(prepared.uploadedBytes / 1_048_576).toFixed(1)} MB.`
+          : 'Your image was uploaded without changing its image data.',
       });
     } catch (error) {
       toast({
         kind: 'crit',
         title: 'Upload failed',
-        message: isApiError(error)
+        message: error instanceof Error
           ? error.message
-          : 'The file could not be read. Please try again.',
+          : isApiError(error) ? error.message : 'The file could not be processed. Please try again.',
       });
     } finally {
       setBusy(false);
-      // Clear the input so choosing the same file again still fires change.
       if (inputRef.current !== null) inputRef.current.value = '';
     }
   };
@@ -201,8 +174,17 @@ export function AvatarUploader({ profile }: AvatarUploaderProps) {
           </span>
           <span className="ps-drop-title">Drag &amp; drop your image here</span>
           <span className="ps-drop-text">
-            Or click to browse. Accepted: PNG, JPG, WEBP, SVG — up to 4 MB. Square crops preferred.
+            Or click to browse. Accepted: PNG, JPG, WEBP, GIF, SVG — up to 50 MB. Square crops preferred.
           </span>
+          <label className="ps-compress-toggle">
+            <input
+              type="checkbox"
+              checked={compressImages}
+              disabled={busy}
+              onChange={(event) => setCompressImages(event.target.checked)}
+            />
+            Compress images before upload (recommended)
+          </label>
           <input
             ref={inputRef}
             className="sr-only"
