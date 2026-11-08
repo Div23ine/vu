@@ -380,7 +380,7 @@ describe('/portal/studio/edit/[id] — featured image', () => {
         .toasts.some(
           (entry) =>
             entry.title === 'Unsupported file' &&
-            entry.message === 'Please choose a JPG, PNG, WebP or GIF image.',
+            entry.message === 'Please choose a valid JPEG, PNG, WebP, GIF or SVG image.',
         ),
     ).toBe(true);
 
