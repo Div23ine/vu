@@ -213,7 +213,6 @@ function fakeSession(overrides: Partial<SupabaseSession> = {}): SupabaseSession 
     userId: USER_ID,
     aal: 'aal1',
     ...overrides,
-    lastActiveAt: overrides.lastActiveAt ?? null,
   };
 }
 
@@ -422,7 +421,6 @@ async function makeHarness(
               deletedAt: null,
               mfaSetupDeadline: null,
               mfaEnrolled: false,
-              lastActiveAt: null,
             }
           : null,
     }),
@@ -928,7 +926,6 @@ describe('GET /api/v1/auth/magic-link/verify', () => {
       accountStatus: 'active',
       deletedAt: null,
       mfaEnrolled: false,
-      lastActiveAt: null,
       ...overrides,
       lastActiveAt: overrides.lastActiveAt ?? null,
     });
