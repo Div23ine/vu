@@ -2,11 +2,14 @@ import { isDeepStrictEqual } from 'node:util';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
+import { checkServerIdentity, connect as tlsConnect } from 'node:tls';
 import type { UampHeader, UampResponseAssertion } from '@vunvault/db';
 import { resolveGuardedTarget, type ResolvedGuardResult } from './target-guard.js';
 
 export interface CheckInput {
   target: string;
+  type?: string;
+  warnDaysBeforeExpiry?: number | null;
   method?: string | null;
   timeoutMs: number;
   headers?: UampHeader[] | null;
@@ -95,7 +98,7 @@ async function requestPinned(
     body?: string;
     signal: AbortSignal;
   },
-): Promise<{ status: number; text: string }> {
+): Promise<{ status: number; text: string; location?: string }> {
   return new Promise((resolve, reject) => {
     const hostname = url.hostname.replace(/^\[|\]$/g, '');
     const pinnedLookup = ((
@@ -145,6 +148,7 @@ async function requestPinned(
         resolve({
           status: response.statusCode ?? 0,
           text: Buffer.concat(chunks).toString('utf8'),
+          location: response.headers.location,
         });
       });
     };
@@ -160,15 +164,175 @@ async function requestPinned(
   });
 }
 
+export interface SslProbeResult {
+  validTo: string;
+  authorized: boolean;
+  hostnameValid: boolean;
+}
+
 export interface CheckDependencies {
   resolveTarget?: (target: string) => Promise<ResolvedGuardResult>;
   request?: typeof requestPinned;
+  sslProbe?: (input: {
+    address: string;
+    hostname: string;
+    port: number;
+    timeoutMs: number;
+  }) => Promise<SslProbeResult>;
+}
+
+async function probeSslCertificate(input: {
+  address: string;
+  hostname: string;
+  port: number;
+  timeoutMs: number;
+}): Promise<SslProbeResult> {
+  return new Promise((resolve, reject) => {
+    const socket = tlsConnect({
+      host: input.address,
+      port: input.port,
+      servername: isIP(input.hostname) === 0 ? input.hostname : undefined,
+      rejectUnauthorized: false,
+    });
+    const timer = setTimeout(() => {
+      const error = new Error('timeout');
+      error.name = 'AbortError';
+      socket.destroy(error);
+    }, input.timeoutMs);
+    socket.once('secureConnect', () => {
+      clearTimeout(timer);
+      const certificate = socket.getPeerCertificate();
+      const validTo = certificate.valid_to;
+      const identityError = checkServerIdentity(input.hostname, certificate);
+      socket.end();
+      if (typeof validTo !== 'string' || validTo.length === 0) {
+        reject(new Error('certificate_missing'));
+        return;
+      }
+      resolve({
+        validTo,
+        authorized: socket.authorized,
+        hostnameValid: identityError === undefined,
+      });
+    });
+    socket.once('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+  });
+}
+
+async function runDnsCheck(
+  input: CheckInput,
+  dependencies: CheckDependencies,
+): Promise<CheckOutcome> {
+  const started = Date.now();
+  const guarded = await (dependencies.resolveTarget ?? resolveGuardedTarget)(input.target);
+  if (!guarded.ok) {
+    const status: CheckOutcome['status'] =
+      guarded.reason === 'dns_no_addresses' || guarded.reason === 'dns_resolution_failed'
+        ? 'down'
+        : 'error';
+    return {
+      status,
+      httpStatus: null,
+      latencyMs: Date.now() - started,
+      errorMessage: guarded.reason,
+      responseSnippet: null,
+    };
+  }
+  if (isIP(guarded.url.hostname.replace(/^\[|\]$/g, '')) !== 0) {
+    return {
+      status: 'error',
+      httpStatus: null,
+      latencyMs: Date.now() - started,
+      errorMessage: 'dns_monitor_requires_hostname',
+      responseSnippet: null,
+    };
+  }
+  return {
+    status: 'up',
+    httpStatus: null,
+    latencyMs: Date.now() - started,
+    errorMessage: null,
+    responseSnippet: guarded.address,
+  };
+}
+
+async function runSslCheck(
+  input: CheckInput,
+  dependencies: CheckDependencies,
+): Promise<CheckOutcome> {
+  const started = Date.now();
+  const guarded = await (dependencies.resolveTarget ?? resolveGuardedTarget)(input.target);
+  if (!guarded.ok) {
+    return {
+      status: 'error',
+      httpStatus: null,
+      latencyMs: Date.now() - started,
+      errorMessage: 'target_blocked:' + guarded.reason,
+      responseSnippet: null,
+    };
+  }
+  if (guarded.url.protocol !== 'https:') {
+    return {
+      status: 'error',
+      httpStatus: null,
+      latencyMs: Date.now() - started,
+      errorMessage: 'ssl_monitor_requires_https',
+      responseSnippet: null,
+    };
+  }
+
+  try {
+    const hostname = guarded.url.hostname.replace(/^\[|\]$/g, '');
+    const certificate = await (dependencies.sslProbe ?? probeSslCertificate)({
+      address: guarded.address,
+      hostname,
+      port: Number(guarded.url.port || 443),
+      timeoutMs: input.timeoutMs,
+    });
+    const expiresAt = Date.parse(certificate.validTo);
+    if (!Number.isFinite(expiresAt)) throw new Error('certificate_expiry_invalid');
+    const remainingDays = (expiresAt - Date.now()) / 86_400_000;
+    const expired = remainingDays <= 0;
+    const valid = certificate.authorized && certificate.hostnameValid && !expired;
+    const status: CheckOutcome['status'] = !valid
+      ? 'down'
+      : remainingDays <= (input.warnDaysBeforeExpiry ?? 14)
+        ? 'degraded'
+        : 'up';
+    return {
+      status,
+      httpStatus: null,
+      latencyMs: Date.now() - started,
+      errorMessage: valid ? null : expired ? 'certificate_expired' : 'certificate_validation_failed',
+      responseSnippet: 'expires_at:' + new Date(expiresAt).toISOString(),
+    };
+  } catch (error) {
+    const name = error instanceof Error ? error.name : 'Error';
+    return {
+      status: name === 'AbortError' ? 'timeout' : 'error',
+      httpStatus: null,
+      latencyMs: Date.now() - started,
+      errorMessage:
+        name === 'AbortError'
+          ? 'timeout'
+          : error instanceof Error
+            ? error.message.slice(0, 400)
+            : 'ssl_check_failed',
+      responseSnippet: null,
+    };
+  }
 }
 
 export async function runCheck(
   input: CheckInput,
   dependencies: CheckDependencies = {},
 ): Promise<CheckOutcome> {
+  if (input.type === 'dns') return runDnsCheck(input, dependencies);
+  if (input.type === 'ssl') return runSslCheck(input, dependencies);
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), input.timeoutMs);
   const started = Date.now();
