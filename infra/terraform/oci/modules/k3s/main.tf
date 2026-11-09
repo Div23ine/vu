@@ -17,7 +17,10 @@ variable "shape" { type = string }
 variable "ocpus" { type = number }
 variable "memory_gbs" { type = number }
 variable "agent_count" { type = number }
-variable "ssh_public_key" { type = string sensitive = true }
+variable "ssh_public_key" {
+  type      = string
+  sensitive = true
+}
 variable "availability_domain" { type = string }
 
 resource "random_password" "k3s_token" {
