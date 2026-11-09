@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { runCheck } from './checker.js';
 import type { ResolvedGuardResult } from './target-guard.js';
 
@@ -10,10 +10,6 @@ const publicTarget: ResolvedGuardResult = {
 };
 
 describe('runCheck', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('treats redirects as failed checks without following the Location header', async () => {
     const request = vi.fn(async () => ({ status: 302, text: '' }));
     const result = await runCheck(
@@ -34,13 +30,6 @@ describe('runCheck', () => {
   });
 
   it('evaluates nested JSON path equality assertions', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ data: { checks: [{ state: 'healthy' }] } }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      }),
-    );
-
     const result = await runCheck(
       {
         target: 'https://example.com/health',
@@ -62,10 +51,6 @@ describe('runCheck', () => {
   });
 
   it('marks a JSON equality mismatch as a failed assertion', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ status: 'degraded' }), { status: 200 }),
-    );
-
     const result = await runCheck(
       {
         target: 'https://example.com/health',
@@ -84,10 +69,6 @@ describe('runCheck', () => {
   });
 
   it('rejects malformed JSON when JSON assertions are configured', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('not-json', { status: 200 }),
-    );
-
     const result = await runCheck(
       {
         target: 'https://example.com/health',
