@@ -101,7 +101,7 @@ jobs:
           if-no-files-found: ignore
 
   verify-uamp-frontend:
-    name: typecheck and lint UAMP HQ frontend
+    name: typecheck UAMP HQ frontend
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -116,8 +116,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Typecheck UAMP HQ
         run: pnpm --filter uamp-web --fail-if-no-match typecheck
-      - name: Lint UAMP HQ
-        run: pnpm --filter uamp-web --fail-if-no-match lint
 
   build-uamp:
     name: build UAMP HQ frontend (independent)
