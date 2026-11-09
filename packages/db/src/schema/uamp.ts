@@ -105,6 +105,7 @@ export const uampCheckResults = pgTable(
     monitorId: uuid('monitor_id')
       .notNull()
       .references(() => uampMonitors.id, { onDelete: 'cascade' }),
+    checkKey: text('check_key').notNull(),
     status: uampCheckResultStatusEnum('status').notNull(),
     httpStatus: integer('http_status'),
     latencyMs: integer('latency_ms'),
@@ -119,6 +120,7 @@ export const uampCheckResults = pgTable(
       table.monitorId,
       sql`${table.checkedAt} DESC`,
     ),
+    uniqueIndex('uamp_check_results_monitor_check_key_idx').on(table.monitorId, table.checkKey),
     index('uamp_check_results_org_checked_idx').on(table.orgId, sql`${table.checkedAt} DESC`),
     check(
       'uamp_check_results_snippet_length',
