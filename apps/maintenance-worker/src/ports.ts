@@ -86,6 +86,17 @@ export interface StuckBroadcastRow {
   kind: 'initial' | 'rebroadcast' | 'retraction';
 }
 
+export interface UampDueMonitor {
+  id: string;
+  orgId: string;
+  intervalSeconds: number;
+  lastCheckedAt: Date | null;
+}
+
+export interface UampCheckProducer {
+  enqueue(monitor: UampDueMonitor): Promise<void>;
+}
+
 export interface MaintenanceRepo {
   // ---- Task 91 -------------------------------------------------------------
   listEndpointWindows(from: Date, to: Date): Promise<EndpointWindowRow[]>;
@@ -98,6 +109,9 @@ export interface MaintenanceRepo {
   insertThreatSnapshot(input: ThreatSnapshotInput): Promise<void>;
   /** `scheduled` items whose time has come → `published`; returns what flipped. */
   publishScheduledContent(now: Date): Promise<PublishedContentRow[]>;
+
+  /** UAMP monitors due for their next scheduled check. */
+  listDueUampMonitors?(limit: number): Promise<UampDueMonitor[]>;
 
   // ---- Task 92 -------------------------------------------------------------
   /** DELETE login_attempts older than the cutoff; returns rows deleted. */
