@@ -21,6 +21,7 @@ export interface DueMonitor {
   assertions: unknown;
   keyword: string | null;
   lastStatus: string | null;
+  warnDaysBeforeExpiry: number | null;
 }
 
 export class SqlUampWorkerRepo {
@@ -43,6 +44,7 @@ export class SqlUampWorkerRepo {
         assertions: uampMonitors.assertions,
         keyword: uampMonitors.keyword,
         lastStatus: uampMonitors.lastStatus,
+        warnDaysBeforeExpiry: uampMonitors.warnDaysBeforeExpiry,
       })
       .from(uampMonitors)
       .where(
