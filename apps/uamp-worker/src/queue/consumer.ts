@@ -24,7 +24,10 @@ export function startConsumers(options: {
     QUEUE_NAMES.uamp,
     async (job: Job) => {
       const payload = UampCheckJobPayload.parse(job.data);
-      await options.handler.handle(payload);
+      await options.handler.handle({
+        ...payload,
+        checkKey: payload.checkKey ?? String(job.id ?? 'uamp-legacy-' + payload.monitorId),
+      });
     },
     {
       connection: options.connection,
