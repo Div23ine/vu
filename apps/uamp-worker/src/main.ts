@@ -9,7 +9,7 @@ import { startConsumers } from './queue/consumer.js';
 /**
  * UAMP monitoring worker.
  *
- * - Scheduler tick finds due monitors and enqueues check jobs.
+ * - Maintenance worker schedules due monitor checks in BullMQ.
  * - Consumers perform HTTP/API checks with SSRF guards.
  * - Writes check results and opens/resolves incidents.
  * - Independent of AI — monitoring continues if AI is unavailable.
@@ -38,9 +38,7 @@ async function main(): Promise<void> {
   const consumers = startConsumers({
     connection,
     handler,
-    repo,
     concurrency: env.UAMP_CONCURRENCY,
-    schedulerIntervalMs: env.UAMP_SCHEDULER_INTERVAL_MS,
     log: {
       info: (m, f) => log.info(f ?? {}, m),
       warn: (m, f) => log.warn(f ?? {}, m),
