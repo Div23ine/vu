@@ -63,7 +63,7 @@ jobs:
         # satisfy the imageRef guard without inventing a real image.
         run: |
           set -euo pipefail
-          for chart in api broadcast-worker notify-worker maintenance-worker scan-controller; do
+          for chart in api broadcast-worker notify-worker maintenance-worker uamp-worker scan-controller; do
             helm dependency update "infra/helm/$chart"
             helm lint "infra/helm/$chart" \
               --set image.repository=example.test/vv/$chart --set image.tag=deadbeef
