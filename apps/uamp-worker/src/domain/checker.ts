@@ -4,7 +4,7 @@ import { request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
 import { checkServerIdentity, connect as tlsConnect } from 'node:tls';
 import type { UampHeader, UampResponseAssertion } from '@vunvault/db';
-import { resolveGuardedTarget, type ResolvedGuardResult } from './target-guard.js';
+import { guardTarget, resolveGuardedTarget, type ResolvedGuardResult } from './target-guard.js';
 
 export interface CheckInput {
   target: string;
@@ -222,6 +222,134 @@ async function probeSslCertificate(input: {
   });
 }
 
+async function runDomainCheck(
+  input: CheckInput,
+  dependencies: CheckDependencies,
+): Promise<CheckOutcome> {
+  const started = Date.now();
+  const guardedInput = guardTarget(input.target);
+  if (!guardedInput.ok) {
+    return {
+      status: 'error',
+      httpStatus: null,
+      latencyMs: Date.now() - started,
+      errorMessage: 'target_blocked:' + guardedInput.reason,
+      responseSnippet: null,
+    };
+  }
+  const hostname = guardedInput.url.hostname.replace(/^\[|\]$/g, '');
+  if (isIP(hostname) !== 0) {
+    return {
+      status: 'error',
+      httpStatus: null,
+      latencyMs: Date.now() - started,
+      errorMessage: 'domain_monitor_requires_hostname',
+      responseSnippet: null,
+    };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), input.timeoutMs);
+  const resolver = dependencies.resolveTarget ?? resolveGuardedTarget;
+  const request = dependencies.request ?? requestPinned;
+  let url = new URL('https://rdap.org/domain/' + encodeURIComponent(hostname));
+
+  try {
+    let response: { status: number; text: string; location?: string } | undefined;
+    for (let redirect = 0; redirect <= 3; redirect += 1) {
+      const guarded = await resolver(url.toString());
+      if (!guarded.ok) {
+        return {
+          status: 'error',
+          httpStatus: null,
+          latencyMs: Date.now() - started,
+          errorMessage: 'rdap_target_blocked:' + guarded.reason,
+          responseSnippet: null,
+        };
+      }
+      if (controller.signal.aborted) {
+        throw new DOMException('The operation was aborted', 'AbortError');
+      }
+      response = await request(guarded.url, guarded.address, guarded.family, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/rdap+json, application/json',
+          'User-Agent': input.userAgent,
+        },
+        signal: controller.signal,
+      });
+      if ([301, 302, 303, 307, 308].includes(response.status) && response.location) {
+        if (redirect === 3) throw new Error('rdap_redirect_limit');
+        const nextUrl = new URL(response.location, url);
+        if (nextUrl.protocol !== 'https:') throw new Error('rdap_redirect_protocol_not_allowed');
+        url = nextUrl;
+        continue;
+      }
+      break;
+    }
+
+    if (response === undefined) throw new Error('rdap_response_missing');
+    if (response.status === 404) {
+      return {
+        status: 'down',
+        httpStatus: response.status,
+        latencyMs: Date.now() - started,
+        errorMessage: 'domain_not_registered',
+        responseSnippet: null,
+      };
+    }
+    if (response.status !== 200) {
+      return {
+        status: 'error',
+        httpStatus: response.status,
+        latencyMs: Date.now() - started,
+        errorMessage: 'rdap_http_status:' + response.status,
+        responseSnippet: response.text.slice(0, 512) || null,
+      };
+    }
+
+    const document = JSON.parse(response.text) as {
+      events?: Array<{ eventAction?: string; eventDate?: string }>;
+    };
+    const expiration = document.events?.find((event) =>
+      ['expiration', 'expiry'].includes((event.eventAction ?? '').toLowerCase()),
+    );
+    const expiresAt = expiration?.eventDate ? Date.parse(expiration.eventDate) : Number.NaN;
+    if (!Number.isFinite(expiresAt)) throw new Error('rdap_expiration_event_missing');
+
+    const remainingDays = (expiresAt - Date.now()) / 86_400_000;
+    const status: CheckOutcome['status'] =
+      remainingDays <= 0
+        ? 'down'
+        : remainingDays <= (input.warnDaysBeforeExpiry ?? 30)
+          ? 'degraded'
+          : 'up';
+    return {
+      status,
+      httpStatus: response.status,
+      latencyMs: Date.now() - started,
+      errorMessage: remainingDays <= 0 ? 'domain_expired' : null,
+      responseSnippet: 'expires_at:' + new Date(expiresAt).toISOString(),
+    };
+  } catch (error) {
+    const name = error instanceof Error ? error.name : 'Error';
+    return {
+      status: name === 'AbortError' ? 'timeout' : 'error',
+      httpStatus: null,
+      latencyMs: Date.now() - started,
+      errorMessage:
+        name === 'AbortError'
+          ? 'timeout'
+          : error instanceof Error
+            ? error.message.slice(0, 400)
+            : 'domain_check_failed',
+      responseSnippet: null,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function runDnsCheck(
   input: CheckInput,
   dependencies: CheckDependencies,
@@ -331,6 +459,7 @@ export async function runCheck(
   dependencies: CheckDependencies = {},
 ): Promise<CheckOutcome> {
   if (input.type === 'dns') return runDnsCheck(input, dependencies);
+  if (input.type === 'domain') return runDomainCheck(input, dependencies);
   if (input.type === 'ssl') return runSslCheck(input, dependencies);
 
   const controller = new AbortController();
