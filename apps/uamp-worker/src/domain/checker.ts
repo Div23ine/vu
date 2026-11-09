@@ -3,7 +3,7 @@ import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
 import type { UampHeader, UampResponseAssertion } from '@vunvault/db';
-import { resolveGuardedTarget } from './target-guard.js';
+import { resolveGuardedTarget, type ResolvedGuardResult } from './target-guard.js';
 
 export interface CheckInput {
   target: string;
@@ -33,7 +33,7 @@ function resolveJsonPath(root: unknown, path: string): JsonPathResult {
   const started = Date.now();
 
   try {
-    const guarded = await resolveGuardedTarget(input.target);
+    const guarded = await (dependencies.resolveTarget ?? resolveGuardedTarget)(input.target);
     if (!guarded.ok) {
       return {
         status: 'error',
@@ -62,7 +62,7 @@ function resolveJsonPath(root: unknown, path: string): JsonPathResult {
 
     // Connect to the exact address that passed the DNS/IP policy check. The
     // original hostname remains in the URL for HTTP Host and TLS SNI validation.
-    const response = await requestPinned(guarded.url, guarded.address, guarded.family, {
+    const response = await (dependencies.request ?? requestPinned)(guarded.url, guarded.address, guarded.family, {
       method,
       headers: Object.fromEntries(headers.entries()),
       body,
@@ -364,7 +364,15 @@ async function requestPinned(
   });
 }
 
-export async function runCheck(input: CheckInput): Promise<CheckOutcome> {
+export interface CheckDependencies {
+  resolveTarget?: (target: string) => Promise<ResolvedGuardResult>;
+  request?: typeof requestPinned;
+}
+
+export async function runCheck(
+  input: CheckInput,
+  dependencies: CheckDependencies = {},
+): Promise<CheckOutcome> {
   const guarded = guardTarget(input.target);
   if (!guarded.ok) {
     return {
