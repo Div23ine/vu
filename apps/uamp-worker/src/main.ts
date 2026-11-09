@@ -39,6 +39,7 @@ async function main(): Promise<void> {
     connection,
     handler,
     concurrency: env.UAMP_CONCURRENCY,
+    prefix: env.REDIS_KEY_PREFIX,
     log: {
       info: (m, f) => log.info(f ?? {}, m),
       warn: (m, f) => log.warn(f ?? {}, m),
