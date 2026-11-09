@@ -1,17 +1,14 @@
-   services:
-     db:
-       image: postgres:15-alpine
-       environment:
-         POSTGRES_USER: vunvault
-         POSTGRES_PASSWORD: vunvault_password
-         POSTGRES_DB: vunvault_db
-       ports:
-         - "5432:5432"
-       volumes:
-         - postgres_data:/var/lib/postgresql/data
-
-   volumes:
-     postgres_data:
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: vunvault
+      POSTGRES_PASSWORD: vunvault_password
+      POSTGRES_DB: vunvault_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
   recon:
     # Unprivileged scanner backend: loopback-only, non-root, no capabilities,
     # read-only rootfs. When this service is absent the site honestly reports
@@ -34,3 +31,6 @@
     user: "1000:1000"
     tmpfs:
       - /tmp
+
+volumes:
+  postgres_data:

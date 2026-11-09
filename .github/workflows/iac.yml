@@ -53,7 +53,7 @@ jobs:
           docker buildx create --name vv-syntax --driver docker-container >/dev/null 2>&1 || true
           REGISTRY=example.test TAG=syntax GIT_SHA=deadbeef CREATED=2026-01-01T00:00:00Z \
           NODE_BUILD_IMAGE=node:22-bookworm-slim DISTROLESS_IMAGE=gcr.io/distroless/nodejs22-debian12:nonroot \
-          docker buildx bake --print >/dev/null
+          docker buildx bake -f docker-bake.hcl --print >/dev/null
 
   helm:
     name: helm charts
