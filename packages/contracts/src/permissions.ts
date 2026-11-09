@@ -42,6 +42,8 @@ export const PERMISSIONS = [
   'support:handle',
   'profile:read',
   'profile:write',
+  'uamp:read',
+  'uamp:manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -97,6 +99,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     'billing:manage',
     'profile:read',
     'profile:write',
+    'uamp:read',
+    'uamp:manage',
   ],
 };
 
