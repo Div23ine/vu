@@ -10,10 +10,11 @@ export class BullUampCheckProducer implements UampCheckProducer {
     const payload = UampCheckJobPayload.parse({
       monitorId: monitor.id,
       orgId: monitor.orgId,
+      checkKey: 'uamp-' + monitor.id + '-' + (monitor.lastCheckedAt?.getTime().toString() ?? 'initial'),
     });
-    const generation = monitor.lastCheckedAt?.getTime().toString() ?? 'initial';
+    const jobId = payload.checkKey!;
     await this.queue.add('check', payload, {
-      jobId: 'uamp-' + monitor.id + '-' + generation,
+      jobId,
       attempts: 3,
       backoff: { type: 'exponential', delay: 1_000 },
       removeOnComplete: 100,
