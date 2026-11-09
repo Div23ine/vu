@@ -131,6 +131,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Materialize the UAMP chart's local vv-lib dependency
+        run: helm dependency update infra/helm/uamp-worker
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
