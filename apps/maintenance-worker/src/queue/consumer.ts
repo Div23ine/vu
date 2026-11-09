@@ -12,6 +12,7 @@ import { runScheduledPublish } from '../domain/scheduled-publish';
 import { runStaleSignups } from '../domain/stale-signups';
 import { runThreatLevel } from '../domain/threat-level';
 import { runVerifyChain } from '../domain/verify-chain';
+import { runUampChecks } from '../domain/uamp-checks';
 import type {
   BroadcastProducer,
   Clock,
@@ -20,6 +21,7 @@ import type {
   NotifyEnqueuer,
   ObjectWriter,
   Summary,
+  UampCheckProducer,
 } from '../ports';
 
 /**
@@ -43,6 +45,7 @@ export const LOCK_DURATION_MS = 30_000;
 export interface HandlerDeps {
   repo: MaintenanceRepo;
   notify: NotifyEnqueuer;
+  uamp?: UampCheckProducer;
   broadcast: BroadcastProducer;
   storage: ObjectWriter;
   /** Audit chain VERIFICATION key lookup (the worker never appends). */
@@ -138,6 +141,15 @@ export const HANDLERS: Record<MaintenanceTask, MaintenanceHandler> = {
       clock: deps.clock,
       logger: deps.logger,
     }),
+  uamp_checks: (deps) => {
+    if (deps.uamp === undefined) throw new Error('uamp_queue_not_configured');
+    return runUampChecks({
+      repo: deps.repo,
+      uamp: deps.uamp,
+      clock: deps.clock,
+      logger: deps.logger,
+    });
+  },
 };
 
 export interface ConsumerDeps {
