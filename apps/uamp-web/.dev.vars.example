@@ -1,0 +1,2 @@
+# Local-only Cloudflare Worker variables; do not commit secrets.
+NEXTJS_ENV=development
