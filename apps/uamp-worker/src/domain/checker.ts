@@ -480,6 +480,33 @@ export async function runCheck(
     if (controller.signal.aborted) {
       throw new DOMException('The operation was aborted', 'AbortError');
     }
+    if (input.type === 'https' && guarded.url.protocol !== 'https:') {
+      return {
+        status: 'error',
+        httpStatus: null,
+        latencyMs: Date.now() - started,
+        errorMessage: 'https_monitor_requires_https',
+        responseSnippet: null,
+      };
+    }
+    if (input.type === 'http' && guarded.url.protocol !== 'http:') {
+      return {
+        status: 'error',
+        httpStatus: null,
+        latencyMs: Date.now() - started,
+        errorMessage: 'http_monitor_requires_http',
+        responseSnippet: null,
+      };
+    }
+    if (input.type === 'keyword' && !input.keyword) {
+      return {
+        status: 'error',
+        httpStatus: null,
+        latencyMs: Date.now() - started,
+        errorMessage: 'keyword_monitor_requires_keyword',
+        responseSnippet: null,
+      };
+    }
 
     const method = (input.method ?? 'GET').toUpperCase();
     const headers = new Headers();
