@@ -15,12 +15,13 @@ function makeLogger(): Logger {
 function makeQueue() {
   const calls: Array<{
     id: string;
-    pattern: string;
+    pattern: string | undefined;
+    every: number | undefined;
     template: { name: string; data: { task: string } };
   }> = [];
   const queue: SchedulerQueue = {
     async upsertJobScheduler(id, repeat, template) {
-      calls.push({ id, pattern: repeat.pattern, template });
+      calls.push({ id, pattern: repeat.pattern, every: repeat.every, template });
       return id;
     },
   };
@@ -28,7 +29,7 @@ function makeQueue() {
 }
 
 describe('SCHEDULES', () => {
-  it('registers exactly the twelve catalogued patterns', () => {
+  it('registers every catalogued schedule', () => {
     expect(SCHEDULES).toEqual([
       { task: 'metrics_rollup', pattern: '5 * * * *' },
       { task: 'node_health', pattern: '*/5 * * * *' },
@@ -42,6 +43,7 @@ describe('SCHEDULES', () => {
       { task: 'purge_login_attempts', pattern: '0 3 * * *' },
       { task: 'flag_dormant_accounts', pattern: '30 3 * * *' },
       { task: 'stale_signups', pattern: '0 4 * * *' },
+      { task: 'uamp_checks', every: 15_000 },
     ]);
   });
 
@@ -71,11 +73,12 @@ describe('registerSchedulers', () => {
     const { queue, calls } = makeQueue();
     const registered = await registerSchedulers(queue, makeLogger());
 
-    expect(registered).toBe(12);
-    expect(calls).toHaveLength(12);
+    expect(registered).toBe(13);
+    expect(calls).toHaveLength(13);
     expect(calls[0]).toEqual({
       id: 'maintenance:metrics_rollup',
       pattern: '5 * * * *',
+      every: undefined,
       template: { name: 'metrics_rollup', data: { task: 'metrics_rollup' } },
     });
   });
@@ -87,8 +90,8 @@ describe('registerSchedulers', () => {
     // upsertJobScheduler with the same stable id is the idempotency: the same
     // four ids appear twice, and BullMQ keeps one schedule per id.
     const ids = calls.map((call) => call.id);
-    expect(new Set(ids).size).toBe(12);
-    expect(ids).toHaveLength(24);
+    expect(new Set(ids).size).toBe(13);
+    expect(ids).toHaveLength(26);
   });
 
   it('accepts an explicit schedule list (the Task 92 seam)', async () => {
