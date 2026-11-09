@@ -119,7 +119,7 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm install --frozen-lockfile
       - name: Build the standalone UAMP HQ Worker
-        run: pnpm --filter uamp-web cf:build
+        run: pnpm --filter uamp-web --fail-if-no-match cf:build
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
