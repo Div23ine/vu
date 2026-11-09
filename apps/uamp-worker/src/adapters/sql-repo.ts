@@ -83,6 +83,7 @@ export class SqlUampWorkerRepo {
         and(
           eq(uampMonitors.id, monitorId),
           eq(uampMonitors.orgId, orgId),
+          eq(uampMonitors.status, 'active'),
           isNull(uampMonitors.deletedAt),
         ),
       )
@@ -98,6 +99,20 @@ export class SqlUampWorkerRepo {
   ): Promise<void> {
     await this.db.transaction(async (tx) => {
       const checkedAt = new Date();
+      const active = await tx
+        .select({ id: uampMonitors.id })
+        .from(uampMonitors)
+        .where(
+          and(
+            eq(uampMonitors.id, monitor.id),
+            eq(uampMonitors.orgId, monitor.orgId),
+            eq(uampMonitors.status, 'active'),
+            isNull(uampMonitors.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (active.length === 0) return;
+
       const inserted = await tx
         .insert(uampCheckResults)
         .values({
