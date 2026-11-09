@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { SessionUser as SessionUserSchema, type SessionUser } from '@vunvault/contracts';
+import type { SessionUser } from '@vunvault/contracts';
 import { env } from '../env';
 
 export async function getServerSession(): Promise<SessionUser | null> {
@@ -16,8 +16,16 @@ export async function getServerSession(): Promise<SessionUser | null> {
     if (!response.ok) return null;
     const body: unknown = await response.json();
     if (typeof body !== 'object' || body === null) return null;
-    const parsed = SessionUserSchema.safeParse((body as { data?: unknown }).data);
-    return parsed.success ? parsed.data : null;
+    const data = (body as { data?: unknown }).data;
+    if (typeof data !== 'object' || data === null) return null;
+    const user = data as Partial<SessionUser>;
+    if (
+      typeof user.id !== 'string' ||
+      typeof user.email !== 'string' ||
+      typeof user.fullName !== 'string' ||
+      !Array.isArray(user.permissions)
+    ) return null;
+    return user as SessionUser;
   } catch {
     return null;
   }
