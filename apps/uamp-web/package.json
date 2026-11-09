@@ -12,7 +12,6 @@
     "cf:deploy:production": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env production",
     "cf:typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "start": "next start",
-    "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -30,7 +29,7 @@
     "@types/react-dom": "^19.3.0",
     "@vunvault/config": "workspace:*",
     "eslint": "catalog:",
-    "typescript": "catalog:",
+    "typescript": "6.0.3",
     "wrangler": "^4.158.0"
   }
 }
