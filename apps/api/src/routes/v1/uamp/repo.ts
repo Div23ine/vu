@@ -1,4 +1,6 @@
 import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
+import type { Db } from '@vunvault/db';
+import type { Tx } from '../../../plugins/db.js';
 import {
   uampAlertRules,
   uampCheckResults,
@@ -8,7 +10,6 @@ import {
   type UampHeader,
   type UampResponseAssertion,
 } from '@vunvault/db';
-import type { SqlExecutor } from '../../../audit/repo.js';
 
 export interface MonitorRow {
   id: string;
@@ -165,7 +166,7 @@ function mapMonitor(row: typeof uampMonitors.$inferSelect): MonitorRow {
 }
 
 export class SqlUampRepo implements UampRepo {
-  constructor(private readonly db: SqlExecutor) {}
+  constructor(private readonly db: Db | Tx) {}
 
   async listMonitors(filter: ListMonitorsFilter): Promise<{ rows: MonitorRow[]; total: number }> {
     const conditions = [eq(uampMonitors.orgId, filter.orgId), isNull(uampMonitors.deletedAt)];
