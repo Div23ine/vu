@@ -1,0 +1,7 @@
+import type { UampCheckResult,UampMonitor } from '@vunvault/contracts';
+import { getUamp,listPath } from '../../../lib/server-api';
+export default async function ChecksPage(){
+ const [checks,monitors]=await Promise.all([getUamp<{data:UampCheckResult[];total:number}>(listPath('check-results')),getUamp<{data:UampMonitor[];total:number}>(listPath('monitors'))]);
+ return <><div className="page-head"><div><p className="eyebrow">MONITORING TELEMETRY</p><h1>Check history</h1><p>Recent HTTP, API, SSL, DNS and domain check results.</p></div></div><section className="panel"><div className="panel-head"><div><h2>Latest check results</h2><p className="panel-sub">{checks.total} records returned</p></div></div>
+ {checks.data.length?<div className="table-wrap"><table><thead><tr><th>Monitor</th><th>Result</th><th>HTTP</th><th>Latency</th><th>Location</th><th>Checked at</th><th>Details</th></tr></thead><tbody>{checks.data.map(c=><tr key={c.id}><td>{monitors.data.find(m=>m.id===c.monitorId)?.name??c.monitorId}</td><td><span className={`status status-${c.status}`}>{c.status}</span></td><td>{c.httpStatus??'—'}</td><td>{c.latencyMs==null?'—':`${c.latencyMs} ms`}</td><td>{c.location??'—'}</td><td>{new Date(c.checkedAt).toLocaleString()}</td><td><span className="subtle">{c.errorMessage??c.responseSnippet??'—'}</span></td></tr>)}</tbody></table></div>:<div className="empty-state">No check results are available yet. New results appear after a monitor runs.</div>}</section></>;
+}

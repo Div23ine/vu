@@ -1,0 +1,3 @@
+import Link from 'next/link';
+import { MonitorForm } from '../../../../components/monitor-form';
+export default function NewMonitorPage(){return <><div className="page-head"><div><p className="eyebrow">NEW CHECK</p><h1>Add a monitor</h1><p>Configure the endpoint and the checks UAMP should perform.</p></div><Link className="button button-secondary" href="/monitors">← Back to monitors</Link></div><section className="panel"><MonitorForm/></section></>;}

@@ -100,6 +100,23 @@ jobs:
           retention-days: 3
           if-no-files-found: ignore
 
+  verify-uamp-frontend:
+    name: typecheck UAMP HQ frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_API_URL: https://api.invalid
+      NEXT_PUBLIC_SITE_URL: https://uamp.invalid
+      NEXT_PUBLIC_AUTH_URL: https://www.invalid
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck UAMP HQ
+        run: pnpm --filter uamp-web --fail-if-no-match typecheck
+
   build-uamp:
     name: build UAMP HQ frontend (independent)
     runs-on: ubuntu-24.04
@@ -119,7 +136,7 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm install --frozen-lockfile
       - name: Build the standalone UAMP HQ Worker
-        run: pnpm --filter uamp-web cf:build
+        run: pnpm --filter uamp-web --fail-if-no-match cf:build
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
