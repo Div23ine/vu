@@ -15,6 +15,7 @@ locals {
     "vv/broadcast-worker",
     "vv/notify-worker",
     "vv/maintenance-worker",
+    "vv/uamp-worker",
     "vv/scan-controller",
     "vv/scan-runner",
   ]
