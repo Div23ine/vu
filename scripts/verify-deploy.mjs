@@ -29,6 +29,7 @@ export const TARGET_TO_CHART = {
   'broadcast-worker': 'broadcast-worker',
   'notify-worker': 'notify-worker',
   'maintenance-worker': 'maintenance-worker',
+  'uamp-worker': 'uamp-worker',
   'scan-controller': 'scan-controller',
 };
 
