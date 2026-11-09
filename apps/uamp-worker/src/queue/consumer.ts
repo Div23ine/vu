@@ -13,6 +13,7 @@ export function startConsumers(options: {
   connection: IORedis;
   handler: CheckHandler;
   concurrency: number;
+  prefix: string;
   log: {
     info: (m: string, f?: object) => void;
     warn: (m: string, f?: object) => void;
@@ -28,6 +29,7 @@ export function startConsumers(options: {
     {
       connection: options.connection,
       concurrency: options.concurrency,
+      prefix: options.prefix,
     },
   );
 
