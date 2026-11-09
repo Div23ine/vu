@@ -100,6 +100,33 @@ jobs:
           retention-days: 3
           if-no-files-found: ignore
 
+  build-uamp:
+    name: build UAMP HQ frontend (independent)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    needs: verify
+    # This is a separate Next.js workspace and produces its own .next and
+    # .open-next output under apps/uamp-web. It never builds apps/web.
+    env:
+      NEXT_PUBLIC_API_URL: https://api.invalid
+      NEXT_PUBLIC_SITE_URL: https://uamp.invalid
+      NEXT_PUBLIC_AUTH_URL: https://www.invalid
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm install --frozen-lockfile
+      - name: Build the standalone UAMP HQ Worker
+        run: pnpm --filter uamp-web cf:build
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: uamp-open-next-build-log
+          path: apps/uamp-web/.open-next/
+          retention-days: 3
+          if-no-files-found: ignore
+
   e2e:
     name: browser smoke (playwright)
     runs-on: ubuntu-24.04
