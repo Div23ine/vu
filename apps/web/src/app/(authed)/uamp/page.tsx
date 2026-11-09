@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { requireSession } from '../../../lib/server-session';
+import { can } from '../../../lib/permissions';
 import {
   getUampDashboardData,
   type UampDashboardData,
@@ -44,7 +47,7 @@ function Metric({ label, value, detail }: { label: string; value: number; detail
   );
 }
 
-function Dashboard({ data }: { data: UampDashboardData }) {
+function Dashboard({ data, canManage }: { data: UampDashboardData; canManage: boolean }) {
   const healthy = data.monitors.filter((monitor) => monitor.lastStatus === 'up').length;
   const degraded = data.monitors.filter((monitor) => monitor.lastStatus === 'degraded').length;
   const down = data.monitors.filter((monitor) =>
@@ -77,7 +80,10 @@ function Dashboard({ data }: { data: UampDashboardData }) {
             <h2 className="font-semibold text-white">Monitors</h2>
             <p className="mt-1 text-xs text-slate-500">Latest check status and response time</p>
           </div>
-          <span className="text-xs text-slate-500">{data.monitors.length} records loaded</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500">{data.monitors.length} records loaded</span>
+            {canManage && <Link href="/uamp/monitors/new" className="rounded-lg bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-300">Add monitor</Link>}
+          </div>
         </div>
         {data.monitors.length === 0 ? (
           <div className="px-5 py-12 text-center">
@@ -154,6 +160,8 @@ function Dashboard({ data }: { data: UampDashboardData }) {
 }
 
 export default async function UampDashboardPage() {
+  const session = await requireSession({ permission: 'uamp:read' });
+  const canManage = can(session, 'uamp:manage');
   let data: UampDashboardData;
   try {
     data = await getUampDashboardData();
@@ -170,5 +178,5 @@ export default async function UampDashboardPage() {
     );
   }
 
-  return <Dashboard data={data} />;
+  return <Dashboard data={data} canManage={canManage} />;
 }
