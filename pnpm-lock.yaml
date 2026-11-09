@@ -730,6 +730,58 @@ importers:
         specifier: ^4.158.0
         version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
 
+  apps/uamp-web:
+    dependencies:
+      '@vunvault/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@vunvault/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
+      next:
+        specifier: 'catalog:'
+        version: 15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react:
+        specifier: 'catalog:'
+        version: 19.3.1
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.3.1(react@19.3.1)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@opennextjs/cloudflare':
+        specifier: ^1.20.16
+        version: 1.20.16(next@15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(supports-color@10.2.2)(wrangler@4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5))
+      '@tailwindcss/postcss':
+        specifier: ^4.3.4
+        version: 4.3.4
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vunvault/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.4
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      wrangler:
+        specifier: ^4.158.0
+        version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
+
   packages/config:
     devDependencies:
       '@eslint/js':
