@@ -1,10 +1,10 @@
 {{- $env := list
-  (dict "name" "NODE_ENV" "value" .Values.config.nodeEnv | quote)
-  (dict "name" "PORT" "value" (.Values.port | quote) | quote)
-  (dict "name" "WEB_ORIGIN" "value" .Values.config.webOrigin | quote)
-  (dict "name" "API_PUBLIC_URL" "value" .Values.config.apiUrl | quote)
+  (dict "name" "NODE_ENV" "value" .Values.config.nodeEnv)
+  (dict "name" "PORT" "value" (toString .Values.port))
+  (dict "name" "WEB_ORIGIN" "value" .Values.config.webOrigin)
+  (dict "name" "API_PUBLIC_URL" "value" .Values.config.apiUrl)
   (dict "name" "SECRETS_PROVIDER" "value" "oci-vault")
-  (dict "name" "OCI_SECRET_MAP" "value" (.Values.ociSecretMap | toJson | quote))
+  (dict "name" "OCI_SECRET_MAP" "value" (.Values.ociSecretMap | toJson))
 -}}
 {{- if .Values.config.sentryDsn }}
 {{- $env = append $env (dict "name" "SENTRY_DSN" "value" .Values.config.sentryDsn) -}}
