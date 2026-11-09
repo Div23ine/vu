@@ -131,18 +131,41 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Materialize the UAMP chart's local vv-lib dependency
-        run: helm dependency update infra/helm/uamp-worker
-      - uses: aquasecurity/trivy-action@v0.36.0
+      - name: Render charts with validation-only image references
+        run: |
+          set -euo pipefail
+          mkdir -p .trivy-rendered
+          for chart in api broadcast-worker notify-worker maintenance-worker uamp-worker scan-controller; do
+            helm dependency update "infra/helm/$chart"
+            helm template "vv-$chart" "infra/helm/$chart" -n vunvault \
+              --set image.repository=example.test/vv/$chart --set image.tag=deadbeef \
+              > ".trivy-rendered/$chart.yaml"
+          done
+      - name: Scan Terraform misconfiguration
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
-          scan-ref: .
+          scan-ref: infra/terraform
           severity: CRITICAL,HIGH
           exit-code: '1'
           format: sarif
-          output: trivy-config.sarif
+          output: trivy-config-terraform.sarif
           trivyignore: .trivyignore
       - uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: trivy-config.sarif
-          category: trivy-config
+          sarif_file: trivy-config-terraform.sarif
+          category: trivy-config-terraform
+      - name: Scan rendered Helm manifests
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .trivy-rendered
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          format: sarif
+          output: trivy-config-helm.sarif
+          trivyignore: .trivyignore
+      - uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-config-helm.sarif
+          category: trivy-config-helm
