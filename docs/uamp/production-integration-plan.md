@@ -1,3 +1,35 @@
+## Implementation progress (9 November 2026)
+
+### Implemented on the feature branch (not yet build-verified)
+
+- Added product-level uamp:read and uamp:manage permissions and applied them to the UAMP API read and mutation routes.
+- Added UAMP audit event types and wrapped all inspected UAMP mutation handlers with the platform's transactional audited() helper.
+- Changed the UAMP repository database type to accept the shared Drizzle database and transaction types.
+- Added organisation-ownership checks for monitor references used by status pages and alert rules.
+- Added DNS resolution checks that reject private/reserved IPv4 and IPv6 destinations, including IPv4-mapped IPv6.
+- Changed the outbound monitor checker to pin HTTP/TLS connections to the validated DNS answer; automatic redirects are not followed for monitor checks.
+- Added HTTP, HTTPS, API JSON-path/equality, keyword, DNS, TLS certificate-expiry and RDAP domain-expiry check paths.
+- Moved recurring UAMP due-monitor scheduling into the maintenance worker's BullMQ scheduler. The UAMP worker now consumes the shared queue using the same Redis key prefix.
+- Added stable per-monitor check keys, a unique database index and transactional result/incident writes to make BullMQ retries idempotent.
+- Added focused unit tests for JSON assertions, DNS/IPv6 policy, SSL/domain expiry, and the maintenance scheduling sweep.
+
+### Not yet verified
+
+- No local typecheck, build, migration execution, integration test or browser QA has been run in this environment.
+- GitHub status/check results must be read from the current pull request or workflow run before claiming success.
+- The new 0103_uamp_check_idempotency.sql migration has not been applied to any database.
+- No production deployment has been performed.
+
+### Remaining implementation work
+
+- Complete and test notification delivery for email, webhooks and Slack, including retries, signing and delivery logs.
+- Implement public status-page serving, incident history, custom-domain validation and safe publication controls.
+- Finish the dedicated UAMP HQ Next.js frontend and connect every screen to authenticated API contracts.
+- Implement the AI investigation provider/orchestration layer, tenant-scoped retrieval, read-only tools and explicit remediation approval.
+- Verify all entitlement limits and usage accounting, multi-location execution, monitor-type edge cases and incident escalation.
+- Add comprehensive tenant-isolation, route authorization, SSRF, queue retry, migration and end-to-end tests.
+- Complete release runbooks, observability, backup/restore and rollback verification.
+
 # UAMP HQ production integration — execution plan
 
 **Status:** implementation started on `feature/uamp-production-integration`  
