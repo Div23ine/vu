@@ -145,8 +145,15 @@ export function guardTarget(target: string): GuardResult {
   return { ok: true, url };
 }
 
+export type TargetAddress = { address: string; family: 4 | 6 };
+export type TargetResolver = (host: string) => Promise<TargetAddress[]>;
+
 /** Resolve and validate every DNS answer before a network connection is opened. */
-export async function resolveGuardedTarget(target: string): Promise<ResolvedGuardResult> {
+export async function resolveGuardedTarget(
+  target: string,
+  resolver: TargetResolver = async (host) =>
+    (await lookup(host, { all: true, verbatim: true })) as TargetAddress[],
+): Promise<ResolvedGuardResult> {
   const guarded = guardTarget(target);
   if (!guarded.ok) return guarded;
 
@@ -157,7 +164,7 @@ export async function resolveGuardedTarget(target: string): Promise<ResolvedGuar
   }
 
   try {
-    const addresses = await lookup(host, { all: true, verbatim: true });
+    const addresses = await resolver(host);
     if (addresses.length === 0) return { ok: false, reason: 'dns_no_addresses' };
     if (addresses.some((entry) => isForbiddenIp(entry.address))) {
       return { ok: false, reason: 'dns_private_address' };
