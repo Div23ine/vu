@@ -104,7 +104,8 @@ jobs:
     name: build UAMP HQ frontend (independent)
     runs-on: ubuntu-24.04
     timeout-minutes: 25
-    needs: verify
+    # Run independently from lint/typecheck so frontend build errors are visible
+    # even when the shared repository toolchain gate is blocked.
     # This is a separate Next.js workspace and produces its own .next and
     # .open-next output under apps/uamp-web. It never builds apps/web.
     env:
