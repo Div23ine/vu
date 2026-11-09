@@ -14,6 +14,8 @@ export class CheckHandler {
 
     const outcome = await runCheck({
       target: monitor.target,
+      type: monitor.type,
+      warnDaysBeforeExpiry: monitor.warnDaysBeforeExpiry,
       method: monitor.method,
       timeoutMs: monitor.timeoutMs,
       headers: (monitor.headers as UampHeader[] | null) ?? [],
