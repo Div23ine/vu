@@ -148,7 +148,10 @@ resource "oci_core_network_security_group_security_rule" "lb_ingress_http" {
   source_type               = "CIDR_BLOCK"
   description               = "Public API over HTTP — redirected to HTTPS at the edge"
   tcp_options {
-    destination_port_range { min = 80  max = 80 }
+    destination_port_range {
+      min = 80
+      max = 80
+    }
   }
 }
 
@@ -160,7 +163,10 @@ resource "oci_core_network_security_group_security_rule" "lb_ingress_https" {
   source_type               = "CIDR_BLOCK"
   description               = "Public API over HTTPS"
   tcp_options {
-    destination_port_range { min = 443 max = 443 }
+    destination_port_range {
+      min = 443
+      max = 443
+    }
   }
 }
 
@@ -208,7 +214,10 @@ resource "oci_core_network_security_group_security_rule" "node_ingress_kubelet" 
   source_type               = "CIDR_BLOCK"
   description               = "kubelet from the OKE API endpoint subnet"
   tcp_options {
-    destination_port_range { min = 10250 max = 10250 }
+    destination_port_range {
+      min = 10250
+      max = 10250
+    }
   }
 }
 
