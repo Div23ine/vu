@@ -12,6 +12,7 @@ import {
   sensorNodes,
   staffInvitations,
   threatLevelSnapshots,
+  uampMonitors,
   type Db,
 } from '@vunvault/db';
 import type { VerifiableAuditEntry } from '@vunvault/lib/audit-chain';
@@ -38,6 +39,28 @@ import type {
  */
 export class SqlMaintenanceRepo implements MaintenanceRepo {
   constructor(private readonly db: Db) {}
+
+  // ---- UAMP monitor scheduling ---------------------------------------------
+
+  async listDueUampMonitors(limit: number) {
+    return this.db
+      .select({
+        id: uampMonitors.id,
+        orgId: uampMonitors.orgId,
+        intervalSeconds: uampMonitors.intervalSeconds,
+        lastCheckedAt: uampMonitors.lastCheckedAt,
+      })
+      .from(uampMonitors)
+      .where(
+        and(
+          eq(uampMonitors.status, 'active'),
+          isNull(uampMonitors.deletedAt),
+          sql`(${uampMonitors.lastCheckedAt} IS NULL OR ${uampMonitors.lastCheckedAt} <= now() - (${uampMonitors.intervalSeconds} * interval '1 second'))`,
+        ),
+      )
+      .orderBy(sql`${uampMonitors.lastCheckedAt} ASC NULLS FIRST`)
+      .limit(limit);
+  }
 
   // ---- Task 91: metrics rollup ---------------------------------------------
 
