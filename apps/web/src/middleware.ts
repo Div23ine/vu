@@ -36,7 +36,7 @@ const REFRESH_TOKEN_COOKIE = 'vv_rt';
  */
 const DEFAULT_R2_HOST = 'assets.vunvault.com';
 
-const GUARDED_PREFIXES = ['/portal', '/admin'] as const;
+const GUARDED_PREFIXES = ['/portal', '/admin', '/uamp'] as const;
 
 function requiresSession(pathname: string): boolean {
   if (pathname === '/onboarding') return true;
@@ -77,7 +77,9 @@ export default function middleware(request: NextRequest): NextResponse {
   const redirectTo = (pathAndSearch: string): NextResponse =>
     withCsp(NextResponse.redirect(new URL(pathAndSearch, request.url), 302));
 
-  const { pathname, search } = request.nextUrl;
+  const { search } = request.nextUrl;
+  const rewriteUampRoot = request.nextUrl.hostname.toLowerCase() === 'uamp.vunvault.com' && request.nextUrl.pathname === '/';
+  const pathname = rewriteUampRoot ? '/uamp' : request.nextUrl.pathname;
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const hasSessionCookie =
     accessToken !== undefined || request.cookies.get(REFRESH_TOKEN_COOKIE)?.value !== undefined;
@@ -116,6 +118,11 @@ export default function middleware(request: NextRequest): NextResponse {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  if (rewriteUampRoot) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/uamp';
+    return withCsp(NextResponse.rewrite(url, { request: { headers: requestHeaders } }));
+  }
   return withCsp(NextResponse.next({ request: { headers: requestHeaders } }));
 }
 
