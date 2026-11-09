@@ -91,7 +91,10 @@ resource "oci_core_network_security_group_security_rule" "ingress_ssh" {
   source_type               = "CIDR_BLOCK"
   description               = "SSH from the bastion target subnet only"
   tcp_options {
-    destination_port_range { min = 22 max = 22 }
+    destination_port_range {
+      min = 22
+      max = 22
+    }
   }
 }
 
@@ -103,7 +106,10 @@ resource "oci_core_network_security_group_security_rule" "ingress_k3s_api" {
   source_type               = "CIDR_BLOCK"
   description               = "k3s API (CI port-forward sessions) from the bastion subnet only"
   tcp_options {
-    destination_port_range { min = 6443 max = 6443 }
+    destination_port_range {
+      min = 6443
+      max = 6443
+    }
   }
 }
 
@@ -117,7 +123,10 @@ resource "oci_core_network_security_group_security_rule" "ingress_intra_vxlan" {
   source_type               = "CIDR_BLOCK"
   description               = "flannel VXLAN between k3s nodes"
   udp_options {
-    destination_port_range { min = 8472 max = 8472 }
+    destination_port_range {
+      min = 8472
+      max = 8472
+    }
   }
 }
 
@@ -129,7 +138,10 @@ resource "oci_core_network_security_group_security_rule" "ingress_intra_tcp" {
   source_type               = "CIDR_BLOCK"
   description               = "k3s API + kubelet between nodes"
   tcp_options {
-    destination_port_range { min = 6443 max = 6443 }
+    destination_port_range {
+      min = 6443
+      max = 6443
+    }
   }
 }
 
@@ -141,7 +153,10 @@ resource "oci_core_network_security_group_security_rule" "ingress_intra_kubelet"
   source_type               = "CIDR_BLOCK"
   description               = "kubelet between nodes"
   tcp_options {
-    destination_port_range { min = 10250 max = 10250 }
+    destination_port_range {
+      min = 10250
+      max = 10250
+    }
   }
 }
 
