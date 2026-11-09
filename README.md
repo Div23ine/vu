@@ -4,7 +4,8 @@ pnpm + Turborepo monorepo for the VUNVAULT security operations platform.
 
 ## Workspace map
 
-- `apps/web` — `web` — Next.js 15 surfaces (marketing, auth, portal, admin), deployed as a Cloudflare Worker via `@opennextjs/cloudflare`
+- `apps/web` — `web` — VUNVAULT marketing, authentication, client portal and admin frontend; deployed independently as its own Cloudflare Worker
+- `apps/uamp-web` — `uamp-web` — standalone UAMP HQ Next.js frontend, with its own `.next` / `.open-next` build output, Wrangler Worker and manual staging/production deployment workflow; deployed at `uamp.vunvault.com`
 - `apps/api` — `api` — Fastify 5 API (Drizzle + Supabase Postgres)
 - `apps/edge` — `@vunvault/edge` — the Cloudflare Worker in front of the API (allow-list, origin lock, metrics)
 - `apps/scan-worker` · `apps/broadcast-worker` · `apps/notify-worker` · `apps/maintenance-worker` — background workers
@@ -17,7 +18,13 @@ pnpm + Turborepo monorepo for the VUNVAULT security operations platform.
 ## Commands
 
 `pnpm install` · `pnpm dev` · `pnpm typecheck` · `pnpm lint` · `pnpm test` ·
-`pnpm verify` (nine static policy gates) · `pnpm test:e2e` (Playwright)
+`pnpm verify` (static policy gates) · `pnpm test:e2e` (Playwright)
+
+Build and deploy the frontends independently:
+
+- VUNVAULT: `pnpm --filter web cf:build`
+- UAMP HQ: `pnpm --filter uamp-web cf:build`
+- UAMP deployment is manually dispatched through `.github/workflows/deploy-uamp-web.yml`; production requires the protected GitHub Environment approval.
 
 ## Documentation map
 

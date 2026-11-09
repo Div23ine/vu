@@ -46,11 +46,13 @@ function isActiveRoute(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+type PortalNavItem = { label: string; href: string; external?: boolean };
+
 export function PortalHeader({ showUamp }: { showUamp: boolean }) {
   const pathname = usePathname() ?? '/';
-  const navItems = showUamp
-    ? [{ label: 'UAMP HQ', href: '/uamp' }, ...PORTAL_NAV_ITEMS]
-    : PORTAL_NAV_ITEMS;
+  const navItems: PortalNavItem[] = showUamp
+    ? [{ label: 'UAMP HQ', href: 'https://uamp.vunvault.com', external: true }, ...PORTAL_NAV_ITEMS]
+    : [...PORTAL_NAV_ITEMS];
   const router = useRouter();
   const queryClient = useQueryClient();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -115,13 +117,18 @@ export function PortalHeader({ showUamp }: { showUamp: boolean }) {
           aria-label="Primary"
         >
           {navItems.map((item) => {
-            const active = isActiveRoute(pathname, item.href);
-            return (
+            const active = !item.external && isActiveRoute(pathname, item.href);
+            const className = cn(LINK_BASE, active ? LINK_ACTIVE : LINK_INACTIVE);
+            return item.external ? (
+              <a key={item.href} href={item.href} className={className}>
+                {item.label}
+              </a>
+            ) : (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={cn(LINK_BASE, active ? LINK_ACTIVE : LINK_INACTIVE)}
+                className={className}
               >
                 {item.label}
               </Link>
@@ -173,9 +180,15 @@ export function PortalHeader({ showUamp }: { showUamp: boolean }) {
         <ul className="mobile-menu-list">
           {navItems.map((item) => (
             <li key={item.href}>
-              <Link href={item.href} onClick={closeDrawer}>
-                {item.label}
-              </Link>
+              {item.external ? (
+                <a href={item.href} onClick={closeDrawer}>
+                  {item.label}
+                </a>
+              ) : (
+                <Link href={item.href} onClick={closeDrawer}>
+                  {item.label}
+                </Link>
+              )}
             </li>
           ))}
           <li>

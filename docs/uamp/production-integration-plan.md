@@ -24,7 +24,7 @@
 
 - Complete and test notification delivery for email, webhooks and Slack, including retries, signing and delivery logs.
 - Implement public status-page serving, incident history, custom-domain validation and safe publication controls.
-- Finish the dedicated UAMP HQ Next.js frontend and connect every screen to authenticated API contracts.
+- Complete and verify the standalone UAMP HQ Next.js frontend in `apps/uamp-web`; remove duplicate UAMP routes from `apps/web`, and connect every screen to authenticated API contracts.
 - Implement the AI investigation provider/orchestration layer, tenant-scoped retrieval, read-only tools and explicit remediation approval.
 - Verify all entitlement limits and usage accounting, multi-location execution, monitor-type edge cases and incident escalation.
 - Add comprehensive tenant-isolation, route authorization, SSRF, queue retry, migration and end-to-end tests.
@@ -38,12 +38,14 @@
 
 ## Architecture decision
 
-UAMP HQ will use the existing VUNVAULT monorepo and platform services. The web product UI will be implemented in the existing Next.js 15 / React 19 application. The API remains Fastify 5 under the existing `/api/v1/uamp` route namespace. PostgreSQL/Drizzle, shared authentication, billing, audit, Redis and BullMQ remain shared platform capabilities. Do not create a second API, user database, authentication system, billing system or Redis deployment for UAMP.
+UAMP HQ will use the existing VUNVAULT monorepo and platform services. Its frontend is a separate Next.js 15 / React 19 workspace at `apps/uamp-web`, with independent `.next` and `.open-next` build output, Cloudflare Worker configuration and deployment workflow. It is not a route group or build target inside `apps/web`. The API remains the shared Fastify 5 service under the existing `/api/v1/uamp` route namespace. PostgreSQL/Drizzle, shared authentication, billing, audit, Redis and BullMQ remain shared platform capabilities. Do not create a second API, user database, authentication system, billing system or Redis deployment for UAMP.
 
 ## Repository facts verified from the current default branch
 
 - Workspace: pnpm 12 + Turborepo; Node.js 22.
-- Web: `apps/web`, Next.js 15, React 19, shared `@vunvault/contracts`, `@vunvault/ui`, `@vunvault/lib`.
+- VUNVAULT frontend: `apps/web`, Next.js 15 / React 19.
+- UAMP HQ frontend: `apps/uamp-web`, separate Next.js 15 / React 19 workspace with its own build artifacts and Wrangler Worker.
+- Both frontends reuse shared `@vunvault/contracts` and `@vunvault/lib`; UAMP does not depend on the `apps/web` application.
 - API: `apps/api`, Fastify 5, Zod type provider, shared auth and audit plugins.
 - Data: `packages/db`, PostgreSQL and Drizzle.
 - Async: BullMQ and shared Redis.
@@ -92,7 +94,9 @@ UAMP HQ will use the existing VUNVAULT monorepo and platform services. The web p
 **Gate:** notification failures are recoverable; public endpoints reveal no tenant-private information.
 
 ### Phase 4 — frontend integration
-- Build the approved UAMP HQ design in the existing Next.js app using shared UI, session, API-client and contract conventions.
+- Build and deploy UAMP HQ only from `apps/uamp-web`; keep all UAMP product pages, styling, environment configuration and build output inside that workspace.
+- Keep `apps/web` limited to VUNVAULT marketing, auth, portal and admin surfaces. Its optional UAMP navigation item must link to `https://uamp.vunvault.com`, not rewrite or render UAMP routes.
+- Build the approved UAMP HQ design using shared session, API-client and contract conventions.
 - Keep the product's own navigation/branding while reusing VUNVAULT identity and workspace context.
 - Replace all prototype data and simulated actions with typed API calls.
 - No credentials or secrets in browser storage; follow the platform's HttpOnly-cookie and CSRF model.
@@ -114,7 +118,7 @@ UAMP HQ will use the existing VUNVAULT monorepo and platform services. The web p
 
 ## Working rules
 
-- All implementation commits stay on `feature/uamp-production-integration`; never commit directly to `main`.
+- All follow-up implementation commits stay on a feature branch and go through a draft pull request; never commit directly to `main`.
 - Inspect repository conventions and tests before adding files, tables, permissions, queue names or migrations.
 - Use additive migrations only; never rewrite already-applied migrations.
 - Do not claim a build/test passed unless it was actually run against the resulting code.
