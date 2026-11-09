@@ -58,13 +58,14 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
     return UampService.fromPlanCode(new SqlUampRepo(app.db), planCode);
   }
 
-  const auth = [app.authenticate];
+  const readAuth = [app.authenticate, app.requirePermission('uamp:read')];
+  const writeAuth = [app.authenticate, app.requirePermission('uamp:manage')];
 
   // ------------------------------------------------------------------ monitors
   app.get(
     '/uamp/monitors',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: UampMonitorListQuery,
         response: { 200: UampMonitorListResponse },
@@ -88,7 +89,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/monitors/:id',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         params: IdParams,
         response: { 200: UampMonitorResponse },
@@ -105,7 +106,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.post(
     '/uamp/monitors',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         body: CreateUampMonitorBody,
         response: { 201: UampMonitorResponse },
@@ -137,7 +138,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.patch(
     '/uamp/monitors/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         params: IdParams,
         body: UpdateUampMonitorBody,
@@ -156,7 +157,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.delete(
     '/uamp/monitors/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         params: IdParams,
         response: { 204: z.null() },
@@ -174,7 +175,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/incidents',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: UampIncidentListQuery,
         response: { 200: UampIncidentListResponse },
@@ -198,7 +199,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/incidents/:id',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         params: IdParams,
         response: { 200: UampIncidentResponse },
@@ -215,7 +216,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.patch(
     '/uamp/incidents/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         params: IdParams,
         body: UpdateUampIncidentBody,
@@ -235,7 +236,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/check-results',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: UampCheckResultListQuery,
         response: { 200: UampCheckResultListResponse },
@@ -260,7 +261,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/status-pages',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: PageQuery,
         response: { 200: UampStatusPageListResponse },
@@ -281,7 +282,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/status-pages/:id',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: { params: IdParams, response: { 200: UampStatusPageResponse } },
     },
     async (request) => {
@@ -295,7 +296,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.post(
     '/uamp/status-pages',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: { body: CreateUampStatusPageBody, response: { 201: UampStatusPageResponse } },
     },
     async (request, reply) => {
@@ -312,7 +313,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.delete(
     '/uamp/status-pages/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: { params: IdParams, response: { 204: z.null() } },
     },
     async (request, reply) => {
@@ -327,7 +328,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/alert-rules',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: z.object({ monitorId: z.string().uuid().optional() }),
         response: { 200: z.object({ data: z.array(UampAlertRuleSchema) }) },
@@ -344,7 +345,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.post(
     '/uamp/alert-rules',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         body: CreateUampAlertRuleBody,
         response: { 201: envelope(UampAlertRuleSchema) },
@@ -364,7 +365,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.delete(
     '/uamp/alert-rules/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: { params: IdParams, response: { 204: z.null() } },
     },
     async (request, reply) => {
