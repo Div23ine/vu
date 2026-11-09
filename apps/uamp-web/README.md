@@ -16,7 +16,6 @@ This app is not a route group or build target inside `apps/web`. It shares platf
 ```sh
 pnpm --filter uamp-web dev
 pnpm --filter uamp-web typecheck
-pnpm --filter uamp-web lint
 pnpm --filter uamp-web cf:build
 pnpm --filter uamp-web cf:preview
 ```
