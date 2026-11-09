@@ -17,7 +17,9 @@ import type { Logger } from '../ports';
 export interface ScheduleEntry {
   task: MaintenanceTask;
   /** Cron pattern, UTC. */
-  pattern: string;
+  pattern?: string;
+  /** Fixed interval in milliseconds (used for sub-minute work). */
+  every?: number;
 }
 
 /** Stable BullMQ job-scheduler id — changing one orphans the old schedule. */
@@ -43,13 +45,14 @@ export const SCHEDULES: readonly ScheduleEntry[] = [
   { task: 'purge_login_attempts', pattern: '0 3 * * *' },
   { task: 'flag_dormant_accounts', pattern: '30 3 * * *' },
   { task: 'stale_signups', pattern: '0 4 * * *' },
+  { task: 'uamp_checks', every: 15_000 },
 ] as const;
 
 /** The slice of a BullMQ `Queue` the scheduler needs (test seam). */
 export interface SchedulerQueue {
   upsertJobScheduler(
     id: string,
-    repeat: { pattern: string },
+    repeat: { pattern?: string; every?: number },
     template: { name: string; data: { task: MaintenanceTask } },
   ): Promise<unknown>;
 }
@@ -64,7 +67,7 @@ export async function registerSchedulers(
   for (const entry of schedules) {
     await queue.upsertJobScheduler(
       schedulerId(entry.task),
-      { pattern: entry.pattern },
+      entry.every !== undefined ? { every: entry.every } : { pattern: entry.pattern },
       { name: entry.task, data: { task: entry.task } },
     );
     registered += 1;

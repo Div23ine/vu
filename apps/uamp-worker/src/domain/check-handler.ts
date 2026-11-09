@@ -8,12 +8,14 @@ export class CheckHandler {
     private readonly userAgent: string,
   ) {}
 
-  async handle(job: { monitorId: string; orgId: string; location?: string }): Promise<void> {
+  async handle(job: { monitorId: string; orgId: string; location?: string; checkKey: string }): Promise<void> {
     const monitor = await this.repo.getMonitor(job.monitorId, job.orgId);
     if (!monitor) return;
 
     const outcome = await runCheck({
       target: monitor.target,
+      type: monitor.type,
+      warnDaysBeforeExpiry: monitor.warnDaysBeforeExpiry,
       method: monitor.method,
       timeoutMs: monitor.timeoutMs,
       headers: (monitor.headers as UampHeader[] | null) ?? [],
@@ -23,6 +25,6 @@ export class CheckHandler {
       userAgent: this.userAgent,
     });
 
-    await this.repo.recordResult(monitor, outcome, job.location ?? null);
+    await this.repo.recordResult(monitor, outcome, job.location ?? null, job.checkKey);
   }
 }

@@ -61,6 +61,7 @@ function mockRepo(over: Partial<UampRepo> = {}): UampRepo {
     updateStatusPage: async () => null,
     deleteStatusPage: async () => false,
     countStatusPages: async () => 0,
+    countOwnedMonitors: async (_orgId, monitorIds) => monitorIds.length,
     listAlertRules: async () => [],
     createAlertRule: async (input) => ({
       id: 'a1000000-0000-4000-8000-000000000001',
@@ -152,6 +153,30 @@ describe('UampService entitlements', () => {
         slug: 'public',
       }),
     ).rejects.toMatchObject({ status: 402, code: 'status_page_limit_reached' });
+  });
+
+  it('rejects status pages that reference another organisation\'s monitors', async () => {
+    const svc = new UampService(mockRepo({ countOwnedMonitors: async () => 0 }));
+    await expect(
+      svc.createStatusPage({
+        orgId: 'o1000000-0000-4000-8000-000000000001',
+        name: 'Public',
+        slug: 'public',
+        monitorIds: ['m2000000-0000-4000-8000-000000000001'],
+      }),
+    ).rejects.toMatchObject({ status: 404, code: 'not_found' });
+  });
+
+  it('rejects alert rules attached to another organisation\'s monitors', async () => {
+    const svc = new UampService(mockRepo({ countOwnedMonitors: async () => 0 }));
+    await expect(
+      svc.createAlertRule({
+        orgId: 'o1000000-0000-4000-8000-000000000001',
+        monitorId: 'm2000000-0000-4000-8000-000000000001',
+        channel: 'email',
+        destination: 'ops@example.com',
+      }),
+    ).rejects.toMatchObject({ status: 404, code: 'not_found' });
   });
 });
 

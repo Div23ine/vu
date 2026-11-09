@@ -21,6 +21,7 @@ export interface DueMonitor {
   assertions: unknown;
   keyword: string | null;
   lastStatus: string | null;
+  warnDaysBeforeExpiry: number | null;
 }
 
 export class SqlUampWorkerRepo {
@@ -43,6 +44,7 @@ export class SqlUampWorkerRepo {
         assertions: uampMonitors.assertions,
         keyword: uampMonitors.keyword,
         lastStatus: uampMonitors.lastStatus,
+        warnDaysBeforeExpiry: uampMonitors.warnDaysBeforeExpiry,
       })
       .from(uampMonitors)
       .where(
@@ -75,12 +77,14 @@ export class SqlUampWorkerRepo {
         assertions: uampMonitors.assertions,
         keyword: uampMonitors.keyword,
         lastStatus: uampMonitors.lastStatus,
+        warnDaysBeforeExpiry: uampMonitors.warnDaysBeforeExpiry,
       })
       .from(uampMonitors)
       .where(
         and(
           eq(uampMonitors.id, monitorId),
           eq(uampMonitors.orgId, orgId),
+          eq(uampMonitors.status, 'active'),
           isNull(uampMonitors.deletedAt),
         ),
       )
@@ -92,87 +96,111 @@ export class SqlUampWorkerRepo {
     monitor: DueMonitor,
     outcome: CheckOutcome,
     location: string | null,
+    checkKey: string,
   ): Promise<void> {
-    await this.db.insert(uampCheckResults).values({
-      orgId: monitor.orgId,
-      monitorId: monitor.id,
-      status: outcome.status as never,
-      httpStatus: outcome.httpStatus,
-      latencyMs: outcome.latencyMs,
-      location,
-      errorMessage: outcome.errorMessage,
-      responseSnippet: outcome.responseSnippet,
-      checkedAt: new Date(),
-    });
+    await this.db.transaction(async (tx) => {
+      const checkedAt = new Date();
+      const active = await tx
+        .select({ id: uampMonitors.id })
+        .from(uampMonitors)
+        .where(
+          and(
+            eq(uampMonitors.id, monitor.id),
+            eq(uampMonitors.orgId, monitor.orgId),
+            eq(uampMonitors.status, 'active'),
+            isNull(uampMonitors.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (active.length === 0) return;
 
-    await this.db
-      .update(uampMonitors)
-      .set({
-        lastStatus: outcome.status as never,
-        lastCheckedAt: new Date(),
-        lastLatencyMs: outcome.latencyMs,
-        updatedAt: new Date(),
-      })
-      .where(eq(uampMonitors.id, monitor.id));
-
-    const isDown = outcome.status === 'down' || outcome.status === 'timeout' || outcome.status === 'error';
-    if (isDown) {
-      await this.openOrBumpIncident(monitor, outcome);
-    } else if (outcome.status === 'up') {
-      await this.resolveOpenIncidents(monitor);
-    }
-  }
-
-  private async openOrBumpIncident(monitor: DueMonitor, outcome: CheckOutcome): Promise<void> {
-    const open = await this.db
-      .select({ id: uampIncidents.id, failureCount: uampIncidents.failureCount })
-      .from(uampIncidents)
-      .where(
-        and(
-          eq(uampIncidents.monitorId, monitor.id),
-          eq(uampIncidents.orgId, monitor.orgId),
-          sql`${uampIncidents.status} IN ('open', 'acknowledged', 'investigating')`,
-        ),
-      )
-      .limit(1);
-
-    if (open[0]) {
-      await this.db
-        .update(uampIncidents)
-        .set({
-          failureCount: open[0].failureCount + 1,
-          updatedAt: new Date(),
-          summary: outcome.errorMessage,
+      const inserted = await tx
+        .insert(uampCheckResults)
+        .values({
+          orgId: monitor.orgId,
+          monitorId: monitor.id,
+          checkKey,
+          status: outcome.status as never,
+          httpStatus: outcome.httpStatus,
+          latencyMs: outcome.latencyMs,
+          location,
+          errorMessage: outcome.errorMessage,
+          responseSnippet: outcome.responseSnippet,
+          checkedAt,
         })
-        .where(eq(uampIncidents.id, open[0].id));
-      return;
-    }
+        .onConflictDoNothing()
+        .returning({ id: uampCheckResults.id });
 
-    await this.db.insert(uampIncidents).values({
-      orgId: monitor.orgId,
-      monitorId: monitor.id,
-      status: 'open',
-      severity: outcome.status === 'timeout' ? 'major' : 'major',
-      title: `${monitor.name} is ${outcome.status}`,
-      summary: outcome.errorMessage,
-      failureCount: 1,
+      // BullMQ is at-least-once. A duplicate delivery with the same check key
+      // must not duplicate history, increment incidents, or move monitor state.
+      if (inserted.length === 0) return;
+
+      await tx
+        .update(uampMonitors)
+        .set({
+          lastStatus: outcome.status as never,
+          lastCheckedAt: checkedAt,
+          lastLatencyMs: outcome.latencyMs,
+          updatedAt: checkedAt,
+        })
+        .where(and(eq(uampMonitors.id, monitor.id), eq(uampMonitors.orgId, monitor.orgId)));
+
+      const isDown =
+        outcome.status === 'down' || outcome.status === 'timeout' || outcome.status === 'error';
+      if (isDown) {
+        const open = await tx
+          .select({ id: uampIncidents.id, failureCount: uampIncidents.failureCount })
+          .from(uampIncidents)
+          .where(
+            and(
+              eq(uampIncidents.monitorId, monitor.id),
+              eq(uampIncidents.orgId, monitor.orgId),
+              sql.raw("uamp_incidents.status IN ('open', 'acknowledged', 'investigating')"),
+            ),
+          )
+          .limit(1);
+
+        if (open[0]) {
+          await tx
+            .update(uampIncidents)
+            .set({
+              failureCount: open[0].failureCount + 1,
+              updatedAt: checkedAt,
+              summary: outcome.errorMessage,
+            })
+            .where(
+              and(
+                eq(uampIncidents.id, open[0].id),
+                eq(uampIncidents.orgId, monitor.orgId),
+              ),
+            );
+        } else {
+          await tx.insert(uampIncidents).values({
+            orgId: monitor.orgId,
+            monitorId: monitor.id,
+            status: 'open',
+            severity: 'major',
+            title: monitor.name + ' is ' + outcome.status,
+            summary: outcome.errorMessage,
+            failureCount: 1,
+          });
+        }
+      } else if (outcome.status === 'up') {
+        await tx
+          .update(uampIncidents)
+          .set({
+            status: 'resolved',
+            resolvedAt: checkedAt,
+            updatedAt: checkedAt,
+          })
+          .where(
+            and(
+              eq(uampIncidents.monitorId, monitor.id),
+              eq(uampIncidents.orgId, monitor.orgId),
+              sql.raw("uamp_incidents.status IN ('open', 'acknowledged', 'investigating')"),
+            ),
+          );
+      }
     });
-  }
-
-  private async resolveOpenIncidents(monitor: DueMonitor): Promise<void> {
-    await this.db
-      .update(uampIncidents)
-      .set({
-        status: 'resolved',
-        resolvedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(uampIncidents.monitorId, monitor.id),
-          eq(uampIncidents.orgId, monitor.orgId),
-          sql`${uampIncidents.status} IN ('open', 'acknowledged', 'investigating')`,
-        ),
-      );
   }
 }

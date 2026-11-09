@@ -36,10 +36,15 @@ jobs:
         with:
           persist-credentials: false
       - name: Hadolint every Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          recursive: true
-          failure-threshold: error
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Hadolint: $file"
+            docker run --rm -i hadolint/hadolint:v2.12.0 hadolint --failure-threshold error - < "$file"
+          done < <(find . -type f \( -iname 'Dockerfile*' -o -iname '*.Dockerfile' \) \
+            -not -path '*/node_modules/*' -not -path '*/.next/*' \
+            -not -path '*/dist/*' -not -path '*/coverage/*' \
+            -not -path '*/.turbo/*' -not -path '*/.git/*' -print0)
       - name: Repo policy (multi-stage, non-root, distroless, no latest)
         uses: ./.github/actions/setup
       - run: node scripts/verify-dockerfiles.mjs
@@ -63,7 +68,7 @@ jobs:
         # satisfy the imageRef guard without inventing a real image.
         run: |
           set -euo pipefail
-          for chart in api broadcast-worker notify-worker maintenance-worker scan-controller; do
+          for chart in api broadcast-worker notify-worker maintenance-worker uamp-worker scan-controller; do
             helm dependency update "infra/helm/$chart"
             helm lint "infra/helm/$chart" \
               --set image.repository=example.test/vv/$chart --set image.tag=deadbeef
@@ -71,6 +76,10 @@ jobs:
               --set image.repository=example.test/vv/$chart --set image.tag=deadbeef \
               > "/tmp/$chart.yaml"
           done
+      - name: Install kubeconform
+        run: |
+          go install github.com/yannh/kubeconform/cmd/kubeconform@v0.6.7
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Schema-check the rendered manifests
         run: |
           kubeconform -strict -summary -ignore-missing-schemas /tmp/*.yaml

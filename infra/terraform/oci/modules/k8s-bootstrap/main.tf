@@ -30,7 +30,10 @@ variable "region" { type = string }
 variable "vault_id" { type = string }
 variable "registry_url" { type = string }
 variable "ocir_username" { type = string }
-variable "ocir_auth_token" { type = string sensitive = true }
+variable "ocir_auth_token" {
+  type      = string
+  sensitive = true
+}
 variable "ingress_nginx_chart_version" { type = string }
 variable "external_secrets_chart_version" { type = string }
 variable "controller_secret_names" { type = list(string) }

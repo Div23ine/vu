@@ -15,8 +15,7 @@ env:
   NODE_ENV: "production"
   LOG_LEVEL: "info"
   UAMP_CONCURRENCY: "5"
-  UAMP_SCHEDULER_INTERVAL_MS: "30000"
-  UAMP_USER_AGENT: "UAMP-Monitor/1.0 (+https://uptimehq.vunvault.com)"
+  UAMP_USER_AGENT: "UAMP-Monitor/1.0 (+https://uamp.vunvault.com)"
   REDIS_KEY_PREFIX: "vv"
 
 vaultSecrets:

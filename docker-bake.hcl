@@ -93,6 +93,7 @@ target "notify-worker" {
 
 target "uamp-worker" {
   inherits   = ["_common"]
+  dockerfile = "docker/node-service.Dockerfile"
   args       = { APP = "uamp-worker" }
   tags = [
     "${REGISTRY}/vv/uamp-worker:${TAG}",

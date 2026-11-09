@@ -1,5 +1,8 @@
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
+import type { Db } from '@vunvault/db';
+import { audited } from '../../../audit/audited.js';
+import type { Tx } from '../../../plugins/db.js';
 import { z } from 'zod';
 import {
   CreateUampAlertRuleBody,
@@ -50,21 +53,23 @@ function actor(request: FastifyRequest): { id: string; email: string; orgId: str
 const uampRoutes: FastifyPluginAsync = async (fastify) => {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
 
-  async function serviceFor(orgId: string): Promise<UampService> {
-    if (!app.hasDecorator('db')) {
+  async function serviceFor(orgId: string, executor?: Db | Tx): Promise<UampService> {
+    if (executor === undefined && !app.hasDecorator('db')) {
       throw new HttpError(503, 'service_unavailable', 'UAMP is not available');
     }
-    const planCode = await resolveUampPlanCode(app.db, orgId);
-    return UampService.fromPlanCode(new SqlUampRepo(app.db), planCode);
+    const db = executor ?? app.db;
+    const planCode = await resolveUampPlanCode(db, orgId);
+    return UampService.fromPlanCode(new SqlUampRepo(db), planCode);
   }
 
-  const auth = [app.authenticate];
+  const readAuth = [app.authenticate, app.requirePermission('uamp:read')];
+  const writeAuth = [app.authenticate, app.requirePermission('uamp:manage')];
 
   // ------------------------------------------------------------------ monitors
   app.get(
     '/uamp/monitors',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: UampMonitorListQuery,
         response: { 200: UampMonitorListResponse },
@@ -88,7 +93,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/monitors/:id',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         params: IdParams,
         response: { 200: UampMonitorResponse },
@@ -105,76 +110,99 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.post(
     '/uamp/monitors',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         body: CreateUampMonitorBody,
         response: { 201: UampMonitorResponse },
       },
     },
-    async (request, reply) => {
-      const user = actor(request);
-      const body = request.body as z.infer<typeof CreateUampMonitorBody>;
-      const row = await (await serviceFor(user.orgId)).createMonitor({
-        orgId: user.orgId,
-        createdBy: user.id,
-        name: body.name,
-        type: body.type,
-        target: body.target,
-        method: body.method,
-        intervalSeconds: body.intervalSeconds,
-        timeoutMs: body.timeoutMs,
-        locations: body.locations,
-        headers: body.headers,
-        requestBody: body.requestBody,
-        assertions: body.assertions,
-        keyword: body.keyword,
-        warnDaysBeforeExpiry: body.warnDaysBeforeExpiry,
-      });
-      return reply.status(201).send({ data: toWireMonitor(row) });
-    },
+    audited<FastifyRequest, { data: ReturnType<typeof toWireMonitor> }>(
+      {
+        eventType: 'UAMP_MONITOR_CREATED',
+        subject: (_request, result) => result.data.id,
+        message: (_request, result) => `UAMP monitor ${result.data.id} created`,
+      },
+      async (request, reply, ctx) => {
+        const user = actor(request);
+        const body = request.body as z.infer<typeof CreateUampMonitorBody>;
+        const row = await (await serviceFor(user.orgId, ctx.tx)).createMonitor({
+          orgId: user.orgId,
+          createdBy: user.id,
+          name: body.name,
+          type: body.type,
+          target: body.target,
+          method: body.method,
+          intervalSeconds: body.intervalSeconds,
+          timeoutMs: body.timeoutMs,
+          locations: body.locations,
+          headers: body.headers,
+          requestBody: body.requestBody,
+          assertions: body.assertions,
+          keyword: body.keyword,
+          warnDaysBeforeExpiry: body.warnDaysBeforeExpiry,
+        });
+        reply.status(201);
+        return { data: toWireMonitor(row) };
+      },
+    ),
   );
 
   app.patch(
     '/uamp/monitors/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         params: IdParams,
         body: UpdateUampMonitorBody,
         response: { 200: UampMonitorResponse },
       },
     },
-    async (request) => {
-      const user = actor(request);
-      const { id } = request.params as z.infer<typeof IdParams>;
-      const body = request.body as z.infer<typeof UpdateUampMonitorBody>;
-      const row = await (await serviceFor(user.orgId)).updateMonitor(user.orgId, id, body);
-      return { data: toWireMonitor(row) };
-    },
+    audited<FastifyRequest, { data: ReturnType<typeof toWireMonitor> }>(
+      {
+        eventType: 'UAMP_MONITOR_UPDATED',
+        subject: (_request, result) => result.data.id,
+        message: (_request, result) => `UAMP monitor ${result.data.id} updated`,
+      },
+      async (request, _reply, ctx) => {
+        const user = actor(request);
+        const { id } = request.params as z.infer<typeof IdParams>;
+        const body = request.body as z.infer<typeof UpdateUampMonitorBody>;
+        const row = await (await serviceFor(user.orgId, ctx.tx)).updateMonitor(user.orgId, id, body);
+        return { data: toWireMonitor(row) };
+      },
+    ),
   );
 
   app.delete(
     '/uamp/monitors/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         params: IdParams,
         response: { 204: z.null() },
       },
     },
-    async (request, reply) => {
-      const user = actor(request);
-      const { id } = request.params as z.infer<typeof IdParams>;
-      await (await serviceFor(user.orgId)).deleteMonitor(user.orgId, id);
-      return reply.status(204).send();
-    },
+    audited<FastifyRequest, null>(
+      {
+        eventType: 'UAMP_MONITOR_DELETED',
+        subject: (request) => (request.params as z.infer<typeof IdParams>).id,
+        message: (request) => `UAMP monitor ${(request.params as z.infer<typeof IdParams>).id} deleted`,
+      },
+      async (request, reply, ctx) => {
+        const user = actor(request);
+        const { id } = request.params as z.infer<typeof IdParams>;
+        await (await serviceFor(user.orgId, ctx.tx)).deleteMonitor(user.orgId, id);
+        reply.status(204);
+        return null;
+      },
+    ),
   );
 
   // ---------------------------------------------------------------- incidents
   app.get(
     '/uamp/incidents',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: UampIncidentListQuery,
         response: { 200: UampIncidentListResponse },
@@ -198,7 +226,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/incidents/:id',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         params: IdParams,
         response: { 200: UampIncidentResponse },
@@ -215,27 +243,34 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.patch(
     '/uamp/incidents/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         params: IdParams,
         body: UpdateUampIncidentBody,
         response: { 200: UampIncidentResponse },
       },
     },
-    async (request) => {
-      const user = actor(request);
-      const { id } = request.params as z.infer<typeof IdParams>;
-      const body = request.body as z.infer<typeof UpdateUampIncidentBody>;
-      const row = await (await serviceFor(user.orgId)).updateIncident(user.orgId, id, user.id, body);
-      return { data: toWireIncident(row) };
-    },
+    audited<FastifyRequest, { data: ReturnType<typeof toWireIncident> }>(
+      {
+        eventType: 'UAMP_INCIDENT_UPDATED',
+        subject: (_request, result) => result.data.id,
+        message: (_request, result) => `UAMP incident ${result.data.id} updated`,
+      },
+      async (request, _reply, ctx) => {
+        const user = actor(request);
+        const { id } = request.params as z.infer<typeof IdParams>;
+        const body = request.body as z.infer<typeof UpdateUampIncidentBody>;
+        const row = await (await serviceFor(user.orgId, ctx.tx)).updateIncident(user.orgId, id, user.id, body);
+        return { data: toWireIncident(row) };
+      },
+    ),
   );
 
   // ------------------------------------------------------------ check results
   app.get(
     '/uamp/check-results',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: UampCheckResultListQuery,
         response: { 200: UampCheckResultListResponse },
@@ -260,7 +295,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/status-pages',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: PageQuery,
         response: { 200: UampStatusPageListResponse },
@@ -281,7 +316,7 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/uamp/status-pages/:id',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: { params: IdParams, response: { 200: UampStatusPageResponse } },
     },
     async (request) => {
@@ -295,39 +330,55 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.post(
     '/uamp/status-pages',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: { body: CreateUampStatusPageBody, response: { 201: UampStatusPageResponse } },
     },
-    async (request, reply) => {
-      const user = actor(request);
-      const body = request.body as z.infer<typeof CreateUampStatusPageBody>;
-      const row = await (await serviceFor(user.orgId)).createStatusPage({
-        orgId: user.orgId,
-        ...body,
-      });
-      return reply.status(201).send({ data: toWireStatusPage(row) });
-    },
+    audited<FastifyRequest, { data: ReturnType<typeof toWireStatusPage> }>(
+      {
+        eventType: 'UAMP_STATUS_PAGE_CREATED',
+        subject: (_request, result) => result.data.id,
+        message: (_request, result) => `UAMP status page ${result.data.id} created`,
+      },
+      async (request, reply, ctx) => {
+        const user = actor(request);
+        const body = request.body as z.infer<typeof CreateUampStatusPageBody>;
+        const row = await (await serviceFor(user.orgId, ctx.tx)).createStatusPage({
+          orgId: user.orgId,
+          ...body,
+        });
+        reply.status(201);
+        return { data: toWireStatusPage(row) };
+      },
+    ),
   );
 
   app.delete(
     '/uamp/status-pages/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: { params: IdParams, response: { 204: z.null() } },
     },
-    async (request, reply) => {
-      const user = actor(request);
-      const { id } = request.params as z.infer<typeof IdParams>;
-      await (await serviceFor(user.orgId)).deleteStatusPage(user.orgId, id);
-      return reply.status(204).send();
-    },
+    audited<FastifyRequest, null>(
+      {
+        eventType: 'UAMP_STATUS_PAGE_DELETED',
+        subject: (request) => (request.params as z.infer<typeof IdParams>).id,
+        message: (request) => `UAMP status page ${(request.params as z.infer<typeof IdParams>).id} deleted`,
+      },
+      async (request, reply, ctx) => {
+        const user = actor(request);
+        const { id } = request.params as z.infer<typeof IdParams>;
+        await (await serviceFor(user.orgId, ctx.tx)).deleteStatusPage(user.orgId, id);
+        reply.status(204);
+        return null;
+      },
+    ),
   );
 
   // --------------------------------------------------------------- alert rules
   app.get(
     '/uamp/alert-rules',
     {
-      preHandler: auth,
+      preHandler: readAuth,
       schema: {
         querystring: z.object({ monitorId: z.string().uuid().optional() }),
         response: { 200: z.object({ data: z.array(UampAlertRuleSchema) }) },
@@ -344,35 +395,51 @@ const uampRoutes: FastifyPluginAsync = async (fastify) => {
   app.post(
     '/uamp/alert-rules',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: {
         body: CreateUampAlertRuleBody,
         response: { 201: envelope(UampAlertRuleSchema) },
       },
     },
-    async (request, reply) => {
-      const user = actor(request);
-      const body = request.body as z.infer<typeof CreateUampAlertRuleBody>;
-      const row = await (await serviceFor(user.orgId)).createAlertRule({
-        orgId: user.orgId,
-        ...body,
-      });
-      return reply.status(201).send({ data: toWireAlertRule(row) });
-    },
+    audited<FastifyRequest, { data: ReturnType<typeof toWireAlertRule> }>(
+      {
+        eventType: 'UAMP_ALERT_RULE_CREATED',
+        subject: (_request, result) => result.data.id,
+        message: (_request, result) => `UAMP alert rule ${result.data.id} created`,
+      },
+      async (request, reply, ctx) => {
+        const user = actor(request);
+        const body = request.body as z.infer<typeof CreateUampAlertRuleBody>;
+        const row = await (await serviceFor(user.orgId, ctx.tx)).createAlertRule({
+          orgId: user.orgId,
+          ...body,
+        });
+        reply.status(201);
+        return { data: toWireAlertRule(row) };
+      },
+    ),
   );
 
   app.delete(
     '/uamp/alert-rules/:id',
     {
-      preHandler: auth,
+      preHandler: writeAuth,
       schema: { params: IdParams, response: { 204: z.null() } },
     },
-    async (request, reply) => {
-      const user = actor(request);
-      const { id } = request.params as z.infer<typeof IdParams>;
-      await (await serviceFor(user.orgId)).deleteAlertRule(user.orgId, id);
-      return reply.status(204).send();
-    },
+    audited<FastifyRequest, null>(
+      {
+        eventType: 'UAMP_ALERT_RULE_DELETED',
+        subject: (request) => (request.params as z.infer<typeof IdParams>).id,
+        message: (request) => `UAMP alert rule ${(request.params as z.infer<typeof IdParams>).id} deleted`,
+      },
+      async (request, reply, ctx) => {
+        const user = actor(request);
+        const { id } = request.params as z.infer<typeof IdParams>;
+        await (await serviceFor(user.orgId, ctx.tx)).deleteAlertRule(user.orgId, id);
+        reply.status(204);
+        return null;
+      },
+    ),
   );
 };
 

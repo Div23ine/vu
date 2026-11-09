@@ -143,6 +143,7 @@ export class UampService {
   }
 
   async createStatusPage(input: CreateStatusPageInput): Promise<StatusPageRow> {
+    await this.assertOwnedMonitors(input.orgId, input.monitorIds ?? []);
     const count = await this.repo.countStatusPages(input.orgId);
     if (count >= this.entitlements.maxStatusPages) {
       throw new HttpError(
@@ -159,6 +160,7 @@ export class UampService {
     id: string,
     patch: Partial<CreateStatusPageInput> & { isActive?: boolean },
   ): Promise<StatusPageRow> {
+    if (patch.monitorIds !== undefined) await this.assertOwnedMonitors(orgId, patch.monitorIds);
     const row = await this.repo.updateStatusPage(orgId, id, patch);
     if (!row) throw new HttpError(404, 'not_found', 'Status page not found');
     return row;
@@ -174,6 +176,7 @@ export class UampService {
   }
 
   async createAlertRule(input: CreateAlertRuleInput): Promise<AlertRuleRow> {
+    if (input.monitorId) await this.assertOwnedMonitors(input.orgId, [input.monitorId]);
     return this.repo.createAlertRule(input);
   }
 
@@ -182,6 +185,7 @@ export class UampService {
     id: string,
     patch: Partial<CreateAlertRuleInput> & { enabled?: boolean },
   ): Promise<AlertRuleRow> {
+    if (patch.monitorId) await this.assertOwnedMonitors(orgId, [patch.monitorId]);
     const row = await this.repo.updateAlertRule(orgId, id, patch);
     if (!row) throw new HttpError(404, 'not_found', 'Alert rule not found');
     return row;
@@ -190,6 +194,15 @@ export class UampService {
   async deleteAlertRule(orgId: string, id: string): Promise<void> {
     const ok = await this.repo.deleteAlertRule(orgId, id);
     if (!ok) throw new HttpError(404, 'not_found', 'Alert rule not found');
+  }
+
+  private async assertOwnedMonitors(orgId: string, monitorIds: string[]): Promise<void> {
+    const uniqueIds = [...new Set(monitorIds)];
+    if (uniqueIds.length === 0) return;
+    const ownedCount = await this.repo.countOwnedMonitors(orgId, uniqueIds);
+    if (ownedCount !== uniqueIds.length) {
+      throw new HttpError(404, 'not_found', 'One or more monitors were not found');
+    }
   }
 
   private assertSafeTarget(target: string): void {

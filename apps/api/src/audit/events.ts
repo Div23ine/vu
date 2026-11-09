@@ -111,6 +111,16 @@ export const AUDIT_EVENTS = {
   INVOICE_ISSUED: { category: 'administrative', severity: 'info' },
   NOTIFICATION_PREFS_UPDATED: { category: 'administrative', severity: 'info' },
 
+  // --- UAMP HQ product lifecycle ---
+  UAMP_MONITOR_CREATED: { category: 'administrative', severity: 'info' },
+  UAMP_MONITOR_UPDATED: { category: 'administrative', severity: 'info' },
+  UAMP_MONITOR_DELETED: { category: 'administrative', severity: 'warning' },
+  UAMP_INCIDENT_UPDATED: { category: 'administrative', severity: 'info' },
+  UAMP_STATUS_PAGE_CREATED: { category: 'administrative', severity: 'info' },
+  UAMP_STATUS_PAGE_DELETED: { category: 'administrative', severity: 'warning' },
+  UAMP_ALERT_RULE_CREATED: { category: 'administrative', severity: 'info' },
+  UAMP_ALERT_RULE_DELETED: { category: 'administrative', severity: 'warning' },
+
   // --- system ---
   KEY_ROTATION: { category: 'system', severity: 'info' },
   CHAIN_VERIFIED: { category: 'system', severity: 'ok' },

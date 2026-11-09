@@ -46,8 +46,11 @@ function isActiveRoute(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function PortalHeader() {
+export function PortalHeader({ showUamp }: { showUamp: boolean }) {
   const pathname = usePathname() ?? '/';
+  const navItems = showUamp
+    ? [{ label: 'UAMP HQ', href: '/uamp' }, ...PORTAL_NAV_ITEMS]
+    : PORTAL_NAV_ITEMS;
   const router = useRouter();
   const queryClient = useQueryClient();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -111,7 +114,7 @@ export function PortalHeader() {
           className="hidden md:flex items-center gap-1.5 lg:gap-3 min-w-0 no-scrollbar"
           aria-label="Primary"
         >
-          {PORTAL_NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const active = isActiveRoute(pathname, item.href);
             return (
               <Link
@@ -168,7 +171,7 @@ export function PortalHeader() {
         aria-label="Mobile"
       >
         <ul className="mobile-menu-list">
-          {PORTAL_NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <li key={item.href}>
               <Link href={item.href} onClick={closeDrawer}>
                 {item.label}
