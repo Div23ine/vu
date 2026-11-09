@@ -80,6 +80,7 @@ export const MAINTENANCE_TASKS = [
   'stale_signups',
   'outbox_reenqueue',
   'media_scan',
+  'uamp_checks',
 ] as const;
 export type MaintenanceTask = (typeof MAINTENANCE_TASKS)[number];
 
@@ -87,16 +88,6 @@ export const MaintenanceJobPayload = z.object({
   task: z.enum(MAINTENANCE_TASKS),
 });
 export type MaintenanceJobPayload = z.infer<typeof MaintenanceJobPayload>;
-
-/** Payload schema per queue, so a producer can validate before it enqueues. */
-export const QUEUE_PAYLOADS = {
-  scan: ScanJobPayload,
-  broadcast: BroadcastJobPayload,
-  pdf: PdfJobPayload,
-  notify: NotifyJobPayload,
-  maintenance: MaintenanceJobPayload,
-} as const;
-
 
 /** One UAMP monitor check execution. */
 export const UampCheckJobPayload = z.object({
@@ -106,3 +97,13 @@ export const UampCheckJobPayload = z.object({
   location: z.string().max(64).optional(),
 });
 export type UampCheckJobPayload = z.infer<typeof UampCheckJobPayload>;
+
+/** Payload schema per queue, so a producer can validate before it enqueues. */
+export const QUEUE_PAYLOADS = {
+  scan: ScanJobPayload,
+  broadcast: BroadcastJobPayload,
+  pdf: PdfJobPayload,
+  notify: NotifyJobPayload,
+  maintenance: MaintenanceJobPayload,
+  uamp: UampCheckJobPayload,
+} as const;
