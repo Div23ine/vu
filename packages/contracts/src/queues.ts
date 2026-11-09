@@ -93,6 +93,8 @@ export type MaintenanceJobPayload = z.infer<typeof MaintenanceJobPayload>;
 export const UampCheckJobPayload = z.object({
   monitorId: z.string().uuid(),
   orgId: z.string().uuid(),
+  /** Stable per-monitor idempotency key; optional for already-enqueued legacy jobs. */
+  checkKey: z.string().min(1).max(128).optional(),
   /** Optional location tag for multi-region checks. */
   location: z.string().max(64).optional(),
 });
