@@ -1,0 +1,47 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "uamp-hq-staging",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-12",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "uamp-hq-staging"
+    }
+  ],
+  "observability": { "enabled": true },
+  "env": {
+    "staging": {
+      "name": "uamp-hq-staging",
+      "workers_dev": true,
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "uamp-hq-staging"
+        }
+      ]
+    },
+    "production": {
+      "name": "uamp-hq-production",
+      "workers_dev": true,
+      "routes": [
+        {
+          "pattern": "uamp.vunvault.com",
+          "custom_domain": true
+        }
+      ],
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "uamp-hq-production"
+        }
+      ]
+    }
+  }
+}
