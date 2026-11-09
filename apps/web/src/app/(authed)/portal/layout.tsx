@@ -1,4 +1,5 @@
 import { requireSession } from '../../../lib/server-session';
+import { can } from '../../../lib/permissions';
 import { PortalFooter } from './_components/portal-footer';
 import { PortalHeader } from './_components/portal-header';
 import { RequestPenTestDialog } from './_components/request-pentest-dialog';
@@ -19,11 +20,11 @@ import { RequestPenTestDialog } from './_components/request-pentest-dialog';
  * `clientVisibleWhere`).
  */
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  await requireSession({});
+  const session = await requireSession({});
 
   return (
     <div className="min-h-screen bg-paper text-neutral-900 flex flex-col">
-      <PortalHeader />
+      <PortalHeader showUamp={can(session, 'uamp:read')} />
       <main className="flex-1">{children}</main>
       <PortalFooter />
       <RequestPenTestDialog />
