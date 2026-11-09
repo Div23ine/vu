@@ -40,7 +40,7 @@ jobs:
           set -euo pipefail
           while IFS= read -r -d '' file; do
             echo "Hadolint: $file"
-            docker run --rm -i hadolint/hadolint:v2.12.0 --failure-threshold error - < "$file"
+            docker run --rm -i hadolint/hadolint:v2.12.0 hadolint --failure-threshold error - < "$file"
           done < <(find . -type f \( -iname 'Dockerfile*' -o -iname '*.Dockerfile' \) \
             -not -path '*/node_modules/*' -not -path '*/.next/*' \
             -not -path '*/dist/*' -not -path '*/coverage/*' \
