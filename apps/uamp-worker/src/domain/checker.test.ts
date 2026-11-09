@@ -1,29 +1,34 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runCheck } from './checker.js';
+import type { ResolvedGuardResult } from './target-guard.js';
+
+const publicTarget: ResolvedGuardResult = {
+  ok: true,
+  url: new URL('https://example.com/health'),
+  address: '93.184.216.34',
+  family: 4,
+};
 
 describe('runCheck', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('does not follow redirects to an untrusted destination', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(null, {
-        status: 302,
-        headers: { location: 'http://169.254.169.254/latest/meta-data' },
-      }),
+  it('treats redirects as failed checks without following the Location header', async () => {
+    const request = vi.fn(async () => ({ status: 302, text: '' }));
+    const result = await runCheck(
+      {
+        target: 'https://example.com/health',
+        timeoutMs: 1_000,
+        userAgent: 'UAMP-test/1.0',
+      },
+      {
+        resolveTarget: async () => publicTarget,
+        request,
+      },
     );
 
-    const result = await runCheck({
-      target: 'https://example.com/health',
-      timeoutMs: 1_000,
-      userAgent: 'UAMP-test/1.0',
-    });
-
-    expect(fetchSpy).toHaveBeenCalledWith(
-      expect.any(URL),
-      expect.objectContaining({ redirect: 'manual' }),
-    );
+    expect(request).toHaveBeenCalledTimes(1);
     expect(result.status).toBe('down');
     expect(result.httpStatus).toBe(302);
   });
@@ -36,12 +41,21 @@ describe('runCheck', () => {
       }),
     );
 
-    const result = await runCheck({
-      target: 'https://example.com/health',
-      timeoutMs: 1_000,
-      userAgent: 'UAMP-test/1.0',
-      assertions: { jsonPath: '$.data.checks[0].state', jsonEquals: 'healthy' },
-    });
+    const result = await runCheck(
+      {
+        target: 'https://example.com/health',
+        timeoutMs: 1_000,
+        userAgent: 'UAMP-test/1.0',
+        assertions: { jsonPath: '$.data.checks[0].state', jsonEquals: 'healthy' },
+      },
+      {
+        resolveTarget: async () => publicTarget,
+        request: async () => ({
+          status: 200,
+          text: JSON.stringify({ data: { checks: [{ state: 'healthy' }] } }),
+        }),
+      },
+    );
 
     expect(result.status).toBe('up');
     expect(result.errorMessage).toBeNull();
@@ -52,12 +66,18 @@ describe('runCheck', () => {
       new Response(JSON.stringify({ status: 'degraded' }), { status: 200 }),
     );
 
-    const result = await runCheck({
-      target: 'https://example.com/health',
-      timeoutMs: 1_000,
-      userAgent: 'UAMP-test/1.0',
-      assertions: { jsonPath: '$.status', jsonEquals: 'healthy' },
-    });
+    const result = await runCheck(
+      {
+        target: 'https://example.com/health',
+        timeoutMs: 1_000,
+        userAgent: 'UAMP-test/1.0',
+        assertions: { jsonPath: '$.status', jsonEquals: 'healthy' },
+      },
+      {
+        resolveTarget: async () => publicTarget,
+        request: async () => ({ status: 200, text: JSON.stringify({ status: 'degraded' }) }),
+      },
+    );
 
     expect(result.status).toBe('down');
     expect(result.errorMessage).toBe('json_assertion_failed');
@@ -68,12 +88,18 @@ describe('runCheck', () => {
       new Response('not-json', { status: 200 }),
     );
 
-    const result = await runCheck({
-      target: 'https://example.com/health',
-      timeoutMs: 1_000,
-      userAgent: 'UAMP-test/1.0',
-      assertions: { jsonPath: '$.status' },
-    });
+    const result = await runCheck(
+      {
+        target: 'https://example.com/health',
+        timeoutMs: 1_000,
+        userAgent: 'UAMP-test/1.0',
+        assertions: { jsonPath: '$.status' },
+      },
+      {
+        resolveTarget: async () => publicTarget,
+        request: async () => ({ status: 200, text: 'not-json' }),
+      },
+    );
 
     expect(result.status).toBe('down');
     expect(result.errorMessage).toBe('json_response_invalid');
