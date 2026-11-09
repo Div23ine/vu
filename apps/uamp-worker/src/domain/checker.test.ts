@@ -162,4 +162,89 @@ describe('runCheck', () => {
     expect(result.status).toBe('down');
     expect(result.errorMessage).toBe('certificate_validation_failed');
   });
+
+  it('checks domain expiry using RDAP and applies the warning window', async () => {
+    const result = await runCheck(
+      {
+        target: 'example.com',
+        type: 'domain',
+        warnDaysBeforeExpiry: 30,
+        timeoutMs: 1_000,
+        userAgent: 'UAMP-test/1.0',
+      },
+      {
+        resolveTarget: async () => publicTarget,
+        request: async () => ({
+          status: 200,
+          text: JSON.stringify({
+            events: [{
+              eventAction: 'expiration',
+              eventDate: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+            }],
+          }),
+        }),
+      },
+    );
+
+    expect(result.status).toBe('degraded');
+    expect(result.errorMessage).toBeNull();
+  });
+
+  it('marks expired domains down', async () => {
+    const result = await runCheck(
+      {
+        target: 'example.com',
+        type: 'domain',
+        timeoutMs: 1_000,
+        userAgent: 'UAMP-test/1.0',
+      },
+      {
+        resolveTarget: async () => publicTarget,
+        request: async () => ({
+          status: 200,
+          text: JSON.stringify({
+            events: [{
+              eventAction: 'expiration',
+              eventDate: new Date(Date.now() - 86_400_000).toISOString(),
+            }],
+          }),
+        }),
+      },
+    );
+
+    expect(result.status).toBe('down');
+    expect(result.errorMessage).toBe('domain_expired');
+  });
+
+  it('revalidates every RDAP redirect destination', async () => {
+    const request = vi.fn()
+      .mockResolvedValueOnce({
+        status: 302,
+        location: 'https://rdap.example.net/domain/example.com',
+        text: '',
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        text: JSON.stringify({
+          events: [{
+            eventAction: 'expiration',
+            eventDate: new Date(Date.now() + 90 * 86_400_000).toISOString(),
+          }],
+        }),
+      });
+    const resolveTarget = vi.fn(async () => publicTarget);
+    const result = await runCheck(
+      {
+        target: 'example.com',
+        type: 'domain',
+        timeoutMs: 1_000,
+        userAgent: 'UAMP-test/1.0',
+      },
+      { resolveTarget, request },
+    );
+
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(resolveTarget).toHaveBeenCalledTimes(2);
+    expect(result.status).toBe('up');
+  });
 });
