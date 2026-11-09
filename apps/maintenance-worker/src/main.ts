@@ -6,6 +6,7 @@ import { parseKeyRing } from '@vunvault/lib/audit-chain';
 import { R2ObjectStorage } from '@vunvault/lib/storage';
 import { BullBroadcastProducer } from './adapters/broadcast-producer';
 import { BullNotifyEnqueuer } from './adapters/notify-queue';
+import { BullUampCheckProducer } from './adapters/uamp-queue';
 import { SqlMaintenanceRepo } from './adapters/sql-repo';
 import { LOG_REDACT_PATHS, loadEnv } from './config/env';
 import { startConsumer, type HandlerDeps } from './queue/consumer';
@@ -77,6 +78,10 @@ export async function bootstrap(options: BootstrapOptions = {}): Promise<Running
     connection: { url: env.REDIS_URL },
     prefix: env.REDIS_KEY_PREFIX,
   });
+  const uampQueue = new Queue(QUEUE_NAMES.uamp, {
+    connection: { url: env.REDIS_URL },
+    prefix: env.REDIS_KEY_PREFIX,
+  });
   const maintenanceQueue = new Queue(QUEUE_NAMES.maintenance, {
     connection: { url: env.REDIS_URL },
     prefix: env.REDIS_KEY_PREFIX,
@@ -98,6 +103,7 @@ export async function bootstrap(options: BootstrapOptions = {}): Promise<Running
     repo,
     notify: new BullNotifyEnqueuer(notifyQueue),
     broadcast: new BullBroadcastProducer(broadcastQueue),
+    uamp: new BullUampCheckProducer(uampQueue),
     storage,
     hmacKeyFor: (keyId) => hmacRing.key(keyId),
     clock,
@@ -140,6 +146,7 @@ export async function bootstrap(options: BootstrapOptions = {}): Promise<Running
       logger.info('shutting down; draining the in-flight sweep');
       await worker.close();
       await maintenanceQueue.close().catch(() => undefined);
+      await uampQueue.close().catch(() => undefined);
       await notifyQueue.close().catch(() => undefined);
       await broadcastQueue.close().catch(() => undefined);
       const client = (db as WithClient).$client;
