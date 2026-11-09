@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { Db } from '@vunvault/db';
 import type { Tx } from '../../../plugins/db.js';
 import {
@@ -108,6 +108,51 @@ export interface ListCheckResultsFilter {
   pageSize: number;
 }
 
+export interface StatusPageRow {
+  id: string;
+  orgId: string;
+  name: string;
+  slug: string;
+  visibility: string;
+  customDomain: string | null;
+  monitorIds: string[];
+  headline: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateStatusPageInput {
+  orgId: string;
+  name: string;
+  slug: string;
+  visibility?: string;
+  customDomain?: string | null;
+  monitorIds?: string[];
+  headline?: string | null;
+}
+
+export interface AlertRuleRow {
+  id: string;
+  orgId: string;
+  monitorId: string | null;
+  channel: string;
+  destination: string;
+  enabled: boolean;
+  failureThreshold: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateAlertRuleInput {
+  orgId: string;
+  monitorId?: string | null;
+  channel: string;
+  destination: string;
+  enabled?: boolean;
+  failureThreshold?: number;
+}
+
 export interface UampRepo {
   listMonitors(filter: ListMonitorsFilter): Promise<{ rows: MonitorRow[]; total: number }>;
   getMonitor(orgId: string, id: string): Promise<MonitorRow | null>;
@@ -133,6 +178,7 @@ export interface UampRepo {
   updateStatusPage(orgId: string, id: string, patch: Partial<CreateStatusPageInput> & { isActive?: boolean }): Promise<StatusPageRow | null>;
   deleteStatusPage(orgId: string, id: string): Promise<boolean>;
   countStatusPages(orgId: string): Promise<number>;
+  countOwnedMonitors(orgId: string, monitorIds: string[]): Promise<number>;
   listAlertRules(orgId: string, monitorId?: string): Promise<AlertRuleRow[]>;
   createAlertRule(input: CreateAlertRuleInput): Promise<AlertRuleRow>;
   updateAlertRule(orgId: string, id: string, patch: Partial<CreateAlertRuleInput> & { enabled?: boolean }): Promise<AlertRuleRow | null>;
@@ -477,6 +523,21 @@ export class SqlUampRepo implements UampRepo {
   async deleteStatusPage(orgId: string, id: string) {
     const rows = await this.db.delete(uampStatusPages).where(and(eq(uampStatusPages.id, id), eq(uampStatusPages.orgId, orgId))).returning({ id: uampStatusPages.id });
     return rows.length > 0;
+  }
+
+  async countOwnedMonitors(orgId: string, monitorIds: string[]): Promise<number> {
+    if (monitorIds.length === 0) return 0;
+    const rows = await this.db
+      .select({ id: uampMonitors.id })
+      .from(uampMonitors)
+      .where(
+        and(
+          eq(uampMonitors.orgId, orgId),
+          inArray(uampMonitors.id, monitorIds),
+          isNull(uampMonitors.deletedAt),
+        ),
+      );
+    return rows.length;
   }
 
   async countStatusPages(orgId: string) {
