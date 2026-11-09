@@ -36,10 +36,16 @@ jobs:
         with:
           persist-credentials: false
       - name: Hadolint every Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          recursive: true
-          failure-threshold: error
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Hadolint: $file"
+            docker run --rm -i hadolint/hadolint:v2.12.0 --failure-threshold error - < "$file"
+          done < <(find . -type f \\
+            \\( -iname 'Dockerfile*' -o -iname '*.Dockerfile' \\) \\
+            -not -path '*/node_modules/*' -not -path '*/.next/*' \\
+            -not -path '*/dist/*' -not -path '*/coverage/*' \\
+            -not -path '*/.turbo/*' -not -path '*/.git/*' -print0)
       - name: Repo policy (multi-stage, non-root, distroless, no latest)
         uses: ./.github/actions/setup
       - run: node scripts/verify-dockerfiles.mjs
