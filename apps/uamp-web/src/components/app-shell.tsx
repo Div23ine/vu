@@ -8,6 +8,7 @@ import { apiPost } from '../lib/api';
 const NAV = [
   { label: 'Overview', href: '/dashboard', icon: '◫' },
   { label: 'Monitors', href: '/monitors', icon: '⌁' },
+  { label: 'Check history', href: '/checks', icon: '◷' },
   { label: 'Incidents', href: '/incidents', icon: '!' },
   { label: 'Status pages', href: '/status-pages', icon: '▤' },
   { label: 'Alert rules', href: '/alert-rules', icon: '⌁' },
