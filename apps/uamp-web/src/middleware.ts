@@ -9,14 +9,14 @@ function nonce():string {
  return btoa(binary);
 }
 
-export default function middleware(_request:NextRequest):NextResponse {
+export default function middleware(request:NextRequest):NextResponse {
  const value=nonce();
- const headers=new Headers(_request.headers);
+ const policy=buildCsp({nonce:value,apiOrigin:env.NEXT_PUBLIC_API_URL,dev:process.env.NODE_ENV==='development'});
+ const headers=new Headers(request.headers);
  headers.set('x-nonce',value);
+ headers.set('content-security-policy',policy);
  const response=NextResponse.next({request:{headers}});
- response.headers.set('content-security-policy',buildCsp({
-  nonce:value,apiOrigin:env.NEXT_PUBLIC_API_URL,dev:process.env.NODE_ENV==='development'
- }));
+ response.headers.set('content-security-policy',policy);
  return response;
 }
 
