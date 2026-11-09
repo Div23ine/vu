@@ -32,6 +32,11 @@ const baseConfig = [
         ...globals.node,
         ...globals.browser,
       },
+      parserOptions: {
+        // TypeScript 7.0 is in use; typescript-eslint has not yet declared support.
+        // Keep lint useful while surfacing the compatibility warning in CI.
+        onUnsupportedTypeScriptVersion: 'warn',
+      },
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
