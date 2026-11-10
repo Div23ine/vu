@@ -272,8 +272,8 @@ importers:
         specifier: ^13.2.0
         version: 13.2.0
       '@fastify/rate-limit':
-        specifier: ^10.3.0
-        version: 10.3.0
+        specifier: ^11.2.2
+        version: 11.2.2
       '@fastify/swagger':
         specifier: ^9.9.3
         version: 9.9.3(supports-color@10.2.2)
@@ -593,6 +593,52 @@ importers:
         specifier: 'catalog:'
         version: 3.2.7(@types/node@26.6.5)(jiti@2.7.0)(jsdom@31.0.0(@noble/hashes@1.8.0))(lightningcss@1.33.0)(msw@2.15.0(@types/node@26.6.5)(typescript@7.0.2))(supports-color@10.2.2)(terser@5.36.0)(tsx@4.23.15)(yaml@2.9.1)
 
+  apps/uamp-web:
+    dependencies:
+      '@vunvault/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@vunvault/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
+      next:
+        specifier: 'catalog:'
+        version: 15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react:
+        specifier: 'catalog:'
+        version: 19.3.1
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.3.1(react@19.3.1)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@opennextjs/cloudflare':
+        specifier: ^1.20.16
+        version: 1.20.16(next@15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(supports-color@10.2.2)(wrangler@4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5))
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vunvault/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      wrangler:
+        specifier: ^4.158.0
+        version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
+
   apps/uamp-worker:
     dependencies:
       '@vunvault/contracts':
@@ -726,52 +772,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 3.2.7(@types/node@26.6.5)(jiti@2.7.0)(jsdom@31.0.0(@noble/hashes@1.8.0))(lightningcss@1.33.0)(msw@2.15.0(@types/node@26.6.5)(typescript@7.0.2))(supports-color@10.2.2)(terser@5.36.0)(tsx@4.23.15)(yaml@2.9.1)
-      wrangler:
-        specifier: ^4.158.0
-        version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
-
-  apps/uamp-web:
-    dependencies:
-      '@vunvault/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@vunvault/lib':
-        specifier: workspace:*
-        version: link:../../packages/lib
-      next:
-        specifier: 'catalog:'
-        version: 15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      react:
-        specifier: 'catalog:'
-        version: 19.3.1
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.3.1(react@19.3.1)
-      zod:
-        specifier: 'catalog:'
-        version: 3.25.76
-    devDependencies:
-      '@opennextjs/cloudflare':
-        specifier: ^1.20.16
-        version: 1.20.16(next@15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(supports-color@10.2.2)(wrangler@4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5))
-      '@types/node':
-        specifier: ^26.6.5
-        version: 26.6.5
-      '@types/react':
-        specifier: ^19.3.0
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: ^19.3.0
-        version: 19.3.0(@types/react@19.3.0)
-      '@vunvault/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      eslint:
-        specifier: 'catalog:'
-        version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
       wrangler:
         specifier: ^4.158.0
         version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
@@ -1927,8 +1927,8 @@ packages:
   '@fastify/proxy-addr@5.1.2':
     resolution: {integrity: sha512-uqB4QsgVoro0XDC+DIftIMGXHdBPn+lK6Ek3xXAIxPMCJfqxnbtyEoMCm2KPUVOuIosd7Cyw9HawEqMFM/UA+g==}
 
-  '@fastify/rate-limit@10.3.0':
-    resolution: {integrity: sha512-eIGkG9XKQs0nyynatApA3EVrojHOuq4l6fhB4eeCk4PIOeadvOJz9/4w3vGI44Go17uaXOWEcPkaD8kuKm7g6Q==}
+  '@fastify/rate-limit@11.2.2':
+    resolution: {integrity: sha512-Ynxk9BU82Y5Ux7NOk9NqyZpTMdFes8EY8quXrN6ePDsbtG4G9Afb3l9mD8Vw2nv0hXg0iFjV+gkdABReFPlShw==}
 
   '@fastify/send@4.1.2':
     resolution: {integrity: sha512-PitRBXg/N4IrE5ToLuP7lITI5Mz8MmP13dv2aMtMNfaGfc5W5hNOwHqcsdQdqu0Lwm5cpDiYLkiOsZTgmhyt2Q==}
@@ -8396,10 +8396,11 @@ snapshots:
       '@fastify/forwarded': 3.1.1
       ipaddr.js: 2.5.0
 
-  '@fastify/rate-limit@10.3.0':
+  '@fastify/rate-limit@11.2.2':
     dependencies:
       '@lukeed/ms': 2.0.2
-      fastify-plugin: 5.1.0
+      fastify-plugin: 6.0.1
+      ip-address: 10.7.4
       toad-cache: 3.7.4
 
   '@fastify/send@4.1.2':
