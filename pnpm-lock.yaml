@@ -593,6 +593,52 @@ importers:
         specifier: 'catalog:'
         version: 3.2.7(@types/node@26.6.5)(jiti@2.7.0)(jsdom@31.0.0(@noble/hashes@1.8.0))(lightningcss@1.33.0)(msw@2.15.0(@types/node@26.6.5)(typescript@7.0.2))(supports-color@10.2.2)(terser@5.36.0)(tsx@4.23.15)(yaml@2.9.1)
 
+  apps/uamp-web:
+    dependencies:
+      '@vunvault/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@vunvault/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
+      next:
+        specifier: 'catalog:'
+        version: 15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react:
+        specifier: 'catalog:'
+        version: 19.3.1
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.3.1(react@19.3.1)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@opennextjs/cloudflare':
+        specifier: ^1.20.16
+        version: 1.20.16(next@15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(supports-color@10.2.2)(wrangler@4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5))
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vunvault/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      wrangler:
+        specifier: ^4.158.0
+        version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
+
   apps/uamp-worker:
     dependencies:
       '@vunvault/contracts':
@@ -730,60 +776,14 @@ importers:
         specifier: ^4.158.0
         version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
 
-  apps/uamp-web:
-    dependencies:
-      '@vunvault/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@vunvault/lib':
-        specifier: workspace:*
-        version: link:../../packages/lib
-      next:
-        specifier: 'catalog:'
-        version: 15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      react:
-        specifier: 'catalog:'
-        version: 19.3.1
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.3.1(react@19.3.1)
-      zod:
-        specifier: 'catalog:'
-        version: 3.25.76
-    devDependencies:
-      '@opennextjs/cloudflare':
-        specifier: ^1.20.16
-        version: 1.20.16(next@15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(supports-color@10.2.2)(wrangler@4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5))
-      '@types/node':
-        specifier: ^26.6.5
-        version: 26.6.5
-      '@types/react':
-        specifier: ^19.3.0
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: ^19.3.0
-        version: 19.3.0(@types/react@19.3.0)
-      '@vunvault/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      eslint:
-        specifier: 'catalog:'
-        version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      wrangler:
-        specifier: ^4.158.0
-        version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
-
   packages/config:
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.5
         version: 9.39.5
       '@next/eslint-plugin-next':
-        specifier: ^15.5.27
-        version: 15.5.27
+        specifier: ^16.4.5
+        version: 16.4.5(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -1853,6 +1853,12 @@ packages:
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
 
+  '@eslint-community/eslint-utils@4.9.1':
+    resolution: {integrity: sha512-phrYmNiYppR7znFEdqgfWHXR6NCkZEK7hwWDHZUjit/2/U0r6XvkDl0SYnoM51Hq7FhCGdLDT6zxCCOY1hexsQ==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    peerDependencies:
+      eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
+
   '@eslint-community/regexpp@4.12.2':
     resolution: {integrity: sha512-EriSTlt5OC9/7SXkRSCAhfSxxoSUgBm33OH+IkwbdpgoqsSsUg7y3uh+IICI/Qg4BBWr3U2i39RpmycbxMq4ew==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
@@ -2353,8 +2359,8 @@ packages:
   '@next/env@15.5.27':
     resolution: {integrity: sha512-WC5hvVqiuFOcRyz6gKPeJkiVvSMf3scNeAV49CdWtVqxmUlzh8UKR6YHt9yiNkh8LngtzqSlVz07/Ma3ZAzchA==}
 
-  '@next/eslint-plugin-next@15.5.27':
-    resolution: {integrity: sha512-a94xlzvOLaULh4Fzcvj9B2hwIOtPHJW75gghkXiJ8s1Jk0eo00UknrDVhx04Y+8ARu9ds13vy/jHg5u/PdVGqw==}
+  '@next/eslint-plugin-next@16.4.5':
+    resolution: {integrity: sha512-dNmc4y4En/34tWxaBFF2tG/R9GeiRwVPf7v8Az/Pqk8FcT4Uv0ePmrZKvWBL2nFy1QprPgJW+6XjfyV6jbRV3Q==}
 
   '@next/swc-darwin-arm64@15.5.27':
     resolution: {integrity: sha512-fBA9QurmK4+uj4wNhmRTuO5zMVRaBHCvp6H93zTG/5i6Yi6TewbvbesXB8YQNj8T99Cwrow87hHiFV6wL/hyMA==}
@@ -8309,6 +8315,11 @@ snapshots:
       eslint: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
       eslint-visitor-keys: 3.4.3
 
+  '@eslint-community/eslint-utils@4.9.1(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))':
+    dependencies:
+      eslint: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
+      eslint-visitor-keys: 3.4.3
+
   '@eslint-community/regexpp@4.12.2': {}
 
   '@eslint/config-array@0.21.2(supports-color@10.2.2)':
@@ -8761,9 +8772,12 @@ snapshots:
 
   '@next/env@15.5.27': {}
 
-  '@next/eslint-plugin-next@15.5.27':
+  '@next/eslint-plugin-next@16.4.5(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))':
     dependencies:
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))
       fast-glob: 3.3.1
+    transitivePeerDependencies:
+      - eslint
 
   '@next/swc-darwin-arm64@15.5.27':
     optional: true
