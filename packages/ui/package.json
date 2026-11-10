@@ -27,7 +27,7 @@
     "@vunvault/lib": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "lucide-react": "^0.468.0",
-    "zustand": "^5.0.16"
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@hookform/resolvers": "^7.0.3",
