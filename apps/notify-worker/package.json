@@ -20,7 +20,7 @@
     "drizzle-orm": "catalog:",
     "ioredis": "^6.0.0",
     "pino": "^9.14.0",
-    "postgres": "^3.4.9",
+    "postgres": "^4.1.0",
     "react": "catalog:",
     "zod": "catalog:"
   },
