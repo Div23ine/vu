@@ -593,6 +593,52 @@ importers:
         specifier: 'catalog:'
         version: 3.2.7(@types/node@26.6.5)(jiti@2.7.0)(jsdom@31.0.0(@noble/hashes@1.8.0))(lightningcss@1.33.0)(msw@2.15.0(@types/node@26.6.5)(typescript@7.0.2))(supports-color@10.2.2)(terser@5.36.0)(tsx@4.23.15)(yaml@2.9.1)
 
+  apps/uamp-web:
+    dependencies:
+      '@vunvault/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@vunvault/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
+      next:
+        specifier: 'catalog:'
+        version: 15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react:
+        specifier: 'catalog:'
+        version: 19.3.1
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.3.1(react@19.3.1)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@opennextjs/cloudflare':
+        specifier: ^1.20.16
+        version: 1.20.16(next@15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(supports-color@10.2.2)(wrangler@4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5))
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vunvault/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      wrangler:
+        specifier: ^4.158.0
+        version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
+
   apps/uamp-worker:
     dependencies:
       '@vunvault/contracts':
@@ -660,8 +706,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/ui
       lucide-react:
-        specifier: ^0.468.0
-        version: 0.468.0(react@19.3.1)
+        specifier: ^1.70.0
+        version: 1.70.0(@types/react@19.3.0)(react@19.3.1)
       next:
         specifier: 'catalog:'
         version: 15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -726,52 +772,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 3.2.7(@types/node@26.6.5)(jiti@2.7.0)(jsdom@31.0.0(@noble/hashes@1.8.0))(lightningcss@1.33.0)(msw@2.15.0(@types/node@26.6.5)(typescript@7.0.2))(supports-color@10.2.2)(terser@5.36.0)(tsx@4.23.15)(yaml@2.9.1)
-      wrangler:
-        specifier: ^4.158.0
-        version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
-
-  apps/uamp-web:
-    dependencies:
-      '@vunvault/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@vunvault/lib':
-        specifier: workspace:*
-        version: link:../../packages/lib
-      next:
-        specifier: 'catalog:'
-        version: 15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      react:
-        specifier: 'catalog:'
-        version: 19.3.1
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.3.1(react@19.3.1)
-      zod:
-        specifier: 'catalog:'
-        version: 3.25.76
-    devDependencies:
-      '@opennextjs/cloudflare':
-        specifier: ^1.20.16
-        version: 1.20.16(next@15.5.27(@opentelemetry/api@1.9.1)(@playwright/test@1.65.0)(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(supports-color@10.2.2)(wrangler@4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5))
-      '@types/node':
-        specifier: ^26.6.5
-        version: 26.6.5
-      '@types/react':
-        specifier: ^19.3.0
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: ^19.3.0
-        version: 19.3.0(@types/react@19.3.0)
-      '@vunvault/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      eslint:
-        specifier: 'catalog:'
-        version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
       wrangler:
         specifier: ^4.158.0
         version: 4.158.0(@cloudflare/workers-types@5.20261104.1)(@types/node@26.6.5)
@@ -941,8 +941,8 @@ importers:
         specifier: ^0.7.1
         version: 0.7.1
       lucide-react:
-        specifier: ^0.468.0
-        version: 0.468.0(react@19.3.1)
+        specifier: ^1.70.0
+        version: 1.70.0(@types/react@19.3.0)(react@19.3.1)
       zustand:
         specifier: ^5.0.16
         version: 5.0.16(@types/react@19.3.0)(react@19.3.1)
@@ -5798,10 +5798,14 @@ packages:
     resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
     engines: {node: 20 || >=22}
 
-  lucide-react@0.468.0:
-    resolution: {integrity: sha512-6koYRhnM2N0GGZIdXzSeiNwguv1gt/FAjZOiPl76roBi3xKEXa4WmfpxgQwTTL4KipXjefrnf3oV4IsYhi4JFA==}
+  lucide-react@1.70.0:
+    resolution: {integrity: sha512-gCTPPN1MlQUBtUgdsUv+0CAUj+X8hifRUiRBw4E5v7lvDIOIpx0EZezdGQMSimS8pKA6esvullJub4GYr0mCHA==}
     peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
+      '@types/react': '*'
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   luxon@3.7.2:
     resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
@@ -12499,9 +12503,11 @@ snapshots:
 
   lru-cache@11.5.3: {}
 
-  lucide-react@0.468.0(react@19.3.1):
+  lucide-react@1.70.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       react: 19.3.1
+    optionalDependencies:
+      '@types/react': 19.3.0
 
   luxon@3.7.2: {}
 
