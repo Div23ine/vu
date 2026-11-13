@@ -56,12 +56,14 @@ export interface ScanSocket {
 
 export type ScanSocketFactory = (url: string) => ScanSocket;
 
+type TimerHandle = ReturnType<typeof setTimeout> | number;
+
 export interface UseScanStreamOptions {
   /** Test seam; defaults to the global `WebSocket`. */
   socketFactory?: ScanSocketFactory;
-  /** Test seam for the backoff timers. */
-  scheduleTimeout?: (callback: () => void, ms: number) => ReturnType<typeof setTimeout>;
-  clearScheduled?: (handle: ReturnType<typeof setTimeout>) => void;
+  /** Test seam for the backoff timers (Node and browser handles are both valid). */
+  scheduleTimeout?: (callback: () => void, ms: number) => TimerHandle;
+  clearScheduled?: (handle: TimerHandle) => void;
   /** Relay frames aimed at the operator (the hook does not toast by itself). */
   onControlAck?: (control: ScanControlType) => void;
   onStreamError?: (code: string) => void;
@@ -90,7 +92,7 @@ export function useScanStream(
   const [state, dispatch] = useReducer(scanStreamReducer, initialStreamState);
 
   const socket = useRef<ScanSocket | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timer = useRef<TimerHandle | null>(null);
   const stopped = useRef(false);
   /** The reconnect's `after` — a ref so the effect below never re-runs on it. */
   const lastSeq = useRef(0);
