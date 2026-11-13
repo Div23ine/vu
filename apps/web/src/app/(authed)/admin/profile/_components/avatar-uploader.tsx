@@ -9,7 +9,7 @@ import { useRef, useState } from 'react';
 import { ImageIcon, Trash2, UploadCloud, UserRound } from 'lucide-react';
 import type { ProfileSettings } from '@vunvault/contracts';
 import { IMAGE_UPLOAD_MAX_BYTES, prepareImageUpload } from '@vunvault/lib/image-upload';
-import { cn, formatUtcClock, isApiError } from '@vunvault/lib';
+import { cn, isApiError } from '@vunvault/lib';
 import { toast } from '@vunvault/ui';
 import {
   initialsOf,
